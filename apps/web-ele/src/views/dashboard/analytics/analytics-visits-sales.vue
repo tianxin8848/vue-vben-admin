@@ -5,10 +5,13 @@ import { onMounted, ref } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
+import { getVisitsSalesApi } from '#/api';
+
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 
-onMounted(() => {
+onMounted(async () => {
+  const result = await getVisitsSalesApi();
   renderEcharts({
     series: [
       {
@@ -19,14 +22,11 @@ onMounted(() => {
         animationType: 'scale',
         center: ['50%', '50%'],
         color: ['#5ab1ef', '#b6a2de', '#67e0e3', '#2ec7c9'],
-        data: [
-          { name: '外包', value: 500 },
-          { name: '定制', value: 310 },
-          { name: '技术支持', value: 274 },
-          { name: '远程', value: 400 },
-        ].toSorted((a, b) => {
-          return a.value - b.value;
-        }),
+        data: result.data.toSorted(
+          (a: { value: number }, b: { value: number }) => {
+            return a.value - b.value;
+          },
+        ),
         name: '商业占比',
         radius: '80%',
         roseType: 'radius',

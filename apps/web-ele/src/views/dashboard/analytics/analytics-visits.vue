@@ -5,10 +5,13 @@ import { onMounted, ref } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
+import { getVisitsApi } from '#/api';
+
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 
-onMounted(() => {
+onMounted(async () => {
+  const result = await getVisitsApi();
   renderEcharts({
     grid: {
       bottom: 0,
@@ -20,29 +23,23 @@ onMounted(() => {
     series: [
       {
         barMaxWidth: 80,
-        // color: '#4f69fd',
-        data: [
-          3000, 2000, 3333, 5000, 3200, 4200, 3200, 2100, 3000, 5100, 6000,
-          3200, 4800,
-        ],
+        data: result.data,
         type: 'bar',
       },
     ],
     tooltip: {
       axisPointer: {
         lineStyle: {
-          // color: '#4f69fd',
           width: 1,
         },
       },
       trigger: 'axis',
     },
     xAxis: {
-      data: Array.from({ length: 12 }).map((_item, index) => `${index + 1}月`),
+      data: result.labels,
       type: 'category',
     },
     yAxis: {
-      max: 8000,
       splitNumber: 4,
       type: 'value',
     },

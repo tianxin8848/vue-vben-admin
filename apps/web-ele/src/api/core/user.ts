@@ -39,7 +39,7 @@ export async function getUserInfoApi(): Promise<UserInfo> {
     phone: result.phone || '',
     roles: result.is_admin ? ['admin'] : ['user'],
     desc: '',
-    homePath: '/dashboard',
+    homePath: '/employees/list',
     token: '',
     avatar: '',
   };

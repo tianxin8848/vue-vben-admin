@@ -5,10 +5,13 @@ import { onMounted, ref } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
+import { getVisitsSourceApi } from '#/api';
+
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 
-onMounted(() => {
+onMounted(async () => {
+  const result = await getVisitsSourceApi();
   renderEcharts({
     legend: {
       bottom: '2%',
@@ -23,12 +26,7 @@ onMounted(() => {
         animationType: 'scale',
         avoidLabelOverlap: false,
         color: ['#5ab1ef', '#b6a2de', '#67e0e3', '#2ec7c9'],
-        data: [
-          { name: '搜索引擎', value: 1048 },
-          { name: '直接访问', value: 735 },
-          { name: '邮件营销', value: 580 },
-          { name: '联盟广告', value: 484 },
-        ],
+        data: result.data,
         emphasis: {
           label: {
             fontSize: '12',
@@ -37,7 +35,6 @@ onMounted(() => {
           },
         },
         itemStyle: {
-          // borderColor: '#fff',
           borderRadius: 10,
           borderWidth: 2,
         },
