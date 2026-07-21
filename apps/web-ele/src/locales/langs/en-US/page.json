@@ -11,5 +11,39 @@
     "title": "Dashboard",
     "analytics": "Analytics",
     "workspace": "Workspace"
+  },
+  "employees": {
+    "title": "Employee Management",
+    "list": "Employee List",
+    "profile": "Employee Profile",
+    "create": "Create Employee",
+    "edit": "Edit Employee",
+    "basicInfo": "Basic Info",
+    "status": "Status",
+    "admin": "Admin",
+    "permissions": "Permissions",
+    "resetPassword": "Reset Password"
+  },
+  "leave": {
+    "title": "Leave Management",
+    "list": "Leave Requests",
+    "detail": "Request Detail",
+    "workflow": "Approval Workflow",
+    "submit": "Submit Request",
+    "review": "Review",
+    "revoke": "Revoke",
+    "sick": "Sick Leave",
+    "annual": "Annual Leave",
+    "personal": "Personal Leave",
+    "maternity": "Maternity Leave",
+    "paternity": "Paternity Leave",
+    "other": "Other"
+  },
+  "system": {
+    "title": "System Settings",
+    "settings": "Settings",
+    "holidays": "Regional Holidays",
+    "regionalHolidays": "Regional Holidays",
+    "holidayRange": "Holiday Range"
   }
 }

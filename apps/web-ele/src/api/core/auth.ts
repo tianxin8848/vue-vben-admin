@@ -22,7 +22,10 @@ export namespace AuthApi {
  * 登录
  */
 export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+  await requestClient.post('/auth/login', data);
+  return {
+    accessToken: `session-${Date.now()}`,
+  };
 }
 
 /**
@@ -38,14 +41,16 @@ export async function refreshTokenApi() {
  * 退出登录
  */
 export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout', {
-    withCredentials: true,
-  });
+  return baseRequestClient.post('/auth/logout');
 }
 
 /**
- * 获取用户权限码
+ * 获取用户权限码（后端未提供，返回空数组）
  */
 export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/auth/codes');
+  try {
+    return await requestClient.get<string[]>('/auth/codes');
+  } catch {
+    return [];
+  }
 }

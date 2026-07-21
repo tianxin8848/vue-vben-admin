@@ -11,5 +11,39 @@
     "title": "概览",
     "analytics": "分析页",
     "workspace": "工作台"
+  },
+  "employees": {
+    "title": "员工管理",
+    "list": "员工列表",
+    "profile": "员工档案",
+    "create": "创建员工",
+    "edit": "编辑员工",
+    "basicInfo": "基本信息",
+    "status": "在职状态",
+    "admin": "管理员权限",
+    "permissions": "模块权限",
+    "resetPassword": "重置密码"
+  },
+  "leave": {
+    "title": "请假管理",
+    "list": "请假申请",
+    "detail": "申请详情",
+    "workflow": "审批流程",
+    "submit": "提交申请",
+    "review": "审批",
+    "revoke": "撤销申请",
+    "sick": "病假",
+    "annual": "年假",
+    "personal": "事假",
+    "maternity": "产假",
+    "paternity": "陪产假",
+    "other": "其他"
+  },
+  "system": {
+    "title": "系统设置",
+    "settings": "系统参数",
+    "holidays": "区域节日",
+    "regionalHolidays": "区域节日",
+    "holidayRange": "假期范围"
   }
 }
