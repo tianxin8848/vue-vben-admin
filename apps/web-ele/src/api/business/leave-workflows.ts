@@ -1,38 +1,36 @@
 import { requestClient } from '#/api/request';
 
 export namespace LeaveWorkflowApi {
-  export interface WorkflowNode {
-    id: string;
-    order: number;
-    approverId: string;
-    approverName: string;
-    required: boolean;
+  export interface WorkflowApprover {
+    user_id: string;
+    username: string;
+    full_name: null | string;
+  }
+
+  export interface WorkflowMatch {
+    employee_id: null | string;
+    department: null | string;
+    region: null | string;
+    position: null | string;
   }
 
   export interface LeaveWorkflow {
     id: string;
     name: string;
-    leaveType:
-      | 'all'
-      | 'annual'
-      | 'maternity'
-      | 'other'
-      | 'paternity'
-      | 'personal'
-      | 'sick';
-    description: string;
-    nodes: WorkflowNode[];
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    priority: number;
+    is_active: boolean;
+    match: WorkflowMatch;
+    approvers: WorkflowApprover[];
+    created_at: null | string;
+    updated_at: null | string;
   }
 
   export interface CreateWorkflowParams {
     name: string;
-    leaveType: LeaveWorkflow['leaveType'];
-    description?: string;
-    nodes: WorkflowNode[];
-    isActive?: boolean;
+    priority?: number;
+    is_active?: boolean;
+    match?: WorkflowMatch;
+    approvers?: WorkflowApprover[];
   }
 
   export type UpdateWorkflowParams = Partial<CreateWorkflowParams>;
@@ -40,24 +38,17 @@ export namespace LeaveWorkflowApi {
   export interface ListParams {
     page?: number;
     pageSize?: number;
-    leaveType?: string;
-    isActive?: boolean;
-  }
-
-  export interface ListResult {
-    data: LeaveWorkflow[];
-    total: number;
-    page: number;
-    pageSize: number;
+    is_active?: boolean;
   }
 }
 
 export async function getLeaveWorkflowsApi(
   params?: LeaveWorkflowApi.ListParams,
 ) {
-  return requestClient.get<LeaveWorkflowApi.ListResult>('/leave-workflows', {
-    params,
-  });
+  return requestClient.get<LeaveWorkflowApi.LeaveWorkflow[]>(
+    '/leave-workflows',
+    { params },
+  );
 }
 
 export async function createLeaveWorkflowApi(

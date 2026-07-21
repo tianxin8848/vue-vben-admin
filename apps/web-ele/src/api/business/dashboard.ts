@@ -1,16 +1,45 @@
 import { requestClient } from '#/api/request';
 
 export namespace DashboardApi {
-  export interface OverviewItem {
-    icon: string;
-    title: string;
-    totalTitle: string;
-    totalValue: number;
-    value: number;
+  export interface OverviewStats {
+    totalEmployees: number;
+    activeEmployees: number;
+    totalLeaveRequests: number;
+    pendingLeaveRequests: number;
+    approvedLeaveRequests: number;
+    annualLeaveSummary: {
+      available_days: number;
+      entitlement_days: number;
+      used_days: number;
+    };
   }
 
-  export interface OverviewResult {
-    items: OverviewItem[];
+  export interface LeaveRequestCount {
+    type: string;
+    count: number;
+  }
+
+  export interface DepartmentLeaveStats {
+    department: string;
+    count: number;
+  }
+
+  export interface RecentLeaveRequest {
+    id: string;
+    employee_name: string;
+    leave_type: string;
+    start_date: string;
+    end_date: string;
+    approval_status: string;
+    created_at: string;
+  }
+
+  export interface DashboardData {
+    overview: OverviewStats;
+    leaveTypeDistribution: LeaveRequestCount[];
+    departmentLeaveStats: DepartmentLeaveStats[];
+    recentLeaveRequests: RecentLeaveRequest[];
+    pendingApprovals: number;
   }
 
   export interface TrendsData {
@@ -27,88 +56,50 @@ export namespace DashboardApi {
     data: number[];
   }
 
-  export interface RadarData {
-    indicator: { name: string }[];
+  export interface VisitsRadarData {
+    indicator: { max: number; name: string }[];
     series: {
       color: string;
       name: string;
       value: number[];
     }[];
   }
-
-  export interface PieData {
-    data: { name: string; value: number }[];
-  }
-
-  export interface WorkbenchProjectItem {
-    id: string;
-    color: string;
-    content: string;
-    date: string;
-    group: string;
-    icon: string;
-    title: string;
-    url: string;
-  }
-
-  export interface WorkbenchQuickNavItem {
-    id: string;
-    color: string;
-    icon: string;
-    title: string;
-    url: string;
-  }
-
-  export interface WorkbenchTodoItem {
-    id: string;
-    completed: boolean;
-    content: string;
-    date: string;
-    title: string;
-  }
-
-  export interface WorkbenchTrendItem {
-    id: string;
-    avatar: string;
-    content: string;
-    date: string;
-    title: string;
-  }
-
-  export interface WorkbenchResult {
-    projects: WorkbenchProjectItem[];
-    quickNavs: WorkbenchQuickNavItem[];
-    todos: WorkbenchTodoItem[];
-    trends: WorkbenchTrendItem[];
-  }
 }
 
-export async function getOverviewApi() {
-  return requestClient.get<DashboardApi.OverviewResult>('/dashboard/overview');
+export async function getDashboardDataApi() {
+  return requestClient.get<DashboardApi.DashboardData>('/dashboard');
 }
 
-export async function getTrendsApi() {
-  return requestClient.get<DashboardApi.TrendsData>('/dashboard/trends');
+export async function getTrendsApi(): Promise<DashboardApi.TrendsData> {
+  return {
+    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+    series: [
+      { name: '请假申请', data: [12, 15, 8, 20, 18, 25], color: '#5470C6' },
+      { name: '审批通过', data: [10, 13, 7, 18, 16, 22], color: '#91CC75' },
+      { name: '审批拒绝', data: [2, 2, 1, 2, 2, 3], color: '#EE6666' },
+    ],
+  };
 }
 
-export async function getVisitsApi() {
-  return requestClient.get<DashboardApi.VisitsData>('/dashboard/visits');
+export async function getVisitsApi(): Promise<DashboardApi.VisitsData> {
+  return {
+    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+    data: [150, 200, 180, 220, 250, 120, 80],
+  };
 }
 
-export async function getVisitsDataApi() {
-  return requestClient.get<DashboardApi.RadarData>('/dashboard/visits-data');
-}
-
-export async function getVisitsSourceApi() {
-  return requestClient.get<DashboardApi.PieData>('/dashboard/visits-source');
-}
-
-export async function getVisitsSalesApi() {
-  return requestClient.get<DashboardApi.PieData>('/dashboard/visits-sales');
-}
-
-export async function getWorkbenchApi() {
-  return requestClient.get<DashboardApi.WorkbenchResult>(
-    '/dashboard/workbench',
-  );
+export async function getVisitsDataApi(): Promise<DashboardApi.VisitsRadarData> {
+  return {
+    indicator: [
+      { name: '病假', max: 100 },
+      { name: '年假', max: 100 },
+      { name: '事假', max: 100 },
+      { name: '调休', max: 100 },
+      { name: '长假', max: 100 },
+    ],
+    series: [
+      { name: '本月', value: [65, 80, 55, 70, 45], color: '#5470C6' },
+      { name: '上月', value: [55, 70, 60, 65, 50], color: '#91CC75' },
+    ],
+  };
 }

@@ -1,17 +1,21 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
 
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
-import { getVisitsSourceApi } from '#/api';
+const props = defineProps<{
+  data?: { name: string; value: number }[];
+}>();
 
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 
-onMounted(async () => {
-  const result = await getVisitsSourceApi();
+const chartData = ref<{ name: string; value: number }[]>([]);
+
+function renderChart() {
+  if (chartData.value.length === 0) return;
   renderEcharts({
     legend: {
       bottom: '2%',
@@ -26,7 +30,7 @@ onMounted(async () => {
         animationType: 'scale',
         avoidLabelOverlap: false,
         color: ['#5ab1ef', '#b6a2de', '#67e0e3', '#2ec7c9'],
-        data: result.data,
+        data: chartData.value,
         emphasis: {
           label: {
             fontSize: '12',
@@ -45,7 +49,7 @@ onMounted(async () => {
         labelLine: {
           show: false,
         },
-        name: '访问来源',
+        name: '请假类型',
         radius: ['40%', '65%'],
         type: 'pie',
       },
@@ -54,7 +58,25 @@ onMounted(async () => {
       trigger: 'item',
     },
   });
+}
+
+onMounted(() => {
+  if (props.data) {
+    chartData.value = props.data;
+    renderChart();
+  }
 });
+
+watch(
+  () => props.data,
+  (newData) => {
+    if (newData) {
+      chartData.value = newData;
+      renderChart();
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>

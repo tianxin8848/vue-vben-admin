@@ -12,7 +12,6 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElPagination,
   ElSelect,
   ElTable,
   ElTableColumn,
@@ -27,21 +26,18 @@ import {
 const router = useRouter();
 const loading = ref(false);
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
 
 const searchForm = reactive({
-  status: '',
-  startDate: '',
-  endDate: '',
+  approval_status: '',
+  start_date: '',
+  end_date: '',
 });
 
 const showCreateModal = ref(false);
 const createForm = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
-  type: 'annual',
-  startDate: '',
-  endDate: '',
+  leave_type: 'annual',
+  start_date: '',
+  end_date: '',
   reason: '',
 });
 
@@ -49,16 +45,15 @@ const leaveTypeOptions = [
   { label: '病假', value: 'sick' },
   { label: '年假', value: 'annual' },
   { label: '事假', value: 'personal' },
-  { label: '产假', value: 'maternity' },
-  { label: '陪产假', value: 'paternity' },
-  { label: '其他', value: 'other' },
+  { label: '调休', value: 'lieu' },
+  { label: '长假', value: 'long' },
 ];
 
 const statusOptions = [
   { label: '待审批', value: 'pending' },
   { label: '已批准', value: 'approved' },
   { label: '已拒绝', value: 'rejected' },
-  { label: '已撤销', value: 'cancelled' },
+  { label: '已撤回', value: 'withdrawn' },
 ];
 
 function formatLeaveType(type: string) {
@@ -72,38 +67,22 @@ function formatStatus(status: string) {
 async function fetchLeaveRequests() {
   loading.value = true;
   try {
-    const res = await getLeaveRequestsApi({
-      page: page.value,
-      pageSize: pageSize.value,
+    leaveRequests.value = await getLeaveRequestsApi({
       ...searchForm,
     });
-    leaveRequests.value = res.data;
-    total.value = res.total;
   } finally {
     loading.value = false;
   }
 }
 
 function handleSearch() {
-  page.value = 1;
   fetchLeaveRequests();
 }
 
 function handleReset() {
-  searchForm.status = '';
-  searchForm.startDate = '';
-  searchForm.endDate = '';
-  fetchLeaveRequests();
-}
-
-function handlePageChange(val: number) {
-  page.value = val;
-  fetchLeaveRequests();
-}
-
-function handlePageSizeChange(val: number) {
-  pageSize.value = val;
-  page.value = 1;
+  searchForm.approval_status = '';
+  searchForm.start_date = '';
+  searchForm.end_date = '';
   fetchLeaveRequests();
 }
 
@@ -122,7 +101,7 @@ async function handleDelete(id: string) {
 }
 
 async function handleCreate() {
-  if (!createForm.startDate || !createForm.endDate) {
+  if (!createForm.start_date || !createForm.end_date) {
     ElMessage.warning('请选择日期');
     return;
   }
@@ -130,9 +109,9 @@ async function handleCreate() {
     await createLeaveRequestApi(createForm);
     ElMessage.success('提交成功');
     showCreateModal.value = false;
-    createForm.type = 'annual';
-    createForm.startDate = '';
-    createForm.endDate = '';
+    createForm.leave_type = 'annual';
+    createForm.start_date = '';
+    createForm.end_date = '';
     createForm.reason = '';
     fetchLeaveRequests();
   } catch {
@@ -148,7 +127,11 @@ fetchLeaveRequests();
     <h2>请假申请</h2>
     <ElForm :model="searchForm" inline class="search-form">
       <ElFormItem label="状态">
-        <ElSelect v-model="searchForm.status" placeholder="请选择" clearable>
+        <ElSelect
+          v-model="searchForm.approval_status"
+          placeholder="请选择"
+          clearable
+        >
           <ElOption
             v-for="opt in statusOptions"
             :key="opt.value"
@@ -159,14 +142,14 @@ fetchLeaveRequests();
       </ElFormItem>
       <ElFormItem label="开始日期">
         <ElDatePicker
-          v-model="searchForm.startDate"
+          v-model="searchForm.start_date"
           type="date"
           placeholder="选择日期"
         />
       </ElFormItem>
       <ElFormItem label="结束日期">
         <ElDatePicker
-          v-model="searchForm.endDate"
+          v-model="searchForm.end_date"
           type="date"
           placeholder="选择日期"
         />
@@ -179,26 +162,27 @@ fetchLeaveRequests();
     </ElForm>
 
     <ElTable :data="leaveRequests" border stripe v-loading="loading">
-      <ElTableColumn prop="employeeName" label="申请人" />
-      <ElTableColumn prop="type" label="请假类型">
-        <template #default="{ row }">{{ formatLeaveType(row.type) }}</template>
-      </ElTableColumn>
-      <ElTableColumn prop="startDate" label="开始日期" />
-      <ElTableColumn prop="endDate" label="结束日期" />
-      <ElTableColumn prop="duration" label="天数" />
-      <ElTableColumn prop="status" label="状态">
+      <ElTableColumn prop="employee_name" label="申请人" />
+      <ElTableColumn prop="leave_type" label="请假类型">
         <template #default="{ row }">
-          <span class="status-tag" :class="[row.status]">{{
-            formatStatus(row.status)
+          {{ formatLeaveType(row.leave_type) }}
+        </template>
+      </ElTableColumn>
+      <ElTableColumn prop="start_date" label="开始日期" />
+      <ElTableColumn prop="end_date" label="结束日期" />
+      <ElTableColumn prop="approval_status" label="状态">
+        <template #default="{ row }">
+          <span class="status-tag" :class="[row.approval_status]">{{
+            formatStatus(row.approval_status)
           }}</span>
         </template>
       </ElTableColumn>
-      <ElTableColumn prop="createdAt" label="申请时间" />
+      <ElTableColumn prop="created_at" label="申请时间" />
       <ElTableColumn label="操作" width="200">
         <template #default="{ row }">
           <ElButton size="small" @click="viewDetail(row.id)">详情</ElButton>
           <ElButton
-            v-if="row.status === 'pending'"
+            v-if="row.approval_status === 'pending'"
             size="small"
             type="danger"
             @click="handleDelete(row.id)"
@@ -209,20 +193,10 @@ fetchLeaveRequests();
       </ElTableColumn>
     </ElTable>
 
-    <ElPagination
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="handlePageSizeChange"
-      @current-change="handlePageChange"
-      class="pagination"
-    />
-
     <ElDialog v-model="showCreateModal" title="提交请假申请" width="500px">
       <ElForm :model="createForm" label-width="100px">
         <ElFormItem label="请假类型">
-          <ElSelect v-model="createForm.type">
+          <ElSelect v-model="createForm.leave_type">
             <ElOption
               v-for="opt in leaveTypeOptions"
               :key="opt.value"
@@ -232,10 +206,10 @@ fetchLeaveRequests();
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="开始日期">
-          <ElDatePicker v-model="createForm.startDate" type="date" />
+          <ElDatePicker v-model="createForm.start_date" type="date" />
         </ElFormItem>
         <ElFormItem label="结束日期">
-          <ElDatePicker v-model="createForm.endDate" type="date" />
+          <ElDatePicker v-model="createForm.end_date" type="date" />
         </ElFormItem>
         <ElFormItem label="请假原因">
           <ElInput v-model="createForm.reason" type="textarea" :rows="3" />
@@ -256,12 +230,6 @@ fetchLeaveRequests();
 
 .search-form {
   margin-bottom: 20px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
 }
 
 .status-tag {
@@ -285,7 +253,7 @@ fetchLeaveRequests();
   background: #fee2e2;
 }
 
-.status-tag.cancelled {
+.status-tag.withdrawn {
   color: #6b7280;
   background: #f3f4f6;
 }

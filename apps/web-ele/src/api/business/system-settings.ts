@@ -3,16 +3,16 @@ import { requestClient } from '#/api/request';
 export namespace SystemSettingsApi {
   export interface SystemSettings {
     id: string;
-    companyName: string;
-    companyAddress: string;
-    companyPhone: string;
-    companyEmail: string;
-    workingHoursStart: string;
-    workingHoursEnd: string;
-    maxAnnualLeaveDays: number;
-    maxSickLeaveDays: number;
-    createdAt: string;
-    updatedAt: string;
+    company_name: string;
+    company_address: string;
+    company_phone: string;
+    company_email: string;
+    working_hours_start: string;
+    working_hours_end: string;
+    max_annual_leave_days: number;
+    max_sick_leave_days: number;
+    created_at: null | string;
+    updated_at: null | string;
   }
 
   export interface RegionalHoliday {
@@ -21,19 +21,19 @@ export namespace SystemSettingsApi {
     date: string;
     type: 'fixed' | 'variable';
     region: string;
-    createdAt: string;
-    updatedAt: string;
+    created_at: null | string;
+    updated_at: null | string;
   }
 
   export interface HolidayRange {
     id: string;
     name: string;
-    startDate: string;
-    endDate: string;
+    start_date: string;
+    end_date: string;
     region: string;
-    isPaid: boolean;
-    createdAt: string;
-    updatedAt: string;
+    is_paid: boolean;
+    created_at: null | string;
+    updated_at: null | string;
   }
 
   export type UpdateSettingsParams = Partial<SystemSettings>;
@@ -47,10 +47,10 @@ export namespace SystemSettingsApi {
 
   export interface CreateHolidayRangeParams {
     name: string;
-    startDate: string;
-    endDate: string;
+    start_date: string;
+    end_date: string;
     region: string;
-    isPaid: boolean;
+    is_paid: boolean;
   }
 }
 
@@ -78,9 +78,7 @@ export async function updateRegionalHolidaysApi(
 }
 
 export async function deleteRegionalHolidayApi(id: string) {
-  return requestClient.delete(`/system-settings/regional-holidays`, {
-    data: { id },
-  });
+  return requestClient.delete(`/system-settings/regional-holidays/${id}`);
 }
 
 export async function updateHolidayRangeApi(
@@ -92,7 +90,5 @@ export async function updateHolidayRangeApi(
 }
 
 export async function deleteHolidayRangeApi(id: string) {
-  return requestClient.delete(`/system-settings/regional-holidays/range`, {
-    data: { id },
-  });
+  return requestClient.delete(`/system-settings/regional-holidays/range/${id}`);
 }

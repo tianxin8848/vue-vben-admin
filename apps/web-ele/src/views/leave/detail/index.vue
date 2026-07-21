@@ -29,16 +29,15 @@ const leaveTypeOptions: Record<string, string> = {
   sick: '病假',
   annual: '年假',
   personal: '事假',
-  maternity: '产假',
-  paternity: '陪产假',
-  other: '其他',
+  lieu: '调休',
+  long: '长假',
 };
 
 const statusOptions: Record<string, string> = {
   pending: '待审批',
   approved: '已批准',
   rejected: '已拒绝',
-  cancelled: '已撤销',
+  withdrawn: '已撤回',
 };
 
 async function fetchDetail() {
@@ -53,8 +52,8 @@ async function fetchDetail() {
 async function handleApprove() {
   try {
     await reviewLeaveRequestApi(requestId, {
-      status: 'approved',
-      comment: reviewComment.value,
+      approval_status: 'approved',
+      review_comment: reviewComment.value,
     });
     ElMessage.success('审批成功');
     showReviewModal.value = false;
@@ -68,8 +67,8 @@ async function handleApprove() {
 async function handleReject() {
   try {
     await reviewLeaveRequestApi(requestId, {
-      status: 'rejected',
-      comment: reviewComment.value,
+      approval_status: 'rejected',
+      review_comment: reviewComment.value,
     });
     ElMessage.success('已拒绝');
     showReviewModal.value = false;
@@ -100,23 +99,21 @@ onMounted(() => {
       <div class="detail-section">
         <div class="detail-row">
           <span class="label">申请人</span>
-          <span class="value">{{ leaveRequest.employeeName }}</span>
+          <span class="value">{{ leaveRequest.employee_name }}</span>
         </div>
         <div class="detail-row">
           <span class="label">请假类型</span>
-          <span class="value">{{ leaveTypeOptions[leaveRequest.type] }}</span>
+          <span class="value">{{
+            leaveTypeOptions[leaveRequest.leave_type]
+          }}</span>
         </div>
         <div class="detail-row">
           <span class="label">开始日期</span>
-          <span class="value">{{ leaveRequest.startDate }}</span>
+          <span class="value">{{ leaveRequest.start_date }}</span>
         </div>
         <div class="detail-row">
           <span class="label">结束日期</span>
-          <span class="value">{{ leaveRequest.endDate }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="label">请假天数</span>
-          <span class="value">{{ leaveRequest.duration }} 天</span>
+          <span class="value">{{ leaveRequest.end_date }}</span>
         </div>
         <div class="detail-row">
           <span class="label">当前状态</span>
@@ -127,46 +124,49 @@ onMounted(() => {
                   pending: 'warning',
                   approved: 'success',
                   rejected: 'danger',
-                  cancelled: 'info',
+                  withdrawn: 'info',
                 } as Record<
                   string,
                   'primary' | 'success' | 'warning' | 'info' | 'danger'
                 >
-              )[leaveRequest.status] || 'info'
+              )[leaveRequest.approval_status] || 'info'
             "
           >
-            {{ statusOptions[leaveRequest.status] }}
+            {{ statusOptions[leaveRequest.approval_status] }}
           </ElTag>
         </div>
         <div class="detail-row">
           <span class="label">申请时间</span>
-          <span class="value">{{ leaveRequest.createdAt }}</span>
+          <span class="value">{{ leaveRequest.created_at }}</span>
         </div>
         <div class="detail-row">
           <span class="label">请假原因</span>
           <p class="value text-area">{{ leaveRequest.reason }}</p>
         </div>
 
-        <div v-if="leaveRequest.reviewedBy" class="review-section">
+        <div v-if="leaveRequest.reviewer_name" class="review-section">
           <h4>审批记录</h4>
           <div class="detail-row">
             <span class="label">审批人</span>
-            <span class="value">{{ leaveRequest.reviewedBy }}</span>
+            <span class="value">{{ leaveRequest.reviewer_name }}</span>
           </div>
           <div class="detail-row">
             <span class="label">审批时间</span>
-            <span class="value">{{ leaveRequest.reviewTime }}</span>
+            <span class="value">{{ leaveRequest.reviewed_at }}</span>
           </div>
           <div class="detail-row">
             <span class="label">审批意见</span>
             <p class="value text-area">
-              {{ leaveRequest.reviewComment || '无' }}
+              {{ leaveRequest.review_comment || '无' }}
             </p>
           </div>
         </div>
       </div>
 
-      <div class="action-section" v-if="leaveRequest.status === 'pending'">
+      <div
+        class="action-section"
+        v-if="leaveRequest.approval_status === 'pending'"
+      >
         <ElButton type="primary" @click="showReviewModal = true">审批</ElButton>
       </div>
     </ElCard>

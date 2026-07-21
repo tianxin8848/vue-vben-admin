@@ -40,7 +40,7 @@ const basicInfoForm = reactive<EmployeeApi.EmployeeBasicInfo>({
 const profileForm = reactive<Partial<EmployeeApi.EmployeeProfile>>({
   education: '',
   workExperience: '',
-  skills: '',
+  skills: [],
   emergencyContact: '',
   emergencyPhone: '',
   bankAccount: '',
@@ -153,7 +153,7 @@ onMounted(() => {
           />
         </ElFormItem>
         <ElFormItem label="技能特长">
-          <ElInput v-model="profileForm.skills" />
+          <ElInput v-model="profileForm.skills" type="textarea" :rows="2" />
         </ElFormItem>
         <ElFormItem label="紧急联系人">
           <ElInput v-model="profileForm.emergencyContact" />
