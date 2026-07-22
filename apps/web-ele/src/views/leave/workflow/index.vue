@@ -49,7 +49,13 @@ const editingId = ref('');
 async function fetchWorkflows() {
   loading.value = true;
   try {
-    workflows.value = await getLeaveWorkflowsApi(searchForm);
+    const all = await getLeaveWorkflowsApi();
+    // 前端过滤
+    if (searchForm.is_active !== undefined) {
+      workflows.value = all.filter((w) => w.is_active === searchForm.is_active);
+    } else {
+      workflows.value = all;
+    }
   } finally {
     loading.value = false;
   }

@@ -16,46 +16,51 @@ import {
   ElTableColumn,
 } from 'element-plus';
 
-import { deleteRegionalHolidayApi, updateRegionalHolidaysApi } from '#/api';
+import {
+  deleteRegionalHolidayApi,
+  getSystemSettingsApi,
+  upsertRegionalHolidayApi,
+} from '#/api';
 
-const holidays = ref<SystemSettingsApi.RegionalHoliday[]>([]);
+const loading = ref(false);
+const holidays = ref<SystemSettingsApi.RegionalHolidayItem[]>([]);
 
 const showCreateModal = ref(false);
-const holidayForm = reactive<SystemSettingsApi.CreateHolidayParams>({
-  name: '',
+const holidayForm = reactive<SystemSettingsApi.RegionalHolidayUpsert>({
   date: '',
-  type: 'fixed',
+  holiday_name: '',
   region: '',
 });
-
-const typeOptions = [
-  { label: '固定日期', value: 'fixed' },
-  { label: '可变日期', value: 'variable' },
-];
 
 const regionOptions = [
   { label: '全国', value: '全国' },
   { label: '北京', value: '北京' },
   { label: '上海', value: '上海' },
   { label: '广州', value: '广州' },
+  { label: '深圳', value: '深圳' },
 ];
 
-function formatType(type: string) {
-  return typeOptions.find((o) => o.value === type)?.label || type;
+async function fetchHolidays() {
+  loading.value = true;
+  try {
+    const settings = await getSystemSettingsApi();
+    holidays.value = settings.regional_holidays || [];
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function handleCreate() {
-  if (!holidayForm.name || !holidayForm.date) {
+  if (!holidayForm.holiday_name || !holidayForm.date || !holidayForm.region) {
     ElMessage.warning('请填写完整信息');
     return;
   }
   try {
-    await updateRegionalHolidaysApi(holidayForm);
+    await upsertRegionalHolidayApi(holidayForm);
     ElMessage.success('创建成功');
     showCreateModal.value = false;
-    holidayForm.name = '';
+    holidayForm.holiday_name = '';
     holidayForm.date = '';
-    holidayForm.type = 'fixed';
     holidayForm.region = '';
     fetchHolidays();
   } catch {
@@ -63,9 +68,9 @@ async function handleCreate() {
   }
 }
 
-async function handleDelete(id: string) {
+async function handleDelete(row: SystemSettingsApi.RegionalHolidayItem) {
   try {
-    await deleteRegionalHolidayApi(id);
+    await deleteRegionalHolidayApi({ region: row.region, date: row.date });
     ElMessage.success('删除成功');
     fetchHolidays();
   } catch {
@@ -73,56 +78,46 @@ async function handleDelete(id: string) {
   }
 }
 
-async function fetchHolidays() {
-  holidays.value = [];
-}
-
 fetchHolidays();
 </script>
 
 <template>
-  <div class="holidays-page">
-    <h2>区域节日管理</h2>
+  <div class="holidays-page" v-loading="loading">
+    <h2>区域假日管理</h2>
     <div style="margin-bottom: 20px">
       <ElButton type="primary" @click="showCreateModal = true">
-        新增节日
+        新增假日
       </ElButton>
     </div>
 
     <ElTable :data="holidays" border stripe>
-      <ElTableColumn prop="name" label="节日名称" />
+      <ElTableColumn prop="holiday_name" label="假日名称" />
       <ElTableColumn prop="date" label="日期" />
-      <ElTableColumn prop="type" label="类型">
-        <template #default="{ row }">{{ formatType(row.type) }}</template>
-      </ElTableColumn>
       <ElTableColumn prop="region" label="适用区域" />
-      <ElTableColumn prop="createdAt" label="创建时间" />
-      <ElTableColumn label="操作" width="150">
+      <ElTableColumn label="操作" width="120">
         <template #default="{ row }">
-          <ElButton size="small" type="danger" @click="handleDelete(row.id)">
+          <ElButton
+            size="small"
+            type="danger"
+            @click="handleDelete(row)"
+          >
             删除
           </ElButton>
         </template>
       </ElTableColumn>
     </ElTable>
 
-    <ElDialog v-model="showCreateModal" title="新增区域节日" width="500px">
+    <ElDialog v-model="showCreateModal" title="新增区域假日" width="500px">
       <ElForm :model="holidayForm" label-width="100px">
-        <ElFormItem label="节日名称">
-          <ElInput v-model="holidayForm.name" />
+        <ElFormItem label="假日名称">
+          <ElInput v-model="holidayForm.holiday_name" />
         </ElFormItem>
         <ElFormItem label="日期">
-          <ElDatePicker v-model="holidayForm.date" type="date" />
-        </ElFormItem>
-        <ElFormItem label="类型">
-          <ElSelect v-model="holidayForm.type">
-            <ElOption
-              v-for="opt in typeOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </ElSelect>
+          <ElDatePicker
+            v-model="holidayForm.date"
+            type="date"
+            value-format="YYYY-MM-DD"
+          />
         </ElFormItem>
         <ElFormItem label="适用区域">
           <ElSelect v-model="holidayForm.region">
@@ -143,8 +138,4 @@ fetchHolidays();
   </div>
 </template>
 
-<style scoped>
-.holidays-page {
-  padding: 20px;
-}
-</style>
+

@@ -9,31 +9,38 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElInputNumber,
   ElMessage,
+  ElTag,
 } from 'element-plus';
 
 import { getSystemSettingsApi, updateSystemSettingsApi } from '#/api';
 
 const loading = ref(false);
-const settings = ref<null | SystemSettingsApi.SystemSettings>(null);
+const settings = ref<null | SystemSettingsApi.SystemSettingsResponse>(null);
 
-const settingsForm = reactive<Partial<SystemSettingsApi.SystemSettings>>({
-  company_name: '',
-  company_address: '',
-  company_phone: '',
-  company_email: '',
-  working_hours_start: '',
-  working_hours_end: '',
-  max_annual_leave_days: 15,
-  max_sick_leave_days: 30,
+const settingsForm = reactive<SystemSettingsApi.SystemSettingsUpdate>({
+  departments: [],
+  positions: [],
+  regions: [],
 });
+
+// 用于编辑的字符串（逗号分隔）
+const deptStr = ref('');
+const posStr = ref('');
+const regionStr = ref('');
 
 async function fetchSettings() {
   loading.value = true;
   try {
     settings.value = await getSystemSettingsApi();
-    Object.assign(settingsForm, settings.value);
+    if (settings.value) {
+      settingsForm.departments = [...settings.value.departments];
+      settingsForm.positions = [...settings.value.positions];
+      settingsForm.regions = [...settings.value.regions];
+      deptStr.value = settings.value.departments.join('、');
+      posStr.value = settings.value.positions.join('、');
+      regionStr.value = settings.value.regions.join('、');
+    }
   } finally {
     loading.value = false;
   }
@@ -41,7 +48,12 @@ async function fetchSettings() {
 
 async function handleSave() {
   try {
-    await updateSystemSettingsApi(settingsForm);
+    const data: SystemSettingsApi.SystemSettingsUpdate = {
+      departments: deptStr.value.split(/[、,，\n]/).map((s) => s.trim()).filter(Boolean),
+      positions: posStr.value.split(/[、,，\n]/).map((s) => s.trim()).filter(Boolean),
+      regions: regionStr.value.split(/[、,，\n]/).map((s) => s.trim()).filter(Boolean),
+    };
+    await updateSystemSettingsApi(data);
     ElMessage.success('保存成功');
     fetchSettings();
   } catch {
@@ -57,57 +69,69 @@ onMounted(() => {
 <template>
   <div class="system-settings-page" v-loading="loading">
     <h2>系统参数设置</h2>
-    <ElCard>
-      <ElForm :model="settingsForm" label-width="150px">
-        <h4 style="margin-bottom: 20px">公司信息</h4>
-        <ElFormItem label="公司名称">
-          <ElInput v-model="settingsForm.company_name" />
-        </ElFormItem>
-        <ElFormItem label="公司地址">
-          <ElInput v-model="settingsForm.company_address" />
-        </ElFormItem>
-        <ElFormItem label="联系电话">
-          <ElInput v-model="settingsForm.company_phone" />
-        </ElFormItem>
-        <ElFormItem label="公司邮箱">
-          <ElInput v-model="settingsForm.company_email" />
-        </ElFormItem>
 
-        <h4 style="margin: 30px 0 20px">工作时间</h4>
-        <ElFormItem label="上班时间">
-          <ElInput v-model="settingsForm.working_hours_start" type="time" />
+    <ElCard v-if="settings" header="基础配置">
+      <ElForm label-width="120px">
+        <ElFormItem label="设置 ID">
+          <ElInput :model-value="settings.id" disabled />
         </ElFormItem>
-        <ElFormItem label="下班时间">
-          <ElInput v-model="settingsForm.working_hours_end" type="time" />
+        <ElFormItem label="创建时间">
+          <ElInput :model-value="settings.created_at || '-'" disabled />
         </ElFormItem>
-
-        <h4 style="margin: 30px 0 20px">请假设置</h4>
-        <ElFormItem label="年休假最大天数">
-          <ElInputNumber
-            v-model="settingsForm.max_annual_leave_days"
-            :min="0"
-            :max="60"
-          />
-        </ElFormItem>
-        <ElFormItem label="病假最大天数">
-          <ElInputNumber
-            v-model="settingsForm.max_sick_leave_days"
-            :min="0"
-            :max="180"
-          />
-        </ElFormItem>
-
-        <ElFormItem>
-          <ElButton type="primary" @click="handleSave">保存设置</ElButton>
+        <ElFormItem label="更新时间">
+          <ElInput :model-value="settings.updated_at || '-'" disabled />
         </ElFormItem>
       </ElForm>
+    </ElCard>
+
+    <ElCard header="部门 / 职位 / 区域" style="margin-top: 20px">
+      <ElForm label-width="120px">
+        <ElFormItem label="部门列表">
+          <ElInput
+            v-model="deptStr"
+            type="textarea"
+            :rows="3"
+            placeholder="用逗号分隔，如：技术部、产品部、人事部"
+          />
+        </ElFormItem>
+        <ElFormItem label="职位列表">
+          <ElInput
+            v-model="posStr"
+            type="textarea"
+            :rows="3"
+            placeholder="用逗号分隔，如：工程师、产品经理、设计师"
+          />
+        </ElFormItem>
+        <ElFormItem label="区域列表">
+          <ElInput
+            v-model="regionStr"
+            type="textarea"
+            :rows="3"
+            placeholder="用逗号分隔，如：北京、上海、深圳"
+          />
+        </ElFormItem>
+        <ElFormItem>
+          <ElButton type="primary" @click="handleSave">保存配置</ElButton>
+        </ElFormItem>
+      </ElForm>
+    </ElCard>
+
+    <ElCard
+      v-if="settings && settings.modules.length > 0"
+      header="系统模块"
+      style="margin-top: 20px"
+    >
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <ElTag
+          v-for="mod in settings.modules"
+          :key="mod.module_code"
+          type="primary"
+        >
+          {{ mod.module_name }}（{{ mod.module_code }}）
+        </ElTag>
+      </div>
     </ElCard>
   </div>
 </template>
 
-<style scoped>
-.system-settings-page {
-  max-width: 800px;
-  padding: 20px;
-}
-</style>
+

@@ -11,11 +11,11 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElPagination,
   ElSelect,
   ElSwitch,
   ElTable,
   ElTableColumn,
+  ElTag,
 } from 'element-plus';
 
 import {
@@ -27,67 +27,58 @@ import {
 
 const router = useRouter();
 const loading = ref(false);
-const employees = ref<EmployeeApi.Employee[]>([]);
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
+const employees = ref<EmployeeApi.EmployeeResponse[]>([]);
 
 const searchForm = reactive({
   keyword: '',
   department: '',
-  status: '',
 });
 
 const showCreateModal = ref(false);
-const createForm = reactive<EmployeeApi.CreateEmployeeParams>({
-  username: '',
-  password: '',
-  realName: '',
-  email: '',
-  phone: '',
+const createForm = reactive<EmployeeApi.EmployeeCreate>({
   department: '',
+  email: '',
+  full_name: '',
+  phone: '',
   position: '',
+  region: '',
+  username: '',
 });
 
 const showResetModal = ref(false);
-const resetPassword = ref('');
+const resetResult = ref<EmployeeApi.EmployeePasswordResetResponse | null>(null);
 const resetEmployeeId = ref('');
 
 async function fetchEmployees() {
   loading.value = true;
   try {
-    const res = await getEmployeesApi({
-      page: page.value,
-      pageSize: pageSize.value,
-      ...searchForm,
-    });
-    employees.value = res.data;
-    total.value = res.total;
+    const res = await getEmployeesApi();
+    // 前端过滤（后端暂无分页/筛选参数）
+    let list = res;
+    if (searchForm.keyword) {
+      const kw = searchForm.keyword.toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.full_name?.toLowerCase().includes(kw) ||
+          e.username.toLowerCase().includes(kw),
+      );
+    }
+    if (searchForm.department) {
+      list = list.filter((e) => e.department === searchForm.department);
+    }
+    employees.value = list;
   } finally {
     loading.value = false;
   }
 }
 
 function handleSearch() {
-  page.value = 1;
   fetchEmployees();
 }
 
 function handleReset() {
   searchForm.keyword = '';
   searchForm.department = '';
-  searchForm.status = '';
-  fetchEmployees();
-}
-
-function handlePageChange(val: number) {
-  page.value = val;
-  fetchEmployees();
-}
-
-function handlePageSizeChange(val: number) {
-  pageSize.value = val;
-  page.value = 1;
   fetchEmployees();
 }
 
@@ -95,9 +86,12 @@ function viewProfile(id: string) {
   router.push(`/employees/profile/${id}`);
 }
 
-async function handleStatusChange(id: string, status: 'active' | 'inactive') {
+async function handleStatusChange(
+  id: string,
+  isActive: boolean,
+) {
   try {
-    await updateEmployeeStatusApi(id, { status });
+    await updateEmployeeStatusApi(id, { is_active: isActive });
     ElMessage.success('状态更新成功');
     fetchEmployees();
   } catch {
@@ -107,21 +101,15 @@ async function handleStatusChange(id: string, status: 'active' | 'inactive') {
 
 function openResetModal(id: string) {
   resetEmployeeId.value = id;
+  resetResult.value = null;
   showResetModal.value = true;
 }
 
 async function handleResetPassword() {
-  if (!resetPassword.value) {
-    ElMessage.warning('请输入新密码');
-    return;
-  }
   try {
-    await resetEmployeePasswordApi(resetEmployeeId.value, {
-      newPassword: resetPassword.value,
-    });
-    ElMessage.success('密码重置成功');
-    showResetModal.value = false;
-    resetPassword.value = '';
+    const res = await resetEmployeePasswordApi(resetEmployeeId.value);
+    resetResult.value = res;
+    ElMessage.success(`密码已重置，临时密码：${res.temporary_password}`);
   } catch {
     ElMessage.error('密码重置失败');
   }
@@ -133,12 +121,12 @@ async function handleCreate() {
     ElMessage.success('创建成功');
     showCreateModal.value = false;
     createForm.username = '';
-    createForm.password = '';
-    createForm.realName = '';
     createForm.email = '';
+    createForm.full_name = '';
     createForm.phone = '';
     createForm.department = '';
     createForm.position = '';
+    createForm.region = '';
     fetchEmployees();
   } catch {
     ElMessage.error('创建失败');
@@ -171,12 +159,6 @@ fetchEmployees();
           <ElOption label="市场部" value="市场部" />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="状态">
-        <ElSelect v-model="searchForm.status" placeholder="请选择" clearable>
-          <ElOption label="在职" value="active" />
-          <ElOption label="离职" value="inactive" />
-        </ElSelect>
-      </ElFormItem>
       <ElButton type="primary" @click="handleSearch">搜索</ElButton>
       <ElButton @click="handleReset">重置</ElButton>
       <ElButton type="primary" @click="showCreateModal = true">
@@ -186,7 +168,7 @@ fetchEmployees();
 
     <ElTable :data="employees" border stripe v-loading="loading">
       <ElTableColumn prop="username" label="账号" />
-      <ElTableColumn prop="realName" label="姓名" />
+      <ElTableColumn prop="full_name" label="姓名" />
       <ElTableColumn prop="email" label="邮箱" />
       <ElTableColumn prop="phone" label="手机号" />
       <ElTableColumn prop="department" label="部门" />
@@ -194,18 +176,20 @@ fetchEmployees();
       <ElTableColumn label="状态">
         <template #default="{ row }">
           <ElSwitch
-            :model-value="row.status === 'active'"
+            :model-value="row.is_active"
             @change="
-              (val) => handleStatusChange(row.id, val ? 'active' : 'inactive')
+              (val: boolean) => handleStatusChange(row.id, val)
             "
             active-text="在职"
             inactive-text="离职"
           />
         </template>
       </ElTableColumn>
-      <ElTableColumn prop="isAdmin" label="管理员">
+      <ElTableColumn label="管理员">
         <template #default="{ row }">
-          {{ row.isAdmin ? '是' : '否' }}
+          <ElTag :type="row.is_admin ? 'danger' : 'info'" size="small">
+            {{ row.is_admin ? '是' : '否' }}
+          </ElTag>
         </template>
       </ElTableColumn>
       <ElTableColumn label="操作" width="200">
@@ -218,26 +202,13 @@ fetchEmployees();
       </ElTableColumn>
     </ElTable>
 
-    <ElPagination
-      :current-page="page"
-      :page-size="pageSize"
-      :total="total"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="handlePageSizeChange"
-      @current-change="handlePageChange"
-      class="pagination"
-    />
-
     <ElDialog v-model="showCreateModal" title="新增员工" width="600px">
       <ElForm :model="createForm" label-width="100px">
         <ElFormItem label="账号" prop="username">
           <ElInput v-model="createForm.username" />
         </ElFormItem>
-        <ElFormItem label="密码" prop="password">
-          <ElInput type="password" v-model="createForm.password" />
-        </ElFormItem>
-        <ElFormItem label="姓名" prop="realName">
-          <ElInput v-model="createForm.realName" />
+        <ElFormItem label="姓名" prop="full_name">
+          <ElInput v-model="createForm.full_name" />
         </ElFormItem>
         <ElFormItem label="邮箱" prop="email">
           <ElInput v-model="createForm.email" />
@@ -256,6 +227,9 @@ fetchEmployees();
         <ElFormItem label="职位" prop="position">
           <ElInput v-model="createForm.position" />
         </ElFormItem>
+        <ElFormItem label="区域" prop="region">
+          <ElInput v-model="createForm.region" />
+        </ElFormItem>
       </ElForm>
       <template #footer>
         <ElButton @click="showCreateModal = false">取消</ElButton>
@@ -263,32 +237,37 @@ fetchEmployees();
       </template>
     </ElDialog>
 
-    <ElDialog v-model="showResetModal" title="重置密码">
-      <ElForm :model="{ password: resetPassword }" label-width="80px">
-        <ElFormItem label="新密码">
-          <ElInput type="password" v-model="resetPassword" />
-        </ElFormItem>
-      </ElForm>
+    <ElDialog v-model="showResetModal" title="重置密码" width="400px">
+      <div v-if="resetResult" style="text-align: center; padding: 20px 0">
+        <p style="margin-bottom: 12px">密码已重置成功！</p>
+        <p>
+          临时密码：
+          <ElTag type="warning" size="large">{{ resetResult.temporary_password }}</ElTag>
+        </p>
+        <p style="color: #999; font-size: 12px; margin-top: 8px">
+          请通知用户使用该临时密码登录并及时修改
+        </p>
+      </div>
+      <div v-else style="text-align: center; padding: 20px 0">
+        <p>确认重置该员工密码？</p>
+        <p style="color: #999; font-size: 12px">
+          系统将自动生成临时密码
+        </p>
+      </div>
       <template #footer>
-        <ElButton @click="showResetModal = false">取消</ElButton>
-        <ElButton type="primary" @click="handleResetPassword">确定</ElButton>
+        <ElButton @click="showResetModal = false">
+          {{ resetResult ? '关闭' : '取消' }}
+        </ElButton>
+        <ElButton
+          v-if="!resetResult"
+          type="primary"
+          @click="handleResetPassword"
+        >
+          确认重置
+        </ElButton>
       </template>
     </ElDialog>
   </div>
 </template>
 
-<style scoped>
-.employee-list-page {
-  padding: 20px;
-}
 
-.search-form {
-  margin-bottom: 20px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-</style>

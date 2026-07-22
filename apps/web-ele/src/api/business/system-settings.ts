@@ -1,94 +1,135 @@
 import { requestClient } from '#/api/request';
 
 export namespace SystemSettingsApi {
-  export interface SystemSettings {
-    id: string;
-    company_name: string;
-    company_address: string;
-    company_phone: string;
-    company_email: string;
-    working_hours_start: string;
-    working_hours_end: string;
-    max_annual_leave_days: number;
-    max_sick_leave_days: number;
-    created_at: null | string;
-    updated_at: null | string;
+  /** 系统模块 */
+  export interface SystemModuleItem {
+    module_code: string;
+    module_name: string;
   }
 
-  export interface RegionalHoliday {
-    id: string;
-    name: string;
+  /** 区域假日项 */
+  export interface RegionalHolidayItem {
     date: string;
-    type: 'fixed' | 'variable';
+    holiday_name: string;
     region: string;
-    created_at: null | string;
-    updated_at: null | string;
   }
 
-  export interface HolidayRange {
+  /** 区域假日目录项 */
+  export interface RegionalHolidayCatalogItem {
+    holiday_names: string[];
+    region: string;
+  }
+
+  /** 系统设置响应 */
+  export interface SystemSettingsResponse {
+    created_at: null | string;
+    departments: string[];
     id: string;
-    name: string;
-    start_date: string;
-    end_date: string;
-    region: string;
-    is_paid: boolean;
-    created_at: null | string;
+    modules: SystemModuleItem[];
+    positions: string[];
+    regional_holiday_catalogs: RegionalHolidayCatalogItem[];
+    regional_holidays: RegionalHolidayItem[];
+    regions: string[];
     updated_at: null | string;
   }
 
-  export type UpdateSettingsParams = Partial<SystemSettings>;
+  /** 更新系统设置请求参数 */
+  export interface SystemSettingsUpdate {
+    departments?: string[];
+    modules?: SystemModuleItem[];
+    positions?: string[];
+    regional_holiday_catalogs?: RegionalHolidayCatalogItem[];
+    regional_holidays?: RegionalHolidayItem[];
+    regions?: string[];
+  }
 
-  export interface CreateHolidayParams {
-    name: string;
+  /** 新增/更新区域假日请求参数 */
+  export interface RegionalHolidayUpsert {
     date: string;
-    type: RegionalHoliday['type'];
+    holiday_name: string;
     region: string;
   }
 
-  export interface CreateHolidayRangeParams {
-    name: string;
-    start_date: string;
-    end_date: string;
+  /** 删除区域假日请求参数 */
+  export interface RegionalHolidayDelete {
+    date: string;
     region: string;
-    is_paid: boolean;
+  }
+
+  /** 批量新增/更新区域假日请求参数 */
+  export interface RegionalHolidayRangeUpsert {
+    end_date?: null | string;
+    holiday_name: string;
+    region: string;
+    start_date: string;
+  }
+
+  /** 批量删除区域假日请求参数 */
+  export interface RegionalHolidayRangeDelete {
+    end_date?: null | string;
+    region: string;
+    start_date: string;
   }
 }
 
+// ─── 系统设置 ────────────────────────────────────────────────────────────────
+
+/** 获取系统设置 */
 export async function getSystemSettingsApi() {
-  return requestClient.get<SystemSettingsApi.SystemSettings>(
+  return requestClient.get<SystemSettingsApi.SystemSettingsResponse>(
     '/system-settings',
   );
 }
 
+/** 更新系统设置 */
 export async function updateSystemSettingsApi(
-  data: SystemSettingsApi.UpdateSettingsParams,
+  data: SystemSettingsApi.SystemSettingsUpdate,
 ) {
-  return requestClient.put<SystemSettingsApi.SystemSettings>(
+  return requestClient.put<SystemSettingsApi.SystemSettingsResponse>(
     '/system-settings',
     data,
   );
 }
 
-export async function updateRegionalHolidaysApi(
-  data:
-    | SystemSettingsApi.CreateHolidayParams
-    | SystemSettingsApi.CreateHolidayParams[],
+// ─── 区域假日 ────────────────────────────────────────────────────────────────
+
+/** 新增/更新单个区域假日 */
+export async function upsertRegionalHolidayApi(
+  data: SystemSettingsApi.RegionalHolidayUpsert,
 ) {
-  return requestClient.put('/system-settings/regional-holidays', data);
+  return requestClient.put<SystemSettingsApi.SystemSettingsResponse>(
+    '/system-settings/regional-holidays',
+    data,
+  );
 }
 
-export async function deleteRegionalHolidayApi(id: string) {
-  return requestClient.delete(`/system-settings/regional-holidays/${id}`);
-}
-
-export async function updateHolidayRangeApi(
-  data:
-    | SystemSettingsApi.CreateHolidayRangeParams
-    | SystemSettingsApi.CreateHolidayRangeParams[],
+/** 删除单个区域假日 */
+export async function deleteRegionalHolidayApi(
+  data: SystemSettingsApi.RegionalHolidayDelete,
 ) {
-  return requestClient.put('/system-settings/regional-holidays/range', data);
+  return requestClient.delete<SystemSettingsApi.SystemSettingsResponse>(
+    '/system-settings/regional-holidays',
+    { data },
+  );
 }
 
-export async function deleteHolidayRangeApi(id: string) {
-  return requestClient.delete(`/system-settings/regional-holidays/range/${id}`);
+/** 批量新增/更新区域假日 */
+export async function upsertRegionalHolidayRangeApi(
+  data: SystemSettingsApi.RegionalHolidayRangeUpsert,
+) {
+  return requestClient.put<SystemSettingsApi.SystemSettingsResponse>(
+    '/system-settings/regional-holidays/range',
+    data,
+  );
 }
+
+/** 批量删除区域假日 */
+export async function deleteRegionalHolidayRangeApi(
+  data: SystemSettingsApi.RegionalHolidayRangeDelete,
+) {
+  return requestClient.delete<SystemSettingsApi.SystemSettingsResponse>(
+    '/system-settings/regional-holidays/range',
+    { data },
+  );
+}
+

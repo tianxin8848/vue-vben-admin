@@ -19,8 +19,8 @@ import {
 
 import {
   createLeaveRequestApi,
-  deleteLeaveRequestApi,
   getLeaveRequestsApi,
+  withdrawLeaveRequestApi,
 } from '#/api';
 
 const router = useRouter();
@@ -90,13 +90,13 @@ function viewDetail(id: string) {
   router.push(`/leave/detail/${id}`);
 }
 
-async function handleDelete(id: string) {
+async function handleWithdraw(id: string) {
   try {
-    await deleteLeaveRequestApi(id);
-    ElMessage.success('撤销成功');
+    await withdrawLeaveRequestApi(id, { withdraw_comment: '' });
+    ElMessage.success('撤回成功');
     fetchLeaveRequests();
   } catch {
-    ElMessage.error('撤销失败');
+    ElMessage.error('撤回失败');
   }
 }
 
@@ -185,9 +185,9 @@ fetchLeaveRequests();
             v-if="row.approval_status === 'pending'"
             size="small"
             type="danger"
-            @click="handleDelete(row.id)"
+            @click="handleWithdraw(row.id)"
           >
-            撤销
+            撤回
           </ElButton>
         </template>
       </ElTableColumn>

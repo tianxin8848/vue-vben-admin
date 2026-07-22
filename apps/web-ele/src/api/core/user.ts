@@ -2,18 +2,6 @@ import type { UserInfo } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
-export interface EmployeeProfile {
-  id: string;
-  username: string;
-  realName: string;
-  email: string;
-  phone: string;
-  department: string;
-  position: string;
-  status: string;
-  isAdmin: boolean;
-}
-
 /**
  * 获取用户信息
  */
@@ -25,6 +13,15 @@ export async function getUserInfoApi(): Promise<UserInfo> {
     id: string;
     is_active: boolean;
     is_admin: boolean;
+    module_permissions: Array<{
+      can_approve: boolean;
+      can_create: boolean;
+      can_delete: boolean;
+      can_edit: boolean;
+      can_view: boolean;
+      module_code: string;
+      module_name: string;
+    }>;
     phone: null | string;
     position: null | string;
     region: null | string;
@@ -44,3 +41,4 @@ export async function getUserInfoApi(): Promise<UserInfo> {
     avatar: '',
   };
 }
+
