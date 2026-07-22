@@ -44,7 +44,8 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       return response.data;
     },
     rejected: (error) => {
-      if (error?.response?.status === 401) {
+      const config = error?.config;
+      if (error?.response?.status === 401 && config?.url !== '/auth/login') {
         doReAuthenticate();
       }
       throw error;
