@@ -99,7 +99,7 @@ async function handleUpdateProfile() {
 }
 
 function goBack() {
-  router.push('/employees/list');
+  router.push('/employee/list');
 }
 
 onMounted(() => {

@@ -14,17 +14,6 @@ const routes: RouteRecordRaw[] = [
     path: '/system',
     children: [
       {
-        name: 'SystemSettings',
-        path: 'settings',
-        component: () => import('#/views/system/settings/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:gear',
-          title: $t('page.system.settings'),
-          authority: ['admin'],
-        },
-      },
-      {
         name: 'RegionalHolidays',
         path: 'holidays',
         component: () => import('#/views/system/holidays/index.vue'),

@@ -62,7 +62,7 @@ const notifications = ref<NotificationItem[]>([
     isRead: false,
     message: '描述信息描述信息描述信息',
     title: '跳转示例',
-    link: '/employees/list',
+    link: '/employee/list',
   },
   {
     id: 6,

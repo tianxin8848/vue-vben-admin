@@ -140,7 +140,7 @@ function goToProfile() {
 }
 
 function goToUsers() {
-  router.push('/employees/list');
+  router.push('/employee/list');
 }
 
 function goToLeaveCalendar() {
@@ -156,7 +156,7 @@ function goToManageApprovals() {
 }
 
 function goToSettings() {
-  router.push('/system/settings');
+  router.push('/employee/manage/settings');
 }
 
 onMounted(() => {

@@ -10,8 +10,8 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.employees.title'),
       authority: ['admin'],
     },
-    name: 'Employees',
-    path: '/employees',
+    name: 'Employee',
+    path: '/employee',
     children: [
       {
         name: 'EmployeeList',
@@ -32,6 +32,17 @@ const routes: RouteRecordRaw[] = [
           hideInMenu: true,
           icon: 'lucide:user',
           title: $t('page.employees.profile'),
+          authority: ['admin'],
+        },
+      },
+      {
+        name: 'EmployeeManageSettings',
+        path: 'manage/settings',
+        component: () => import('#/views/system/settings/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:gear',
+          title: $t('page.system.settings'),
           authority: ['admin'],
         },
       },

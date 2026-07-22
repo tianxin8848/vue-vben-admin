@@ -94,7 +94,7 @@ onMounted(() => {
             placeholder="用逗号分隔，如：技术部、产品部、人事部"
           />
         </ElFormItem>
-        <ElFormItem label="职位列表">
+        <ElFormItem label="岗位列表">
           <ElInput
             v-model="posStr"
             type="textarea"

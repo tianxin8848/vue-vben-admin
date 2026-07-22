@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { EmployeeApi } from '#/api';
+import type { EmployeeApi, SystemSettingsApi } from '#/api';
 
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
@@ -24,6 +24,7 @@ import {
 import {
   createEmployeeApi,
   getEmployeesApi,
+  getSystemSettingsApi,
   resetEmployeePasswordApi,
   updateEmployeeAdminApi,
   updateEmployeeStatusApi,
@@ -72,19 +73,30 @@ const resetEmployeeId = ref('');
 const sortField = ref<string>('');
 const sortOrder = ref<'ascending' | 'descending'>('ascending');
 
-const departmentOptions = [
-  { label: '技术部', value: '技术部' },
-  { label: '人事部', value: '人事部' },
-  { label: '财务部', value: '财务部' },
-  { label: '市场部', value: '市场部' },
-];
+const departmentOptions = ref<{ label: string; value: string }[]>([]);
+const positionOptions = ref<{ label: string; value: string }[]>([]);
+const regionOptions = ref<{ label: string; value: string }[]>([]);
 
-const regionOptions = [
-  { label: '北京', value: '北京' },
-  { label: '上海', value: '上海' },
-  { label: '广州', value: '广州' },
-  { label: '深圳', value: '深圳' },
-];
+async function fetchSystemSettings() {
+  try {
+    const settings: SystemSettingsApi.SystemSettingsResponse =
+      await getSystemSettingsApi();
+    departmentOptions.value = (settings.departments || []).map((d) => ({
+      label: d,
+      value: d,
+    }));
+    positionOptions.value = (settings.positions || []).map((p) => ({
+      label: p,
+      value: p,
+    }));
+    regionOptions.value = (settings.regions || []).map((r) => ({
+      label: r,
+      value: r,
+    }));
+  } catch {
+    // 获取系统设置失败时保持空选项
+  }
+}
 
 const filteredEmployees = computed(() => {
   let list = [...employees.value];
@@ -169,7 +181,7 @@ function handleReset() {
 }
 
 function viewProfile(id: string) {
-  router.push(`/employees/profile/${id}`);
+  router.push(`/employee/profile/${id}`);
 }
 
 async function handleStatusChange(id: string, isActive: boolean) {
@@ -241,7 +253,11 @@ function getPermissionLabels(permissions: EmployeeApi.ModulePermission[]) {
     .join(', ');
 }
 
+fetchSystemSettings();
 fetchEmployees();
+onMounted(() => {
+  // 确保页面加载时获取系统设置
+});
 </script>
 
 <template>
