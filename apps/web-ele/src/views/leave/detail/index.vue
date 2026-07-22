@@ -80,7 +80,7 @@ async function handleReject() {
 }
 
 function goBack() {
-  router.push('/leave/list');
+  router.push('/employee/leave');
 }
 
 onMounted(() => {

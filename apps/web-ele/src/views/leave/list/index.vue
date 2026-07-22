@@ -83,7 +83,7 @@ function handleReset() {
 }
 
 function viewDetail(id: string) {
-  router.push(`/leave/detail/${id}`);
+  router.push(`/employee/leave/detail/${id}`);
 }
 
 async function handleWithdraw(id: string) {

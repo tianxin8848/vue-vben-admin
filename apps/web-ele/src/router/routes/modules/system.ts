@@ -5,20 +5,19 @@ import { $t } from '#/locales';
 const routes: RouteRecordRaw[] = [
   {
     meta: {
-      icon: 'lucide:settings',
-      order: 3,
+      hideInMenu: true,
       title: $t('page.system.title'),
       authority: ['admin'],
     },
-    name: 'System',
-    path: '/system',
+    name: 'SystemSettingsExtra',
+    path: '/employee/manage/settings',
     children: [
       {
         name: 'RegionalHolidays',
         path: 'holidays',
         component: () => import('#/views/system/holidays/index.vue'),
         meta: {
-          affixTab: false,
+          hideInMenu: true,
           icon: 'lucide:calendar-check',
           title: $t('page.system.holidays'),
           authority: ['admin'],

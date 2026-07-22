@@ -124,11 +124,11 @@ async function fetchData() {
 }
 
 function goToLeave() {
-  router.push('/leave/my-leave');
+  router.push('/employee/my-leave');
 }
 
 function goToApprovals() {
-  router.push('/leave/my-approvals');
+  router.push('/employee/manage/approvals');
 }
 
 function goToChangePassword() {
@@ -140,19 +140,19 @@ function goToProfile() {
 }
 
 function goToUsers() {
-  router.push('/employee/list');
+  router.push('/employee/manage/users');
 }
 
 function goToLeaveCalendar() {
-  router.push('/leave/calendar');
+  router.push('/employee/manage/leave');
 }
 
 function goToWorkflow() {
-  router.push('/leave/workflow');
+  router.push('/employee/manage/leave-workflows');
 }
 
 function goToManageApprovals() {
-  router.push('/leave/my-approvals');
+  router.push('/employee/manage/approvals');
 }
 
 function goToSettings() {

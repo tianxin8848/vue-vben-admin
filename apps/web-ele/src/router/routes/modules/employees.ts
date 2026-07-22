@@ -10,12 +10,12 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.employees.title'),
       authority: ['admin'],
     },
-    name: 'Employee',
-    path: '/employee',
+    name: 'EmployeeManage',
+    path: '/employee/manage',
     children: [
       {
-        name: 'EmployeeList',
-        path: 'list',
+        name: 'EmployeeManageUsers',
+        path: 'users',
         component: () => import('#/views/employees/list/index.vue'),
         meta: {
           affixTab: false,
@@ -25,8 +25,8 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        name: 'EmployeeProfile',
-        path: 'profile/:id',
+        name: 'EmployeeManageUserProfile',
+        path: 'users/:id/profile',
         component: () => import('#/views/employees/profile/index.vue'),
         meta: {
           hideInMenu: true,
@@ -37,7 +37,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'EmployeeManageSettings',
-        path: 'manage/settings',
+        path: 'settings',
         component: () => import('#/views/system/settings/index.vue'),
         meta: {
           affixTab: false,

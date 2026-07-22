@@ -188,7 +188,7 @@ function handleReset() {
 }
 
 function viewProfile(id: string) {
-  router.push(`/employee/profile/${id}`);
+  router.push(`/employee/manage/users/${id}/profile`);
 }
 
 async function handleStatusChange(id: string, isActive: boolean) {
