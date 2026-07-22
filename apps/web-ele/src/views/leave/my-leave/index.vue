@@ -478,7 +478,7 @@ function goToCurrentYear() {
 }
 
 function goBackHome() {
-  router.push('/dashboard/workspace');
+  router.push('/employee');
 }
 
 onMounted(() => {

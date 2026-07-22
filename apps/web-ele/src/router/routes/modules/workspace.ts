@@ -10,12 +10,12 @@ const routes: RouteRecordRaw[] = [
       title: $t('page.workspace.title'),
     },
     name: 'Workspace',
-    path: '/workspace',
-    redirect: '/workspace/index',
+    path: '/employee',
+    redirect: '/employee',
     children: [
       {
         name: 'WorkspaceHome',
-        path: 'index',
+        path: '',
         component: () => import('#/views/workspace/index.vue'),
         meta: {
           affixTab: true,

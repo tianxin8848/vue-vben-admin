@@ -261,7 +261,7 @@ async function submitDecision(action: 'approved' | 'rejected') {
 }
 
 function goBackHome() {
-  router.push('/dashboard/workspace');
+  router.push('/employee');
 }
 
 onMounted(() => {

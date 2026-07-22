@@ -286,7 +286,7 @@ async function loadSystemSettings() {
 }
 
 function goBackHome() {
-  router.push('/dashboard/workspace');
+  router.push('/employee');
 }
 
 function goToCalendar() {

@@ -408,7 +408,7 @@ async function loadEmployees() {
 }
 
 function goBackHome() {
-  router.push('/dashboard/workspace');
+  router.push('/employee');
 }
 
 function goToWorkflow() {

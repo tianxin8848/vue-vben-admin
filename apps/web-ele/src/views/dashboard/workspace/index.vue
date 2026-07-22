@@ -132,11 +132,11 @@ function goToApprovals() {
 }
 
 function goToChangePassword() {
-  router.push('/profile/password-setting');
+  router.push('/employee/change-password');
 }
 
 function goToProfile() {
-  router.push('/profile');
+  router.push('/employee/profile');
 }
 
 function goToUsers() {

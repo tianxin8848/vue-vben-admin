@@ -45,7 +45,7 @@ async function fetchData() {
 }
 
 function goToProfile() {
-  router.push('/workspace/profile');
+  router.push('/employee/profile');
 }
 
 onMounted(() => {

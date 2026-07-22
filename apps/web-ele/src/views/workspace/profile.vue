@@ -121,7 +121,7 @@ async function handleUpdateProfile() {
 }
 
 function goBack() {
-  router.push('/workspace');
+  router.push('/employee');
 }
 
 onMounted(() => {

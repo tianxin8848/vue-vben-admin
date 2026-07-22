@@ -11,7 +11,7 @@ const routes: RouteRecordRaw[] = [
     },
     name: 'Dashboard',
     path: '/dashboard',
-    redirect: '/dashboard/workspace',
+    redirect: '/employee',
     children: [
       {
         name: 'DashboardAnalytics',
