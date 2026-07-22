@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { LeaveWorkflowApi } from '#/api';
+import type { LeaveWorkflowApi, EmployeeApi } from '#/api';
 
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
 import {
   ElButton,
@@ -10,8 +10,10 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
+  ElSelect,
   ElTable,
   ElTableColumn,
+  ElTag,
 } from 'element-plus';
 
 import {
@@ -19,9 +21,11 @@ import {
   deleteLeaveWorkflowApi,
   getLeaveWorkflowsApi,
   updateLeaveWorkflowApi,
+  getEmployeesApi,
 } from '#/api';
 
 const loading = ref(false);
+const employees = ref<EmployeeApi.EmployeeResponse[]>([]);
 const workflows = ref<LeaveWorkflowApi.LeaveWorkflow[]>([]);
 
 const searchForm = reactive({
@@ -44,13 +48,26 @@ const workflowForm = reactive<Partial<LeaveWorkflowApi.CreateWorkflowParams>>({
   approvers: [],
 });
 
+const approverIds = ref<string[]>([]);
+
 const editingId = ref('');
+
+const employeeOptions = reactive<
+  { label: string; value: string; username: string; full_name: string }[]
+>([]);
+
+watch(
+  () => workflowForm.approvers,
+  (newApprovers) => {
+    approverIds.value = newApprovers?.map((a) => a.user_id) || [];
+  },
+  { deep: true, immediate: true },
+);
 
 async function fetchWorkflows() {
   loading.value = true;
   try {
     const all = await getLeaveWorkflowsApi();
-    // 前端过滤
     if (searchForm.is_active !== undefined) {
       workflows.value = all.filter((w) => w.is_active === searchForm.is_active);
     } else {
@@ -58,6 +75,24 @@ async function fetchWorkflows() {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+async function fetchEmployees() {
+  try {
+    const data = await getEmployeesApi();
+    employees.value = data;
+    employeeOptions.length = 0;
+    data.forEach((emp) => {
+      employeeOptions.push({
+        label: emp.full_name || emp.username,
+        value: emp.id,
+        username: emp.username,
+        full_name: emp.full_name || '',
+      });
+    });
+  } catch {
+    console.error('Failed to fetch employees');
   }
 }
 
@@ -81,6 +116,7 @@ function openCreateModal() {
     position: null,
   };
   workflowForm.approvers = [];
+  approverIds.value = [];
   showCreateModal.value = true;
 }
 
@@ -91,12 +127,31 @@ function openEditModal(workflow: LeaveWorkflowApi.LeaveWorkflow) {
   workflowForm.is_active = workflow.is_active;
   workflowForm.match = { ...workflow.match };
   workflowForm.approvers = [...workflow.approvers];
+  approverIds.value = workflow.approvers.map((a) => a.user_id);
   showEditModal.value = true;
+}
+
+function handleApproverChange(newIds: string[]) {
+  workflowForm.approvers = newIds
+    .map((id) => {
+      const emp = employeeOptions.find((e) => e.value === id);
+      if (!emp) return null;
+      return {
+        user_id: emp.value,
+        username: emp.username,
+        full_name: emp.full_name || null,
+      };
+    })
+    .filter((a): a is LeaveWorkflowApi.WorkflowApprover => a !== null);
 }
 
 async function handleCreate() {
   if (!workflowForm.name) {
     ElMessage.warning('请输入流程名称');
+    return;
+  }
+  if (!workflowForm.approvers || workflowForm.approvers.length === 0) {
+    ElMessage.warning('请选择审批人');
     return;
   }
   try {
@@ -114,6 +169,10 @@ async function handleCreate() {
 async function handleEdit() {
   if (!workflowForm.name) {
     ElMessage.warning('请输入流程名称');
+    return;
+  }
+  if (!workflowForm.approvers || workflowForm.approvers.length === 0) {
+    ElMessage.warning('请选择审批人');
     return;
   }
   try {
@@ -137,11 +196,14 @@ async function handleDelete(id: string) {
 }
 
 fetchWorkflows();
+fetchEmployees();
 </script>
 
 <template>
   <div class="workflow-page">
-    <h2>审批流程管理</h2>
+    <div class="page-header">
+      <h2>审批流程管理</h2>
+    </div>
     <ElForm :model="searchForm" inline class="search-form">
       <ElFormItem label="状态">
         <ElSelect v-model="searchForm.is_active" placeholder="请选择" clearable>
@@ -168,7 +230,7 @@ fetchWorkflows();
           <span v-else class="text-muted">全部</span>
         </template>
       </ElTableColumn>
-      <ElTableColumn prop="approvers" label="审批人">
+      <ElTableColumn prop="approvers" label="审批人" min-width="150">
         <template #default="{ row }">
           {{
             (row as LeaveWorkflowApi.LeaveWorkflow).approvers
@@ -188,14 +250,14 @@ fetchWorkflows();
         </template>
       </ElTableColumn>
       <ElTableColumn prop="created_at" label="创建时间" />
-      <ElTableColumn label="操作" width="200">
+      <ElTableColumn label="操作" width="150">
         <template #default="{ row }">
           <ElButton
             size="small"
             @click="openEditModal(row as LeaveWorkflowApi.LeaveWorkflow)"
-            >
-编辑
-</ElButton>
+          >
+            编辑
+          </ElButton>
           <ElButton size="small" type="danger" @click="handleDelete(row.id)">
             删除
           </ElButton>
@@ -203,9 +265,9 @@ fetchWorkflows();
       </ElTableColumn>
     </ElTable>
 
-    <ElDialog v-model="showCreateModal" title="新增审批流程" width="600px">
+    <ElDialog v-model="showCreateModal" title="新增审批流程" width="650px">
       <ElForm :model="workflowForm" label-width="100px">
-        <ElFormItem label="流程名称">
+        <ElFormItem label="流程名称" required>
           <ElInput v-model="workflowForm.name" />
         </ElFormItem>
         <ElFormItem label="优先级">
@@ -228,6 +290,22 @@ fetchWorkflows();
             v-model="workflowForm.match!.region"
             placeholder="为空则不限制"
           />
+        </ElFormItem>
+        <ElFormItem label="审批人" required>
+          <ElSelect
+            v-model="approverIds"
+            multiple
+            filterable
+            placeholder="请选择审批人"
+            @change="handleApproverChange"
+          >
+            <ElOption
+              v-for="emp in employeeOptions"
+              :key="emp.value"
+              :label="emp.label"
+              :value="emp.value"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem label="状态">
           <ElSwitch
@@ -243,9 +321,9 @@ fetchWorkflows();
       </template>
     </ElDialog>
 
-    <ElDialog v-model="showEditModal" title="编辑审批流程" width="600px">
+    <ElDialog v-model="showEditModal" title="编辑审批流程" width="650px">
       <ElForm :model="workflowForm" label-width="100px">
-        <ElFormItem label="流程名称">
+        <ElFormItem label="流程名称" required>
           <ElInput v-model="workflowForm.name" />
         </ElFormItem>
         <ElFormItem label="优先级">
@@ -268,6 +346,22 @@ fetchWorkflows();
             v-model="workflowForm.match!.region"
             placeholder="为空则不限制"
           />
+        </ElFormItem>
+        <ElFormItem label="审批人" required>
+          <ElSelect
+            v-model="approverIds"
+            multiple
+            filterable
+            placeholder="请选择审批人"
+            @change="handleApproverChange"
+          >
+            <ElOption
+              v-for="emp in employeeOptions"
+              :key="emp.value"
+              :label="emp.label"
+              :value="emp.value"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem label="状态">
           <ElSwitch
@@ -287,11 +381,28 @@ fetchWorkflows();
 
 <style scoped>
 .workflow-page {
-  padding: 20px;
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: calc(100vh - 80px);
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
 }
 
 .search-form {
   margin-bottom: 20px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .text-muted {

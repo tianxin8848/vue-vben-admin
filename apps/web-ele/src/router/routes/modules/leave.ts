@@ -20,6 +20,48 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:clipboard-list',
           title: $t('page.leave.list'),
+          authority: ['admin'],
+        },
+      },
+      {
+        name: 'MyLeave',
+        path: 'my-leave',
+        component: () => import('#/views/leave/my-leave/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:user-circle',
+          title: $t('page.leave.myLeave'),
+        },
+      },
+      {
+        name: 'MyApprovals',
+        path: 'my-approvals',
+        component: () => import('#/views/leave/my-approvals/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:check-circle',
+          title: $t('page.leave.myApprovals'),
+        },
+      },
+      {
+        name: 'MyRecords',
+        path: 'my-records',
+        component: () => import('#/views/leave/my-records/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:history',
+          title: $t('page.leave.myRecords'),
+        },
+      },
+      {
+        name: 'LeaveCalendar',
+        path: 'calendar',
+        component: () => import('#/views/leave/calendar/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:calendar-days',
+          title: $t('page.leave.calendar'),
+          authority: ['admin'],
         },
       },
       {
@@ -40,6 +82,7 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:git-branch',
           title: $t('page.leave.workflow'),
+          authority: ['admin'],
         },
       },
     ],

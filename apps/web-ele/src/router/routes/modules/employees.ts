@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
       icon: 'lucide:users',
       order: 1,
       title: $t('page.employees.title'),
+      authority: ['admin'],
     },
     name: 'Employees',
     path: '/employees',
@@ -20,6 +21,7 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:list',
           title: $t('page.employees.list'),
+          authority: ['admin'],
         },
       },
       {
@@ -30,6 +32,7 @@ const routes: RouteRecordRaw[] = [
           hideInMenu: true,
           icon: 'lucide:user',
           title: $t('page.employees.profile'),
+          authority: ['admin'],
         },
       },
     ],

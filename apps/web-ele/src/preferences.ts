@@ -10,7 +10,7 @@ import {
  */
 export const overridesPreferences = defineOverridesPreferences({
   app: {
-    defaultHomePath: '/employees/list',
+    defaultHomePath: '/dashboard/workspace',
     name: import.meta.env.VITE_APP_TITLE,
   },
   logo: {
