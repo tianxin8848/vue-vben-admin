@@ -46,7 +46,7 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
-      // ─── 请假管理子路由 ───────────────────────────────────────────────
+      // ─── 请假管理 ───────────────────────────────────────────────────────
       {
         name: 'LeaveManageCalendar',
         path: 'leave',
