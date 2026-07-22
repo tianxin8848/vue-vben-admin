@@ -65,29 +65,32 @@ watch(
   },
 );
 
-function handlePageChange(val: number) {
-  currentPage.value = val;
-  emit('update:page', val);
+function handlePageChange(page: number) {
+  emit('update:page', page);
 }
 
-function handlePageSizeChange(val: number) {
-  currentPageSize.value = val;
-  emit('update:pageSize', val);
+function handlePageSizeChange(pageSize: number) {
+  emit('update:pageSize', pageSize);
+}
+
+function handleAdd() {
+  emit('add');
+}
+
+function handleRefresh() {
+  emit('refresh');
 }
 </script>
 
 <template>
-  <div class="base-table-container">
-    <div class="table-header" v-if="showAdd || showRefresh">
-      <span></span>
-      <div class="header-actions">
-        <ElButton v-if="showRefresh" type="primary" @click="emit('refresh')">
-          {{ refreshText }}
-        </ElButton>
-        <ElButton v-if="showAdd" type="success" @click="emit('add')">
-          {{ addText }}
-        </ElButton>
-      </div>
+  <div class="base-table-wrapper">
+    <div class="table-toolbar" v-if="showAdd || showRefresh">
+      <ElButton type="primary" icon="Plus" @click="handleAdd" v-if="showAdd">
+        {{ addText }}
+      </ElButton>
+      <ElButton icon="RefreshCw" @click="handleRefresh" v-if="showRefresh">
+        {{ refreshText }}
+      </ElButton>
     </div>
     <ElTable
       :data="data"
@@ -95,31 +98,20 @@ function handlePageSizeChange(val: number) {
       :size="size"
       border
       stripe
-      style="width: 100%"
+      v-loading="loading"
     >
       <ElTableColumn
         v-for="column in columns"
-        :key="column.prop"
-        :prop="column.prop"
-        :label="column.label"
-        :width="column.width"
-        :align="column.align || 'left'"
-      >
-        <template #default="{ row, $index }">
-          <template v-if="column.formatter">
-            {{ column.formatter(row, column, row[column.prop], $index) }}
-          </template>
-          <template v-else>
-            {{ row[column.prop] }}
-          </template>
-        </template>
-      </ElTableColumn>
+        :key="column.prop || column.label"
+        v-bind="column"
+      />
     </ElTable>
-    <div class="pagination-container">
+    <div class="pagination-wrapper" v-if="total > 0">
       <ElPagination
         :current-page="currentPage"
         :page-size="currentPageSize"
         :total="total"
+        :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handlePageSizeChange"
         @current-change="handlePageChange"
@@ -129,28 +121,19 @@ function handlePageSizeChange(val: number) {
 </template>
 
 <style scoped>
-.base-table-container {
-  padding: 16px;
+.base-table-wrapper {
+  width: 100%;
 }
 
-.table-header {
+.table-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.pagination-container {
+.pagination-wrapper {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
 }
 </style>
-EOF; __tr_native_ec=$?; pwd -P >|
-'/var/folders/3b/lwjkgqhx3419yhxy4r241tpc0000gn/T/agent-toolhost/jobs/job-52ce314c59724eff9e9965c9650ad620/cwd.txt';
-exit "$__tr_native_ec"
