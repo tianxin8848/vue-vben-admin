@@ -34,36 +34,18 @@ const routes: RouteRecordRaw[] = [
         },
       },
       // ─── 员工自助：请假相关 ─────────────────────────────────────────
-      {
-        name: 'EmployeeLeaveApply',
-        path: 'leave',
-        component: () => import('#/views/leave/list/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:clipboard-list',
-          title: $t('page.leave.list'),
-        },
-      },
-      {
-        name: 'EmployeeMyLeave',
-        path: 'my-leave',
-        component: () => import('#/views/leave/my-leave/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:user-circle',
-          title: $t('page.leave.myLeave'),
-        },
-      },
-      {
-        name: 'EmployeeMyRecords',
-        path: 'my-records',
-        component: () => import('#/views/leave/my-records/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:history',
-          title: $t('page.leave.myRecords'),
-        },
-      },
+      // {
+      //   name: 'EmployeeLeaveApply',
+      //   path: 'leave',
+      //   component: () => import('#/views/leave/list/index.vue'),
+      //   meta: {
+      //     affixTab: false,
+      //     icon: 'lucide:clipboard-list',
+      //     title: $t('page.leave.list'),
+      //   },
+      // },
+     
+    
       {
         name: 'LeaveDetail',
         path: 'leave/detail/:id',
