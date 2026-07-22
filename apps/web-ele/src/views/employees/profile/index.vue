@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { EmployeeApi } from '#/api';
+import type { EmployeeApi, SystemSettingsApi } from '#/api';
 
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -18,6 +18,7 @@ import {
 import {
   getEmployeeProfileApi,
   getEmployeesApi,
+  getSystemSettingsApi,
   updateEmployeeBasicInfoApi,
   updateEmployeeProfileApi,
 } from '#/api';
@@ -45,6 +46,31 @@ const profileForm = reactive<Partial<EmployeeApi.EmployeeProfileUpdate>>({
   id_number: '',
   work_start_date: '',
 });
+
+const departmentOptions = ref<{ label: string; value: string }[]>([]);
+const positionOptions = ref<{ label: string; value: string }[]>([]);
+const regionOptions = ref<{ label: string; value: string }[]>([]);
+
+async function fetchSystemSettings() {
+  try {
+    const settings: SystemSettingsApi.SystemSettingsResponse =
+      await getSystemSettingsApi();
+    departmentOptions.value = (settings.departments || []).map((d) => ({
+      label: d,
+      value: d,
+    }));
+    positionOptions.value = (settings.positions || []).map((p) => ({
+      label: p,
+      value: p,
+    }));
+    regionOptions.value = (settings.regions || []).map((r) => ({
+      label: r,
+      value: r,
+    }));
+  } catch {
+    // 获取失败保持空选项
+  }
+}
 
 async function fetchData() {
   loading.value = true;
@@ -104,6 +130,7 @@ function goBack() {
 
 onMounted(() => {
   fetchData();
+  fetchSystemSettings();
 });
 </script>
 
@@ -130,17 +157,33 @@ onMounted(() => {
         </ElFormItem>
         <ElFormItem label="部门">
           <ElSelect v-model="basicInfoForm.department" clearable>
-            <ElOption label="技术部" value="技术部" />
-            <ElOption label="人事部" value="人事部" />
-            <ElOption label="财务部" value="财务部" />
-            <ElOption label="市场部" value="市场部" />
+            <ElOption
+              v-for="opt in departmentOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="职位">
-          <ElInput v-model="basicInfoForm.position" />
+          <ElSelect v-model="basicInfoForm.position" clearable>
+            <ElOption
+              v-for="opt in positionOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem label="区域">
-          <ElInput v-model="basicInfoForm.region" />
+          <ElSelect v-model="basicInfoForm.region" clearable>
+            <ElOption
+              v-for="opt in regionOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem>
           <ElButton type="primary" @click="handleUpdateBasicInfo">
@@ -194,5 +237,3 @@ onMounted(() => {
     </ElCard>
   </div>
 </template>
-
-

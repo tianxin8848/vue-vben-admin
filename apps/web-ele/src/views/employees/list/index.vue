@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { EmployeeApi, SystemSettingsApi } from '#/api';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
@@ -105,19 +105,25 @@ const filteredEmployees = computed(() => {
     const kw = searchForm.keyword.toLowerCase();
     list = list.filter(
       (e) =>
-        (e.full_name?.toLowerCase().includes(kw) || false) ||
+        e.full_name?.toLowerCase().includes(kw) ||
+        false ||
         e.username.toLowerCase().includes(kw) ||
         e.email.toLowerCase().includes(kw) ||
-        (e.employee_code?.toLowerCase().includes(kw) || false),
+        e.employee_code?.toLowerCase().includes(kw) ||
+        false,
     );
   }
 
   if (searchForm.role) {
-    list = list.filter((e) => (searchForm.role === 'admin' ? e.is_admin : !e.is_admin));
+    list = list.filter((e) =>
+      searchForm.role === 'admin' ? e.is_admin : !e.is_admin,
+    );
   }
 
   if (searchForm.status) {
-    list = list.filter((e) => (searchForm.status === 'active' ? e.is_active : !e.is_active));
+    list = list.filter((e) =>
+      searchForm.status === 'active' ? e.is_active : !e.is_active,
+    );
   }
 
   if (searchForm.department) {
@@ -144,7 +150,8 @@ const filteredEmployees = computed(() => {
 
 function toggleSort(field: string) {
   if (sortField.value === field) {
-    sortOrder.value = sortOrder.value === 'ascending' ? 'descending' : 'ascending';
+    sortOrder.value =
+      sortOrder.value === 'ascending' ? 'descending' : 'ascending';
   } else {
     sortField.value = field;
     sortOrder.value = 'ascending';
@@ -221,7 +228,12 @@ async function handleResetPassword() {
 }
 
 async function handleCreate() {
-  if (!createForm.username || !createForm.email || !createForm.full_name || !createForm.department) {
+  if (
+    !createForm.username ||
+    !createForm.email ||
+    !createForm.full_name ||
+    !createForm.department
+  ) {
     ElMessage.warning('请填写必填项');
     return;
   }
@@ -248,54 +260,42 @@ function getInitialPasswordStatus(isInitial: number) {
 
 function getPermissionLabels(permissions: EmployeeApi.ModulePermission[]) {
   return permissions
-    .filter((p) => p.can_view || p.can_create || p.can_edit || p.can_delete || p.can_approve)
+    .filter(
+      (p) =>
+        p.can_view ||
+        p.can_create ||
+        p.can_edit ||
+        p.can_delete ||
+        p.can_approve,
+    )
     .map((p) => p.module_name)
     .join(', ');
 }
 
 fetchSystemSettings();
 fetchEmployees();
-onMounted(() => {
-  // 确保页面加载时获取系统设置
-});
 </script>
 
 <template>
   <div class="employee-list-page">
     <div class="page-header">
       <h2>用户管理</h2>
-      <p class="page-desc">新增员工、查看初始密码、重置密码、维护员工模块权限</p>
+      <p class="page-desc">
+        新增员工、查看初始密码、重置密码、维护员工模块权限
+      </p>
     </div>
 
     <div class="column-toggle-bar">
-      <ElCheckbox
-        v-model="columnVisibility.user_id"
-        label="用户ID"
-      />
-      <ElCheckbox
-        v-model="columnVisibility.employee_code"
-        label="工号"
-      />
-      <ElCheckbox
-        v-model="columnVisibility.full_name"
-        label="姓名"
-      />
-      <ElCheckbox
-        v-model="columnVisibility.username"
-        label="账号"
-      />
-      <ElCheckbox
-        v-model="columnVisibility.role"
-        label="身份"
-      />
+      <ElCheckbox v-model="columnVisibility.user_id" label="用户ID" />
+      <ElCheckbox v-model="columnVisibility.employee_code" label="工号" />
+      <ElCheckbox v-model="columnVisibility.full_name" label="姓名" />
+      <ElCheckbox v-model="columnVisibility.username" label="账号" />
+      <ElCheckbox v-model="columnVisibility.role" label="身份" />
       <ElCheckbox
         v-model="columnVisibility.department_position"
         label="部门/岗位/地区"
       />
-      <ElCheckbox
-        v-model="columnVisibility.status"
-        label="状态"
-      />
+      <ElCheckbox v-model="columnVisibility.status" label="状态" />
       <ElCheckbox
         v-model="columnVisibility.initial_status"
         label="初始密码状态"
@@ -304,14 +304,13 @@ onMounted(() => {
         v-model="columnVisibility.temporary_password"
         label="初始密码"
       />
-      <ElCheckbox
-        v-model="columnVisibility.permissions"
-        label="权限"
-      />
+      <ElCheckbox v-model="columnVisibility.permissions" label="权限" />
     </div>
 
     <ElCard class="create-card" header="新增员工">
-      <p class="card-desc">用于快速创建员工账号，系统会自动生成复杂初始密码。</p>
+      <p class="card-desc">
+        用于快速创建员工账号，系统会自动生成复杂初始密码。
+      </p>
       <ElForm :model="createForm" label-width="100px" inline>
         <ElFormItem label="用户名 *">
           <ElInput
@@ -371,11 +370,19 @@ onMounted(() => {
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="岗位">
-          <ElInput
+          <ElSelect
             v-model="createForm.position"
             placeholder="请选择岗位"
             style="width: 120px"
-          />
+            clearable
+          >
+            <ElOption
+              v-for="opt in positionOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
         </ElFormItem>
         <ElFormItem>
           <ElCheckbox v-model="createForm.is_admin" label="创建为管理员" />
@@ -448,7 +455,13 @@ onMounted(() => {
     </ElCard>
 
     <ElCard class="table-card" header="员工列表">
-      <ElTable :data="filteredEmployees" border stripe v-loading="loading" size="small">
+      <ElTable
+        :data="filteredEmployees"
+        border
+        stripe
+        v-loading="loading"
+        size="small"
+      >
         <ElTableColumn
           v-if="columnVisibility.user_id"
           prop="id"
@@ -503,11 +516,7 @@ onMounted(() => {
           </template>
         </ElTableColumn>
 
-        <ElTableColumn
-          v-if="columnVisibility.role"
-          label="身份"
-          width="80"
-        >
+        <ElTableColumn v-if="columnVisibility.role" label="身份" width="80">
           <template #header>
             <span @click="toggleSort('is_admin')" class="sortable-header">
               身份 {{ getSortIcon('is_admin') }}
@@ -537,11 +546,7 @@ onMounted(() => {
           </template>
         </ElTableColumn>
 
-        <ElTableColumn
-          v-if="columnVisibility.status"
-          label="状态"
-          width="120"
-        >
+        <ElTableColumn v-if="columnVisibility.status" label="状态" width="120">
           <template #header>
             <span @click="toggleSort('is_active')" class="sortable-header">
               状态 {{ getSortIcon('is_active') }}
@@ -631,19 +636,23 @@ onMounted(() => {
     </ElCard>
 
     <ElDialog v-model="showResetModal" title="重置密码" width="400px">
-      <div v-if="resetResult" style="text-align: center; padding: 20px 0">
+      <div v-if="resetResult" style=" padding: 20px 0;text-align: center">
         <p style="margin-bottom: 12px">密码已重置成功！</p>
         <p>
           临时密码：
-          <ElTag type="warning" size="large">{{ resetResult.temporary_password }}</ElTag>
+          <ElTag type="warning" size="large">
+{{
+            resetResult.temporary_password
+          }}
+</ElTag>
         </p>
-        <p style="color: #999; font-size: 12px; margin-top: 8px">
+        <p style=" margin-top: 8px; font-size: 12px;color: #999">
           请通知用户使用该临时密码登录并及时修改
         </p>
       </div>
-      <div v-else style="text-align: center; padding: 20px 0">
+      <div v-else style=" padding: 20px 0;text-align: center">
         <p>确认重置该员工密码？</p>
-        <p style="color: #999; font-size: 12px">系统将自动生成临时密码</p>
+        <p style=" font-size: 12px;color: #999">系统将自动生成临时密码</p>
       </div>
       <template #footer>
         <ElButton @click="showResetModal = false">
