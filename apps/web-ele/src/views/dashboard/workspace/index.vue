@@ -1,83 +1,121 @@
 <script lang="ts" setup>
-import type { LeaveRequestApi } from '#/api';
-
-import { onMounted, ref } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
   ElButton,
-  ElLink,
+  ElCard,
+  ElTag,
 } from 'element-plus';
 
 import {
-  getAnnualLeaveSummaryApi,
-  getMyLeaveRequestsApi,
-  getMyPendingApprovalsApi,
   getUserInfoApi,
+  getMyPendingApprovalsApi,
+  getMyLeaveRequestsApi,
+  getAnnualLeaveSummaryApi,
 } from '#/api';
 
 const router = useRouter();
 const loading = ref(false);
 
+const currentTime = ref('');
+let timer: number | null = null;
+
 const userInfo = ref<null | {
-  full_name: string;
   id: string;
-  is_admin: boolean;
   username: string;
+  full_name: string;
+  department: string | null;
+  position: string | null;
+  email: string;
+  phone: string | null;
+  region: string | null;
+  is_admin: boolean;
+  module_permissions: Array<{
+    module_code: string;
+    module_name: string;
+    can_view: boolean;
+  }>;
 }>(null);
 
-const pendingApprovals = ref<LeaveRequestApi.LeaveRequest[]>([]);
-const recentLeaves = ref<LeaveRequestApi.LeaveRequest[]>([]);
-const annualLeaveSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
+const pendingApprovals = ref<any[]>([]);
+const myLeaveRequests = ref<any[]>([]);
+const annualLeaveSummary = ref<null | {
+  entitlement_days: number;
+  available_days: number;
+  used_days: number;
+}>(null);
 
 const currentYear = new Date().getFullYear();
 
-const leaveTypeOptions: Record<string, string> = {
-  sick: '病假',
-  annual: '年假',
-  personal: '事假',
-  lieu: '调休',
-  long: '长假',
-};
+const hasLeavePermission = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.module_permissions.some(
+    (p) => p.module_code === 'employee_leave' && p.can_view !== false,
+  );
+});
 
-const statusOptions: Record<string, string> = {
-  pending: '待审批',
-  approved: '已批准',
-  rejected: '已拒绝',
-  withdrawn: '已撤回',
-};
+const hasApprovalPermission = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.module_permissions.some(
+    (p) => p.module_code === 'approval_management' && p.can_view !== false,
+  );
+});
 
-const statusTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'danger',
-  withdrawn: 'info',
-};
+const hasPendingApprovals = computed(() => {
+  return pendingApprovals.value.length > 0;
+});
+
+function formatNow() {
+  const now = new Date();
+  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[now.getDay()]}`;
+}
+
+function startLiveClock() {
+  currentTime.value = formatNow();
+  timer = window.setInterval(() => {
+    currentTime.value = formatNow();
+  }, 1000);
+}
 
 async function fetchData() {
   loading.value = true;
   try {
-    const [
-      approvalsRes,
-      myLeavesRes,
-      annualLeaveRes,
-      userRes,
-    ] = await Promise.all([
+    const [userRes, approvalsRes, leaveRes, annualRes] = await Promise.all([
+      getUserInfoApi(),
       getMyPendingApprovalsApi(),
       getMyLeaveRequestsApi(),
       getAnnualLeaveSummaryApi(currentYear),
-      getUserInfoApi(),
     ]);
 
-    pendingApprovals.value = approvalsRes.slice(0, 5);
-    recentLeaves.value = myLeavesRes.slice(0, 5);
-    annualLeaveSummary.value = annualLeaveRes;
     userInfo.value = {
       id: userRes.userId,
       username: userRes.username,
       full_name: userRes.realName,
+      department: userRes.department || null,
+      position: userRes.position || null,
+      email: userRes.email,
+      phone: userRes.phone || null,
+      region: userRes.region || null,
       is_admin: (userRes.roles || []).includes('admin'),
+      module_permissions: [],
     };
+
+    pendingApprovals.value = approvalsRes;
+    myLeaveRequests.value = leaveRes;
+    annualLeaveSummary.value = annualRes;
+
+    const detailedUser = await getUserInfoApi();
+    if ('module_permissions' in detailedUser) {
+      userInfo.value.module_permissions = detailedUser.module_permissions as any;
+    }
   } catch (e) {
     console.error('Dashboard fetch error:', e);
   } finally {
@@ -85,182 +123,181 @@ async function fetchData() {
   }
 }
 
-function goToLeaveList() {
-  router.push('/leave/list');
-}
-
-function goToMyLeave() {
+function goToLeave() {
   router.push('/leave/my-leave');
 }
 
-function goToMyApprovals() {
+function goToApprovals() {
   router.push('/leave/my-approvals');
 }
 
-function goToCalendar() {
+function goToChangePassword() {
+  router.push('/profile/password-setting');
+}
+
+function goToProfile() {
+  router.push('/profile');
+}
+
+function goToUsers() {
+  router.push('/employees/list');
+}
+
+function goToLeaveCalendar() {
   router.push('/leave/calendar');
 }
 
-function viewLeaveDetail(id: string) {
-  router.push(`/leave/detail/${id}`);
+function goToWorkflow() {
+  router.push('/leave/workflow');
+}
+
+function goToManageApprovals() {
+  router.push('/leave/my-approvals');
+}
+
+function goToSettings() {
+  router.push('/system/settings');
 }
 
 onMounted(() => {
+  startLiveClock();
   fetchData();
+});
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+  }
 });
 </script>
 
 <template>
-  <div class="dashboard-page" v-loading="loading">
+  <div class="workspace-page" v-loading="loading">
     <div class="page-header">
       <div class="header-info">
-        <h2>欢迎回来，{{ userInfo?.full_name || '用户' }}</h2>
-        <p class="page-desc">今天是 {{ new Date().toLocaleDateString('zh-CN') }}</p>
+        <h2>工作台首页</h2>
+        <p class="page-subtitle">员工登录后的默认页面</p>
+        <div class="live-time">{{ currentTime }}</div>
       </div>
       <div class="header-actions">
-        <ElButton type="primary" @click="goToLeaveList">
-          提交请假申请
-        </ElButton>
+        <ElButton @click="goToChangePassword">修改密码</ElButton>
+        <ElButton type="primary" @click="goToLeave">提交请假申请</ElButton>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon pending">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+    <div class="grid">
+      <ElCard class="card">
+        <template #header>
+          <h3>个人信息</h3>
+        </template>
+        <div v-if="userInfo" class="profile-content">
+          <div>邮箱：{{ userInfo.email }}</div>
+          <div>手机号：{{ userInfo.phone || '-' }}</div>
+          <div>岗位：{{ userInfo.position || '-' }}</div>
+          <div>地区：{{ userInfo.region || '-' }}</div>
         </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ pendingApprovals.length }}</div>
-          <div class="stat-label">待审批</div>
-        </div>
-        <ElLink type="primary" :underline="false" @click="goToMyApprovals" class="stat-link">
-          查看全部
-        </ElLink>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon annual">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4" /><path d="M16 2v4" /><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 10h18" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /></svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">
-            {{ annualLeaveSummary?.available_days || 0 }}
-            <span class="stat-unit">天</span>
-          </div>
-          <div class="stat-label">
-            {{ currentYear }}年年假余额
-          </div>
-        </div>
-        <div class="stat-detail">
-          已使用 {{ annualLeaveSummary?.used_days || 0 }} / 总计 {{ annualLeaveSummary?.entitlement_days || 0 }} 天
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon recent">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ recentLeaves.length }}</div>
-          <div class="stat-label">最近请假记录</div>
-        </div>
-        <ElLink type="primary" :underline="false" @click="goToMyLeave" class="stat-link">
-          查看全部
-        </ElLink>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon calendar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">📅</div>
-          <div class="stat-label">请假日历</div>
-        </div>
-        <ElLink type="primary" :underline="false" @click="goToCalendar" class="stat-link">
-          查看日历
-        </ElLink>
-      </div>
-    </div>
-
-    <div class="content-grid">
-      <ElCard class="section-card" header="待审批列表">
-        <div v-if="pendingApprovals.length === 0" class="empty-state">
-          暂无待审批的请假申请
-        </div>
-        <ElTable
-          v-else
-          :data="pendingApprovals"
-          border
-          size="small"
-          highlight-current-row
-          @row-click="(row) => viewLeaveDetail(row.id)"
-        >
-          <ElTableColumn prop="employee_name" label="申请人" width="120" />
-          <ElTableColumn prop="leave_type" label="请假类型" width="100">
-            <template #default="{ row }">
-              {{ leaveTypeOptions[row.leave_type] }}
-            </template>
-          </ElTableColumn>
-          <ElTableColumn prop="start_date" label="开始日期" width="120" />
-          <ElTableColumn prop="end_date" label="结束日期" width="120" />
-          <ElTableColumn prop="reason" label="原因" min-width="150" show-overflow-tooltip />
-          <ElTableColumn prop="created_at" label="申请时间" width="150" />
-          <ElTableColumn label="操作" width="80">
-            <template #default="{ row }">
-              <ElButton size="small" type="primary" @click="viewLeaveDetail(row.id)">
-                审批
-              </ElButton>
-            </template>
-          </ElTableColumn>
-        </ElTable>
+        <div v-else>加载中...</div>
+        <div class="card-action" @click="goToProfile">查看详情</div>
       </ElCard>
 
-      <ElCard class="section-card" header="我的最近请假">
-        <div v-if="recentLeaves.length === 0" class="empty-state">
-          暂无请假记录
+      <ElCard class="card">
+        <template #header>
+          <h3>模块权限</h3>
+        </template>
+        <div class="permissions-content">
+          <template v-if="userInfo">
+            <ElTag
+              v-for="perm in userInfo.module_permissions"
+              :key="perm.module_code"
+              class="permission-tag"
+            >
+              {{ perm.module_name }}
+            </ElTag>
+            <ElTag v-if="userInfo.is_admin" class="permission-tag admin-tag">
+              系统管理模块
+            </ElTag>
+          </template>
+          <span v-else>加载中...</span>
         </div>
-        <ElTable
-          v-else
-          :data="recentLeaves"
-          border
-          size="small"
-          highlight-current-row
-          @row-click="(row) => viewLeaveDetail(row.id)"
-        >
-          <ElTableColumn prop="leave_type" label="类型" width="80">
-            <template #default="{ row }">
-              {{ leaveTypeOptions[row.leave_type] }}
-            </template>
-          </ElTableColumn>
-          <ElTableColumn prop="start_date" label="开始日期" width="120" />
-          <ElTableColumn prop="end_date" label="结束日期" width="120" />
-          <ElTableColumn prop="approval_status" label="状态" width="100">
-            <template #default="{ row }">
-              <ElTag :type="statusTypeMap[row.approval_status]">
-                {{ statusOptions[row.approval_status] }}
-              </ElTag>
-            </template>
-          </ElTableColumn>
-          <ElTableColumn prop="reason" label="原因" min-width="150" show-overflow-tooltip />
-          <ElTableColumn prop="created_at" label="申请时间" width="150" />
-          <ElTableColumn label="操作" width="80">
-            <template #default="{ row }">
-              <ElButton size="small" @click="viewLeaveDetail(row.id)">
-                详情
-              </ElButton>
-            </template>
-          </ElTableColumn>
-        </ElTable>
+      </ElCard>
+
+      <ElCard v-if="hasLeavePermission" class="card">
+        <template #header>
+          <h3>请假模块</h3>
+        </template>
+        <p>可在这里查看自己的请假记录，并提交新的请假申请。</p>
+        <div class="leave-stats">
+          <span class="stat-item">
+            <span class="stat-value">{{ myLeaveRequests.length }}</span>
+            <span class="stat-label">请假记录</span>
+          </span>
+          <span class="stat-item">
+            <span class="stat-value">{{ annualLeaveSummary?.available_days || '-' }}</span>
+            <span class="stat-label">年假余额</span>
+          </span>
+        </div>
+        <ElButton type="primary" @click="goToLeave">进入请假模块</ElButton>
+      </ElCard>
+
+      <ElCard
+        v-if="hasApprovalPermission || hasPendingApprovals"
+        class="card"
+      >
+        <template #header>
+          <h3>审批中心</h3>
+        </template>
+        <p>
+          <template v-if="hasPendingApprovals">
+            你当前有 {{ pendingApprovals.length }} 条待审批请假。
+          </template>
+          <template v-else>
+            如果你在某些流程中被设定为审批人，可以在这里处理待办。
+          </template>
+        </p>
+        <div class="approval-stats">
+          <span class="stat-item">
+            <span class="stat-value pending">{{ pendingApprovals.length }}</span>
+            <span class="stat-label">待审批</span>
+          </span>
+        </div>
+        <ElButton type="primary" @click="goToApprovals">进入审批中心</ElButton>
+      </ElCard>
+
+      <ElCard v-if="userInfo?.is_admin" class="card admin-card">
+        <template #header>
+          <h3>系统管理模块</h3>
+        </template>
+        <div class="module-grid">
+          <div class="module-link" @click="goToUsers">
+            <div class="module-title">用户管理</div>
+            <small>管理员工账号、管理员身份和模块权限。</small>
+          </div>
+          <div class="module-link" @click="goToLeaveCalendar">
+            <div class="module-title">请假管理</div>
+            <small>查看地区日历、全年排期和请假总览。</small>
+          </div>
+          <div class="module-link" @click="goToWorkflow">
+            <div class="module-title">流程维护</div>
+            <small>配置不同员工对应的审批链条。</small>
+          </div>
+          <div class="module-link" @click="goToManageApprovals">
+            <div class="module-title">审批管理</div>
+            <small>集中查看并处理管理侧工作流待办。</small>
+          </div>
+          <div class="module-link" @click="goToSettings">
+            <div class="module-title">系统参数</div>
+            <small>维护部门、岗位、地区和模块配置。</small>
+          </div>
+        </div>
       </ElCard>
     </div>
   </div>
 </template>
 
 <style scoped>
-.dashboard-page {
-  padding: 24px;
-  background: #f5f5f5;
+.workspace-page {
+  padding: 32px;
+  background: #f8fafc;
   min-height: calc(100vh - 80px);
 }
 
@@ -268,139 +305,185 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .header-info h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 8px 0;
-}
-
-.page-desc {
-  font-size: 14px;
-  color: #909399;
   margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.stats-grid {
+.page-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.live-time {
+  margin-top: 10px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.header-actions button {
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.card {
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+.card :deep(.el-card__header) {
+  padding: 0 0 16px;
+  border-bottom: none;
+}
+
+.card :deep(.el-card__header) h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.card :deep(.el-card__body) {
+  padding: 0;
+}
+
+.profile-content {
+  line-height: 1.8;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.profile-content div {
+  margin-top: 8px;
+}
+
+.profile-content div:first-child {
+  margin-top: 0;
+}
+
+.card-action {
+  margin-top: 12px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.permissions-content {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.stat-icon.pending {
+.permission-tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.permission-tag.admin-tag {
   background: #fef3c7;
   color: #d97706;
 }
 
-.stat-icon.annual {
-  background: #dbeafe;
-  color: #2563eb;
+.leave-stats,
+.approval-stats {
+  display: flex;
+  gap: 20px;
+  margin: 16px 0;
 }
 
-.stat-icon.recent {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.stat-icon.calendar {
-  background: #f3e8ff;
-  color: #9333ea;
-}
-
-.stat-content {
-  flex: 1;
+.stat-item {
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  color: #303133;
-  line-height: 1.2;
+  color: #0f172a;
 }
 
-.stat-unit {
-  font-size: 14px;
-  font-weight: 400;
-  color: #909399;
-  margin-left: 4px;
+.stat-value.pending {
+  color: #d97706;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #909399;
+  font-size: 13px;
+  color: #64748b;
   margin-top: 4px;
 }
 
-.stat-detail {
-  font-size: 12px;
-  color: #c0c4cc;
+.card :deep(.el-button) {
+  margin-top: 16px;
 }
 
-.stat-link {
-  font-size: 13px;
+.admin-card {
+  grid-column: span 2;
 }
 
-.content-grid {
+.module-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
 }
 
-@media (max-width: 992px) {
-  .content-grid {
+.module-link {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.module-link:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+.module-title {
+  font-weight: 700;
+}
+
+.module-link small {
+  display: block;
+  margin-top: 6px;
+  color: #475569;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .admin-card {
+    grid-column: span 1;
+  }
+
+  .module-grid {
     grid-template-columns: 1fr;
   }
-}
-
-.section-card {
-  height: fit-content;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 0;
-  color: #909399;
-  font-size: 14px;
 }
 </style>

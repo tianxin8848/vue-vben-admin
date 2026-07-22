@@ -29,8 +29,6 @@ const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 
 const searchForm = reactive({
   approval_status: '',
-  start_date: '',
-  end_date: '',
 });
 
 const showCreateModal = ref(false);
@@ -68,7 +66,7 @@ async function fetchLeaveRequests() {
   loading.value = true;
   try {
     leaveRequests.value = await getLeaveRequestsApi({
-      ...searchForm,
+      approval_status: (searchForm.approval_status || undefined) as any,
     });
   } finally {
     loading.value = false;
@@ -81,8 +79,6 @@ function handleSearch() {
 
 function handleReset() {
   searchForm.approval_status = '';
-  searchForm.start_date = '';
-  searchForm.end_date = '';
   fetchLeaveRequests();
 }
 
@@ -140,20 +136,7 @@ fetchLeaveRequests();
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="开始日期">
-        <ElDatePicker
-          v-model="searchForm.start_date"
-          type="date"
-          placeholder="选择日期"
-        />
-      </ElFormItem>
-      <ElFormItem label="结束日期">
-        <ElDatePicker
-          v-model="searchForm.end_date"
-          type="date"
-          placeholder="选择日期"
-        />
-      </ElFormItem>
+
       <ElButton type="primary" @click="handleSearch">搜索</ElButton>
       <ElButton @click="handleReset">重置</ElButton>
       <ElButton type="primary" @click="showCreateModal = true">

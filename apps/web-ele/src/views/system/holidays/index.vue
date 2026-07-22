@@ -99,7 +99,7 @@ fetchHolidays();
           <ElButton
             size="small"
             type="danger"
-            @click="handleDelete(row)"
+            @click="handleDelete(row as SystemSettingsApi.RegionalHolidayItem)"
           >
             删除
           </ElButton>

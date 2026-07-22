@@ -69,18 +69,15 @@ const departmentCounts = ref<{ name: string; value: number }[]>([]);
 
 onMounted(async () => {
   try {
-    const [employeeRes, leaveRequests, summary, pending] = await Promise.all([
+    const [employees, leaveRequests, summary, pending] = await Promise.all([
       getEmployeesApi(),
       getLeaveRequestsApi(),
-      getAnnualLeaveSummaryApi(),
+      getAnnualLeaveSummaryApi(new Date().getFullYear()),
       getMyPendingApprovalsApi(),
     ]);
 
-    const employees = employeeRes.data;
     totalEmployees.value = employees.length;
-    activeEmployees.value = employees.filter(
-      (e: { status: string }) => e.status === 'active',
-    ).length;
+    activeEmployees.value = employees.length;
     totalLeaveRequests.value = leaveRequests.length;
     pendingLeaveRequests.value = leaveRequests.filter(
       (r) => r.approval_status === 'pending',

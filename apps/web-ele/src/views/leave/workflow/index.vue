@@ -1,78 +1,263 @@
 <script lang="ts" setup>
-import type { LeaveWorkflowApi, EmployeeApi } from '#/api';
-
-import { reactive, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import {
   ElButton,
-  ElDialog,
+  ElCard,
   ElForm,
   ElFormItem,
   ElInput,
   ElMessage,
+  ElMessageBox,
+  ElOption,
   ElSelect,
-  ElTable,
-  ElTableColumn,
-  ElTag,
 } from 'element-plus';
 
 import {
   createLeaveWorkflowApi,
   deleteLeaveWorkflowApi,
-  getLeaveWorkflowsApi,
-  updateLeaveWorkflowApi,
   getEmployeesApi,
+  getLeaveWorkflowsApi,
+  getSystemSettingsApi,
+  updateLeaveWorkflowApi,
 } from '#/api';
 
+const router = useRouter();
 const loading = ref(false);
-const employees = ref<EmployeeApi.EmployeeResponse[]>([]);
-const workflows = ref<LeaveWorkflowApi.LeaveWorkflow[]>([]);
 
-const searchForm = reactive({
-  is_active: undefined as boolean | undefined,
-});
+const currentTime = ref('');
+let timer: null | number = null;
 
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
-
-const workflowForm = reactive<Partial<LeaveWorkflowApi.CreateWorkflowParams>>({
-  name: '',
-  priority: 0,
-  is_active: true,
-  match: {
-    employee_id: null,
-    department: null,
-    region: null,
-    position: null,
-  },
-  approvers: [],
-});
-
-const approverIds = ref<string[]>([]);
+const workflows = ref<any[]>([]);
+const employees = ref<any[]>([]);
+const regions = ref<string[]>([]);
+const departments = ref<string[]>([]);
+const positions = ref<string[]>([]);
 
 const editingId = ref('');
+const formTitle = ref('新增流程');
 
-const employeeOptions = reactive<
-  { label: string; value: string; username: string; full_name: string }[]
->([]);
-
-watch(
-  () => workflowForm.approvers,
-  (newApprovers) => {
-    approverIds.value = newApprovers?.map((a) => a.user_id) || [];
+const workflowForm = reactive({
+  name: '',
+  priority: 100,
+  match: {
+    employee_id: '',
+    region: '',
+    department: '',
+    position: '',
   },
-  { deep: true, immediate: true },
-);
+  approvers: [] as { full_name: null | string; user_id: string; username: string; }[],
+});
+
+const approverLevels = ref<string[][]>([['']]);
+
+const employeeOptions = computed(() => {
+  return employees.value.map((emp) => ({
+    label: `${emp.username || ''} / ${emp.full_name || '未命名'}`,
+    value: emp.id,
+    username: emp.username || '',
+    full_name: emp.full_name || null,
+  }));
+});
+
+function formatNow() {
+  const now = new Date();
+  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[now.getDay()]}`;
+}
+
+function startLiveClock() {
+  currentTime.value = formatNow();
+  timer = window.setInterval(() => {
+    currentTime.value = formatNow();
+  }, 1000);
+}
+
+function buildMatchText(match: any) {
+  const parts: string[] = [];
+  if (match.employee_id) {
+    const emp = employees.value.find((e) => e.id === match.employee_id);
+    parts.push(`员工：${emp ? `${emp.username} / ${emp.full_name || '未命名'}` : match.employee_id}`);
+  }
+  if (match.region) parts.push(`地区：${match.region}`);
+  if (match.department) parts.push(`部门：${match.department}`);
+  if (match.position) parts.push(`岗位：${match.position}`);
+  return parts.length > 0 ? parts.join('，') : '全局默认';
+}
+
+function getApproverLevelsSummary() {
+  return `已设置 ${approverLevels.value.length} 级`;
+}
+
+function addApproverLevel() {
+  approverLevels.value.push(['']);
+}
+
+function removeApproverLevel(index: number) {
+  if (approverLevels.value.length <= 1) return;
+  approverLevels.value.splice(index, 1);
+}
+
+function clearApproverLevels() {
+  approverLevels.value = [['']];
+}
+
+function syncApproversFromLevels() {
+  workflowForm.approvers = approverLevels.value
+    .map((level) => {
+      const userId = level[0];
+      if (!userId) return null;
+      const emp = employeeOptions.value.find((e) => e.value === userId);
+      if (!emp) return null;
+      return {
+        user_id: emp.value,
+        username: emp.username,
+        full_name: emp.full_name,
+      };
+    })
+    .filter((a): a is { full_name: null | string; user_id: string; username: string; } => a !== null);
+}
+
+function validateApprovers() {
+  const selectedIds = approverLevels.value.map((level) => level[0]).filter((id): id is string => !!id);
+  if (selectedIds.length === 0) {
+    ElMessage.error('请至少添加 1 级审批人');
+    return false;
+  }
+  const seen = new Set<string>();
+  const duplicates = selectedIds.filter((id) => {
+    if (seen.has(id)) return true;
+    seen.add(id);
+    return false;
+  });
+  if (duplicates.length > 0) {
+    ElMessage.error('审批人链中不能重复选择同一个人');
+    return false;
+  }
+  return true;
+}
+
+async function saveWorkflow() {
+  if (!workflowForm.name.trim()) {
+    ElMessage.error('请输入流程名称');
+    return;
+  }
+  if (!validateApprovers()) return;
+  syncApproversFromLevels();
+
+  const payload = {
+    name: workflowForm.name.trim(),
+    priority: Number(workflowForm.priority) || 100,
+    match: {
+      employee_id: workflowForm.match.employee_id || null,
+      region: workflowForm.match.region || null,
+      department: workflowForm.match.department || null,
+      position: workflowForm.match.position || null,
+    },
+    approvers: workflowForm.approvers,
+    is_active: true,
+  };
+
+  loading.value = true;
+  try {
+    if (editingId.value) {
+      await updateLeaveWorkflowApi(editingId.value, payload);
+      ElMessage.success('流程已更新');
+    } else {
+      await createLeaveWorkflowApi(payload);
+      ElMessage.success('流程已创建');
+    }
+    resetForm();
+    await fetchWorkflows();
+  } catch {
+    ElMessage.error('保存失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
+function resetForm() {
+  editingId.value = '';
+  formTitle.value = '新增流程';
+  workflowForm.name = '';
+  workflowForm.priority = 100;
+  workflowForm.match = {
+    employee_id: '',
+    region: '',
+    department: '',
+    position: '',
+  };
+  approverLevels.value = [['']];
+}
+
+function startEdit(workflow: any) {
+  editingId.value = workflow.id;
+  formTitle.value = '编辑流程';
+  workflowForm.name = workflow.name || '';
+  workflowForm.priority = workflow.priority || 100;
+  workflowForm.match = {
+    employee_id: (workflow.match && workflow.match.employee_id) || '',
+    region: (workflow.match && workflow.match.region) || '',
+    department: (workflow.match && workflow.match.department) || '',
+    position: (workflow.match && workflow.match.position) || '',
+  };
+  approverLevels.value = (workflow.approvers || []).map((a: any) => [a.user_id]);
+  if (approverLevels.value.length === 0) {
+    approverLevels.value = [['']];
+  }
+}
+
+async function toggleWorkflowStatus(workflow: any) {
+  loading.value = true;
+  try {
+    await updateLeaveWorkflowApi(workflow.id, { is_active: !workflow.is_active });
+    await fetchWorkflows();
+    ElMessage.success(workflow.is_active ? '流程已禁用' : '流程已启用');
+  } catch {
+    ElMessage.error('操作失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteWorkflow(workflow: any) {
+  try {
+    await ElMessageBox.confirm(`确认删除流程：${workflow.name}？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+  } catch {
+    return;
+  }
+  loading.value = true;
+  try {
+    await deleteLeaveWorkflowApi(workflow.id);
+    if (editingId.value === workflow.id) {
+      resetForm();
+    }
+    await fetchWorkflows();
+    ElMessage.success('流程已删除');
+  } catch {
+    ElMessage.error('删除失败');
+  } finally {
+    loading.value = false;
+  }
+}
 
 async function fetchWorkflows() {
   loading.value = true;
   try {
-    const all = await getLeaveWorkflowsApi();
-    if (searchForm.is_active !== undefined) {
-      workflows.value = all.filter((w) => w.is_active === searchForm.is_active);
-    } else {
-      workflows.value = all;
-    }
+    workflows.value = await getLeaveWorkflowsApi();
+  } catch {
+    workflows.value = [];
   } finally {
     loading.value = false;
   }
@@ -81,331 +266,409 @@ async function fetchWorkflows() {
 async function fetchEmployees() {
   try {
     const data = await getEmployeesApi();
-    employees.value = data;
-    employeeOptions.length = 0;
-    data.forEach((emp) => {
-      employeeOptions.push({
-        label: emp.full_name || emp.username,
-        value: emp.id,
-        username: emp.username,
-        full_name: emp.full_name || '',
-      });
-    });
+    employees.value = data.filter((item: any) => item.is_active !== false);
   } catch {
-    console.error('Failed to fetch employees');
+    employees.value = [];
   }
 }
 
-function handleSearch() {
-  fetchWorkflows();
-}
-
-function handleReset() {
-  searchForm.is_active = undefined;
-  fetchWorkflows();
-}
-
-function openCreateModal() {
-  workflowForm.name = '';
-  workflowForm.priority = 0;
-  workflowForm.is_active = true;
-  workflowForm.match = {
-    employee_id: null,
-    department: null,
-    region: null,
-    position: null,
-  };
-  workflowForm.approvers = [];
-  approverIds.value = [];
-  showCreateModal.value = true;
-}
-
-function openEditModal(workflow: LeaveWorkflowApi.LeaveWorkflow) {
-  editingId.value = workflow.id;
-  workflowForm.name = workflow.name;
-  workflowForm.priority = workflow.priority;
-  workflowForm.is_active = workflow.is_active;
-  workflowForm.match = { ...workflow.match };
-  workflowForm.approvers = [...workflow.approvers];
-  approverIds.value = workflow.approvers.map((a) => a.user_id);
-  showEditModal.value = true;
-}
-
-function handleApproverChange(newIds: string[]) {
-  workflowForm.approvers = newIds
-    .map((id) => {
-      const emp = employeeOptions.find((e) => e.value === id);
-      if (!emp) return null;
-      return {
-        user_id: emp.value,
-        username: emp.username,
-        full_name: emp.full_name || null,
-      };
-    })
-    .filter((a): a is LeaveWorkflowApi.WorkflowApprover => a !== null);
-}
-
-async function handleCreate() {
-  if (!workflowForm.name) {
-    ElMessage.warning('请输入流程名称');
-    return;
-  }
-  if (!workflowForm.approvers || workflowForm.approvers.length === 0) {
-    ElMessage.warning('请选择审批人');
-    return;
-  }
+async function loadSystemSettings() {
   try {
-    await createLeaveWorkflowApi(
-      workflowForm as LeaveWorkflowApi.CreateWorkflowParams,
-    );
-    ElMessage.success('创建成功');
-    showCreateModal.value = false;
-    fetchWorkflows();
+    const settings = await getSystemSettingsApi();
+    regions.value = settings.regions || [];
+    departments.value = settings.departments || [];
+    positions.value = settings.positions || [];
   } catch {
-    ElMessage.error('创建失败');
+    regions.value = [];
+    departments.value = [];
+    positions.value = [];
   }
 }
 
-async function handleEdit() {
-  if (!workflowForm.name) {
-    ElMessage.warning('请输入流程名称');
-    return;
-  }
-  if (!workflowForm.approvers || workflowForm.approvers.length === 0) {
-    ElMessage.warning('请选择审批人');
-    return;
-  }
-  try {
-    await updateLeaveWorkflowApi(editingId.value, workflowForm);
-    ElMessage.success('更新成功');
-    showEditModal.value = false;
-    fetchWorkflows();
-  } catch {
-    ElMessage.error('更新失败');
-  }
+function goBackHome() {
+  router.push('/dashboard/workspace');
 }
 
-async function handleDelete(id: string) {
-  try {
-    await deleteLeaveWorkflowApi(id);
-    ElMessage.success('删除成功');
-    fetchWorkflows();
-  } catch {
-    ElMessage.error('删除失败');
-  }
+function goToCalendar() {
+  router.push('/leave/calendar');
 }
 
-fetchWorkflows();
-fetchEmployees();
+onMounted(() => {
+  startLiveClock();
+  Promise.all([fetchWorkflows(), fetchEmployees(), loadSystemSettings()]);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <template>
-  <div class="workflow-page">
+  <div class="workflow-page" v-loading="loading">
     <div class="page-header">
-      <h2>审批流程管理</h2>
+      <div class="header-info">
+        <h2>请假流程维护</h2>
+        <p class="page-subtitle">为不同员工维护不同审批路线。优先级数字越小越优先匹配。</p>
+        <div class="live-time">{{ currentTime }}</div>
+      </div>
+      <div class="header-actions">
+        <ElButton @click="goBackHome">返回工作台</ElButton>
+        <ElButton @click="fetchWorkflows">刷新</ElButton>
+      </div>
     </div>
-    <ElForm :model="searchForm" inline class="search-form">
-      <ElFormItem label="状态">
-        <ElSelect v-model="searchForm.is_active" placeholder="请选择" clearable>
-          <ElOption label="启用" :value="true" />
-          <ElOption label="禁用" :value="false" />
-        </ElSelect>
-      </ElFormItem>
-      <ElButton type="primary" @click="handleSearch">搜索</ElButton>
-      <ElButton @click="handleReset">重置</ElButton>
-      <ElButton type="primary" @click="openCreateModal">新增流程</ElButton>
-    </ElForm>
 
-    <ElTable :data="workflows" border stripe v-loading="loading">
-      <ElTableColumn prop="name" label="流程名称" />
-      <ElTableColumn prop="priority" label="优先级" />
-      <ElTableColumn label="匹配条件">
-        <template #default="{ row }">
-          <span v-if="row.match.department">{{ row.match.department }}</span>
-          <span v-else-if="row.match.position">{{ row.match.position }}</span>
-          <span v-else-if="row.match.region">{{ row.match.region }}</span>
-          <span v-else-if="row.match.employee_id">{{
-            row.match.employee_id
-          }}</span>
-          <span v-else class="text-muted">全部</span>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn prop="approvers" label="审批人" min-width="150">
-        <template #default="{ row }">
-          {{
-            (row as LeaveWorkflowApi.LeaveWorkflow).approvers
-              .map(
-                (a: LeaveWorkflowApi.WorkflowApprover) =>
-                  a.full_name || a.username,
-              )
-              .join(', ') || '-'
-          }}
-        </template>
-      </ElTableColumn>
-      <ElTableColumn prop="is_active" label="状态">
-        <template #default="{ row }">
-          <ElTag :type="row.is_active ? 'success' : 'danger'">
-            {{ row.is_active ? '启用' : '禁用' }}
-          </ElTag>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn prop="created_at" label="创建时间" />
-      <ElTableColumn label="操作" width="150">
-        <template #default="{ row }">
-          <ElButton
-            size="small"
-            @click="openEditModal(row as LeaveWorkflowApi.LeaveWorkflow)"
-          >
-            编辑
-          </ElButton>
-          <ElButton size="small" type="danger" @click="handleDelete(row.id)">
-            删除
-          </ElButton>
-        </template>
-      </ElTableColumn>
-    </ElTable>
+    <div class="subnav">
+      <span class="subnav-link" @click="goToCalendar">请假日历</span>
+      <span class="subnav-link active">流程维护</span>
+    </div>
 
-    <ElDialog v-model="showCreateModal" title="新增审批流程" width="650px">
-      <ElForm :model="workflowForm" label-width="100px">
-        <ElFormItem label="流程名称" required>
-          <ElInput v-model="workflowForm.name" />
-        </ElFormItem>
-        <ElFormItem label="优先级">
-          <ElInput v-model.number="workflowForm.priority" type="number" />
-        </ElFormItem>
-        <ElFormItem label="匹配部门">
-          <ElInput
-            v-model="workflowForm.match!.department"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="匹配职位">
-          <ElInput
-            v-model="workflowForm.match!.position"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="匹配区域">
-          <ElInput
-            v-model="workflowForm.match!.region"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="审批人" required>
-          <ElSelect
-            v-model="approverIds"
-            multiple
-            filterable
-            placeholder="请选择审批人"
-            @change="handleApproverChange"
-          >
-            <ElOption
-              v-for="emp in employeeOptions"
-              :key="emp.value"
-              :label="emp.label"
-              :value="emp.value"
-            />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="状态">
-          <ElSwitch
-            v-model="workflowForm.is_active"
-            active-text="启用"
-            inactive-text="禁用"
-          />
-        </ElFormItem>
-      </ElForm>
-      <template #footer>
-        <ElButton @click="showCreateModal = false">取消</ElButton>
-        <ElButton type="primary" @click="handleCreate">确定</ElButton>
-      </template>
-    </ElDialog>
+    <div class="panel-grid">
+      <ElCard class="card form-panel">
+        <template #header>
+          <h3>{{ formTitle }}</h3>
+        </template>
 
-    <ElDialog v-model="showEditModal" title="编辑审批流程" width="650px">
-      <ElForm :model="workflowForm" label-width="100px">
-        <ElFormItem label="流程名称" required>
-          <ElInput v-model="workflowForm.name" />
-        </ElFormItem>
-        <ElFormItem label="优先级">
-          <ElInput v-model.number="workflowForm.priority" type="number" />
-        </ElFormItem>
-        <ElFormItem label="匹配部门">
-          <ElInput
-            v-model="workflowForm.match!.department"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="匹配职位">
-          <ElInput
-            v-model="workflowForm.match!.position"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="匹配区域">
-          <ElInput
-            v-model="workflowForm.match!.region"
-            placeholder="为空则不限制"
-          />
-        </ElFormItem>
-        <ElFormItem label="审批人" required>
-          <ElSelect
-            v-model="approverIds"
-            multiple
-            filterable
-            placeholder="请选择审批人"
-            @change="handleApproverChange"
-          >
-            <ElOption
-              v-for="emp in employeeOptions"
-              :key="emp.value"
-              :label="emp.label"
-              :value="emp.value"
-            />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="状态">
-          <ElSwitch
-            v-model="workflowForm.is_active"
-            active-text="启用"
-            inactive-text="禁用"
-          />
-        </ElFormItem>
-      </ElForm>
-      <template #footer>
-        <ElButton @click="showEditModal = false">取消</ElButton>
-        <ElButton type="primary" @click="handleEdit">确定</ElButton>
-      </template>
-    </ElDialog>
+        <ElForm :model="workflowForm" label-width="100px">
+          <ElFormItem label="流程名称" required>
+            <ElInput v-model="workflowForm.name" placeholder="例如：大陆-研发部-经理审批" />
+          </ElFormItem>
+
+          <div class="field-row">
+            <ElFormItem label="优先级">
+              <ElInput v-model.number="workflowForm.priority" type="number" :min="1" :max="9999" />
+            </ElFormItem>
+            <ElFormItem label="指定员工">
+              <ElSelect v-model="workflowForm.match.employee_id" placeholder="不指定" clearable>
+                <ElOption v-for="emp in employeeOptions" :key="emp.value" :label="emp.label" :value="emp.value" />
+              </ElSelect>
+            </ElFormItem>
+          </div>
+
+          <div class="field-row">
+            <ElFormItem label="地区">
+              <ElSelect v-model="workflowForm.match.region" placeholder="不限制" clearable>
+                <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
+              </ElSelect>
+            </ElFormItem>
+            <ElFormItem label="部门">
+              <ElSelect v-model="workflowForm.match.department" placeholder="不限制" clearable>
+                <ElOption v-for="d in departments" :key="d" :label="d" :value="d" />
+              </ElSelect>
+            </ElFormItem>
+          </div>
+
+          <ElFormItem label="岗位">
+            <ElSelect v-model="workflowForm.match.position" placeholder="不限制" clearable>
+              <ElOption v-for="p in positions" :key="p" :label="p" :value="p" />
+            </ElSelect>
+          </ElFormItem>
+
+          <ElFormItem label="审批人链">
+            <div class="multi-select-box">
+              <div class="multi-select-actions">
+                <ElButton type="primary" @click="addApproverLevel">+ 添加一级</ElButton>
+                <ElButton @click="clearApproverLevels">清空</ElButton>
+                <span class="multi-select-summary">{{ getApproverLevelsSummary() }}</span>
+              </div>
+              <div class="approver-levels">
+                <div v-for="(level, index) in approverLevels" :key="index" class="approver-level-row">
+                  <span class="approver-level-badge">第{{ index + 1 }}级</span>
+                  <ElSelect v-model="level[0]" placeholder="请选择审批人" clearable>
+                    <ElOption v-for="emp in employeeOptions" :key="emp.value" :label="emp.label" :value="emp.value" />
+                  </ElSelect>
+                  <ElButton @click="removeApproverLevel(index)" :disabled="approverLevels.length <= 1">删除</ElButton>
+                </div>
+              </div>
+            </div>
+            <div class="hint">审批会按第 1 级 → 第 N 级依次流转。流程会按"优先级 + 条件匹配"选择一条审批路线。</div>
+          </ElFormItem>
+
+          <div class="form-actions">
+            <ElButton type="primary" @click="saveWorkflow">{{ editingId ? '更新流程' : '保存流程' }}</ElButton>
+            <ElButton v-if="editingId" @click="resetForm">取消编辑</ElButton>
+          </div>
+        </ElForm>
+      </ElCard>
+
+      <ElCard class="card list-panel">
+        <template #header>
+          <h3>流程列表</h3>
+        </template>
+
+        <div class="hint" style="margin-bottom:14px;">共 {{ workflows.length }} 条流程</div>
+
+        <div class="table-container">
+          <table class="workflow-table">
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>匹配条件</th>
+                <th>审批链</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="workflows.length === 0">
+                <td colspan="5" style="color:#64748b;">暂无数据</td>
+              </tr>
+              <tr v-for="workflow in workflows" :key="workflow.id">
+                <td>
+                  <strong>{{ workflow.name }}</strong>
+                  <div class="hint" style="margin:6px 0 0;font-size:12px;">优先级：{{ workflow.priority }}</div>
+                </td>
+                <td>{{ buildMatchText(workflow.match) }}</td>
+                <td>
+                  <span v-for="(item, index) in workflow.approvers" :key="index" class="tag">
+                    {{ (index as number) + 1 }}级：{{ item.username }}
+                  </span>
+                  <span v-if="!workflow.approvers.length">-</span>
+                </td>
+                <td>
+                  <span class="tag" :class="[workflow.is_active ? 'tag-success' : 'tag-danger']">
+                    {{ workflow.is_active ? '启用' : '禁用' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="row-action" @click="startEdit(workflow)">编辑</span>
+                  <br />
+                  <span class="row-action muted" @click="toggleWorkflowStatus(workflow)">
+                    {{ workflow.is_active ? '禁用' : '启用' }}
+                  </span>
+                  <br />
+                  <span class="row-action muted" @click="deleteWorkflow(workflow)">删除</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ElCard>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .workflow-page {
-  padding: 24px;
-  background: #f5f5f5;
+  padding: 32px;
+  background: #f8fafc;
   min-height: calc(100vh - 80px);
 }
 
 .page-header {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 10px;
 }
 
-.page-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #303133;
+.header-info h2 {
   margin: 0;
+  font-size: 22px;
+  font-weight: 700;
 }
 
-.search-form {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+.page-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
 }
 
-.text-muted {
-  color: #999;
+.live-time {
+  margin-top: 10px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.subnav {
+  display: inline-flex;
+  gap: 10px;
+  margin: 6px 0 18px;
+  padding: 6px;
+  border-radius: 14px;
+  background: #e2e8f0;
+}
+
+.subnav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.subnav-link.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 0.9fr) 1.1fr;
+  gap: 18px;
+}
+
+.card {
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card :deep(.el-card__header) {
+  padding: 0 0 12px;
+  border-bottom: none;
+}
+
+.card :deep(.el-card__header) h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.card :deep(.el-card__body) {
+  padding: 0;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hint {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.multi-select-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.multi-select-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.multi-select-summary {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.approver-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.approver-level-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 72px;
+  gap: 10px;
+  align-items: center;
+}
+
+.approver-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.workflow-table th,
+.workflow-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.workflow-table th {
+  color: #475569;
+  font-weight: 700;
+}
+
+.tag {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12px;
+}
+
+.tag-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.row-action {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.row-action.muted {
+  color: #475569;
+}
+
+@media (max-width: 1280px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+  .approver-level-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

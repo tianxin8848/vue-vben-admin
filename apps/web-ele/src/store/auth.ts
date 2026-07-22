@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loginLoading.value = true;
       // 后端使用 session cookie 认证，登录成功后直接获取用户信息
-      await loginApi(params);
+      await loginApi(params as any);
 
       // 获取用户信息并存储到 accessStore 中
       const [fetchUserInfoResult, accessCodes] = await Promise.all([
