@@ -12,7 +12,7 @@ const routes: RouteRecordRaw[] = [
       authority: ['admin'],
     },
     name: 'LeaveManage',
-    path: '/employee/manage',
+    path: '/leave/manage',
     children: [
       {
         name: 'LeaveManageCalendar',

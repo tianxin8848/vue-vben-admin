@@ -55,7 +55,19 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
       const responseData = error?.response?.data ?? {};
-      const errorMessage = responseData?.error ?? responseData?.message ?? '';
+      // 优先使用 error / message 字段
+      let errorMessage = responseData?.error ?? responseData?.message ?? '';
+      // FastAPI 验证错误返回 detail 字段（数组或字符串）
+      if (!errorMessage && responseData?.detail) {
+        if (Array.isArray(responseData.detail)) {
+          errorMessage = responseData.detail
+            .map((e: any) => e.msg || e.message || '')
+            .filter(Boolean)
+            .join('；');
+        } else if (typeof responseData.detail === 'string') {
+          errorMessage = responseData.detail;
+        }
+      }
       ElMessage.error(errorMessage || msg);
     }),
   );

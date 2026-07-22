@@ -249,8 +249,9 @@ async function handleCreate() {
     createForm.region = '';
     createForm.is_admin = false;
     fetchEmployees();
-  } catch {
-    ElMessage.error('创建失败');
+  } catch (e: any) {
+    // 拦截器已显示具体错误信息，此处无需重复提示
+    console.error('创建员工失败:', e);
   }
 }
 
