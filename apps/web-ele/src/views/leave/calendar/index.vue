@@ -412,7 +412,7 @@ function goBackHome() {
 }
 
 function goToWorkflow() {
-  router.push('/leave/manage/leave-workflows');
+  router.push('/employee/manage/leave-workflows');
 }
 
 onMounted(() => {

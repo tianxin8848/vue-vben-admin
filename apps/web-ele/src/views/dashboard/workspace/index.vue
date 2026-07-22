@@ -144,11 +144,11 @@ function goToUsers() {
 }
 
 function goToLeaveCalendar() {
-  router.push('/leave/manage/leave');
+  router.push('/employee/manage/leave');
 }
 
 function goToWorkflow() {
-  router.push('/leave/manage/leave-workflows');
+  router.push('/employee/manage/leave-workflows');
 }
 
 function goToManageApprovals() {

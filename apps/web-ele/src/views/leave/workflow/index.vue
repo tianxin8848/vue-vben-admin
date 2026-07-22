@@ -290,7 +290,7 @@ function goBackHome() {
 }
 
 function goToCalendar() {
-  router.push('/leave/manage/leave');
+  router.push('/employee/manage/leave');
 }
 
 onMounted(() => {
