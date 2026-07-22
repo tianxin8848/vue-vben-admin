@@ -2,6 +2,8 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { Calendar as ArcoCalendar } from '@arco-design/web-vue';
+import '@arco-design/web-vue/dist/arco.css';
 import {
   ElButton,
   ElCard,
@@ -43,22 +45,26 @@ const regionalHolidays = ref<any[]>([]);
 
 const calendarRecords = ref<any[]>([]);
 
-const monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+// UTC+8 时区辅助函数
+function toUTC8DateKey(date: Date): string {
+  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
+  const y = utc8.getUTCFullYear();
+  const m = String(utc8.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utc8.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
-const weekNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function fromUTC8DateKey(key: string): Date {
+  const parts = key.split('-').map(Number) as [number, number, number];
+  const y = parts[0];
+  const m = parts[1];
+  const d = parts[2];
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0) - 8 * 3600 * 1000);
+}
+
+function getUTC8Now(): Date {
+  return new Date(Date.now() + 8 * 3600 * 1000);
+}
 
 const leaveTypeConfig: Record<string, { color: string; label: string; }> = {
   annual: { label: '年假', color: '#60a5fa' },
@@ -193,69 +199,44 @@ const stats = computed(() => {
   };
 });
 
-const calendarMonths = computed(() => {
-  return monthNames.map((monthName, monthIndex) => {
-    const firstDay = new Date(currentYear.value, monthIndex, 1).getDay();
-    const daysInMonth = new Date(currentYear.value, monthIndex + 1, 0).getDate();
-
-    const cells: {
-      dateKey: string;
-      day: number;
-      entries: any[];
-      hasLeave: boolean;
-      isEmpty: boolean;
-      isHighlighted: boolean;
-      isRisk: boolean;
-      isSelected: boolean;
-      isWeekend: boolean;
-    }[] = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      cells.push({ day: 0, isEmpty: true, isWeekend: false, hasLeave: false, isSelected: false, isRisk: false, isHighlighted: false, dateKey: '', entries: [] });
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${currentYear.value}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const entries = dayMap.value[dateKey] || [];
-      const currentDate = new Date(currentYear.value, monthIndex, day);
-      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-      const isSelected = selectedDateKey.value === dateKey;
-      const isRisk = entries.length >= searchForm.risk_threshold;
-
-      const keyword = searchForm.employee_keyword.trim();
-      const isHighlighted = keyword && entries.some((e: any) => e.employee_name.includes(keyword));
-
-      cells.push({
-        day,
-        isEmpty: false,
-        isWeekend,
-        hasLeave: entries.length > 0,
-        isSelected,
-        isRisk,
-        isHighlighted: Boolean(isHighlighted),
-        dateKey,
-        entries,
-      });
-    }
-
-    const rows: {
-      dateKey: string;
-      day: number;
-      entries: any[];
-      hasLeave: boolean;
-      isEmpty: boolean;
-      isHighlighted: boolean;
-      isRisk: boolean;
-      isSelected: boolean;
-      isWeekend: boolean;
-    }[][] = [];
-    for (let i = 0; i < cells.length; i += 7) {
-      rows.push(cells.slice(i, i + 7));
-    }
-
-    return { monthName, rows };
-  });
+const calendarValue = computed({
+  get() {
+    if (selectedDateKey.value) return fromUTC8DateKey(selectedDateKey.value);
+    const now = getUTC8Now();
+    return fromUTC8DateKey(`${currentYear.value}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`);
+  },
+  set(val: Date) {
+    selectedDateKey.value = toUTC8DateKey(val);
+  },
 });
+
+function onSelectDate(date: Date) {
+  selectedDateKey.value = toUTC8DateKey(date);
+}
+
+function onPanelChange(date: Date) {
+  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
+  currentYear.value = utc8.getUTCFullYear();
+}
+
+function getEntriesForDate(date: Date): any[] {
+  const key = toUTC8DateKey(date);
+  return dayMap.value[key] || [];
+}
+
+function cellClassForDate(date: Date) {
+  const key = toUTC8DateKey(date);
+  const entries = dayMap.value[key] || [];
+  const d = new Date(date.getTime() + 8 * 3600 * 1000);
+  const dayOfWeek = d.getUTCDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  return {
+    'has-leave': entries.length > 0,
+    'is-risk': entries.length >= searchForm.risk_threshold,
+    'is-selected': selectedDateKey.value === key,
+    'is-weekend': isWeekend,
+  };
+}
 
 interface CalendarDetail {
   title: string;
@@ -295,15 +276,16 @@ const calendarDetail = computed<CalendarDetail>(() => {
 });
 
 function formatNow() {
-  const now = new Date();
+  const utc8Now = getUTC8Now();
   const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[now.getDay()]}`;
+  const year = utc8Now.getUTCFullYear();
+  const month = String(utc8Now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utc8Now.getUTCDate()).padStart(2, '0');
+  const hours = String(utc8Now.getUTCHours()).padStart(2, '0');
+  const minutes = String(utc8Now.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(utc8Now.getUTCSeconds()).padStart(2, '0');
+  const dayOfWeek = utc8Now.getUTCDay();
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[dayOfWeek]}`;
 }
 
 function startLiveClock() {
@@ -340,10 +322,11 @@ function getDisplayLimit(entryCount: number) {
 function changeYear(delta: number) {
   currentYear.value += delta;
   selectedDateKey.value = '';
+  fetchCalendar();
 }
 
 function goToCurrentYear() {
-  currentYear.value = new Date().getFullYear();
+  currentYear.value = getUTC8Now().getUTCFullYear();
   selectedDateKey.value = '';
 }
 
@@ -545,67 +528,34 @@ onUnmounted(() => {
         <h3>年历视图</h3>
       </template>
 
-      <div class="calendar-grid" :class="[searchForm.view_mode === 'detail' ? 'detail-mode' : '']">
-        <div v-for="(month, index) in calendarMonths" :key="index" class="month-card">
-          <h4 class="month-title">{{ month.monthName }}</h4>
-          <table class="month-table">
-            <thead>
-              <tr>
-                <th v-for="day in weekNames" :key="day">{{ day }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, rowIndex) in month.rows" :key="rowIndex">
-                <td v-for="(cell, cellIndex) in row" :key="cellIndex" class="day-cell" :class="[{ empty: cell.isEmpty }]">
-                  <div
-                    v-if="!cell.isEmpty"
-                    class="calendar-day" :class="[{
-                      weekend: cell.isWeekend,
-                      'has-leave': cell.hasLeave,
-                      selected: cell.isSelected,
-                      risk: cell.isRisk,
-                      'is-highlighted': cell.isHighlighted,
-                    }]"
-                    @click="selectedDateKey = cell.dateKey"
-                  >
-                    <div class="calendar-day-top">
-                      <span class="day-number">{{ cell.day }}</span>
-                      <span v-if="cell.entries.length" class="day-badge">{{ cell.entries.length }}</span>
-                    </div>
-                    <div class="leave-list">
-                      <div
-                        v-for="(entry, entryIndex) in cell.entries.slice(0, getDisplayLimit(cell.entries.length))"
-                        :key="entryIndex"
-                        class="leave-item" :class="[{ dimmed: entry.approval_status === 'pending' }]"
-                      >
-                        <span class="type-dot" :style="{ background: getLeaveTypeColor(entry.leave_type, entry.approval_status) }"></span>
-                        <span class="leave-name">{{ entry.employee_name }}</span>
-                        <span v-if="getSessionShortLabel(entry.session)" class="leave-session">
-                          {{ getSessionShortLabel(entry.session) }}
-                        </span>
-                      </div>
-                      <div v-if="cell.entries.length > getDisplayLimit(cell.entries.length)" class="more-line">
-                        +{{ cell.entries.length - getDisplayLimit(cell.entries.length) }}
-                      </div>
-                    </div>
-                    <div v-if="cell.entries.length" class="day-bars">
-                      <span
-                        v-for="type in [...new Set(cell.entries.map((e: any) => e.leave_type))]"
-                        :key="type"
-                        class="day-bar"
-                        :style="{ background: getLeaveTypeColor(type, 'approved') }"
-                      ></span>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ArcoCalendar v-model="calendarValue" @select="onSelectDate" @panel-change="onPanelChange">
+        <template #cell="{ date }">
+          <div class="arco-cell-custom" :class="cellClassForDate(date)">
+            <span class="cell-day-num">{{ date.getDate() }}</span>
+            <template v-if="getEntriesForDate(date).length">
+              <span class="cell-count-badge">{{ getEntriesForDate(date).length }}</span>
+              <div class="cell-leave-list">
+                <div
+                  v-for="(entry, idx) in getEntriesForDate(date).slice(0, getDisplayLimit(getEntriesForDate(date).length))"
+                  :key="idx"
+                  class="cell-leave-item"
+                  :class="{ dimmed: entry.approval_status === 'pending' }"
+                >
+                  <span class="cell-type-dot" :style="{ background: getLeaveTypeColor(entry.leave_type, entry.approval_status) }"></span>
+                  <span class="cell-leave-name">{{ entry.employee_name }}</span>
+                  <span v-if="getSessionShortLabel(entry.session)" class="cell-leave-session">{{ getSessionShortLabel(entry.session) }}</span>
+                </div>
+                <div v-if="getEntriesForDate(date).length > getDisplayLimit(getEntriesForDate(date).length)" class="cell-more">
+                  +{{ getEntriesForDate(date).length - getDisplayLimit(getEntriesForDate(date).length) }}
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </ArcoCalendar>
 
       <div class="hint">
-        当前已切换为真实后端数据版本：直接读取 MongoDB 请假记录生成年历，默认模式下尽量直显请假人员，超出时用 <code>+N人</code> 收口；点击日期可看当天详细明细。
+        当前已切换为 Arco Design 日历组件（UTC+8 时区），点击日期可看当天详细明细。
       </div>
     </ElCard>
 
@@ -692,549 +642,93 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.leave-calendar-page {
-  padding: 32px;
-  background: #f8fafc;
-  min-height: calc(100vh - 80px);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.header-info h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.live-time {
-  margin-top: 10px;
-  color: #2563eb;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.toolbar-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-}
-
-.toolbar-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #334155;
-  white-space: nowrap;
-}
-
-.toolbar-select {
-  border: 0;
-  background: transparent;
-  font-weight: 700;
-  color: #0f172a;
-  padding: 0;
-  min-width: 180px;
-}
-
-.year-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 88px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #e2e8f0;
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.subnav {
-  display: inline-flex;
-  gap: 10px;
-  margin: 6px 0 18px;
-  padding: 6px;
-  border-radius: 14px;
-  background: #e2e8f0;
-}
-
-.subnav-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 12px;
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.subnav-link.active {
-  background: #2563eb;
-  color: #fff;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.stat-card {
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.stat-label {
-  color: #64748b;
-  font-size: 13px;
-}
-
-.stat-value {
-  margin-top: 10px;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.card {
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.card :deep(.el-card__header) {
-  padding: 0 0 16px;
-  border-bottom: none;
-}
-
-.card :deep(.el-card__header) h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.card :deep(.el-card__body) {
-  padding: 0;
-}
-
-.control-panel {
-  margin-bottom: 18px;
-}
-
-.control-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
-  align-items: end;
-}
-
-.control-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.control-item label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 8px;
-}
-
-.view-toggle :deep(.el-button) {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.view-toggle :deep(.el-button.active) {
-  background: #2563eb;
-  color: #fff;
-}
-
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  margin-top: 16px;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #475569;
-  font-size: 13px;
-}
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.legend-swatch {
-  width: 18px;
-  height: 10px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.calendar-panel {
-  margin-bottom: 18px;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px 18px;
-}
-
-.calendar-grid.detail-mode {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.month-card {
-  min-width: 0;
-}
-
-.month-title {
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.month-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  background: #fff;
-}
-
-.month-table th {
-  height: 30px;
-  border: 1px solid #d1d5db;
-  background: #f8fafc;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.month-table td {
-  width: 14.285%;
-  border: 1px solid #d1d5db;
-  padding: 0;
-  vertical-align: top;
-}
-
-.day-cell.empty {
-  background: #f8fafc;
-}
-
-.calendar-day {
+.arco-cell-custom {
   position: relative;
-  min-height: 82px;
-  padding: 6px 6px 16px;
-  cursor: pointer;
-  background: #ffffff;
-  transition: background 0.16s ease, box-shadow 0.16s ease;
+  width: 100%;
+  min-height: 60px;
+  padding: 2px 4px;
+  overflow: hidden;
 }
 
-.calendar-grid.detail-mode .calendar-day {
-  min-height: 108px;
+.arco-cell-custom.has-leave {
+  background: rgba(96, 165, 250, 0.06);
+  border-radius: 4px;
 }
 
-.calendar-day:hover {
-  background: #f8fbff;
-}
-
-.calendar-day.selected {
-  box-shadow: inset 0 0 0 2px #2563eb;
-  background: #eff6ff;
-}
-
-.calendar-day.weekend {
-  background: #f1f5f9;
-}
-
-.calendar-day.risk {
+.arco-cell-custom.is-risk {
   box-shadow: inset 0 0 0 2px #ef4444;
+  border-radius: 4px;
 }
 
-.calendar-day.is-highlighted {
-  box-shadow: inset 0 0 0 2px #22c55e;
+.arco-cell-custom.is-selected {
+  background: rgba(96, 165, 250, 0.15);
+  border-radius: 4px;
 }
 
-.calendar-day-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 6px;
-  margin-bottom: 4px;
+.cell-day-num {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
 }
 
-.day-number {
-  font-size: 12px;
-  font-weight: 700;
+.cell-count-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 8px;
+  background: #60a5fa;
+  color: #fff;
+  padding: 0 4px;
 }
 
-.day-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.leave-list {
+.cell-leave-list {
+  margin-top: 2px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-height: 50px;
+  gap: 1px;
 }
 
-.leave-item {
+.cell-leave-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  min-width: 0;
-  padding: 1px 0;
-  font-size: 12px;
-  line-height: 1.25;
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.leave-item.dimmed {
-  opacity: 0.72;
+.cell-leave-item.dimmed {
+  opacity: 0.5;
 }
 
-.type-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  flex: 0 0 auto;
+.cell-type-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
-.leave-name {
+.cell-leave-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  color: #475569;
 }
 
-.leave-session {
-  color: #64748b;
+.cell-leave-session {
+  flex-shrink: 0;
   font-size: 10px;
-  flex: 0 0 auto;
+  color: #94a3b8;
 }
 
-.more-line {
-  margin-top: 2px;
-  color: #475569;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.day-bars {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 5px;
-  display: flex;
-  gap: 3px;
-  height: 6px;
-}
-
-.day-bar {
-  flex: 1;
-  border-radius: 999px;
-}
-
-.hint {
-  margin-top: 16px;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.detail-panel {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 18px;
-}
-
-.detail-section h3 {
-  margin: 0 0 12px;
-  font-size: 18px;
-}
-
-.detail-empty {
-  padding: 18px;
-  border-radius: 14px;
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.detail-group {
-  margin-bottom: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.detail-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-top: 1px solid #e2e8f0;
-  font-size: 14px;
-}
-
-.detail-row-meta {
-  color: #64748b;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.summary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.summary-item {
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fafc;
-  font-size: 14px;
-  color: #334155;
-}
-
-.summary-item strong {
-  display: block;
-  margin-bottom: 4px;
-  color: #0f172a;
-}
-
-.holiday-manager {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 14px;
-  background: #f8fafc;
-}
-
-.holiday-manager-title {
-  font-weight: 700;
-}
-
-.holiday-manager-status {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.7;
-}
-
-.holiday-manager-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 10px;
-  margin-top: 12px;
-  align-items: center;
-}
-
-.holiday-select {
-  width: 100%;
-}
-
-@media (max-width: 1440px) {
-  .control-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1280px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .calendar-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .calendar-grid.detail-mode {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .detail-panel {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 980px) {
-  .page-header {
-    flex-direction: column;
-  }
-  .header-actions {
-    justify-content: flex-start;
-  }
-  .control-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .calendar-grid,
-  .calendar-grid.detail-mode {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .stats-grid,
-  .control-grid,
-  .calendar-grid,
-  .calendar-grid.detail-mode {
-    grid-template-columns: 1fr;
-  }
+.cell-more {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 1px;
 }
 </style>
