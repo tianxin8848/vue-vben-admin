@@ -4,11 +4,7 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import {
-  ElButton,
-  ElOption,
-  ElSelect,
-} from 'element-plus';
+import { ElButton, ElOption, ElSelect } from 'element-plus';
 
 import {
   deleteRegionalHolidayApi,
@@ -160,17 +156,6 @@ function startLiveClock() {
   }, 1000);
 }
 
-function changeYear(delta: number) {
-  currentYear.value += delta;
-  selectedDateKey.value = '';
-  fetchCalendar();
-}
-
-function goToCurrentYear() {
-  currentYear.value = getUTC8Now().getUTCFullYear();
-  selectedDateKey.value = '';
-}
-
 function resetFilters() {
   searchForm.team = '';
   searchForm.region = '';
@@ -315,13 +300,28 @@ onUnmounted(() => {
     description="请假管理包含'请假日历'和'流程维护'，当前为日历视图。"
     v-loading="loading"
   >
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px">
+    <div
+      style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      "
+    >
       <div>
-        <span style="color: #64748b; font-size: 14px">{{ currentTime }}</span>
+        <span style="font-size: 14px; color: #64748b">{{ currentTime }}</span>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+      <div
+        style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center"
+      >
         <ElButton @click="goBackHome">返回工作台</ElButton>
-        <ElSelect v-model="searchForm.region" @change="searchForm.region = $event" style="width: 180px">
+        <ElSelect
+          v-model="searchForm.region"
+          @change="searchForm.region = $event"
+          style="width: 180px"
+        >
           <ElOption label="总览（全部地区）" value="" />
           <ElOption label="未设置地区" value="__unset__" />
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />

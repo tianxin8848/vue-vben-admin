@@ -63,7 +63,7 @@ export async function importDataApi(
     `/data-migration/import?${params.toString()}`,
     {
       method: 'POST',
-      body: formData,
+      data: formData,
       headers: {},
     },
   );
