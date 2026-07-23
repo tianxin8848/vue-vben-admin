@@ -3,6 +3,8 @@ import type { SystemSettingsApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
+import { Page } from '@vben/common-ui';
+
 import {
   ElButton,
   ElDatePicker,
@@ -82,8 +84,7 @@ fetchHolidays();
 </script>
 
 <template>
-  <div class="holidays-page" v-loading="loading">
-    <h2>区域假日管理</h2>
+  <Page title="区域假日管理" v-loading="loading">
     <div style="margin-bottom: 20px">
       <ElButton type="primary" @click="showCreateModal = true">
         新增假日
@@ -135,7 +136,7 @@ fetchHolidays();
         <ElButton type="primary" @click="handleCreate">确定</ElButton>
       </template>
     </ElDialog>
-  </div>
+  </Page>
 </template>
 
 

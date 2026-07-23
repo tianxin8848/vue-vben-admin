@@ -10,18 +10,18 @@ import { getUserInfoApi } from '#/api';
 
 const router = useRouter();
 const loading = ref(false);
-const userInfo = ref<{
-  id: string;
-  username: string;
-  full_name: string;
+const userInfo = ref<null | {
+  department: null | string;
   email: string;
-  phone: string | null;
-  department: string | null;
-  position: string | null;
-  region: string | null;
+  full_name: string;
+  id: string;
   is_admin: boolean;
   module_permissions: EmployeeApi.ModulePermission[];
-} | null>(null);
+  phone: null | string;
+  position: null | string;
+  region: null | string;
+  username: string;
+}>(null);
 
 async function fetchData() {
   loading.value = true;
@@ -54,16 +54,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="workspace-page" v-loading="loading">
-    <div class="page-header">
-      <h2>员工工作台</h2>
-      <p class="page-desc">员工登录后的默认页面</p>
-    </div>
-
+  <Page title="员工工作台" description="员工登录后的默认页面" v-loading="loading">
     <div class="quick-actions">
       <div class="action-card" @click="goToProfile">
         <div class="action-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
         </div>
         <span class="action-text">个人信息维护</span>
       </div>
@@ -131,32 +126,10 @@ onMounted(() => {
         </div>
       </ElCard>
     </div>
-  </div>
+  </Page>
 </template>
 
 <style scoped>
-.workspace-page {
-  padding: 24px;
-  background: #f5f5f5;
-  min-height: calc(100vh - 80px);
-}
-
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-header h2 {
-  font-size: 22px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 8px 0;
-}
-
-.page-desc {
-  font-size: 14px;
-  color: #909399;
-  margin: 0;
-}
 
 .quick-actions {
   display: flex;

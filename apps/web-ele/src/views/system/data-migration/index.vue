@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { ref, reactive } from 'vue';
 
+import { Page } from '@vben/common-ui';
+
 import {
   ElButton,
   ElCard,
@@ -159,14 +161,10 @@ fetchBackups();
 </script>
 
 <template>
-  <div class="data-migration-page">
-    <div class="page-header">
-      <h2>数据处理维护</h2>
-      <p class="page-desc">
-        用于在本地数据库与远程数据库之间进行备份/恢复、数据导出与数据导入。
-      </p>
-    </div>
-
+  <Page
+    title="数据处理维护"
+    description="用于在本地数据库与远程数据库之间进行备份/恢复、数据导出与数据导入。"
+  >
     <ElCard header="数据导出">
       <p class="card-desc">导出格式为 NDJSON（逐行 JSON），支持 ObjectId 与日期类型。</p>
       <ElForm :model="exportForm" inline>
@@ -262,5 +260,5 @@ fetchBackups();
         </div>
       </div>
     </ElCard>
-  </div>
+  </Page>
 </template>
