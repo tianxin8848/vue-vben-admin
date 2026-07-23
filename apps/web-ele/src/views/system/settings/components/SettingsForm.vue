@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { SystemSettingsApi } from '#/api';
-import { onMounted, ref, watch } from 'vue';
-import { ElButton, ElCheckbox, ElForm, ElFormItem, ElInput } from 'element-plus';
+import { computed, onMounted, ref, watch } from 'vue';
+import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus';
 import { getSystemSettingsApi } from '#/api';
 
 const props = defineProps<{
@@ -61,6 +61,8 @@ function toggleModule(code: string) {
     localSelectedModules.value = localSelectedModules.value.filter((c) => c !== code);
   }
 }
+
+const gridKey = computed(() => localSelectedModules.value.join(','));
 </script>
 
 <template>
@@ -83,9 +85,9 @@ function toggleModule(code: string) {
         <ElButton size="small" type="default" @click="clearModules">清空选择</ElButton>
         <span style="color:#2563eb;font-weight:700">{{ modulesSummary }}</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <div :key="gridKey" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
         <div v-for="mod in localModules" :key="mod.module_code" style="padding:14px 16px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff;cursor:pointer;display:flex;align-items:center;" @click="toggleModule(mod.module_code)">
-          <ElCheckbox :checked="localSelectedModules.includes(mod.module_code)" />
+          <input type="checkbox" :checked="localSelectedModules.includes(mod.module_code)" tabindex="-1" style="pointer-events:none;width:16px;height:16px" />
           <div style="margin-left:10px">
             <div style="font-weight:700">{{ mod.module_name }}</div>
             <div style="color:#64748b;font-size:12px;margin-top:4px">{{ mod.module_code }}</div>
