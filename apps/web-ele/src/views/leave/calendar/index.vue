@@ -8,7 +8,6 @@ import {
   ElButton,
   ElOption,
   ElSelect,
-  ElTag,
 } from 'element-plus';
 
 import {
@@ -327,10 +326,6 @@ onUnmounted(() => {
           <ElOption label="未设置地区" value="__unset__" />
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
-        <ElButton @click="changeYear(-1)">上一年</ElButton>
-        <ElTag size="large" type="primary" effect="dark">{{ currentYear }}</ElTag>
-        <ElButton @click="changeYear(1)">下一年</ElButton>
-        <ElButton type="primary" @click="goToCurrentYear">回到今年</ElButton>
       </div>
     </div>
 

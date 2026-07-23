@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import { ElDatePicker, ElTable, ElTableColumn } from 'element-plus';
 
 interface CalendarCell {
-  day: number | null;
+  day: null | number;
   date: string;
 }
 
@@ -15,14 +15,12 @@ const selectedMonth = ref(7);
 
 const yearMonthValue = ref('2026-07');
 
-function onYearMonthChange(val: string | null) {
+function onYearMonthChange(val: null | string) {
   if (!val) return;
   const [y, m] = val.split('-');
   selectedYear.value = Number(y);
   selectedMonth.value = Number(m);
 }
-
-const calendarTitle = computed(() => `${selectedYear.value}年${selectedMonth.value}月`);
 
 const calendarData = computed<CalendarCell[]>(() => {
   const year = selectedYear.value;
@@ -63,7 +61,6 @@ const calendarRows = computed(() => {
 <template>
   <div>
     <div class="calendar-header">
-      <h2>{{ calendarTitle }}</h2>
       <ElDatePicker
         v-model="yearMonthValue"
         type="month"
