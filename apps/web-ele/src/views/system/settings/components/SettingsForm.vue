@@ -31,15 +31,30 @@ const localRegionStr = ref(props.regionStr);
 const localSelectedModules = ref<string[]>([...props.selectedModules]);
 const localModules = ref<SystemSettingsApi.SystemModuleItem[]>([]);
 
+async function updateCheckboxState() {
+  await nextTick();
+  localModules.value.forEach((row) => {
+    gridApi.grid.setCheckboxRow(
+      row,
+      localSelectedModules.value.includes(row.module_code),
+    );
+  });
+}
+
 function handleCheckboxChange() {
   const records = gridApi.grid.getCheckboxRecords();
-  localSelectedModules.value = records.map((r) => r.module_code);
-  emit('update:selectedModules', [...localSelectedModules.value]);
+  const newSelected = records.map((r) => r.module_code);
+  localSelectedModules.value = newSelected;
+  emit('update:selectedModules', [...newSelected]);
 }
 
 const gridOptions: VxeGridProps<SystemSettingsApi.SystemModuleItem> = {
+  rowConfig: {
+    keyField: 'module_code',
+  },
   checkboxConfig: {
     highlight: true,
+    checkRowKeys: [],
   },
   columns: [
     { type: 'checkbox', width: 50 },
@@ -55,22 +70,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions,
 });
 
-async function syncInitialSelection() {
-  await nextTick();
-  localModules.value.forEach((row) => {
-    gridApi.grid.setCheckboxRow(
-      row,
-      localSelectedModules.value.includes(row.module_code),
-    );
-  });
-}
-
 onMounted(async () => {
   try {
     const settings = await getSystemSettingsApi();
     localModules.value = settings?.modules || [];
-    gridApi.setGridOptions({ data: localModules.value });
-    await syncInitialSelection();
+    gridApi.setGridOptions({
+      data: localModules.value,
+    });
+    await updateCheckboxState();
   } catch {
     localModules.value = [];
   }
@@ -117,9 +124,9 @@ watch(localRegionStr, (newVal) => {
 
 watch(
   () => props.selectedModules,
-  (newVal) => {
+  async (newVal) => {
     localSelectedModules.value = [...newVal];
-    syncInitialSelection();
+    await updateCheckboxState();
   },
   { deep: true },
 );
