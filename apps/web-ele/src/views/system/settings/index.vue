@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import type { SystemSettingsApi } from '#/api';
+
 import { onMounted, ref } from 'vue';
-import { ElCard, ElMessage } from 'element-plus';
+
 import { Page } from '@vben/common-ui';
 
 import {
@@ -11,11 +12,11 @@ import {
   upsertRegionalHolidayRangeApi,
 } from '#/api';
 
-import SettingsForm from './components/SettingsForm.vue';
 import ClaimReasonEditor from './components/ClaimReasonEditor.vue';
 import CurrencyEditor from './components/CurrencyEditor.vue';
-import HolidayEditor from './components/HolidayEditor.vue';
 import HolidayCatalogEditor from './components/HolidayCatalogEditor.vue';
+import HolidayEditor from './components/HolidayEditor.vue';
+import SettingsForm from './components/SettingsForm.vue';
 import SettingsPreview from './components/SettingsPreview.vue';
 
 const loading = ref(false);
@@ -27,7 +28,7 @@ const regionStr = ref('');
 const claimReasonsStr = ref('');
 const claimCurrenciesStr = ref('');
 
-const selectedModules = ref<Set<string>>(new Set());
+const selectedModules = ref<string[]>([]);
 
 const formMessage = ref('');
 const formMessageType = ref<'' | 'error' | 'success'>('');
@@ -87,7 +88,7 @@ async function fetchSettings() {
       claimReasonsStr.value = (settings.value.claim_reasons || []).map((item) => item.name || '').filter(Boolean).join('\n');
       claimCurrenciesStr.value = (settings.value.claim_currencies || []).map((item) => `${item.currency_code || ''},${item.to_hkd_rate || ''}`).join('\n');
 
-      selectedModules.value = new Set(settings.value.modules.map((m) => m.module_code));
+      selectedModules.value = settings.value.modules.map((m) => m.module_code);
     }
   } finally {
     loading.value = false;
@@ -101,7 +102,7 @@ async function handleSaveSettings() {
       positions: parseLineList(posStr.value),
       regions: parseLineList(regionStr.value),
       modules: (settings.value?.modules || [])
-        .filter((m) => selectedModules.value.has(m.module_code))
+        .filter((m) => selectedModules.value.includes(m.module_code))
         .map((m) => ({ module_code: m.module_code, module_name: m.module_name })),
       claim_reasons: parseLineList(claimReasonsStr.value).map((name) => ({ name })),
       claim_currencies: parseClaimCurrencies(claimCurrenciesStr.value),
@@ -126,14 +127,14 @@ async function handleSaveHoliday(data: SystemSettingsApi.RegionalHolidayRangeUps
   }
 }
 
-async function handleSaveCatalog(data: { region: string; holidayNames: string }) {
+async function handleSaveCatalog(data: { holidayNames: string; region: string; }) {
   try {
     const catalogs = settings.value?.regional_holiday_catalogs || [];
     const existingIndex = catalogs.findIndex(
       (c) => c.region.toLowerCase() === data.region.toLowerCase(),
     );
     const updatedCatalogs = [...catalogs];
-    if (existingIndex >= 0) {
+    if (existingIndex !== -1) {
       updatedCatalogs[existingIndex] = {
         region: data.region,
         holiday_names: parseLineList(data.holidayNames),
@@ -184,15 +185,15 @@ onMounted(() => {
   >
     <div style="display: grid; grid-template-columns: minmax(420px, 1.15fr) minmax(320px, 0.85fr); gap: 20px">
       <div>
-        <ElCard header="参数配置">
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;background:#fff">
+          <h3 style="margin:0 0 16px;font-size:16px;font-weight:700">参数配置</h3>
           <p style="color: #64748b; margin-bottom: 18px">前三项按“一行一个值”维护；模块列表、地区假期和地区假期名称清单都统一由数据库中的系统参数维护，相关页面会直接读取这里的结果。</p>
 
           <SettingsForm
-            v-model:deptStr="deptStr"
-            v-model:posStr="posStr"
-            v-model:regionStr="regionStr"
-            v-model:selectedModules="selectedModules"
-            :modules="settings?.modules || []"
+            v-model:dept-str="deptStr"
+            v-model:pos-str="posStr"
+            v-model:region-str="regionStr"
+            v-model:selected-modules="selectedModules"
             @save="handleSaveSettings"
           />
 
@@ -209,26 +210,26 @@ onMounted(() => {
 
           <HolidayEditor
             :regions="settings?.regions || []"
-            :holidayCatalogs="settings?.regional_holiday_catalogs || []"
+            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
             v-model:message="holidayMessage"
-            v-model:messageType="holidayMessageType"
+            v-model:message-type="holidayMessageType"
             @save="handleSaveHoliday"
           />
 
           <HolidayCatalogEditor
             :regions="settings?.regions || []"
-            :holidayCatalogs="settings?.regional_holiday_catalogs || []"
+            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
             v-model:message="catalogMessage"
-            v-model:messageType="catalogMessageType"
+            v-model:message-type="catalogMessageType"
             @save="handleSaveCatalog"
           />
-        </ElCard>
+        </div>
       </div>
 
       <div>
         <SettingsPreview
           :settings="settings"
-          @deleteHoliday="handleDeleteHoliday"
+          @delete-holiday="handleDeleteHoliday"
         />
       </div>
     </div>

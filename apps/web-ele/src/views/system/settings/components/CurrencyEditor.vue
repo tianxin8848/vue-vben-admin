@@ -2,11 +2,11 @@
 import { ElForm, ElFormItem, ElInput } from 'element-plus';
 
 defineProps<{
-  value: string;
+  modelValue: string;
 }>();
 
 defineEmits<{
-  (e: 'update:value', value: string): void;
+  (e: 'update:modelValue', value: string): void;
 }>();
 </script>
 
@@ -17,11 +17,11 @@ defineEmits<{
     <ElForm label-width="160px">
       <ElFormItem label="币种列表">
         <ElInput
-          :value="value"
+          :value="modelValue"
           type="textarea"
           :rows="3"
           placeholder="例如：&#10;CNY,1.09&#10;HKD,1.0&#10;USD,7.8&#10;MOP,0.97"
-          @input="$emit('update:value', $event)"
+          @input="$emit('update:modelValue', $event)"
         />
       </ElFormItem>
     </ElForm>

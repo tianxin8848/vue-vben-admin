@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import type { SystemSettingsApi } from '#/api';
+
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
@@ -9,44 +11,62 @@ import {
 } from 'element-plus';
 
 import {
-  getUserInfoApi,
-  getMyPendingApprovalsApi,
-  getMyLeaveRequestsApi,
   getAnnualLeaveSummaryApi,
+  getMyLeaveRequestsApi,
+  getMyPendingApprovalsApi,
+  getSystemSettingsApi,
+  getUserInfoApi,
 } from '#/api';
 
 const router = useRouter();
 const loading = ref(false);
 
 const currentTime = ref('');
-let timer: number | null = null;
+let timer: null | number = null;
 
 const userInfo = ref<null | {
-  id: string;
-  username: string;
-  full_name: string;
-  department: string | null;
-  position: string | null;
+  department: null | string;
   email: string;
-  phone: string | null;
-  region: string | null;
+  full_name: string;
+  id: string;
   is_admin: boolean;
   module_permissions: Array<{
+    can_view: boolean;
     module_code: string;
     module_name: string;
-    can_view: boolean;
   }>;
+  phone: null | string;
+  position: null | string;
+  region: null | string;
+  username: string;
 }>(null);
 
 const pendingApprovals = ref<any[]>([]);
 const myLeaveRequests = ref<any[]>([]);
 const annualLeaveSummary = ref<null | {
-  entitlement_days: number;
   available_days: number;
+  entitlement_days: number;
   used_days: number;
 }>(null);
 
 const currentYear = new Date().getFullYear();
+
+const modules = ref<SystemSettingsApi.SystemModuleItem[]>([]);
+
+const modulePathMap: Record<string, string> = {
+  employee_home: '/employee',
+  employee_password: '/employee/change-password',
+  employee_leave: '/employee/my-leave',
+  admin_dashboard: '/dashboard/workspace',
+  user_management: '/employee/manage/users',
+  leave_calendar: '/employee/manage/leave',
+  leave_workflows: '/employee/manage/leave-workflows',
+  approval_management: '/employee/manage/approvals',
+  system_settings: '/employee/manage/settings',
+  data_migration: '/employee/manage/data-migration',
+  access_control: '/employee/manage/access-control',
+  claim_management: '/employee/claims',
+};
 
 const hasLeavePermission = computed(() => {
   if (!userInfo.value) return false;
@@ -88,11 +108,12 @@ function startLiveClock() {
 async function fetchData() {
   loading.value = true;
   try {
-    const [userRes, approvalsRes, leaveRes, annualRes] = await Promise.all([
+    const [userRes, approvalsRes, leaveRes, annualRes, settingsRes] = await Promise.all([
       getUserInfoApi(),
       getMyPendingApprovalsApi(),
       getMyLeaveRequestsApi(),
       getAnnualLeaveSummaryApi(currentYear),
+      getSystemSettingsApi(),
     ]);
 
     userInfo.value = {
@@ -111,13 +132,14 @@ async function fetchData() {
     pendingApprovals.value = approvalsRes;
     myLeaveRequests.value = leaveRes;
     annualLeaveSummary.value = annualRes;
+    modules.value = settingsRes.modules || [];
 
     const detailedUser = await getUserInfoApi();
     if ('module_permissions' in detailedUser) {
       userInfo.value.module_permissions = detailedUser.module_permissions as any;
     }
-  } catch (e) {
-    console.error('Dashboard fetch error:', e);
+  } catch (error) {
+    console.error('Dashboard fetch error:', error);
   } finally {
     loading.value = false;
   }
@@ -139,25 +161,7 @@ function goToProfile() {
   router.push('/employee/profile');
 }
 
-function goToUsers() {
-  router.push('/employee/manage/users');
-}
 
-function goToLeaveCalendar() {
-  router.push('/employee/manage/leave');
-}
-
-function goToWorkflow() {
-  router.push('/employee/manage/leave-workflows');
-}
-
-function goToManageApprovals() {
-  router.push('/employee/manage/approvals');
-}
-
-function goToSettings() {
-  router.push('/employee/manage/settings');
-}
 
 onMounted(() => {
   startLiveClock();
@@ -268,25 +272,14 @@ onUnmounted(() => {
           <h3>系统管理模块</h3>
         </template>
         <div class="module-grid">
-          <div class="module-link" @click="goToUsers">
-            <div class="module-title">用户管理</div>
-            <small>管理员工账号、管理员身份和模块权限。</small>
-          </div>
-          <div class="module-link" @click="goToLeaveCalendar">
-            <div class="module-title">请假管理</div>
-            <small>查看地区日历、全年排期和请假总览。</small>
-          </div>
-          <div class="module-link" @click="goToWorkflow">
-            <div class="module-title">流程维护</div>
-            <small>配置不同员工对应的审批链条。</small>
-          </div>
-          <div class="module-link" @click="goToManageApprovals">
-            <div class="module-title">审批管理</div>
-            <small>集中查看并处理管理侧工作流待办。</small>
-          </div>
-          <div class="module-link" @click="goToSettings">
-            <div class="module-title">系统参数</div>
-            <small>维护部门、岗位、地区和模块配置。</small>
+          <div
+            v-for="mod in modules"
+            :key="mod.module_code"
+            class="module-link"
+            @click="router.push(modulePathMap[mod.module_code] || '/employee')"
+          >
+            <div class="module-title">{{ mod.module_name }}</div>
+            <small>{{ mod.module_code }}</small>
           </div>
         </div>
       </ElCard>

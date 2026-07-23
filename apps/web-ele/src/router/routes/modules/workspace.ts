@@ -33,6 +33,17 @@ const routes: RouteRecordRaw[] = [
           title: $t('page.workspace.profile'),
         },
       },
+      // ─── 员工自助：报销相关 ─────────────────────────────────────────
+      {
+        name: 'EmployeeClaims',
+        path: 'claims',
+        component: () => import('#/views/claim/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:receipt',
+          title: '报销管理',
+        },
+      },
       // ─── 员工自助：请假相关 ─────────────────────────────────────────
       // {
       //   name: 'EmployeeLeaveApply',

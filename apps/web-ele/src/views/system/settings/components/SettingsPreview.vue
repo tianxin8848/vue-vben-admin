@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { SystemSettingsApi } from '#/api';
 import { computed, ref } from 'vue';
-import { ElButton, ElOption, ElSelect, ElTable, ElTableColumn, ElTag } from 'element-plus';
+import { ElButton, ElOption, ElSelect, ElTag } from 'element-plus';
 
 const props = defineProps<{
   settings: null | SystemSettingsApi.SystemSettingsResponse;
@@ -69,7 +69,8 @@ function handleDeleteHoliday(startDate: string, endDate: string, region: string)
 </script>
 
 <template>
-  <ElCard header="当前预览">
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:20px;background:#fff">
+    <h3 style="margin:0 0 16px;font-size:16px;font-weight:700">当前预览</h3>
     <p style="color: #64748b; margin-bottom: 20px">这些参数统一保存在一个 MongoDB 集合中，保存后新增员工页面会直接使用。</p>
 
     <div style="margin-bottom: 20px">
@@ -98,13 +99,10 @@ function handleDeleteHoliday(startDate: string, endDate: string, region: string)
 
     <div style="margin-bottom: 20px">
       <div style="font-weight: 700; margin-bottom: 10px">模块</div>
-      <ElTable :data="settings?.modules || []" size="small" border>
-        <ElTableColumn prop="module_code" label="模块编码" />
-        <ElTableColumn prop="module_name" label="模块名称" />
-        <template #empty>
-          <span style="color: #64748b">暂无模块配置</span>
-        </template>
-      </ElTable>
+      <div v-if="settings?.modules?.length" style="display:flex;flex-wrap:wrap;gap:8px">
+        <ElTag v-for="m in settings.modules" :key="m.module_code" type="warning" size="small">{{ m.module_name }} ({{ m.module_code }})</ElTag>
+      </div>
+      <span v-else style="color: #64748b; font-size: 13px">暂无模块配置</span>
     </div>
 
     <div style="margin-bottom: 20px">
@@ -117,13 +115,10 @@ function handleDeleteHoliday(startDate: string, endDate: string, region: string)
 
     <div style="margin-bottom: 20px">
       <div style="font-weight: 700; margin-bottom: 10px">币种与港币汇率</div>
-      <ElTable :data="settings?.claim_currencies || []" size="small" border>
-        <ElTableColumn prop="currency_code" label="币种" />
-        <ElTableColumn prop="to_hkd_rate" label="汇率" />
-        <template #empty>
-          <span style="color: #64748b">暂无币种配置</span>
-        </template>
-      </ElTable>
+      <div v-if="settings?.claim_currencies?.length" style="display:flex;flex-wrap:wrap;gap:8px">
+        <ElTag v-for="c in settings.claim_currencies" :key="c.currency_code" type="success" size="small">{{ c.currency_code }} → {{ c.to_hkd_rate }}</ElTag>
+      </div>
+      <span v-else style="color: #64748b; font-size: 13px">暂无币种配置</span>
     </div>
 
     <div style="margin-bottom: 20px">
@@ -133,34 +128,23 @@ function handleDeleteHoliday(startDate: string, endDate: string, region: string)
           <ElOption v-for="y in Array.from({ length: 100 }, (_, i) => 2000 + i)" :key="y" :label="`${y }年`" :value="y" />
         </ElSelect>
       </div>
-      <ElTable :data="groupedHolidays" size="small" border>
-        <ElTableColumn prop="region" label="地区" />
-        <ElTableColumn label="日期">
-          <template #default="{ row }">{{ row.start_date === row.end_date ? row.start_date : `${row.start_date}/${row.end_date}` }}</template>
-        </ElTableColumn>
-        <ElTableColumn prop="holiday_name" label="假期名称" />
-        <ElTableColumn label="操作" width="80">
-          <template #default="{ row }">
-            <ElButton size="small" type="danger" @click="handleDeleteHoliday(row.start_date, row.end_date, row.region)">删除</ElButton>
-          </template>
-        </ElTableColumn>
-        <template #empty>
-          <span style="color: #64748b">暂无地区假期配置</span>
-        </template>
-      </ElTable>
+      <div v-if="groupedHolidays.length" style="display:flex;flex-direction:column;gap:6px">
+        <div v-for="(h, idx) in groupedHolidays" :key="idx" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f8fafc;border-radius:6px;font-size:13px">
+          <span><ElTag size="small">{{ h.region }}</ElTag> {{ h.start_date === h.end_date ? h.start_date : `${h.start_date}/${h.end_date}` }} — {{ h.holiday_name }}</span>
+          <ElButton size="small" type="danger" link @click="handleDeleteHoliday(h.start_date, h.end_date, h.region)">删除</ElButton>
+        </div>
+      </div>
+      <span v-else style="color: #64748b; font-size: 13px">暂无地区假期配置</span>
     </div>
 
     <div>
       <div style="font-weight: 700; margin-bottom: 10px">地区假期名称清单</div>
-      <ElTable :data="settings?.regional_holiday_catalogs || []" size="small" border>
-        <ElTableColumn prop="region" label="地区" />
-        <ElTableColumn label="假期名称列表">
-          <template #default="{ row }">{{ (row.holiday_names || []).join(' / ') || '-' }}</template>
-        </ElTableColumn>
-        <template #empty>
-          <span style="color: #64748b">暂无地区假期名称清单配置</span>
-        </template>
-      </ElTable>
+      <div v-if="settings?.regional_holiday_catalogs?.length" style="display:flex;flex-direction:column;gap:6px">
+        <div v-for="(c, idx) in settings.regional_holiday_catalogs" :key="idx" style="padding:6px 10px;background:#f8fafc;border-radius:6px;font-size:13px">
+          <ElTag size="small">{{ c.region }}</ElTag> {{ (c.holiday_names || []).join(' / ') || '-' }}
+        </div>
+      </div>
+      <span v-else style="color: #64748b; font-size: 13px">暂无地区假期名称清单配置</span>
     </div>
-  </ElCard>
+  </div>
 </template>
