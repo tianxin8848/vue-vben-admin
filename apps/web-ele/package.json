@@ -26,6 +26,10 @@
     "#/*": "./src/*"
   },
   "dependencies": {
+    "@fullcalendar/core": "catalog:",
+    "@fullcalendar/daygrid": "catalog:",
+    "@fullcalendar/multimonth": "catalog:",
+    "@fullcalendar/vue3": "catalog:",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -48,7 +52,7 @@
     "vue-router": "catalog:"
   },
   "devDependencies": {
-    "@arco-design/web-vue": "^2.58.0",
+    "@arco-design/web-vue": "catalog:",
     "unplugin-element-plus": "catalog:"
   }
 }

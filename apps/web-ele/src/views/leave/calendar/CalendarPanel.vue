@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { ElCard } from 'element-plus';
-import { Calendar as ArcoCalendar } from '@arco-design/web-vue';
+import { computed, ref } from 'vue';
+
+import { ElButton, ElCalendar, ElCard } from 'element-plus';
+
+import cnHolidayData from '#/data/holiday/CN-holiday.json';
+import hkHolidayData from '#/data/holiday/hk-holiday.json';
 
 interface CalendarRecord {
   id: string;
@@ -17,145 +20,391 @@ interface Props {
   currentYear: number;
   searchForm: {
     risk_threshold: number;
-    view_mode: 'standard' | 'detail';
+    view_mode: 'detail' | 'standard';
   };
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'selectDate', date: Date): void;
-  (e: 'panelChange', date: Date): void;
+  (e: 'panelChange' | 'selectDate', date: Date): void;
 }>();
 
-const leaveTypeConfig: Record<string, { color: string; label: string; }> = {
-  annual: { label: '年假', color: '#60a5fa' },
-  personal: { label: '事假', color: '#fb923c' },
-  sick: { label: '病假', color: '#f87171' },
-  lieu: { label: '调休', color: '#4ade80' },
-  long: { label: '长假', color: '#a78bfa' },
-};
+const currentView = ref<'month' | 'year'>('year');
+const selectedMonth = ref(new Date().getMonth());
 
-const approvalStatusConfig: Record<string, { label: string; opacity: number }> = {
-  approved: { label: '已通过', opacity: 1 },
-  pending: { label: '待审批', opacity: 0.5 },
-  rejected: { label: '已驳回', opacity: 0.45 },
-  withdrawn: { label: '已撤回', opacity: 0.35 },
-};
+const cnHolidayDates = new Set(
+  cnHolidayData.days
+    .filter((day: { date: string; isOffDay: boolean }) => day.isOffDay)
+    .map((day: { date: string }) => day.date),
+);
 
-function toUTC8DateKey(date: Date): string {
-  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
-  const y = utc8.getUTCFullYear();
-  const m = String(utc8.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(utc8.getUTCDate()).padStart(2, '0');
+const hkHolidayDates = new Set(
+  Object.keys(hkHolidayData as Record<string, string>),
+);
+
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-function fromUTC8DateKey(key: string): Date {
-  const parts = key.split('-').map(Number) as [number, number, number];
-  const y = parts[0];
-  const m = parts[1];
-  const d = parts[2];
-  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0) - 8 * 3600 * 1000);
-}
-
-const calendarValue = computed({
-  get() {
-    if (props.selectedDateKey) return fromUTC8DateKey(props.selectedDateKey);
-    const now = new Date(Date.now() + 8 * 3600 * 1000);
-    return fromUTC8DateKey(`${props.currentYear}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`);
-  },
-  set(val: Date) {
-    emit('selectDate', val);
-  },
-});
-
-function onSelectDate(date: Date) {
-  emit('selectDate', date);
-}
-
-function onPanelChange(date: Date) {
-  emit('panelChange', date);
-}
-
-function getEntriesForDate(date: Date): CalendarRecord[] {
-  const key = toUTC8DateKey(date);
-  return props.dayMap[key] || [];
-}
-
-function cellClassForDate(date: Date) {
-  const key = toUTC8DateKey(date);
-  const entries = props.dayMap[key] || [];
-  const d = new Date(date.getTime() + 8 * 3600 * 1000);
-  const dayOfWeek = d.getUTCDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+function getHolidayInfo(date: Date) {
+  const key = toDateKey(date);
+  const isCN = cnHolidayDates.has(key);
+  const isHK = hkHolidayDates.has(key);
   return {
-    'has-leave': entries.length > 0,
-    'is-risk': entries.length >= props.searchForm.risk_threshold,
-    'is-selected': props.selectedDateKey === key,
-    'is-weekend': isWeekend,
+    isCNHoliday: isCN,
+    isHKHoliday: isHK,
+    isHoliday: isCN || isHK,
   };
 }
 
-function getLeaveTypeColor(type: string, status: string) {
-  const baseColor = leaveTypeConfig[type]?.color || '#94a3b8';
-  const opacity = approvalStatusConfig[status]?.opacity ?? 1;
-  if (opacity === 1) return baseColor;
-  const hex = baseColor.replace('#', '');
-  const red = Number.parseInt(hex.slice(0, 2), 16);
-  const green = Number.parseInt(hex.slice(2, 4), 16);
-  const blue = Number.parseInt(hex.slice(4, 6), 16);
-  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-}
-
-function getSessionShortLabel(session: string) {
-  if (session === 'morning') return '上';
-  if (session === 'afternoon') return '下';
+function getHolidayName(date: Date): string {
+  const key = toDateKey(date);
+  const hkData = hkHolidayData as Record<string, string>;
+  if (hkHolidayDates.has(key)) {
+    const name = hkData[key];
+    if (!name) return '';
+    if (name.includes('｜')) {
+      return name.split('｜')[0] || '';
+    }
+    return name;
+  }
+  if (cnHolidayDates.has(key)) {
+    const day = cnHolidayData.days.find(
+      (d: { date: string }) => d.date === key,
+    );
+    return day?.name || '';
+  }
   return '';
 }
 
-function getDisplayLimit(entryCount: number) {
-  if (props.searchForm.view_mode === 'detail') return 4;
-  if (entryCount <= 2) return 2;
-  if (entryCount <= 4) return 3;
-  return 2;
+function getDayInfo(date: Date) {
+  const key = toDateKey(date);
+  const records = props.dayMap[key] || [];
+  const isRisk = records.length >= props.searchForm.risk_threshold;
+  return {
+    records,
+    count: records.length,
+    isRisk,
+  };
+}
+
+const months = computed(() => {
+  return Array.from({ length: 12 }, (_, i) => ({
+    month: i,
+    label: `${i + 1}月`,
+    date: new Date(props.currentYear, i, 1),
+  }));
+});
+
+const currentMonthDate = computed(() => {
+  return new Date(props.currentYear, selectedMonth.value, 1);
+});
+
+function getDayClass(date: Date) {
+  const key = toDateKey(date);
+  const holidayInfo = getHolidayInfo(date);
+  const dayInfo = getDayInfo(date);
+  const classes: string[] = [];
+
+  if (holidayInfo.isCNHoliday) {
+    classes.push('holiday-cn');
+  }
+  if (holidayInfo.isHKHoliday) {
+    classes.push('holiday-hk');
+  }
+  if (dayInfo.count > 0) {
+    classes.push('has-leave');
+  }
+  if (dayInfo.isRisk) {
+    classes.push('is-risk');
+  }
+  if (date.getDay() === 0 || date.getDay() === 6) {
+    classes.push('is-weekend');
+  }
+  if (key === props.selectedDateKey) {
+    classes.push('is-selected');
+  }
+
+  return classes.join(' ');
+}
+
+function handleDateClick(date: Date) {
+  emit('selectDate', date);
+}
+
+function toggleView() {
+  currentView.value = currentView.value === 'month' ? 'year' : 'month';
+  if (currentView.value === 'month') {
+    selectedMonth.value = new Date().getMonth();
+  }
 }
 </script>
 
 <template>
   <ElCard class="card calendar-panel">
     <template #header>
-      <h3>年历视图</h3>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <h3>
+          {{
+            currentView === 'month'
+              ? `${currentYear}年${selectedMonth + 1}月`
+              : `${currentYear}年`
+          }}
+        </h3>
+        <ElButton type="primary" size="small" @click="toggleView">
+          {{ currentView === 'month' ? '切换到年视图' : '切换到月视图' }}
+        </ElButton>
+      </div>
     </template>
 
-    <ArcoCalendar v-model="calendarValue" @select="onSelectDate" @panel-change="onPanelChange">
-      <template #cell="{ date }">
-        <div class="arco-cell-custom" :class="cellClassForDate(date)">
-          <span class="cell-day-num">{{ date.getDate() }}</span>
-          <template v-if="getEntriesForDate(date).length">
-            <span class="cell-count-badge">{{ getEntriesForDate(date).length }}</span>
-            <div class="cell-leave-list">
-              <div
-                v-for="(entry, idx) in getEntriesForDate(date).slice(0, getDisplayLimit(getEntriesForDate(date).length))"
-                :key="idx"
-                class="cell-leave-item"
-                :class="{ dimmed: entry.approval_status === 'pending' }"
-              >
-                <span class="cell-type-dot" :style="{ background: getLeaveTypeColor(entry.leave_type, entry.approval_status) }"></span>
-                <span class="cell-leave-name">{{ entry.employee_name }}</span>
-                <span v-if="getSessionShortLabel(entry.session)" class="cell-leave-session">{{ getSessionShortLabel(entry.session) }}</span>
+    <div v-if="currentView === 'year'" class="year-view">
+      <div class="month-grid">
+        <div
+          v-for="m in months"
+          :key="m.month"
+          class="month-card"
+          @click="
+            currentView = 'month';
+            selectedMonth = m.month;
+          "
+        >
+          <h4>{{ m.label }}</h4>
+          <ElCalendar
+            :model-value="m.date"
+            @select="handleDateClick"
+            class="mini-calendar"
+          >
+            <template #date-cell="{ data }">
+              <div :class="getDayClass(data.date)" class="day-cell">
+                <span class="day-number">{{ data.day }}</span>
+                <span
+                  v-if="getHolidayName(data.date)"
+                  class="holiday-name"
+                  :class="{
+                    'holiday-cn': getHolidayInfo(data.date).isCNHoliday,
+                    'holiday-hk': getHolidayInfo(data.date).isHKHoliday,
+                  }"
+                  >{{ getHolidayName(data.date) }}</span>
+                <span
+                  v-if="
+                    getDayInfo(data.date).count > 0 &&
+                    searchForm.view_mode === 'detail'
+                  "
+                  class="leave-count"
+                  >{{ getDayInfo(data.date).count }}</span>
               </div>
-              <div v-if="getEntriesForDate(date).length > getDisplayLimit(getEntriesForDate(date).length)" class="cell-more">
-                +{{ getEntriesForDate(date).length - getDisplayLimit(getEntriesForDate(date).length) }}
-              </div>
-            </div>
-          </template>
+            </template>
+          </ElCalendar>
         </div>
-      </template>
-    </ArcoCalendar>
+      </div>
+    </div>
+
+    <div v-else class="month-view">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 16px;
+        "
+      >
+        <ElButton
+          size="small"
+          @click="selectedMonth = Math.max(0, selectedMonth - 1)"
+          :disabled="selectedMonth === 0"
+        >
+          上一月
+        </ElButton>
+        <span style="font-size: 16px; font-weight: 600">{{ currentYear }}年{{ selectedMonth + 1 }}月</span>
+        <ElButton
+          size="small"
+          @click="selectedMonth = Math.min(11, selectedMonth + 1)"
+          :disabled="selectedMonth === 11"
+        >
+          下一月
+        </ElButton>
+      </div>
+      <ElCalendar
+        :model-value="currentMonthDate"
+        @select="handleDateClick"
+        class="full-calendar"
+      >
+        <template #date-cell="{ data }">
+          <div :class="getDayClass(data.date)" class="day-cell">
+            <span class="day-number">{{ data.day }}</span>
+            <span
+              v-if="getHolidayName(data.date)"
+              class="holiday-name"
+              :class="{
+                'holiday-cn': getHolidayInfo(data.date).isCNHoliday,
+                'holiday-hk': getHolidayInfo(data.date).isHKHoliday,
+              }"
+              >{{ getHolidayName(data.date) }}</span>
+            <span
+              v-if="
+                getDayInfo(data.date).count > 0 &&
+                searchForm.view_mode === 'detail'
+              "
+              class="leave-count"
+              >{{ getDayInfo(data.date).count }}</span>
+          </div>
+        </template>
+      </ElCalendar>
+    </div>
 
     <div class="hint">
-      当前已切换为 Arco Design 日历组件（UTC+8 时区），点击日期可看当天详细明细。
+      当前使用 Element Plus 日历组件（UTC+8
+      时区），点击日期可查看当天详细明细。<br />
+      节假日标记：<span style="color: #ef4444">红色标签（港）</span>表示香港节假日，<span style="color: #3b82f6">蓝色标签（国）</span>表示中国内地节假日。<br />
+      请假状态：<span
+        style="
+          padding: 2px 8px;
+          background: rgb(96 165 250 / 10%);
+          border-radius: 4px;
+        "
+        >浅蓝色背景</span>表示有请假记录，<span
+        style="padding: 2px 8px; border: 1px solid #ef4444; border-radius: 4px"
+        >红色边框</span>表示风险日。<br />
+      提示：当前月份（7月）只有 7月1日
+      香港特别行政区成立纪念日是节假日，可切换到1月、2月、5月等月份查看更多节假日。
     </div>
   </ElCard>
 </template>
+
+<style scoped>
+.calendar-panel {
+  .year-view {
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .month-card {
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+
+      h4 {
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #374151;
+        text-align: center;
+      }
+
+      .mini-calendar {
+        width: 100%;
+      }
+    }
+  }
+
+  .month-view {
+    .full-calendar {
+      width: 100%;
+    }
+  }
+}
+
+.day-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 50px;
+  padding: 4px;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.day-number {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.holiday-name {
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.holiday-name.holiday-cn {
+  color: #3b82f6;
+}
+
+.holiday-name.holiday-hk {
+  color: #ef4444;
+}
+
+.leave-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  color: #fff;
+  text-align: center;
+  background: #ef4444;
+  border-radius: 8px;
+}
+
+:deep(.holiday-cn .day-number) {
+  font-weight: bold !important;
+  color: #3b82f6 !important;
+}
+
+:deep(.holiday-hk .day-number) {
+  font-weight: bold !important;
+  color: #ef4444 !important;
+}
+
+:deep(.holiday-cn) {
+  background-color: rgb(59 130 246 / 8%) !important;
+}
+
+:deep(.holiday-hk) {
+  background-color: rgb(239 68 68 / 8%) !important;
+}
+
+:deep(.has-leave) {
+  background-color: rgb(96 165 250 / 10%) !important;
+}
+
+:deep(.is-risk) {
+  border: 2px solid #ef4444 !important;
+}
+
+:deep(.is-selected) {
+  background-color: #2563eb !important;
+
+  .day-number {
+    color: #fff !important;
+  }
+
+  .holiday-name {
+    color: #fff !important;
+  }
+}
+
+:deep(.is-weekend) {
+  background-color: #f8fafc !important;
+}
+</style>

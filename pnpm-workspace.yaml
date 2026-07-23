@@ -37,6 +37,7 @@ overrides:
   vue: 'catalog:'
 
 catalog:
+  '@arco-design/web-vue': ^2.58.0
   '@ast-grep/napi': ^0.43.0
   '@changesets/changelog-github': ^0.7.0
   '@changesets/cli': ^2.31.0
@@ -48,6 +49,10 @@ catalog:
   '@eslint-community/eslint-plugin-eslint-comments': ^4.7.2
   '@eslint/js': ^10.0.1
   '@faker-js/faker': ^10.4.0
+  '@fullcalendar/core': ^7.0.1
+  '@fullcalendar/daygrid': ^6.1.21
+  '@fullcalendar/multimonth': ^6.1.21
+  '@fullcalendar/vue3': ^7.0.1
   '@iconify/json': ^2.2.487
   '@iconify/tailwind4': ^1.2.3
   '@iconify/vue': ^5.0.1
@@ -218,3 +223,12 @@ allowBuilds:
   esbuild: true
   lefthook: true
   vue-demi: true
+catalogs:
+  conflicts_@fullcalendar/daygrid_h7_0_1:
+    '@fullcalendar/daygrid': ^7.0.1
+  conflicts_@fullcalendar/multimonth_h7_0_1:
+    '@fullcalendar/multimonth': ^7.0.1
+  conflicts_conflicts_@fullcalendar/daygrid_h7_0_1_h6_1_21:
+    '@fullcalendar/daygrid': ^6.1.21
+  conflicts_conflicts_@fullcalendar/multimonth_h7_0_1_h6_1_21:
+    '@fullcalendar/multimonth': ^6.1.21

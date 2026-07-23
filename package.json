@@ -71,5 +71,11 @@
     "node": "^22.18.0 || ^24.0.0",
     "pnpm": ">=11.0.0"
   },
-  "packageManager": "pnpm@11.7.0"
+  "packageManager": "pnpm@11.7.0",
+  "dependencies": {
+    "@fullcalendar/core": "^7.0.1",
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/multimonth": "^6.1.21",
+    "@fullcalendar/vue3": "^7.0.1"
+  }
 }
