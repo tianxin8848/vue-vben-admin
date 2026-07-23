@@ -80,6 +80,17 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
+      {
+        name: 'EmployeeManageDataMigration',
+        path: 'data-migration',
+        component: () => import('#/views/system/data-migration/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:database',
+          title: '数据处理维护',
+          authority: ['admin'],
+        },
+      },
     ],
   },
 ];

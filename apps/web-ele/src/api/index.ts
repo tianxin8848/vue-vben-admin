@@ -1,4 +1,5 @@
 export * from './business/dashboard';
+export * from './business/data-migration';
 export * from './business/employees';
 export * from './business/leave-requests';
 export * from './business/leave-workflows';
