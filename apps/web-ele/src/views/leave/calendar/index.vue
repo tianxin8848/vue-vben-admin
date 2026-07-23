@@ -2,6 +2,15 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { Page } from '@vben/common-ui';
+
+import {
+  ElButton,
+  ElOption,
+  ElSelect,
+  ElTag,
+} from 'element-plus';
+
 import {
   deleteRegionalHolidayApi,
   getEmployeesApi,
@@ -13,7 +22,6 @@ import {
 import CalendarPanel from './components/CalendarPanel.vue';
 import DetailPanel from './components/DetailPanel.vue';
 import FilterPanel from './components/FilterPanel.vue';
-import PageHeader from './components/PageHeader.vue';
 import StatsPanel from './components/StatsPanel.vue';
 
 const router = useRouter();
@@ -303,17 +311,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="leave-calendar-page" v-loading="loading">
-    <PageHeader
-      :current-time="currentTime"
-      :current-year="currentYear"
-      :regions="regions"
-      :region="searchForm.region"
-      @go-back-home="goBackHome"
-      @change-year="changeYear"
-      @go-to-current-year="goToCurrentYear"
-      @update:region="searchForm.region = $event"
-    />
+  <Page
+    title="请假管理"
+    description="请假管理包含'请假日历'和'流程维护'，当前为日历视图。"
+    v-loading="loading"
+  >
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px">
+      <div>
+        <span style="color: #64748b; font-size: 14px">{{ currentTime }}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <ElButton @click="goBackHome">返回工作台</ElButton>
+        <ElSelect v-model="searchForm.region" @change="searchForm.region = $event" style="width: 180px">
+          <ElOption label="总览（全部地区）" value="" />
+          <ElOption label="未设置地区" value="__unset__" />
+          <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
+        </ElSelect>
+        <ElButton @click="changeYear(-1)">上一年</ElButton>
+        <ElTag size="large" type="primary" effect="dark">{{ currentYear }}</ElTag>
+        <ElButton @click="changeYear(1)">下一年</ElButton>
+        <ElButton type="primary" @click="goToCurrentYear">回到今年</ElButton>
+      </div>
+    </div>
 
     <div style="display: flex; gap: 8px; margin: 16px 0">
       <span
@@ -380,7 +399,7 @@ onUnmounted(() => {
       @set-holiday="setHoliday"
       @remove-holiday="removeHoliday"
     />
-  </div>
+  </Page>
 </template>
 
 <style scoped>
