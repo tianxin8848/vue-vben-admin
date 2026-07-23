@@ -10,11 +10,11 @@ import {
   upsertRegionalHolidayApi,
 } from '#/api';
 
-import CalendarPanel from './CalendarPanel.vue';
-import DetailPanel from './DetailPanel.vue';
-import FilterPanel from './FilterPanel.vue';
-import PageHeader from './PageHeader.vue';
-import StatsPanel from './StatsPanel.vue';
+import CalendarPanel from './components/CalendarPanel.vue';
+import DetailPanel from './components/DetailPanel.vue';
+import FilterPanel from './components/FilterPanel.vue';
+import PageHeader from './components/PageHeader.vue';
+import StatsPanel from './components/StatsPanel.vue';
 
 const router = useRouter();
 const loading = ref(false);
