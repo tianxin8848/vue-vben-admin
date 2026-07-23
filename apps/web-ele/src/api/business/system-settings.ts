@@ -20,8 +20,21 @@ export namespace SystemSettingsApi {
     region: string;
   }
 
+  /** 报销理由项 */
+  export interface ClaimReasonItem {
+    name: string;
+  }
+
+  /** 币种项 */
+  export interface ClaimCurrencyItem {
+    currency_code: string;
+    to_hkd_rate: number;
+  }
+
   /** 系统设置响应 */
   export interface SystemSettingsResponse {
+    claim_currencies: ClaimCurrencyItem[];
+    claim_reasons: ClaimReasonItem[];
     created_at: null | string;
     departments: string[];
     id: string;
@@ -35,6 +48,8 @@ export namespace SystemSettingsApi {
 
   /** 更新系统设置请求参数 */
   export interface SystemSettingsUpdate {
+    claim_currencies?: ClaimCurrencyItem[];
+    claim_reasons?: ClaimReasonItem[];
     departments?: string[];
     modules?: SystemModuleItem[];
     positions?: string[];
