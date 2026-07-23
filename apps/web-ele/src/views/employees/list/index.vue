@@ -4,6 +4,8 @@ import type { EmployeeApi, SystemSettingsApi } from '#/api';
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { Page } from '@vben/common-ui';
+
 import {
   ElButton,
   ElCard,
@@ -278,14 +280,10 @@ fetchEmployees();
 </script>
 
 <template>
-  <div class="employee-list-page">
-    <div class="page-header">
-      <h2>用户管理</h2>
-      <p class="page-desc">
-        新增员工、查看初始密码、重置密码、维护员工模块权限
-      </p>
-    </div>
-
+  <Page
+    title="用户管理"
+    description="新增员工、查看初始密码、重置密码、维护员工模块权限"
+  >
     <div class="column-toggle-bar">
       <ElCheckbox v-model="columnVisibility.user_id" label="用户ID" />
       <ElCheckbox v-model="columnVisibility.employee_code" label="工号" />
@@ -668,5 +666,5 @@ fetchEmployees();
         </ElButton>
       </template>
     </ElDialog>
-  </div>
+  </Page>
 </template>

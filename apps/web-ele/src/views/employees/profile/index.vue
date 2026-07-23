@@ -4,6 +4,8 @@ import type { EmployeeApi, SystemSettingsApi } from '#/api';
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { Page } from '@vben/common-ui';
+
 import {
   ElButton,
   ElCard,
@@ -135,12 +137,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="employee-profile-page" v-loading="loading">
-    <div class="page-header">
-      <ElButton @click="goBack">返回</ElButton>
-      <h2>员工档案</h2>
-    </div>
-
+  <Page
+    title="员工档案"
+    v-loading="loading"
+  >
+    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
     <ElCard v-if="employee" header="基本信息">
       <ElForm :model="basicInfoForm" label-width="120px">
         <ElFormItem label="账号">
@@ -235,5 +236,5 @@ onMounted(() => {
         </ElFormItem>
       </ElForm>
     </ElCard>
-  </div>
+  </Page>
 </template>
