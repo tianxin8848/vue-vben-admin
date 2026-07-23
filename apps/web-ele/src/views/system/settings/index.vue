@@ -341,12 +341,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="system-settings-page" v-loading="loading">
-    <div class="page-header">
-      <h2>系统参数维护</h2>
-      <p style="color: #64748b; margin-top: 8px">统一维护部门、岗位、地区和模块清单，用户管理页面会直接读取这些配置。</p>
-    </div>
-
+  <Page
+    title="系统参数维护"
+    description="统一维护部门、岗位、地区和模块清单，用户管理页面会直接读取这些配置。"
+    v-loading="loading"
+  >
     <div style="display: grid; grid-template-columns: minmax(420px, 1.15fr) minmax(320px, 0.85fr); gap: 20px">
       <div>
         <ElCard header="参数配置">
@@ -621,5 +620,5 @@ onMounted(() => {
         </ElCard>
       </div>
     </div>
-  </div>
+  </Page>
 </template>
