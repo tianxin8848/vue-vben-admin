@@ -2,6 +2,7 @@
 import type { SystemSettingsApi } from '#/api';
 import { onMounted, ref } from 'vue';
 import { ElCard, ElMessage } from 'element-plus';
+import { Page } from '@vben/common-ui';
 
 import {
   deleteRegionalHolidayRangeApi,

@@ -27,15 +27,15 @@ import {
 const router = useRouter();
 const loading = ref(false);
 
-const employee = ref<{
-  username: string;
-  full_name: string;
+const employee = ref<null | {
+  department: null | string;
   email: string;
-  phone: string | null;
-  department: string | null;
-  position: string | null;
-  region: string | null;
-} | null>(null);
+  full_name: string;
+  phone: null | string;
+  position: null | string;
+  region: null | string;
+  username: string;
+}>(null);
 
 const profile = ref<EmployeeApi.EmployeeProfileResponse | null>(null);
 
@@ -132,7 +132,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="个人信息维护" v-loading="loading">
+  <Page title="个人信息维护2" v-loading="loading">
     <ElButton @click="goBack" style="margin-bottom: 16px">返回工作台</ElButton>
 
     <ElCard v-if="employee" header="基本信息">
