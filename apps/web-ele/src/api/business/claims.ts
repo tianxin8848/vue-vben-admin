@@ -21,8 +21,8 @@ export namespace ClaimApi {
 
   /** 报销选项 */
   export interface ClaimOptions {
-    currencies: ClaimCurrencyOption[];
-    reasons: ClaimReasonOption[];
+    claim_currencies: ClaimCurrencyOption[];
+    claim_reasons: ClaimReasonOption[];
   }
 
   /** 报销申请响应 */

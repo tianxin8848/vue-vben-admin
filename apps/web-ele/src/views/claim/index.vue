@@ -121,15 +121,15 @@ async function fetchAll() {
 }
 
 async function loadOptions() {
-  try {
-    const opts = await getClaimOptionsApi();
-    reasonOptions.value = (opts as any).reasons || [];
-    currencyOptions.value = (opts as any).currencies || [];
-  } catch {
-    reasonOptions.value = [];
-    currencyOptions.value = [];
+    try {
+      const opts = await getClaimOptionsApi();
+      reasonOptions.value = (opts as any).claim_reasons || [];
+      currencyOptions.value = (opts as any).claim_currencies || [];
+    } catch {
+      reasonOptions.value = [];
+      currencyOptions.value = [];
+    }
   }
-}
 
 async function loadUserInfo() {
   try {
