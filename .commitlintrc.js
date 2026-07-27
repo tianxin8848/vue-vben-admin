@@ -1,1 +1,1 @@
-export { default } from '@vben/commitlint-config';
+export { default } from './internal/lint-configs/commitlint-config/index.mjs';
