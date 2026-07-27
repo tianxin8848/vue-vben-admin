@@ -6,25 +6,27 @@ import type { VbenFormSchema } from '#/adapter/form';
 import { computed, onMounted, ref } from 'vue';
 
 import { ProfileBaseSetting } from '@vben/common-ui';
+import { ElMessage } from 'element-plus';
 
-import { getUserInfoApi } from '#/api';
+import { getUserInfoApi, getSystemSettingsApi, getMyProfileApi, updateMyProfileApi } from '#/api';
 
 const profileBaseSettingRef = ref();
 
-const MOCK_ROLES_OPTIONS: BasicOption[] = [
-  {
-    label: '管理员',
-    value: 'super',
-  },
-  {
-    label: '用户',
-    value: 'user',
-  },
-  {
-    label: '测试',
-    value: 'test',
-  },
-];
+const departments = ref<string[]>([]);
+const positions = ref<string[]>([]);
+const regions = ref<string[]>([]);
+
+const departmentOptions = computed<BasicOption[]>(() => {
+  return [{ label: '请选择', value: '' }, ...departments.value.map((d) => ({ label: d, value: d }))];
+});
+
+const positionOptions = computed<BasicOption[]>(() => {
+  return [{ label: '请选择', value: '' }, ...positions.value.map((p) => ({ label: p, value: p }))];
+});
+
+const regionOptions = computed<BasicOption[]>(() => {
+  return [{ label: '请选择', value: '' }, ...regions.value.map((r) => ({ label: r, value: r }))];
+});
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -32,34 +34,176 @@ const formSchema = computed((): VbenFormSchema[] => {
       fieldName: 'realName',
       component: 'Input',
       label: '姓名',
+      componentProps: {
+        disabled: true,
+      },
     },
     {
       fieldName: 'username',
       component: 'Input',
       label: '用户名',
-    },
-    {
-      fieldName: 'roles',
-      component: 'Select',
       componentProps: {
-        mode: 'tags',
-        options: MOCK_ROLES_OPTIONS,
+        disabled: true,
       },
-      label: '角色',
     },
     {
-      fieldName: 'introduction',
+      fieldName: 'department',
+      component: 'Select',
+      label: '部门',
+      componentProps: {
+        options: departmentOptions.value,
+      },
+    },
+    {
+      fieldName: 'position',
+      component: 'Select',
+      label: '岗位',
+      componentProps: {
+        options: positionOptions.value,
+      },
+    },
+    {
+      fieldName: 'region',
+      component: 'Select',
+      label: '地区',
+      componentProps: {
+        options: regionOptions.value,
+      },
+    },
+    {
+      fieldName: 'hire_date',
+      component: 'DatePicker',
+      label: '本单位入职日期',
+      componentProps: {
+        type: 'date',
+        valueFormat: 'YYYY-MM-DD',
+        placeholder: '选填',
+      },
+    },
+    {
+      fieldName: 'work_start_date',
+      component: 'DatePicker',
+      label: '累计工龄起始日期',
+      componentProps: {
+        type: 'date',
+        valueFormat: 'YYYY-MM-DD',
+        placeholder: '选填',
+      },
+    },
+    {
+      fieldName: 'birth_date',
+      component: 'DatePicker',
+      label: '出生日期',
+      componentProps: {
+        type: 'date',
+        valueFormat: 'YYYY-MM-DD',
+        placeholder: '选填',
+      },
+    },
+    {
+      fieldName: 'id_number',
+      component: 'Input',
+      label: '证件号码',
+      componentProps: {
+        placeholder: '选填',
+      },
+    },
+    {
+      fieldName: 'address',
       component: 'Textarea',
-      label: '个人简介',
+      label: '地址',
+      componentProps: {
+        placeholder: '选填',
+        rows: 3,
+      },
+    },
+    {
+      fieldName: 'emergency_contact_name',
+      component: 'Input',
+      label: '紧急联系人',
+      componentProps: {
+        placeholder: '选填',
+      },
+    },
+    {
+      fieldName: 'emergency_contact_phone',
+      component: 'Input',
+      label: '紧急联系人电话',
+      componentProps: {
+        placeholder: '选填',
+      },
     },
   ];
 });
 
+async function loadSystemSettings() {
+  try {
+    const settings = await getSystemSettingsApi();
+    departments.value = settings.departments || [];
+    positions.value = settings.positions || [];
+    regions.value = settings.regions || [];
+  } catch {
+    departments.value = [];
+    positions.value = [];
+    regions.value = [];
+  }
+}
+
+async function loadUserData() {
+  const [userInfo, profile] = await Promise.all([
+    getUserInfoApi(),
+    getMyProfileApi(),
+  ]);
+
+  const formData: Record<string, any> = {
+    realName: userInfo.realName,
+    username: userInfo.username,
+    department: userInfo.department || '',
+    position: userInfo.position || '',
+    region: userInfo.region || '',
+  };
+
+  if (profile) {
+    formData.hire_date = profile.hire_date || '';
+    formData.work_start_date = profile.work_start_date || '';
+    formData.birth_date = profile.birth_date || '';
+    formData.id_number = profile.id_number || '';
+    formData.address = profile.address || '';
+    formData.emergency_contact_name = profile.emergency_contact_name || '';
+    formData.emergency_contact_phone = profile.emergency_contact_phone || '';
+  }
+
+  profileBaseSettingRef.value.getFormApi().setValues(formData);
+}
+
+async function handleSubmit(values: Record<string, any>) {
+  try {
+    const profilePayload = {
+      hire_date: values.hire_date || null,
+      work_start_date: values.work_start_date || null,
+      birth_date: values.birth_date || null,
+      id_number: values.id_number || null,
+      address: values.address || null,
+      emergency_contact_name: values.emergency_contact_name || null,
+      emergency_contact_phone: values.emergency_contact_phone || null,
+    };
+
+    await updateMyProfileApi(profilePayload);
+    ElMessage.success('保存成功');
+  } catch {
+    ElMessage.error('保存失败');
+  }
+}
+
 onMounted(async () => {
-  const data = await getUserInfoApi();
-  profileBaseSettingRef.value.getFormApi().setValues(data);
+  await loadSystemSettings();
+  await loadUserData();
 });
 </script>
 <template>
-  <ProfileBaseSetting ref="profileBaseSettingRef" :form-schema="formSchema" />
+  <ProfileBaseSetting
+    ref="profileBaseSettingRef"
+    :form-schema="formSchema"
+    @submit="handleSubmit"
+  />
 </template>

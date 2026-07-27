@@ -1,266 +1,482 @@
 <script lang="ts" setup>
-import type {
-  WorkbenchProjectItem,
-  WorkbenchQuickNavItem,
-  WorkbenchTodoItem,
-  WorkbenchTrendItem,
-} from '@vben/common-ui';
+import type { SystemSettingsApi } from '#/api';
 
-import { ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
-  AnalysisChartCard,
-  WorkbenchHeader,
-  WorkbenchProject,
-  WorkbenchQuickNav,
-  WorkbenchTodo,
-  WorkbenchTrends,
-} from '@vben/common-ui';
-import { preferences } from '@vben/preferences';
-import { useUserStore } from '@vben/stores';
-import { openWindow } from '@vben/utils';
+  ElButton,
+  ElCard,
+  ElTag,
+} from 'element-plus';
 
-import AnalyticsVisitsSource from '../analytics/analytics-visits-source.vue';
-
-const userStore = useUserStore();
-
-// 这是一个示例数据，实际项目中需要根据实际情况进行调整
-// url 也可以是内部路由，在 navTo 方法中识别处理，进行内部跳转
-// 例如：url: /dashboard/workspace
-const projectItems: WorkbenchProjectItem[] = [
-  {
-    color: '',
-    content: '不要等待机会，而要创造机会。',
-    date: '2021-04-01',
-    group: '开源组',
-    icon: 'carbon:logo-github',
-    title: 'Github',
-    url: 'https://github.com',
-  },
-  {
-    color: '#3fb27f',
-    content: '现在的你决定将来的你。',
-    date: '2021-04-01',
-    group: '算法组',
-    icon: 'ion:logo-vue',
-    title: 'Vue',
-    url: 'https://vuejs.org',
-  },
-  {
-    color: '#e18525',
-    content: '没有什么才能比努力更重要。',
-    date: '2021-04-01',
-    group: '上班摸鱼',
-    icon: 'ion:logo-html5',
-    title: 'Html5',
-    url: 'https://developer.mozilla.org/zh-CN/docs/Web/HTML',
-  },
-  {
-    color: '#bf0c2c',
-    content: '热情和欲望可以突破一切难关。',
-    date: '2021-04-01',
-    group: 'UI',
-    icon: 'ion:logo-angular',
-    title: 'Angular',
-    url: 'https://angular.io',
-  },
-  {
-    color: '#00d8ff',
-    content: '健康的身体是实现目标的基石。',
-    date: '2021-04-01',
-    group: '技术牛',
-    icon: 'bx:bxl-react',
-    title: 'React',
-    url: 'https://reactjs.org',
-  },
-  {
-    color: '#EBD94E',
-    content: '路是走出来的，而不是空想出来的。',
-    date: '2021-04-01',
-    group: '架构组',
-    icon: 'ion:logo-javascript',
-    title: 'Js',
-    url: 'https://developer.mozilla.org/zh-CN/docs/Web/JavaScript',
-  },
-];
-
-// 同样，这里的 url 也可以使用以 http 开头的外部链接
-const quickNavItems: WorkbenchQuickNavItem[] = [
-  {
-    color: '#1fdaca',
-    icon: 'ion:home-outline',
-    title: '首页',
-    url: '/',
-  },
-  {
-    color: '#bf0c2c',
-    icon: 'ion:grid-outline',
-    title: '仪表盘',
-    url: '/dashboard',
-  },
-  {
-    color: '#e18525',
-    icon: 'ion:layers-outline',
-    title: '组件',
-    url: '/demos/features/icons',
-  },
-  {
-    color: '#3fb27f',
-    icon: 'ion:settings-outline',
-    title: '系统管理',
-    url: '/demos/features/login-expired', // 这里的 URL 是示例，实际项目中需要根据实际情况进行调整
-  },
-  {
-    color: '#4daf1bc9',
-    icon: 'ion:key-outline',
-    title: '权限管理',
-    url: '/demos/access/page-control',
-  },
-  {
-    color: '#00d8ff',
-    icon: 'ion:bar-chart-outline',
-    title: '图表',
-    url: '/analytics',
-  },
-];
-
-const todoItems = ref<WorkbenchTodoItem[]>([
-  {
-    completed: false,
-    content: `审查最近提交到Git仓库的前端代码，确保代码质量和规范。`,
-    date: '2024-07-30 11:00:00',
-    title: '审查前端代码提交',
-  },
-  {
-    completed: true,
-    content: `检查并优化系统性能，降低CPU使用率。`,
-    date: '2024-07-30 11:00:00',
-    title: '系统性能优化',
-  },
-  {
-    completed: false,
-    content: `进行系统安全检查，确保没有安全漏洞或未授权的访问。 `,
-    date: '2024-07-30 11:00:00',
-    title: '安全检查',
-  },
-  {
-    completed: false,
-    content: `更新项目中的所有npm依赖包，确保使用最新版本。`,
-    date: '2024-07-30 11:00:00',
-    title: '更新项目依赖',
-  },
-  {
-    completed: false,
-    content: `修复用户报告的页面UI显示问题，确保在不同浏览器中显示一致。 `,
-    date: '2024-07-30 11:00:00',
-    title: '修复UI显示问题',
-  },
-]);
-const trendItems: WorkbenchTrendItem[] = [
-  {
-    avatar: 'svg:avatar-1',
-    content: `在 <a>开源组</a> 创建了项目 <a>Vue</a>`,
-    date: '刚刚',
-    title: '威廉',
-  },
-  {
-    avatar: 'svg:avatar-2',
-    content: `关注了 <a>威廉</a> `,
-    date: '1个小时前',
-    title: '艾文',
-  },
-  {
-    avatar: 'svg:avatar-3',
-    content: `发布了 <a>个人动态</a> `,
-    date: '1天前',
-    title: '克里斯',
-  },
-  {
-    avatar: 'svg:avatar-4',
-    content: `发表文章 <a>如何编写一个Vite插件</a> `,
-    date: '2天前',
-    title: 'Vben',
-  },
-  {
-    avatar: 'svg:avatar-1',
-    content: `回复了 <a>杰克</a> 的问题 <a>如何进行项目优化？</a>`,
-    date: '3天前',
-    title: '皮特',
-  },
-  {
-    avatar: 'svg:avatar-2',
-    content: `关闭了问题 <a>如何运行项目</a> `,
-    date: '1周前',
-    title: '杰克',
-  },
-  {
-    avatar: 'svg:avatar-3',
-    content: `发布了 <a>个人动态</a> `,
-    date: '1周前',
-    title: '威廉',
-  },
-  {
-    avatar: 'svg:avatar-4',
-    content: `推送了代码到 <a>Github</a>`,
-    date: '2021-04-01 20:00',
-    title: '威廉',
-  },
-  {
-    avatar: 'svg:avatar-4',
-    content: `发表文章 <a>如何编写使用 Admin Vben</a> `,
-    date: '2021-03-01 20:00',
-    title: 'Vben',
-  },
-];
+import {
+  getAnnualLeaveSummaryApi,
+  getMyLeaveRequestsApi,
+  getMyPendingApprovalsApi,
+  getSystemSettingsApi,
+  getUserInfoApi,
+} from '#/api';
 
 const router = useRouter();
+const loading = ref(false);
 
-// 这是一个示例方法，实际项目中需要根据实际情况进行调整
-// This is a sample method, adjust according to the actual project requirements
-function navTo(nav: WorkbenchProjectItem | WorkbenchQuickNavItem) {
-  if (nav.url?.startsWith('http')) {
-    openWindow(nav.url);
-    return;
-  }
-  if (nav.url?.startsWith('/')) {
-    router.push(nav.url).catch((error) => {
-      console.error('Navigation failed:', error);
-    });
-  } else {
-    console.warn(`Unknown URL for navigation item: ${nav.title} -> ${nav.url}`);
+const currentTime = ref('');
+let timer: null | number = null;
+
+const userInfo = ref<null | {
+  department: null | string;
+  email: string;
+  full_name: string;
+  id: string;
+  is_admin: boolean;
+  module_permissions: Array<{
+    can_view: boolean;
+    module_code: string;
+    module_name: string;
+  }>;
+  phone: null | string;
+  position: null | string;
+  region: null | string;
+  username: string;
+}>(null);
+
+const pendingApprovals = ref<any[]>([]);
+const myLeaveRequests = ref<any[]>([]);
+const annualLeaveSummary = ref<null | {
+  available_days: number;
+  entitlement_days: number;
+  used_days: number;
+}>(null);
+
+const currentYear = new Date().getFullYear();
+
+const modules = ref<SystemSettingsApi.SystemModuleItem[]>([]);
+
+const modulePathMap: Record<string, string> = {
+  employee_home: '/employee',
+  employee_password: '/employee/change-password',
+  employee_leave: '/employee/my-leave',
+  admin_dashboard: '/dashboard/workspace',
+  user_management: '/employee/manage/users',
+  leave_calendar: '/employee/manage/leave',
+  leave_workflows: '/employee/manage/leave-workflows',
+  approval_management: '/employee/manage/approvals',
+  system_settings: '/employee/manage/settings',
+  data_migration: '/employee/manage/data-migration',
+  access_control: '/employee/manage/access-control',
+  claim_management: '/employee/claims',
+};
+
+const hasLeavePermission = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.module_permissions.some(
+    (p) => p.module_code === 'employee_leave' && p.can_view !== false,
+  );
+});
+
+const hasApprovalPermission = computed(() => {
+  if (!userInfo.value) return false;
+  return userInfo.value.module_permissions.some(
+    (p) => p.module_code === 'approval_management' && p.can_view !== false,
+  );
+});
+
+const hasPendingApprovals = computed(() => {
+  return pendingApprovals.value.length > 0;
+});
+
+function formatNow() {
+  const now = new Date();
+  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[now.getDay()]}`;
+}
+
+function startLiveClock() {
+  currentTime.value = formatNow();
+  timer = window.setInterval(() => {
+    currentTime.value = formatNow();
+  }, 1000);
+}
+
+async function fetchData() {
+  loading.value = true;
+  try {
+    const [userRes, approvalsRes, leaveRes, annualRes, settingsRes] = await Promise.all([
+      getUserInfoApi(),
+      getMyPendingApprovalsApi(),
+      getMyLeaveRequestsApi(),
+      getAnnualLeaveSummaryApi(currentYear),
+      getSystemSettingsApi(),
+    ]);
+
+    userInfo.value = {
+      id: userRes.userId,
+      username: userRes.username,
+      full_name: userRes.realName,
+      department: userRes.department || null,
+      position: userRes.position || null,
+      email: userRes.email,
+      phone: userRes.phone || null,
+      region: userRes.region || null,
+      is_admin: (userRes.roles || []).includes('admin'),
+      module_permissions: [],
+    };
+
+    pendingApprovals.value = approvalsRes;
+    myLeaveRequests.value = leaveRes;
+    annualLeaveSummary.value = annualRes;
+    modules.value = settingsRes.modules || [];
+
+    const detailedUser = await getUserInfoApi();
+    if ('module_permissions' in detailedUser) {
+      userInfo.value.module_permissions = detailedUser.module_permissions as any;
+    }
+  } catch (error) {
+    console.error('Dashboard fetch error:', error);
+  } finally {
+    loading.value = false;
   }
 }
+
+function goToLeave() {
+  router.push('/employee/my-leave');
+}
+
+function goToApprovals() {
+  router.push('/employee/manage/approvals');
+}
+
+function goToChangePassword() {
+  router.push('/employee/change-password');
+}
+
+function goToProfile() {
+  router.push('/employee/profile');
+}
+
+
+
+onMounted(() => {
+  startLiveClock();
+  fetchData();
+});
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+  }
+});
 </script>
 
 <template>
-  <div class="p-5">
-    <WorkbenchHeader
-      :avatar="userStore.userInfo?.avatar || preferences.app.defaultAvatar"
-    >
-      <template #title>
-        早安, {{ userStore.userInfo?.realName }}, 开始您一天的工作吧！
-      </template>
-      <template #description> 今日晴，20℃ - 32℃！ </template>
-    </WorkbenchHeader>
+  <div class="workspace-page" v-loading="loading">
+    <div class="page-header">
+      <div class="header-info">
+        <h2>工作台首页</h2>
+        <p class="page-subtitle">员工登录后的默认页面</p>
+        <div class="live-time">{{ currentTime }}</div>
+      </div>
+      <div class="header-actions">
+        <ElButton @click="goToChangePassword">修改密码</ElButton>
+        <ElButton type="primary" @click="goToLeave">提交请假申请</ElButton>
+      </div>
+    </div>
 
-    <div class="mt-5 flex flex-col lg:flex-row">
-      <div class="mr-4 w-full lg:w-3/5">
-        <WorkbenchProject :items="projectItems" title="项目" @click="navTo" />
-        <WorkbenchTrends :items="trendItems" class="mt-5" title="最新动态" />
-      </div>
-      <div class="w-full lg:w-2/5">
-        <WorkbenchQuickNav
-          :items="quickNavItems"
-          class="mt-5 lg:mt-0"
-          title="快捷导航"
-          @click="navTo"
-        />
-        <WorkbenchTodo :items="todoItems" class="mt-5" title="待办事项" />
-        <AnalysisChartCard class="mt-5" title="访问来源">
-          <AnalyticsVisitsSource />
-        </AnalysisChartCard>
-      </div>
+    <div class="grid">
+      <ElCard class="card">
+        <template #header>
+          <h3>个人信息</h3>
+        </template>
+        <div v-if="userInfo" class="profile-content">
+          <div>邮箱：{{ userInfo.email }}</div>
+          <div>手机号：{{ userInfo.phone || '-' }}</div>
+          <div>岗位：{{ userInfo.position || '-' }}</div>
+          <div>地区：{{ userInfo.region || '-' }}</div>
+        </div>
+        <div v-else>加载中...</div>
+        <div class="card-action" @click="goToProfile">查看详情</div>
+      </ElCard>
+
+      <ElCard class="card">
+        <template #header>
+          <h3>模块权限</h3>
+        </template>
+        <div class="permissions-content">
+          <template v-if="userInfo">
+            <ElTag
+              v-for="perm in userInfo.module_permissions"
+              :key="perm.module_code"
+              class="permission-tag"
+            >
+              {{ perm.module_name }}
+            </ElTag>
+            <ElTag v-if="userInfo.is_admin" class="permission-tag admin-tag">
+              系统管理模块
+            </ElTag>
+          </template>
+          <span v-else>加载中...</span>
+        </div>
+      </ElCard>
+
+      <ElCard v-if="hasLeavePermission" class="card">
+        <template #header>
+          <h3>请假模块</h3>
+        </template>
+        <p>可在这里查看自己的请假记录，并提交新的请假申请。</p>
+        <div class="leave-stats">
+          <span class="stat-item">
+            <span class="stat-value">{{ myLeaveRequests.length }}</span>
+            <span class="stat-label">请假记录</span>
+          </span>
+          <span class="stat-item">
+            <span class="stat-value">{{ annualLeaveSummary?.available_days || '-' }}</span>
+            <span class="stat-label">年假余额</span>
+          </span>
+        </div>
+        <ElButton type="primary" @click="goToLeave">进入请假模块</ElButton>
+      </ElCard>
+
+      <ElCard
+        v-if="hasApprovalPermission || hasPendingApprovals"
+        class="card"
+      >
+        <template #header>
+          <h3>审批中心</h3>
+        </template>
+        <p>
+          <template v-if="hasPendingApprovals">
+            你当前有 {{ pendingApprovals.length }} 条待审批请假。
+          </template>
+          <template v-else>
+            如果你在某些流程中被设定为审批人，可以在这里处理待办。
+          </template>
+        </p>
+        <div class="approval-stats">
+          <span class="stat-item">
+            <span class="stat-value pending">{{ pendingApprovals.length }}</span>
+            <span class="stat-label">待审批</span>
+          </span>
+        </div>
+        <ElButton type="primary" @click="goToApprovals">进入审批中心</ElButton>
+      </ElCard>
+
+      <ElCard v-if="userInfo?.is_admin" class="card admin-card">
+        <template #header>
+          <h3>系统管理模块</h3>
+        </template>
+        <div class="module-grid">
+          <div
+            v-for="mod in modules"
+            :key="mod.module_code"
+            class="module-link"
+            @click="router.push(modulePathMap[mod.module_code] || '/employee')"
+          >
+            <div class="module-title">{{ mod.module_name }}</div>
+            <small>{{ mod.module_code }}</small>
+          </div>
+        </div>
+      </ElCard>
     </div>
   </div>
 </template>
+
+<style scoped>
+.workspace-page {
+  padding: 32px;
+  background: #f8fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.header-info h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.live-time {
+  margin-top: 10px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.header-actions button {
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card :deep(.el-card__header) {
+  padding: 0 0 16px;
+  border-bottom: none;
+}
+
+.card :deep(.el-card__header) h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.card :deep(.el-card__body) {
+  padding: 0;
+}
+
+.profile-content {
+  line-height: 1.8;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.profile-content div {
+  margin-top: 8px;
+}
+
+.profile-content div:first-child {
+  margin-top: 0;
+}
+
+.card-action {
+  margin-top: 12px;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.permissions-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.permission-tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.permission-tag.admin-tag {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.leave-stats,
+.approval-stats {
+  display: flex;
+  gap: 20px;
+  margin: 16px 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stat-value.pending {
+  color: #d97706;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.card :deep(.el-button) {
+  margin-top: 16px;
+}
+
+.admin-card {
+  grid-column: span 2;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.module-link {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.module-link:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+.module-title {
+  font-weight: 700;
+}
+
+.module-link small {
+  display: block;
+  margin-top: 6px;
+  color: #475569;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .admin-card {
+    grid-column: span 1;
+  }
+
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

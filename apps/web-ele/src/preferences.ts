@@ -9,9 +9,12 @@ import {
  * !!! 更改配置后请清空缓存，否则可能不生效
  */
 export const overridesPreferences = defineOverridesPreferences({
-  // overrides
   app: {
+    defaultHomePath: '/employee',
     name: import.meta.env.VITE_APP_TITLE,
+  },
+  logo: {
+    source: '/favicon/web-app-manifest-512x512.png',
   },
   copyright: appCopyrightPreferences,
 });

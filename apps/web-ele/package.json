@@ -26,6 +26,10 @@
     "#/*": "./src/*"
   },
   "dependencies": {
+    "@fullcalendar/core": "catalog:",
+    "@fullcalendar/daygrid": "catalog:",
+    "@fullcalendar/multimonth": "catalog:",
+    "@fullcalendar/vue3": "catalog:",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -45,9 +49,12 @@
     "element-plus": "catalog:",
     "pinia": "catalog:",
     "vue": "catalog:",
-    "vue-router": "catalog:"
+    "vue-router": "catalog:",
+    "vxe-pc-ui": "4.16.20",
+    "vxe-table": "4.20.6"
   },
   "devDependencies": {
+    "@arco-design/web-vue": "catalog:",
     "unplugin-element-plus": "catalog:"
   }
 }

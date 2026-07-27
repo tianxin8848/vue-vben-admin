@@ -213,7 +213,7 @@ onBeforeUnmount(() => {
           mode === 'horizontal' ? 'is-horizontal' : '',
         ]"
         :content-props="contentProps"
-        :open="true"
+        :open="opened"
         :open-delay="0"
       >
         <template #trigger>

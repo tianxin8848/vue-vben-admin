@@ -1,0 +1,314 @@
+<script lang="ts" setup>
+import type { SystemSettingsApi } from '#/api';
+
+import { computed, ref } from 'vue';
+
+import {
+  ElButton,
+  ElMessageBox,
+  ElOption,
+  ElSelect,
+  ElTag,
+} from 'element-plus';
+
+const props = defineProps<{
+  settings: null | SystemSettingsApi.SystemSettingsResponse;
+}>();
+
+const emit = defineEmits<{
+  (
+    e: 'deleteHoliday',
+    startDate: string,
+    endDate: string,
+    region: string,
+  ): void;
+}>();
+
+const holidayYearFilter = ref(new Date().getFullYear());
+
+const groupedHolidays = computed(() => {
+  const items = props.settings?.regional_holidays || [];
+  const year = String(holidayYearFilter.value);
+  const filtered = items.filter((item) =>
+    String(item.date || '').startsWith(`${year}-`),
+  );
+
+  const sorted = [...filtered].toSorted((left, right) => {
+    const regionCompare = String(left.region || '').localeCompare(
+      String(right.region || ''),
+      'zh-CN',
+    );
+    if (regionCompare !== 0) return regionCompare;
+    const holidayCompare = String(left.holiday_name || '').localeCompare(
+      String(right.holiday_name || ''),
+      'zh-CN',
+    );
+    if (holidayCompare !== 0) return holidayCompare;
+    return String(left.date || '').localeCompare(String(right.date || ''));
+  });
+
+  const grouped: {
+    end_date: string;
+    holiday_name: string;
+    region: string;
+    start_date: string;
+  }[] = [];
+  const dateAddOne = (value: string) => {
+    const dateObject = new Date(`${value}T00:00:00`);
+    dateObject.setDate(dateObject.getDate() + 1);
+    const year = dateObject.getFullYear();
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObject.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  for (const item of sorted) {
+    const region = String(item.region || '');
+    const holidayName = String(item.holiday_name || '');
+    const dateText = String(item.date || '');
+    const last = grouped[grouped.length - 1];
+    if (
+      last &&
+      last.region === region &&
+      last.holiday_name === holidayName &&
+      dateAddOne(last.end_date) === dateText
+    ) {
+      last.end_date = dateText;
+      continue;
+    }
+    grouped.push({
+      region,
+      holiday_name: holidayName,
+      start_date: dateText,
+      end_date: dateText,
+    });
+  }
+
+  return grouped;
+});
+
+async function handleDeleteHoliday(
+  startDate: string,
+  endDate: string,
+  region: string,
+) {
+  const label = startDate === endDate ? startDate : `${startDate}/${endDate}`;
+  try {
+    await ElMessageBox.confirm(
+      `确认删除 ${region} ${label} 的假期设置吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
+    emit('deleteHoliday', startDate, endDate, region);
+  } catch {}
+}
+</script>
+
+<template>
+  <div
+    style="
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    "
+  >
+    <h3 style="margin: 0 0 16px; font-size: 16px; font-weight: 700">
+      当前预览
+    </h3>
+    <p style="margin-bottom: 20px; color: #64748b">
+      这些参数统一保存在一个 MongoDB 集合中，保存后新增员工页面会直接使用。
+    </p>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">部门</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <ElTag
+          v-for="d in settings?.departments"
+          :key="d"
+          type="primary"
+          size="small"
+        >
+          {{ d }}
+        </ElTag>
+        <span
+          v-if="!settings?.departments?.length"
+          style="font-size: 13px; color: #64748b"
+          >暂无部门配置</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">岗位</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <ElTag
+          v-for="p in settings?.positions"
+          :key="p"
+          type="primary"
+          size="small"
+        >
+          {{ p }}
+        </ElTag>
+        <span
+          v-if="!settings?.positions?.length"
+          style="font-size: 13px; color: #64748b"
+          >暂无岗位配置</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">地区</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <ElTag
+          v-for="r in settings?.regions"
+          :key="r"
+          type="primary"
+          size="small"
+        >
+          {{ r }}
+        </ElTag>
+        <span
+          v-if="!settings?.regions?.length"
+          style="font-size: 13px; color: #64748b"
+          >暂无地区配置</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">模块</div>
+      <div
+        v-if="settings?.modules?.length"
+        style="display: flex; flex-wrap: wrap; gap: 8px"
+      >
+        <ElTag
+          v-for="m in settings.modules"
+          :key="m.module_code"
+          type="warning"
+          size="small"
+        >
+          {{ m.module_name }} ({{ m.module_code }})
+        </ElTag>
+      </div>
+      <span v-else style="font-size: 13px; color: #64748b">暂无模块配置</span>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">报销理由</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <ElTag
+          v-for="cr in settings?.claim_reasons?.map((r) => r.name)"
+          :key="cr"
+          type="info"
+          size="small"
+        >
+          {{ cr }}
+        </ElTag>
+        <span
+          v-if="!settings?.claim_reasons?.length"
+          style="font-size: 13px; color: #64748b"
+          >暂无报销理由配置</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div style="margin-bottom: 10px; font-weight: 700">币种与港币汇率</div>
+      <div
+        v-if="settings?.claim_currencies?.length"
+        style="display: flex; flex-wrap: wrap; gap: 8px"
+      >
+        <ElTag
+          v-for="c in settings.claim_currencies"
+          :key="c.currency_code"
+          type="success"
+          size="small"
+        >
+          {{ c.currency_code }} → {{ c.to_hkd_rate }}
+        </ElTag>
+      </div>
+      <span v-else style="font-size: 13px; color: #64748b">暂无币种配置</span>
+    </div>
+
+    <div style="margin-bottom: 20px">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 10px;
+        "
+      >
+        <div style="font-weight: 700">地区假期</div>
+        <ElSelect v-model="holidayYearFilter" style="width: 100px" size="small">
+          <ElOption
+            v-for="y in Array.from({ length: 61 }, (_, i) => 2000 + i)"
+            :key="y"
+            :label="`${y}年`"
+            :value="y"
+          />
+        </ElSelect>
+      </div>
+      <div
+        v-if="groupedHolidays.length"
+        style="display: flex; flex-direction: column; gap: 6px"
+      >
+        <div
+          v-for="(h, idx) in groupedHolidays"
+          :key="idx"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            font-size: 13px;
+            background: #f8fafc;
+            border-radius: 6px;
+          "
+        >
+          <span><ElTag size="small">{{ h.region }}</ElTag>
+            {{
+              h.start_date === h.end_date
+                ? h.start_date
+                : `${h.start_date}/${h.end_date}`
+            }}
+            — {{ h.holiday_name }}</span>
+          <ElButton
+            size="small"
+            type="danger"
+            link
+            @click="handleDeleteHoliday(h.start_date, h.end_date, h.region)"
+          >
+            删除
+          </ElButton>
+        </div>
+      </div>
+      <span v-else style="font-size: 13px; color: #64748b">暂无地区假期配置</span>
+    </div>
+
+    <div>
+      <div style="margin-bottom: 10px; font-weight: 700">地区假期名称清单</div>
+      <div
+        v-if="settings?.regional_holiday_catalogs?.length"
+        style="display: flex; flex-direction: column; gap: 6px"
+      >
+        <div
+          v-for="(c, idx) in settings.regional_holiday_catalogs"
+          :key="idx"
+          style="
+            padding: 6px 10px;
+            font-size: 13px;
+            background: #f8fafc;
+            border-radius: 6px;
+          "
+        >
+          <ElTag size="small">{{ c.region }}</ElTag>
+          {{ (c.holiday_names || []).join(' / ') || '-' }}
+        </div>
+      </div>
+      <span v-else style="font-size: 13px; color: #64748b">暂无地区假期名称清单配置</span>
+    </div>
+  </div>
+</template>
