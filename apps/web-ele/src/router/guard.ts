@@ -10,6 +10,9 @@ import { useAuthStore } from '#/store';
 
 import { generateAccess } from './access';
 
+// ===== 模块级日志：import 时立即执行，用于验证此文件是否被 Vite 加载 =====
+console.warn('=== [guard.ts] 模块已加载 === coreRouteNames:', coreRouteNames);
+
 /**
  * 通用守卫配置
  * @param router
@@ -50,8 +53,17 @@ function setupAccessGuard(router: Router) {
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
+    console.warn('[DEBUG] 路由守卫触发:', {
+      toPath: to.path,
+      toName: to.name,
+      fromPath: from.path,
+      hasToken: !!accessStore.accessToken,
+      isChecked: accessStore.isAccessChecked,
+    });
+
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
+      console.warn('[DEBUG] 基本路由，跳过权限检查:', to.name);
       if (
         !import.meta.env.VITE_TEST_LOGIN_ACCESS &&
         to.path === LOGIN_PATH &&
@@ -68,6 +80,7 @@ function setupAccessGuard(router: Router) {
 
     // accessToken 检查
     if (!accessStore.accessToken) {
+      console.warn('[DEBUG] 无accessToken，跳转登录:', to.path);
       // 明确声明忽略权限访问权限，则可以访问
       if (to.meta.ignoreAccess) {
         return true;
@@ -91,13 +104,18 @@ function setupAccessGuard(router: Router) {
 
     // 是否已经生成过动态路由
     if (accessStore.isAccessChecked) {
+      console.warn('[DEBUG] 路由已生成，直接放行:', to.path);
       return true;
     }
 
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
+    console.warn('[DEBUG] 开始生成动态路由...');
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
     const userRoles = userInfo.roles ?? [];
+
+    console.warn('[DEBUG] 用户角色:', userRoles);
+    console.warn('[DEBUG] 原始路由数量:', accessRoutes.length);
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
@@ -105,6 +123,12 @@ function setupAccessGuard(router: Router) {
       router,
       // 则会在菜单中显示，但是访问会被重定向到403
       routes: accessRoutes,
+    });
+
+    console.warn('[DEBUG] 生成路由结果:', {
+      accessibleRoutesCount: accessibleRoutes.length,
+      accessibleMenusCount: accessibleMenus.length,
+      menuNames: accessibleMenus.map((m) => m.name),
     });
 
     // 保存菜单信息和路由信息
@@ -115,6 +139,8 @@ function setupAccessGuard(router: Router) {
       (to.path === preferences.app.defaultHomePath
         ? userInfo.homePath || preferences.app.defaultHomePath
         : to.fullPath)) as string;
+
+    console.warn('[DEBUG] 重定向路径:', redirectPath);
 
     return {
       ...router.resolve(decodeURIComponent(redirectPath)),

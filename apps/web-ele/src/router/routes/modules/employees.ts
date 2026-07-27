@@ -12,6 +12,7 @@ const routes: RouteRecordRaw[] = [
     },
     name: 'EmployeeManage',
     path: '/employee/manage',
+    redirect: '/employee/manage/users',
     children: [
       {
         name: 'EmployeeManageUsers',
@@ -48,13 +49,13 @@ const routes: RouteRecordRaw[] = [
       },
       // ─── 请假管理 ───────────────────────────────────────────────────────
       {
-        name: 'LeaveManageCalendar',
+        name: 'LeaveManageAdmin',
         path: 'leave',
-        component: () => import('#/views/leave/calendar/index.vue'),
+        component: () => import('#/views/leave/admin-manage/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:calendar-days',
-          title: $t('page.leave.calendar'),
+          title: '请假管理',
           authority: ['admin'],
         },
       },
@@ -65,18 +66,18 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:git-branch',
-          title: $t('page.leave.workflow'),
+          title: '请假流程',
           authority: ['admin'],
         },
       },
       {
         name: 'LeaveManageApprovals',
         path: 'approvals',
-        component: () => import('#/views/leave/my-approvals/index.vue'),
+        component: () => import('#/views/leave/admin-approvals/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:check-circle',
-          title: $t('page.leave.myApprovals'),
+          title: '审批管理',
           authority: ['admin'],
         },
       },
@@ -88,6 +89,17 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:database',
           title: '数据处理维护',
+          authority: ['admin'],
+        },
+      },
+      {
+        name: 'EmployeeManageAccessControl',
+        path: 'access-control',
+        component: () => import('#/views/system/access-control/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:key',
+          title: '门禁管理',
           authority: ['admin'],
         },
       },

@@ -96,6 +96,11 @@ export namespace EmployeeApi {
     module_permissions: ModulePermission[];
   }
 
+  /** 更新门禁ID请求参数 */
+  export interface EmployeeAccessControlUpdate {
+    access_control_id: string;
+  }
+
   /** 重置密码响应 */
   export interface EmployeePasswordResetResponse {
     employee_code: null | string;
@@ -161,6 +166,17 @@ export async function updateEmployeeAdminApi(
   );
 }
 
+/** 更新员工门禁ID */
+export async function updateEmployeeAccessControlApi(
+  employeeId: string,
+  data: EmployeeApi.EmployeeAccessControlUpdate,
+) {
+  return requestClient.request<EmployeeApi.EmployeeResponse>(
+    `/employees/${employeeId}/access-control-id`,
+    { method: 'PATCH', data },
+  );
+}
+
 // ─── 基本信息 ────────────────────────────────────────────────────────────────
 
 /** 更新我的基本信息 */
@@ -220,4 +236,3 @@ export async function updateEmployeeProfileApi(
     { method: 'PATCH', data },
   );
 }
-
