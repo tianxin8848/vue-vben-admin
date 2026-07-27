@@ -8,13 +8,14 @@ const routes: RouteRecordRaw[] = [
       icon: 'lucide:users',
       order: 1,
       title: $t('page.employees.title'),
-      authority: ['admin'],
+      // 父路由：admin 和 user 都能看到
+      authority: ['admin', 'user'],
     },
     name: 'EmployeeManage',
     path: '/employee/manage',
     redirect: '/employee/manage/users',
     children: [
-      // ─── 员工管理 ─────────────────────────────────────────────────
+      // Employee management — admin + user 都能看到
       {
         name: 'EmployeeManageUsers',
         path: 'users',
@@ -23,7 +24,7 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:list',
           title: $t('page.employees.list'),
-          authority: ['admin'],
+          authority: ['admin', 'user'],
         },
       },
       {
@@ -34,10 +35,46 @@ const routes: RouteRecordRaw[] = [
           hideInMenu: true,
           icon: 'lucide:user',
           title: $t('page.employees.profile'),
-          authority: ['admin'],
+          authority: ['admin', 'user'],
         },
       },
-      // ─── 系统参数 ─────────────────────────────────────────────────
+      // Leave management — 仅 user（admin 看不到）
+      {
+        name: 'LeaveManageAdmin',
+        path: 'leave',
+        component: () => import('#/views/leave/admin-manage/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:calendar-check',
+          title: '请假管理',
+          authority: ['user'],
+        },
+      },
+      // Leave workflows — 仅 user（admin 看不到）
+      {
+        name: 'LeaveManageWorkflows',
+        path: 'leave-workflows',
+        component: () => import('#/views/leave/workflow/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:git-branch',
+          title: '请假流程',
+          authority: ['user'],
+        },
+      },
+      // Approval management — 仅 user（admin 看不到）
+      {
+        name: 'LeaveManageApprovals',
+        path: 'approvals',
+        component: () => import('#/views/leave/admin-approvals/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:clipboard-list',
+          title: '审批管理',
+          authority: ['user'],
+        },
+      },
+      // System settings — admin + user 都能看到
       {
         name: 'EmployeeManageSettings',
         path: 'settings',
@@ -46,10 +83,10 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:gear',
           title: $t('page.system.settings'),
-          authority: ['admin'],
+          authority: ['admin', 'user'],
         },
       },
-      // ─── 数据迁移 ─────────────────────────────────────────────────
+      // Data migration — admin + user 都能看到
       {
         name: 'EmployeeManageDataMigration',
         path: 'data-migration',
@@ -58,10 +95,10 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:database',
           title: '数据处理维护',
-          authority: ['admin'],
+          authority: ['admin', 'user'],
         },
       },
-      // ─── 门禁管理 ─��───────────────────────────────────────────────
+      // Access control — admin + user 都能看到
       {
         name: 'EmployeeManageAccessControl',
         path: 'access-control',
@@ -70,7 +107,7 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:key',
           title: '门禁管理',
-          authority: ['admin'],
+          authority: ['admin', 'user'],
         },
       },
     ],

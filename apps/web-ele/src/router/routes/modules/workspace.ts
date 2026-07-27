@@ -36,7 +36,31 @@ const routes: RouteRecordRaw[] = [
           authority: ['user'],
         },
       },
-      // ─── 员工自助：报销 ──────────────────────────────────────────
+      // Employee: My Leave
+      {
+        name: 'EmployeeLeave',
+        path: 'leave',
+        component: () => import('#/views/leave/list/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:calendar',
+          title: '请假申请',
+          authority: ['user'],
+        },
+      },
+      // Employee: My Approvals
+      {
+        name: 'EmployeeApprovals',
+        path: 'approvals',
+        component: () => import('#/views/leave/my-approvals/index.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:clipboard-check',
+          title: '审批记录',
+          authority: ['user'],
+        },
+      },
+      // Employee: Claims
       {
         name: 'EmployeeClaims',
         path: 'claims',
@@ -48,7 +72,7 @@ const routes: RouteRecordRaw[] = [
           authority: ['user'],
         },
       },
-      // ─── 员工自助：请假详情（菜单隐藏，从列表跳转） ──────────────
+      // Employee: Leave Detail (hidden in menu, reached from leave list)
       {
         name: 'LeaveDetail',
         path: 'leave/detail/:id',

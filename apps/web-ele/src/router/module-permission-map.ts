@@ -17,6 +17,9 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
   EmployeeManageSettings: 'system_settings',
   EmployeeManageDataMigration: 'data_migration',
   EmployeeManageAccessControl: 'access_control',
+  LeaveManageAdmin: 'leave_management',
+  LeaveManageWorkflows: 'leave_workflows',
+  LeaveManageApprovals: 'approval_management',
 };
 
 /**
