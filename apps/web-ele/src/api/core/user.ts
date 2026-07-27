@@ -55,7 +55,7 @@ export async function getUserInfoApi(): Promise<
     phone: result.phone || '',
     roles: isAdmin ? ['admin'] : ['user'],
     desc: '',
-    homePath: '/employee',
+    homePath: isAdmin ? '/employee/manage' : '/employee',
     token: '',
     avatar: '',
     department: result.department,

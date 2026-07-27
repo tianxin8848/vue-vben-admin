@@ -14,6 +14,7 @@ export namespace EmployeeApi {
 
   /** 员工响应（列表 & 通用） */
   export interface EmployeeResponse {
+    access_control_id: null | string;
     created_at: null | string;
     department: null | string;
     email: string;

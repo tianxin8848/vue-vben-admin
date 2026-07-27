@@ -14,6 +14,7 @@ const routes: RouteRecordRaw[] = [
     path: '/employee/manage',
     redirect: '/employee/manage/users',
     children: [
+      // ─── 员工管理 ─────────────────────────────────────────────────
       {
         name: 'EmployeeManageUsers',
         path: 'users',
@@ -36,6 +37,7 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
+      // ─── 系统参数 ─────────────────────────────────────────────────
       {
         name: 'EmployeeManageSettings',
         path: 'settings',
@@ -47,40 +49,7 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
-      // ─── 请假管理 ───────────────────────────────────────────────────────
-      {
-        name: 'LeaveManageAdmin',
-        path: 'leave',
-        component: () => import('#/views/leave/admin-manage/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:calendar-days',
-          title: '请假管理',
-          authority: ['admin'],
-        },
-      },
-      {
-        name: 'LeaveManageWorkflows',
-        path: 'leave-workflows',
-        component: () => import('#/views/leave/workflow/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:git-branch',
-          title: '请假流程',
-          authority: ['admin'],
-        },
-      },
-      {
-        name: 'LeaveManageApprovals',
-        path: 'approvals',
-        component: () => import('#/views/leave/admin-approvals/index.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:check-circle',
-          title: '审批管理',
-          authority: ['admin'],
-        },
-      },
+      // ─── 数据迁移 ─────────────────────────────────────────────────
       {
         name: 'EmployeeManageDataMigration',
         path: 'data-migration',
@@ -92,6 +61,7 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
+      // ─── 门禁管理 ─��───────────────────────────────────────────────
       {
         name: 'EmployeeManageAccessControl',
         path: 'access-control',

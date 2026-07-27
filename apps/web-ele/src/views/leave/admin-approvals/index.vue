@@ -40,7 +40,7 @@ const searchForm = reactive({
 
 const showReviewModal = ref(false);
 const currentRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
-const reviewComment = ref('');
+const reviewForm = reactive({ reviewComment: '' });
 
 const departmentOptions = ref<{ label: string; value: string }[]>([]);
 const regionOptions = ref<{ label: string; value: string }[]>([]);
@@ -165,20 +165,20 @@ function handleReset() {
 
 function openReviewModal(request: LeaveRequestApi.LeaveRequest) {
   currentRequest.value = request;
-  reviewComment.value = '';
+  reviewForm.reviewComment = '';
   showReviewModal.value = true;
 }
 
 async function handleReview(action: 'approved' | 'rejected') {
   if (!currentRequest.value) return;
-  if (action === 'rejected' && !reviewComment.value.trim()) {
+  if (action === 'rejected' && !reviewForm.reviewComment.trim()) {
     ElMessage.warning('驳回必须填写原因');
     return;
   }
   try {
     await reviewLeaveRequestApi(currentRequest.value.id, {
       approval_status: action,
-      review_comment: reviewComment.value.trim() || null,
+      review_comment: reviewForm.reviewComment.trim() || null,
     });
     ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
     showReviewModal.value = false;
@@ -292,9 +292,13 @@ fetchLeaveRequests();
         />
         <ElTableColumn label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <ElButton size="small" type="primary" @click="openReviewModal(row)">
-审批
-</ElButton>
+            <ElButton
+              size="small"
+              type="primary"
+              @click="openReviewModal(row as LeaveRequestApi.LeaveRequest)"
+            >
+              审批
+            </ElButton>
           </template>
         </ElTableColumn>
       </ElTable>
@@ -377,14 +381,10 @@ fetchLeaveRequests();
           时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
         </p>
         <p>原因：{{ currentRequest.reason || '无' }}</p>
-        <ElForm
-          :model="reviewComment"
-          label-width="80px"
-          style="margin-top: 16px"
-        >
+        <ElForm :model="reviewForm" label-width="80px" style="margin-top: 16px">
           <ElFormItem label="审批备注">
             <ElInput
-              v-model="reviewComment"
+              v-model="reviewForm.reviewComment"
               type="textarea"
               :rows="4"
               placeholder="通过可不填；驳回必须填写原因"
@@ -395,11 +395,11 @@ fetchLeaveRequests();
       <template #footer>
         <ElButton @click="showReviewModal = false">取消</ElButton>
         <ElButton type="danger" @click="handleReview('rejected')">
-驳回
-</ElButton>
+          驳回
+        </ElButton>
         <ElButton type="primary" @click="handleReview('approved')">
-通过
-</ElButton>
+          通过
+        </ElButton>
       </template>
     </ElDialog>
   </Page>

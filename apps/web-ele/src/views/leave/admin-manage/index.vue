@@ -44,8 +44,8 @@ const showDetailModal = ref(false);
 const showReviewModal = ref(false);
 const showWithdrawModal = ref(false);
 const currentRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
-const reviewComment = ref('');
-const withdrawComment = ref('');
+const reviewForm = reactive({ reviewComment: '' });
+const withdrawForm = reactive({ withdrawComment: '' });
 
 const departmentOptions = ref<{ label: string; value: string }[]>([]);
 const regionOptions = ref<{ label: string; value: string }[]>([]);
@@ -131,7 +131,9 @@ async function fetchLeaveRequests() {
   loading.value = true;
   try {
     leaveRequests.value = await getLeaveRequestsApi({
-      approval_status: searchForm.status || undefined,
+      approval_status: searchForm.status
+        ? (searchForm.status as LeaveRequestApi.ApprovalStatus)
+        : null,
       employee_keyword: searchForm.keyword || undefined,
       region: searchForm.region || undefined,
       team: searchForm.department || undefined,
@@ -161,26 +163,26 @@ function openDetailModal(request: LeaveRequestApi.LeaveRequest) {
 
 function openReviewModal(request: LeaveRequestApi.LeaveRequest) {
   currentRequest.value = request;
-  reviewComment.value = '';
+  reviewForm.reviewComment = '';
   showReviewModal.value = true;
 }
 
 function openWithdrawModal(request: LeaveRequestApi.LeaveRequest) {
   currentRequest.value = request;
-  withdrawComment.value = '';
+  withdrawForm.withdrawComment = '';
   showWithdrawModal.value = true;
 }
 
 async function handleReview(action: 'approved' | 'rejected') {
   if (!currentRequest.value) return;
-  if (action === 'rejected' && !reviewComment.value.trim()) {
+  if (action === 'rejected' && !reviewForm.reviewComment.trim()) {
     ElMessage.warning('驳回必须填写原因');
     return;
   }
   try {
     await reviewLeaveRequestApi(currentRequest.value.id, {
       approval_status: action,
-      review_comment: reviewComment.value.trim() || null,
+      review_comment: reviewForm.reviewComment.trim() || null,
     });
     ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
     showReviewModal.value = false;
@@ -194,7 +196,7 @@ async function handleWithdraw() {
   if (!currentRequest.value) return;
   try {
     await withdrawLeaveRequestApi(currentRequest.value.id, {
-      withdraw_comment: withdrawComment.value.trim() || null,
+      withdraw_comment: withdrawForm.withdrawComment.trim() || null,
     });
     ElMessage.success('已撤回');
     showWithdrawModal.value = false;
@@ -334,23 +336,33 @@ fetchLeaveRequests();
         />
         <ElTableColumn label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <ElButton size="small" @click="openDetailModal(row)">详情</ElButton>
             <ElButton
-              v-if="row.approval_status === 'pending'"
+              size="small"
+              @click="openDetailModal(row as LeaveRequestApi.LeaveRequest)"
+              >
+详情
+</ElButton>
+            <ElButton
+              v-if="
+                (row as LeaveRequestApi.LeaveRequest).approval_status ===
+                'pending'
+              "
               size="small"
               type="primary"
-              @click="openReviewModal(row)"
+              @click="openReviewModal(row as LeaveRequestApi.LeaveRequest)"
             >
               审批
             </ElButton>
             <ElButton
               v-if="
-                row.approval_status === 'pending' ||
-                row.approval_status === 'approved'
+                (row as LeaveRequestApi.LeaveRequest).approval_status ===
+                  'pending' ||
+                (row as LeaveRequestApi.LeaveRequest).approval_status ===
+                  'approved'
               "
               size="small"
               type="danger"
-              @click="openWithdrawModal(row)"
+              @click="openWithdrawModal(row as LeaveRequestApi.LeaveRequest)"
             >
               撤回
             </ElButton>
@@ -436,14 +448,10 @@ fetchLeaveRequests();
         <p>
           时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
         </p>
-        <ElForm
-          :model="reviewComment"
-          label-width="80px"
-          style="margin-top: 16px"
-        >
+        <ElForm :model="reviewForm" label-width="80px" style="margin-top: 16px">
           <ElFormItem label="审批备注">
             <ElInput
-              v-model="reviewComment"
+              v-model="reviewForm.reviewComment"
               type="textarea"
               :rows="4"
               placeholder="通过可不填；驳回必须填写原因"
@@ -454,11 +462,11 @@ fetchLeaveRequests();
       <template #footer>
         <ElButton @click="showReviewModal = false">取消</ElButton>
         <ElButton type="danger" @click="handleReview('rejected')">
-驳回
-</ElButton>
+          驳回
+        </ElButton>
         <ElButton type="primary" @click="handleReview('approved')">
-通过
-</ElButton>
+          通过
+        </ElButton>
       </template>
     </ElDialog>
 
@@ -477,13 +485,13 @@ fetchLeaveRequests();
           时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
         </p>
         <ElForm
-          :model="withdrawComment"
+          :model="withdrawForm"
           label-width="80px"
           style="margin-top: 16px"
         >
           <ElFormItem label="撤回原因">
             <ElInput
-              v-model="withdrawComment"
+              v-model="withdrawForm.withdrawComment"
               type="textarea"
               :rows="4"
               placeholder="请输入撤回原因"

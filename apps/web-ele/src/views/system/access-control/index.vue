@@ -39,7 +39,7 @@ const searchForm = reactive({
 const showEditModal = ref(false);
 const editEmployeeId = ref('');
 const editEmployee = ref<EmployeeApi.EmployeeResponse | null>(null);
-const editAccessControlId = ref('');
+const editForm = reactive({ accessControlId: '' });
 
 const departmentOptions = ref<{ label: string; value: string }[]>([]);
 const regionOptions = ref<{ label: string; value: string }[]>([]);
@@ -109,7 +109,7 @@ function handleReset() {
 function openEditModal(employee: EmployeeApi.EmployeeResponse) {
   editEmployeeId.value = employee.id;
   editEmployee.value = employee;
-  editAccessControlId.value = employee.access_control_id || '';
+  editForm.accessControlId = employee.access_control_id || '';
   showEditModal.value = true;
 }
 
@@ -117,13 +117,13 @@ function closeEditModal() {
   showEditModal.value = false;
   editEmployeeId.value = '';
   editEmployee.value = null;
-  editAccessControlId.value = '';
+  editForm.accessControlId = '';
 }
 
 async function handleSaveAccessControl() {
   try {
     await updateEmployeeAccessControlApi(editEmployeeId.value, {
-      access_control_id: editAccessControlId.value,
+      access_control_id: editForm.accessControlId,
     });
     ElMessage.success('门禁ID更新成功');
     closeEditModal();
@@ -218,7 +218,11 @@ fetchEmployees();
         </ElTableColumn>
         <ElTableColumn label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <ElButton size="small" type="primary" @click="openEditModal(row)">
+            <ElButton
+              size="small"
+              type="primary"
+              @click="openEditModal(row as EmployeeApi.EmployeeResponse)"
+            >
               编辑
             </ElButton>
           </template>
@@ -228,13 +232,13 @@ fetchEmployees();
 
     <ElDialog v-model="showEditModal" title="编辑门禁ID" width="450px">
       <div v-if="editEmployee" style="padding: 10px 0">
-        <p style=" margin-bottom: 12px;color: #64748b">
+        <p style="margin-bottom: 12px; color: #64748b">
           员工：{{ editEmployee.full_name }}（{{ editEmployee.username }}）
         </p>
-        <ElForm :model="editAccessControlId" label-width="80px">
+        <ElForm :model="editForm" label-width="80px">
           <ElFormItem label="门禁ID">
             <ElInput
-              v-model="editAccessControlId"
+              v-model="editForm.accessControlId"
               placeholder="请输入门禁ID"
               style="width: 100%"
             />
@@ -244,8 +248,8 @@ fetchEmployees();
       <template #footer>
         <ElButton @click="closeEditModal">取消</ElButton>
         <ElButton type="primary" @click="handleSaveAccessControl">
-保存
-</ElButton>
+          保存
+        </ElButton>
       </template>
     </ElDialog>
   </Page>

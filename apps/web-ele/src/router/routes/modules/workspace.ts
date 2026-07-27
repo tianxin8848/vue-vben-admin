@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
       icon: 'lucide:home',
       order: 0,
       title: $t('page.workspace.title'),
+      authority: ['user'],
     },
     name: 'Workspace',
     path: '/employee',
@@ -21,6 +22,7 @@ const routes: RouteRecordRaw[] = [
           affixTab: true,
           icon: 'lucide:home',
           title: $t('page.workspace.home'),
+          authority: ['user'],
         },
       },
       {
@@ -31,9 +33,10 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:user',
           title: $t('page.workspace.profile'),
+          authority: ['user'],
         },
       },
-      // ─── 员工自助：报销相关 ─────────────────────────────────────────
+      // ─── 员工自助：报销 ──────────────────────────────────────────
       {
         name: 'EmployeeClaims',
         path: 'claims',
@@ -42,21 +45,10 @@ const routes: RouteRecordRaw[] = [
           affixTab: false,
           icon: 'lucide:receipt',
           title: '报销管理',
+          authority: ['user'],
         },
       },
-      // ─── 员工自助：请假相关 ─────────────────────────────────────────
-      // {
-      //   name: 'EmployeeLeaveApply',
-      //   path: 'leave',
-      //   component: () => import('#/views/leave/list/index.vue'),
-      //   meta: {
-      //     affixTab: false,
-      //     icon: 'lucide:clipboard-list',
-      //     title: $t('page.leave.list'),
-      //   },
-      // },
-     
-    
+      // ─── 员工自助：请假详情（菜单隐藏，从列表跳转） ──────────────
       {
         name: 'LeaveDetail',
         path: 'leave/detail/:id',
@@ -65,6 +57,7 @@ const routes: RouteRecordRaw[] = [
           hideInMenu: true,
           icon: 'lucide:file-text',
           title: $t('page.leave.detail'),
+          authority: ['user'],
         },
       },
     ],
