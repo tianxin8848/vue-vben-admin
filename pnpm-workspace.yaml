@@ -232,3 +232,7 @@ catalogs:
     '@fullcalendar/daygrid': ^6.1.21
   conflicts_conflicts_@fullcalendar/multimonth_h7_0_1_h6_1_21:
     '@fullcalendar/multimonth': ^6.1.21
+  conflicts_vxe-pc-ui_4_16_20:
+    vxe-pc-ui: 4.16.20
+  conflicts_vxe-table_4_20_6:
+    vxe-table: 4.20.6

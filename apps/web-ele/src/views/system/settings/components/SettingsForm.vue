@@ -4,10 +4,26 @@ import type { SystemSettingsApi } from '#/api';
 
 import { nextTick, onMounted, ref, watch } from 'vue';
 
-import { ElButton, ElForm, ElFormItem, ElInput } from 'element-plus';
+import {
+  ElButton,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessage,
+} from 'element-plus';
+import { VxeColumn, VxeTable, VxeToolbar } from 'vxe-table';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSystemSettingsApi } from '#/api';
+
+import 'vxe-table/styles/cssvar.scss';
+import 'vxe-pc-ui/styles/cssvar.scss';
+
+interface ListItem {
+  id: string;
+  name: string;
+}
 
 const props = defineProps<{
   deptStr: string;
@@ -30,6 +46,100 @@ const localPosStr = ref(props.posStr);
 const localRegionStr = ref(props.regionStr);
 const localSelectedModules = ref<string[]>([...props.selectedModules]);
 const localModules = ref<SystemSettingsApi.SystemModuleItem[]>([]);
+
+const deptList = ref<ListItem[]>([]);
+const posList = ref<ListItem[]>([]);
+const regionList = ref<ListItem[]>([]);
+
+const showDeptDialog = ref(false);
+const showPosDialog = ref(false);
+const showRegionDialog = ref(false);
+const newDeptName = ref('');
+const newPosName = ref('');
+const newRegionName = ref('');
+
+const deptToolbarButtons = ref([{ name: '新增', code: 'add' }]);
+
+const posToolbarButtons = ref([{ name: '新增', code: 'add' }]);
+
+const regionToolbarButtons = ref([{ name: '新增', code: 'add' }]);
+
+function strToList(str: string): ListItem[] {
+  return str
+    .split('\n')
+    .filter((s) => s.trim())
+    .map((s, i) => ({
+      id: String(i),
+      name: s.trim(),
+    }));
+}
+
+function listToStr(list: ListItem[]): string {
+  return list.map((item) => item.name).join('\n');
+}
+
+function updateLists() {
+  deptList.value = strToList(localDeptStr.value);
+  posList.value = strToList(localPosStr.value);
+  regionList.value = strToList(localRegionStr.value);
+}
+
+function handleDeptAdd() {
+  if (!newDeptName.value.trim()) {
+    ElMessage.warning('请输入部门名称');
+    return;
+  }
+  deptList.value.push({
+    id: String(Date.now()),
+    name: newDeptName.value.trim(),
+  });
+  localDeptStr.value = listToStr(deptList.value);
+  emit('update:deptStr', localDeptStr.value);
+  newDeptName.value = '';
+  showDeptDialog.value = false;
+}
+
+function handlePosAdd() {
+  if (!newPosName.value.trim()) {
+    ElMessage.warning('请输入岗位名称');
+    return;
+  }
+  posList.value.push({
+    id: String(Date.now()),
+    name: newPosName.value.trim(),
+  });
+  localPosStr.value = listToStr(posList.value);
+  emit('update:posStr', localPosStr.value);
+  newPosName.value = '';
+  showPosDialog.value = false;
+}
+
+function handleRegionAdd() {
+  if (!newRegionName.value.trim()) {
+    ElMessage.warning('请输入地区名称');
+    return;
+  }
+  regionList.value.push({
+    id: String(Date.now()),
+    name: newRegionName.value.trim(),
+  });
+  localRegionStr.value = listToStr(regionList.value);
+  emit('update:regionStr', localRegionStr.value);
+  newRegionName.value = '';
+  showRegionDialog.value = false;
+}
+
+function handleDeptToolbarClick({ code }: { code: string }) {
+  if (code === 'add') showDeptDialog.value = true;
+}
+
+function handlePosToolbarClick({ code }: { code: string }) {
+  if (code === 'add') showPosDialog.value = true;
+}
+
+function handleRegionToolbarClick({ code }: { code: string }) {
+  if (code === 'add') showRegionDialog.value = true;
+}
 
 async function updateCheckboxState() {
   await nextTick();
@@ -71,6 +181,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 onMounted(async () => {
+  updateLists();
   try {
     const settings = await getSystemSettingsApi();
     localModules.value = settings?.modules || [];
@@ -88,6 +199,7 @@ watch(
   (newVal) => {
     if (newVal !== localDeptStr.value) {
       localDeptStr.value = newVal;
+      updateLists();
     }
   },
 );
@@ -97,6 +209,7 @@ watch(
   (newVal) => {
     if (newVal !== localPosStr.value) {
       localPosStr.value = newVal;
+      updateLists();
     }
   },
 );
@@ -106,6 +219,7 @@ watch(
   (newVal) => {
     if (newVal !== localRegionStr.value) {
       localRegionStr.value = newVal;
+      updateLists();
     }
   },
 );
@@ -152,28 +266,34 @@ gridApi.setState({
 <template>
   <ElForm label-width="120px">
     <ElFormItem label="部门列表">
-      <ElInput
-        v-model="localDeptStr"
-        type="textarea"
-        :rows="3"
-        placeholder="例如：&#10;研发部&#10;运营部&#10;行政部"
+      <VxeToolbar
+        :buttons="deptToolbarButtons"
+        @button-click="handleDeptToolbarClick"
       />
+      <VxeTable :data="deptList">
+        <VxeColumn type="seq" width="70" />
+        <VxeColumn field="name" title="部门名称" />
+      </VxeTable>
     </ElFormItem>
     <ElFormItem label="岗位列表">
-      <ElInput
-        v-model="localPosStr"
-        type="textarea"
-        :rows="3"
-        placeholder="例如：&#10;前端开发&#10;后端开发&#10;人事专员"
+      <VxeToolbar
+        :buttons="posToolbarButtons"
+        @button-click="handlePosToolbarClick"
       />
+      <VxeTable :data="posList">
+        <VxeColumn type="seq" width="70" />
+        <VxeColumn field="name" title="岗位名称" />
+      </VxeTable>
     </ElFormItem>
     <ElFormItem label="地区列表">
-      <ElInput
-        v-model="localRegionStr"
-        type="textarea"
-        :rows="3"
-        placeholder="例如：&#10;深圳&#10;广州&#10;上海"
+      <VxeToolbar
+        :buttons="regionToolbarButtons"
+        @button-click="handleRegionToolbarClick"
       />
+      <VxeTable :data="regionList">
+        <VxeColumn type="seq" width="70" />
+        <VxeColumn field="name" title="地区名称" />
+      </VxeTable>
     </ElFormItem>
     <ElFormItem label="模块列表">
       <div
@@ -202,4 +322,40 @@ gridApi.setState({
       <ElButton type="primary" @click="$emit('save')">保存系统参数</ElButton>
     </ElFormItem>
   </ElForm>
+
+  <ElDialog v-model="showDeptDialog" title="新增部门" width="400px">
+    <ElForm :model="{ name: newDeptName }" label-width="80px">
+      <ElFormItem label="部门名称">
+        <ElInput v-model="newDeptName" placeholder="请输入部门名称" />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="showDeptDialog = false">取消</ElButton>
+      <ElButton type="primary" @click="handleDeptAdd">确认</ElButton>
+    </template>
+  </ElDialog>
+
+  <ElDialog v-model="showPosDialog" title="新增岗位" width="400px">
+    <ElForm :model="{ name: newPosName }" label-width="80px">
+      <ElFormItem label="岗位名称">
+        <ElInput v-model="newPosName" placeholder="请输入岗位名称" />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="showPosDialog = false">取消</ElButton>
+      <ElButton type="primary" @click="handlePosAdd">确认</ElButton>
+    </template>
+  </ElDialog>
+
+  <ElDialog v-model="showRegionDialog" title="新增地区" width="400px">
+    <ElForm :model="{ name: newRegionName }" label-width="80px">
+      <ElFormItem label="地区名称">
+        <ElInput v-model="newRegionName" placeholder="请输入地区名称" />
+      </ElFormItem>
+    </ElForm>
+    <template #footer>
+      <ElButton @click="showRegionDialog = false">取消</ElButton>
+      <ElButton type="primary" @click="handleRegionAdd">确认</ElButton>
+    </template>
+  </ElDialog>
 </template>

@@ -1,5 +1,9 @@
 <script lang="ts" setup>
+import type { ClaimApi } from '#/api';
+
 import { computed, onMounted, reactive, ref } from 'vue';
+
+import { Page } from '@vben/common-ui';
 
 import {
   ElButton,
@@ -21,14 +25,13 @@ import {
 import {
   createClaimApi,
   getClaimOptionsApi,
+  getMyClaimApprovalRecordsApi,
   getMyClaimHistoryApi,
   getMyClaimsApi,
-  getMyClaimApprovalRecordsApi,
   getMyPendingClaimApprovalsApi,
   getUserInfoApi,
   reviewClaimApi,
 } from '#/api';
-import type { ClaimApi } from '#/api';
 
 const loading = ref(false);
 
@@ -42,8 +45,27 @@ const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
 const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
 
 // ─── Tab 状态 ────────────────────────────────────────────────────────────────
-type TabKey = 'my' | 'history' | 'pending' | 'records';
+type TabKey = 'history' | 'my' | 'pending' | 'records';
 const activeTab = ref<TabKey>('my');
+
+const segmentedOptions = computed(() => [
+  {
+    label: `我的报销${myClaims.value.length > 0 ? ` ${myClaims.value.length}` : ''}`,
+    value: 'my',
+  },
+  {
+    label: '历史记录',
+    value: 'history',
+  },
+  {
+    label: `待我审批${pendingApprovals.value.length > 0 ? ` ${pendingApprovals.value.length}` : ''}`,
+    value: 'pending',
+  },
+  {
+    label: '审批记录',
+    value: 'records',
+  },
+]);
 
 // ─── 数据列表 ────────────────────────────────────────────────────────────────
 const myClaims = ref<ClaimApi.ClaimResponse[]>([]);
@@ -58,7 +80,7 @@ const createForm = reactive({
   description: '',
   amount: 0,
   currency: 'HKD',
-  attachmentFile: null as null | File,
+  attachmentFile: null as File | null,
 });
 const submitting = ref(false);
 
@@ -75,7 +97,10 @@ const statusLabelMap: Record<string, string> = {
   withdrawn: '已撤回',
 };
 
-const statusTypeMap: Record<string, '' | 'danger' | 'info' | 'success' | 'warning'> = {
+const statusTypeMap: Record<
+  string,
+  '' | 'danger' | 'info' | 'success' | 'warning'
+> = {
   approved: 'success',
   pending: 'warning',
   rejected: 'danger',
@@ -113,23 +138,23 @@ async function fetchAll() {
       loadPendingApprovals(),
       loadApprovalRecords(),
     ]);
-  } catch (e) {
-    console.error('Fetch all error:', e);
+  } catch (error) {
+    console.error('Fetch all error:', error);
   } finally {
     loading.value = false;
   }
 }
 
 async function loadOptions() {
-    try {
-      const opts = await getClaimOptionsApi();
-      reasonOptions.value = (opts as any).claim_reasons || [];
-      currencyOptions.value = (opts as any).claim_currencies || [];
-    } catch {
-      reasonOptions.value = [];
-      currencyOptions.value = [];
-    }
+  try {
+    const opts = await getClaimOptionsApi();
+    reasonOptions.value = (opts as any).claim_reasons || [];
+    currencyOptions.value = (opts as any).claim_currencies || [];
+  } catch {
+    reasonOptions.value = [];
+    currencyOptions.value = [];
   }
+}
 
 async function loadUserInfo() {
   try {
@@ -267,65 +292,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="claims-page">
-    <!-- 页头 -->
-    <div class="page-header">
-      <div class="header-info">
-        <h2>报销管理</h2>
-        <p class="page-subtitle">
-          提交报销申请、查看审批进度与历史记录
-          <template v-if="userInfo">
-            &nbsp;·&nbsp;当前用户：{{ userInfo.full_name }}（{{ userInfo.username }}）
-          </template>
-        </p>
-      </div>
-      <div class="header-actions">
-        <ElButton type="primary" @click="openCreateModal">
-          新建报销申请
-        </ElButton>
-      </div>
-    </div>
+  <Page title="报销管理" description="提交报销申请、查看审批进度与历史记录">
+    <template #actions>
+      <ElButton type="primary" @click="openCreateModal">
+        新建报销申请
+      </ElButton>
+    </template>
 
-    <!-- Tab 切换 -->
-    <div class="tab-bar">
-      <button
-        :class="['tab-btn', { active: activeTab === 'my' }]"
-        @click="activeTab = 'my'"
-      >
-        我的报销
-        <ElTag v-if="myClaims.length" size="small" type="warning" class="tab-badge">
-          {{ myClaims.length }}
-        </ElTag>
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'history' }]"
-        @click="activeTab = 'history'"
-      >
-        历史记录
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'pending' }]"
-        @click="activeTab = 'pending'"
-      >
-        待我审批
-        <ElTag v-if="pendingApprovals.length" size="small" type="danger" class="tab-badge">
-          {{ pendingApprovals.length }}
-        </ElTag>
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'records' }]"
-        @click="activeTab = 'records'"
-      >
-        审批记录
-      </button>
+    <ElSegmented v-model="activeTab" :options="segmentedOptions" />
+    <div
+      v-if="userInfo"
+      style="margin-bottom: 16px; font-size: 13px; color: #64748b"
+    >
+      当前用户：{{ userInfo.full_name }}（{{ userInfo.username }}）
     </div>
 
     <!-- 我的报销 -->
-    <ElCard v-if="activeTab === 'my'" class="card" :class="{ loading }">
+    <ElCard v-if="activeTab === 'my'">
       <ElTable
         v-if="myClaims.length"
         :data="myClaims"
         border
+        v-loading="loading"
         style="width: 100%"
       >
         <ElTableColumn label="报销理由" min-width="140">
@@ -335,9 +323,14 @@ onMounted(() => {
         </ElTableColumn>
         <ElTableColumn label="金额" min-width="130">
           <template #default="{ row }">
-            <span class="amount">{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
-            <div v-if="row.amount_hkd" class="amount-hkd">
-              ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+            <div>
+              <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
+              <div
+                v-if="row.amount_hkd"
+                style="font-size: 12px; color: #64748b"
+              >
+                ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+              </div>
             </div>
           </template>
         </ElTableColumn>
@@ -364,7 +357,6 @@ onMounted(() => {
               v-if="row.attachment_url"
               :href="row.attachment_url"
               target="_blank"
-              class="link"
             >
               {{ row.attachment_name || '查看' }}
             </a>
@@ -372,11 +364,13 @@ onMounted(() => {
           </template>
         </ElTableColumn>
       </ElTable>
-      <div v-else class="empty-tip">暂无进行中的报销申请</div>
+      <div v-else style="padding: 40px; color: #999; text-align: center">
+        暂无进行中的报销申请
+      </div>
     </ElCard>
 
     <!-- 历史记录 -->
-    <ElCard v-if="activeTab === 'history'" class="card">
+    <ElCard v-if="activeTab === 'history'">
       <ElTable
         v-if="myHistory.length"
         :data="myHistory"
@@ -390,9 +384,14 @@ onMounted(() => {
         </ElTableColumn>
         <ElTableColumn label="金额" min-width="130">
           <template #default="{ row }">
-            <span class="amount">{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
-            <div v-if="row.amount_hkd" class="amount-hkd">
-              ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+            <div>
+              <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
+              <div
+                v-if="row.amount_hkd"
+                style="font-size: 12px; color: #64748b"
+              >
+                ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+              </div>
             </div>
           </template>
         </ElTableColumn>
@@ -419,11 +418,13 @@ onMounted(() => {
           </template>
         </ElTableColumn>
       </ElTable>
-      <div v-else class="empty-tip">暂无历史记录</div>
+      <div v-else style="padding: 40px; color: #999; text-align: center">
+        暂无历史记录
+      </div>
     </ElCard>
 
     <!-- 待我审批 -->
-    <ElCard v-if="activeTab === 'pending'" class="card">
+    <ElCard v-if="activeTab === 'pending'">
       <ElTable
         v-if="pendingApprovals.length"
         :data="pendingApprovals"
@@ -434,7 +435,9 @@ onMounted(() => {
           <template #default="{ row }">
             <div>
               <strong>{{ row.employee_name }}</strong>
-              <div class="meta-text">{{ row.employee_username }}</div>
+              <div style="font-size: 12px; color: #64748b">
+                {{ row.employee_username }}
+              </div>
             </div>
           </template>
         </ElTableColumn>
@@ -445,9 +448,14 @@ onMounted(() => {
         </ElTableColumn>
         <ElTableColumn label="金额" min-width="130">
           <template #default="{ row }">
-            <span class="amount">{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
-            <div v-if="row.amount_hkd" class="amount-hkd">
-              ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+            <div>
+              <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
+              <div
+                v-if="row.amount_hkd"
+                style="font-size: 12px; color: #64748b"
+              >
+                ≈ HKD {{ row.amount_hkd.toFixed(2) }}
+              </div>
             </div>
           </template>
         </ElTableColumn>
@@ -463,17 +471,23 @@ onMounted(() => {
         </ElTableColumn>
         <ElTableColumn label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <ElButton size="small" type="primary" @click="openReviewModal(row as ClaimApi.ClaimResponse)">
+            <ElButton
+              size="small"
+              type="primary"
+              @click="openReviewModal(row as ClaimApi.ClaimResponse)"
+            >
               审批
             </ElButton>
           </template>
         </ElTableColumn>
       </ElTable>
-      <div v-else class="empty-tip">暂无待审批报销</div>
+      <div v-else style="padding: 40px; color: #999; text-align: center">
+        暂无待审批报销
+      </div>
     </ElCard>
 
     <!-- 审批记录 -->
-    <ElCard v-if="activeTab === 'records'" class="card">
+    <ElCard v-if="activeTab === 'records'">
       <ElTable
         v-if="approvalRecords.length"
         :data="approvalRecords"
@@ -484,7 +498,9 @@ onMounted(() => {
           <template #default="{ row }">
             <div>
               <strong>{{ row.employee_name }}</strong>
-              <div class="meta-text">{{ row.employee_username }}</div>
+              <div style="font-size: 12px; color: #64748b">
+                {{ row.employee_username }}
+              </div>
             </div>
           </template>
         </ElTableColumn>
@@ -495,12 +511,20 @@ onMounted(() => {
         </ElTableColumn>
         <ElTableColumn label="金额" min-width="120">
           <template #default="{ row }">
-            <span class="amount">{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
+            <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
           </template>
         </ElTableColumn>
         <ElTableColumn label="操作" width="90">
           <template #default="{ row }">
-            <ElTag :type="row.action === 'approved' ? 'success' : row.action === 'rejected' ? 'danger' : 'info'">
+            <ElTag
+              :type="
+                row.action === 'approved'
+                  ? 'success'
+                  : row.action === 'rejected'
+                    ? 'danger'
+                    : 'info'
+              "
+            >
               {{ formatAction(row.action) }}
             </ElTag>
           </template>
@@ -516,7 +540,9 @@ onMounted(() => {
           </template>
         </ElTableColumn>
       </ElTable>
-      <div v-else class="empty-tip">暂无审批记录</div>
+      <div v-else style="padding: 40px; color: #999; text-align: center">
+        暂无审批记录
+      </div>
     </ElCard>
 
     <!-- 新建报销弹窗 -->
@@ -526,7 +552,7 @@ onMounted(() => {
       width="560px"
       :close-on-click-modal="false"
     >
-      <ElForm label-width="90px" class="create-form">
+      <ElForm label-width="90px">
         <ElFormItem label="报销理由" required>
           <ElSelect
             v-model="createForm.reason_code"
@@ -562,7 +588,7 @@ onMounted(() => {
           </ElSelect>
         </ElFormItem>
         <ElFormItem v-if="createForm.currency !== 'HKD'" label="折合港币">
-          <span class="hkd-preview">≈ HKD {{ estimatedHkd.toFixed(2) }}</span>
+          <span>≈ HKD {{ estimatedHkd.toFixed(2) }}</span>
         </ElFormItem>
         <ElFormItem label="说明">
           <ElInput
@@ -581,7 +607,9 @@ onMounted(() => {
           >
             <ElButton>选择文件</ElButton>
             <template #tip>
-              <div class="upload-tip">支持图片或 PDF，用于报销凭证</div>
+              <div style="font-size: 12px; color: #999">
+                支持图片或 PDF，用于报销凭证
+              </div>
             </template>
           </ElUpload>
         </ElFormItem>
@@ -601,50 +629,54 @@ onMounted(() => {
       width="560px"
       :close-on-click-modal="false"
     >
-      <div v-if="currentReviewItem" class="review-detail">
-        <div class="detail-row">
-          <span class="detail-label">申请人：</span>
+      <div v-if="currentReviewItem">
+        <div style="margin-bottom: 12px">
+          <span style="font-weight: 500; color: #64748b">申请人：</span>
           <strong>{{ currentReviewItem.employee_name }}</strong>
           （{{ currentReviewItem.employee_username }}）
         </div>
-        <div class="detail-row">
-          <span class="detail-label">部门/地区：</span>
+        <div style="margin-bottom: 12px">
+          <span style="font-weight: 500; color: #64748b">部门/地区：</span>
           {{ currentReviewItem.employee_department || '-' }}
           /
           {{ currentReviewItem.employee_region || '-' }}
         </div>
-        <div class="detail-row">
-          <span class="detail-label">报销理由：</span>
+        <div style="margin-bottom: 12px">
+          <span style="font-weight: 500; color: #64748b">报销理由：</span>
           {{ currentReviewItem.reason_label }}
         </div>
-        <div class="detail-row">
-          <span class="detail-label">金额：</span>
-          <span class="amount">
+        <div style="margin-bottom: 12px">
+          <span style="font-weight: 500; color: #64748b">金额：</span>
+          <span>
             {{ currentReviewItem.amount.toFixed(2) }}
             {{ currentReviewItem.currency }}
           </span>
-          <span v-if="currentReviewItem.amount_hkd" class="amount-hkd">
-            &nbsp;≈ HKD {{ currentReviewItem.amount_hkd.toFixed(2) }}
+          <span
+            v-if="currentReviewItem.amount_hkd"
+            style="font-size: 12px; color: #64748b"
+          >
+            ≈ HKD {{ currentReviewItem.amount_hkd.toFixed(2) }}
           </span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">说明：</span>
+        <div style="margin-bottom: 12px">
+          <span style="font-weight: 500; color: #64748b">说明：</span>
           {{ currentReviewItem.description || '无' }}
         </div>
-        <div class="detail-row">
-          <span class="detail-label">附件：</span>
+        <div style="margin-bottom: 16px">
+          <span style="font-weight: 500; color: #64748b">附件：</span>
           <a
             v-if="currentReviewItem.attachment_url"
             :href="currentReviewItem.attachment_url"
             target="_blank"
-            class="link"
           >
             {{ currentReviewItem.attachment_name || '查看附件' }}
           </a>
           <span v-else>无</span>
         </div>
-        <div class="review-comment-section">
-          <div class="detail-label">审批备注：</div>
+        <div>
+          <div style="margin-bottom: 8px; font-weight: 500; color: #64748b">
+            审批备注：
+          </div>
           <ElInput
             v-model="reviewComment"
             type="textarea"
@@ -655,154 +687,13 @@ onMounted(() => {
       </div>
       <template #footer>
         <ElButton @click="showReviewModal = false">取消</ElButton>
-        <ElButton type="danger" @click="submitReview('rejected')">驳回</ElButton>
-        <ElButton type="primary" @click="submitReview('approved')">通过</ElButton>
+        <ElButton type="danger" @click="submitReview('rejected')">
+          驳回
+        </ElButton>
+        <ElButton type="primary" @click="submitReview('approved')">
+          通过
+        </ElButton>
       </template>
     </ElDialog>
-  </div>
+  </Page>
 </template>
-
-<style scoped>
-.claims-page {
-  padding: 32px;
-  background: #f8fafc;
-  min-height: calc(100vh - 80px);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.header-info h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.tab-bar {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 0;
-}
-
-.tab-btn {
-  position: relative;
-  padding: 10px 20px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.tab-btn:hover {
-  color: #1e40af;
-}
-
-.tab-btn.active {
-  color: #1e40af;
-  border-bottom-color: #1e40af;
-}
-
-.tab-badge {
-  margin-left: 2px;
-}
-
-.card {
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.card.loading {
-  opacity: 0.6;
-}
-
-.empty-tip {
-  padding: 40px 0;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.amount {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.amount-hkd {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.meta-text {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.link {
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.create-form {
-  padding: 8px 0;
-}
-
-.hkd-preview {
-  font-weight: 600;
-  color: #1e40af;
-}
-
-.upload-tip {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 4px;
-}
-
-.review-detail .detail-row {
-  margin-bottom: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.detail-label {
-  color: #64748b;
-  font-size: 13px;
-}
-
-.review-comment-section {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-</style>
