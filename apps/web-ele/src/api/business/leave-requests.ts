@@ -204,7 +204,7 @@ export async function reviewLeaveRequestApi(
 /** 撤回请假申请 */
 export async function withdrawLeaveRequestApi(
   id: string,
-  data?: LeaveRequestApi.WithdrawParams,
+  data: LeaveRequestApi.WithdrawParams = {},
 ) {
   return requestClient.request<LeaveRequestApi.LeaveRequest>(
     `/leave-requests/${id}/withdraw`,
