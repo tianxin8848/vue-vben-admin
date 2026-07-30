@@ -31,8 +31,13 @@ async function generateAccessible(
 
   const root = router.getRoutes().find((item) => item.path === '/');
 
-  // 获取已有的路由名称列表
-  const names = root?.children?.map((item) => item.name) ?? [];
+  // 清空旧的动态路由，防止切换用户时产生脏数据
+  if (root && root.children) {
+    root.children = [];
+  }
+
+  // 获取已有的路由名称列表（清空后，names 应为空）
+  const names: Array<string | symbol | undefined> = [];
 
   // 动态添加到router实例内
   accessibleRoutes.forEach((route) => {

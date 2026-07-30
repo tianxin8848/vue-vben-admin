@@ -5,11 +5,11 @@ import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
-import { accessRoutes, coreRouteNames } from '#/router/routes';
+import { coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
 
 import { generateAccess } from './access';
-import { filterAdminRoutesByPermissions } from './module-permission-map';
+import { buildRoutesFromPermissions } from './module-permission-map';
 
 // ===== 工具函数：递归打印路由树 =====
 function dumpRouteTree(routes: any[], label: string) {
@@ -44,11 +44,6 @@ function dumpRouteTree(routes: any[], label: string) {
   });
   return result;
 }
-
-// ===== 模块级日志：import 时立即执行 =====
-console.warn('=== [guard.ts] MODULE LOADED - coreRouteNames:', coreRouteNames);
-// 打印所有源路由定义（权限检查前的原始路由列表）
-dumpRouteTree(accessRoutes, 'BEFORE AUTH - All source routes (accessRoutes)');
 
 /**
  * 通用守卫配置
@@ -90,17 +85,8 @@ function setupAccessGuard(router: Router) {
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
-    console.warn('[DEBUG] Route guard triggered:', {
-      toPath: to.path,
-      toName: to.name,
-      fromPath: from.path,
-      hasToken: !!accessStore.accessToken,
-      isChecked: accessStore.isAccessChecked,
-    });
-
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
-      console.warn('[DEBUG] Core route, skip auth check:', to.name);
       if (
         !import.meta.env.VITE_TEST_LOGIN_ACCESS &&
         to.path === LOGIN_PATH &&
@@ -117,7 +103,6 @@ function setupAccessGuard(router: Router) {
 
     // accessToken 检查
     if (!accessStore.accessToken) {
-      console.warn('[DEBUG] No accessToken, redirect to login:', to.path);
       // 明确声明忽略权限访问权限，则可以访问
       if (to.meta.ignoreAccess) {
         return true;
@@ -127,12 +112,10 @@ function setupAccessGuard(router: Router) {
       if (to.fullPath !== LOGIN_PATH) {
         return {
           path: LOGIN_PATH,
-          // 如不需要，直接删除 query
           query:
             to.fullPath === preferences.app.defaultHomePath
               ? {}
               : { redirect: encodeURIComponent(to.fullPath) },
-          // 携带当前跳转的页面，登录后重新跳转该页面
           replace: true,
         };
       }
@@ -141,75 +124,58 @@ function setupAccessGuard(router: Router) {
 
     // 是否已经生成过动态路由
     if (accessStore.isAccessChecked) {
-      console.warn('[DEBUG] Routes already generated, pass through:', to.path);
       return true;
     }
 
-    // 生成路由表
-    // 当前登录用户拥有的角色标识列表
-    console.warn('[DEBUG] Start generating dynamic routes...');
+    // 获取用户信息（包含 module_permissions）
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
-    const userRoles = userInfo.roles ?? [];
 
-    console.warn('[DEBUG] User roles:', userRoles);
-    console.warn('[DEBUG] Source route count:', accessRoutes.length);
-
-    // 根据后端 module_permissions 过滤 admin 路由
-    let filteredRoutes = [...accessRoutes];
-    const modulePermissions = (userInfo as any)?.module_permissions;
-    if (modulePermissions && modulePermissions.length > 0) {
+    // 构建动态路由：根据后端返回的 module_permissions 生成路由树
+    const fetchMenuListAsync = async () => {
+      const modulePermissions =
+        (userInfo as any)?.module_permissions || [];
       console.warn(
-        '[DEBUG] Module permission filter - user permissions:',
+        '[DEBUG] module_permissions:',
         modulePermissions.map(
           (p: any) => `${p.module_code}:can_view=${p.can_view}`,
         ),
       );
-      filteredRoutes = filterAdminRoutesByPermissions(
-        accessRoutes,
-        modulePermissions,
-      );
-      console.warn(
-        '[DEBUG] After module filter, route count:',
-        filteredRoutes.length,
-      );
-    }
+      const routes = buildRoutesFromPermissions(modulePermissions);
+      console.warn('[DEBUG] Built routes count:', routes.length);
+      dumpRouteTree(routes, 'DYNAMIC ROUTES (from module_permissions)');
+      return routes;
+    };
 
-    // 生成菜单和路由
+    // 生成菜单和路由（backend 模式通过 fetchMenuListAsync 动态获取路由）
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
-      roles: userRoles,
+      roles: [],
       router,
-      routes: filteredRoutes,
+      routes: [],
+      fetchMenuListAsync,
     });
 
-    // ===== 打印最终生成的全部路由 =====
-    console.warn('[DEBUG] Generate result summary:', {
+    console.warn('[DEBUG] Generate result:', {
       accessibleRoutesCount: accessibleRoutes.length,
       accessibleMenusCount: accessibleMenus.length,
     });
-    dumpRouteTree(
-      accessibleRoutes,
-      'AFTER AUTH - Final registered routes (accessibleRoutes)',
-    );
-
-    console.warn(
-      '[DEBUG] Menu list:',
-      accessibleMenus.map((m: any) => ({
-        name: m.name,
-        path: m.path,
-        title: m.meta?.title,
-      })),
-    );
 
     // 保存菜单信息和路由信息
     accessStore.setAccessMenus(accessibleMenus);
     accessStore.setAccessRoutes(accessibleRoutes);
     accessStore.setIsAccessChecked(true);
-    const redirectPath = (from.query.redirect ??
+
+    // Determine redirect path
+    let redirectPath = (from.query.redirect ??
       (to.path === preferences.app.defaultHomePath
         ? userInfo.homePath || preferences.app.defaultHomePath
         : to.fullPath)) as string;
 
-    console.warn('[DEBUG] Redirect path:', redirectPath);
+    // If the redirect path doesn't resolve to a valid route (e.g., homePath
+    // points to a route the user no longer has access to), fall back to default
+    const resolved = router.resolve(decodeURIComponent(redirectPath));
+    if (resolved.matched.length === 0 || resolved.name === 'FallbackNotFound') {
+      redirectPath = preferences.app.defaultHomePath;
+    }
 
     return {
       ...router.resolve(decodeURIComponent(redirectPath)),

@@ -1,3 +1,7 @@
+import type { RouteRecordStringComponent } from '@vben/types';
+
+import { $t } from '#/locales';
+
 /**
  * Route name -> module_code mapping table
  *
@@ -12,17 +16,314 @@
 
 /** Route name -> module_code */
 export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
-  EmployeeManageUsers: 'user_management',
-  EmployeeManageUserProfile: 'user_management',
-  EmployeeManageSettings: 'system_settings',
-  EmployeeManageDataMigration: 'data_migration',
   EmployeeManageAccessControl: 'access_control',
+  EmployeeManageDataMigration: 'data_migration',
+  EmployeeManageSettings: 'system_settings',
+  EmployeeManageUserProfile: 'user_management',
+  EmployeeManageUsers: 'user_management',
   LeaveManageAdmin: 'leave_management',
-  LeaveManageWorkflows: 'leave_workflows',
   LeaveManageApprovals: 'approval_management',
+  LeaveManageWorkflows: 'leave_workflows',
 };
 
 /**
+ * Routes that are always visible (no module permission check required).
+ * These are the workspace and profile routes available to all authenticated users.
+ *
+ * Note: Employee sub-routes that require module permissions (e.g. approvals)
+ * are NOT included here. They are added by buildRoutesFromPermissions() based
+ * on the user's module_permissions from the backend.
+ */
+const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
+  {
+    name: 'Workspace',
+    path: '/employee',
+    component: 'BasicLayout',
+    meta: {
+      icon: 'lucide:home',
+      order: 0,
+      title: $t('page.workspace.title'),
+    },
+    children: [
+      {
+        name: 'WorkspaceHome',
+        path: '',
+        component: 'workspace/index',
+        meta: {
+          affixTab: true,
+          icon: 'lucide:home',
+          title: $t('page.workspace.home'),
+        },
+      },
+      {
+        name: 'WorkspaceProfile',
+        path: 'profile',
+        component: 'workspace/profile',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:user',
+          title: $t('page.workspace.profile'),
+        },
+      },
+      {
+        name: 'EmployeeLeave',
+        path: 'leave',
+        component: 'leave/list/index',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:calendar',
+          title: '请假申请',
+        },
+      },
+      {
+        name: 'EmployeeClaims',
+        path: 'claims',
+        component: 'claim/index',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:receipt',
+          title: '报销管理',
+        },
+      },
+      {
+        name: 'LeaveDetail',
+        path: 'leave/detail/:id',
+        component: 'leave/detail/index',
+        meta: {
+          hideInMenu: true,
+          icon: 'lucide:file-text',
+          title: $t('page.leave.detail'),
+        },
+      },
+    ],
+  },
+  {
+    name: 'Profile',
+    path: '/employee/change-password',
+    component: '_core/profile/index',
+    meta: {
+      hideInMenu: true,
+      icon: 'lucide:user',
+      order: 99,
+      title: $t('page.auth.profile'),
+    },
+  },
+];
+
+/**
+ * Workspace child routes that require backend module permissions.
+ * key = template key (used with addRoute helper), value = { route, module_code }
+ */
+const WORKSPACE_PERMISSION_CHILDREN: Record<
+  string,
+  { module_code: string; route: RouteRecordStringComponent }
+> = {
+  employee_approvals: {
+    module_code: 'approval_management',
+    route: {
+      name: 'EmployeeApprovals',
+      path: 'approvals',
+      component: 'leave/my-approvals/index',
+      meta: {
+        affixTab: false,
+        icon: 'lucide:clipboard-check',
+        title: '审批记录',
+      },
+    },
+  },
+};
+
+/**
+ * Route templates for management sub-routes, keyed by module_code.
+ * Each template is a child route of the management parent.
+ */
+const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
+  approval_management: {
+    name: 'LeaveManageApprovals',
+    path: 'approvals',
+    component: 'leave/admin-approvals/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:clipboard-list',
+      title: '审批管理',
+    },
+  },
+  access_control: {
+    name: 'EmployeeManageAccessControl',
+    path: 'access-control',
+    component: 'system/access-control/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:key',
+      title: '门禁管理',
+    },
+  },
+  data_migration: {
+    name: 'EmployeeManageDataMigration',
+    path: 'data-migration',
+    component: 'system/data-migration/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:database',
+      title: '数据处理维护',
+    },
+  },
+  leave_management: {
+    name: 'LeaveManageAdmin',
+    path: 'leave',
+    component: 'leave/admin-manage/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:calendar-check',
+      title: '请假管理',
+    },
+  },
+  leave_workflows: {
+    name: 'LeaveManageWorkflows',
+    path: 'leave-workflows',
+    component: 'leave/workflow/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:git-branch',
+      title: '请假流程',
+    },
+  },
+  system_settings: {
+    name: 'EmployeeManageSettings',
+    path: 'settings',
+    component: 'system/settings/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:gear',
+      title: $t('page.system.settings'),
+    },
+  },
+  user_management: {
+    name: 'EmployeeManageUsers',
+    path: 'users',
+    component: 'employees/list/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:list',
+      title: $t('page.employees.list'),
+    },
+  },
+  user_management_profile: {
+    name: 'EmployeeManageUserProfile',
+    path: 'users/:id/profile',
+    component: 'employees/profile/index',
+    meta: {
+      hideInMenu: true,
+      icon: 'lucide:user',
+      title: $t('page.employees.profile'),
+    },
+  },
+};
+
+/**
+ * Build the complete route tree based on user's module_permissions.
+ *
+ * Always-visible routes (workspace, profile) are included.
+ * Management routes are filtered by module_permissions where can_view === true.
+ *
+ * @param modulePermissions - Array of { module_code, can_view } from /auth/me
+ * @returns RouteRecordStringComponent[] ready for generateRoutesByBackend
+ */
+export function buildRoutesFromPermissions(
+  modulePermissions: Array<{
+    can_view?: boolean;
+    module_code: string;
+  }>,
+): RouteRecordStringComponent[] {
+  const routes: RouteRecordStringComponent[] = [...ALWAYS_VISIBLE_ROUTES];
+
+  // Build permission map: module_code -> can_view
+  const permissionMap = new Map<string, boolean>();
+  for (const perm of modulePermissions) {
+    permissionMap.set(perm.module_code, perm.can_view !== false);
+  }
+
+  // Helper: check if a module is viewable
+  const canViewModule = (moduleCode: string) => {
+    const canView = permissionMap.get(moduleCode);
+    // Opt-in: only include if backend explicitly says can_view !== false
+    // If permission is not in map at all, default to hidden (security-first)
+    return canView !== false && canView !== undefined;
+  };
+
+  // Add permission-gated children to the Workspace route
+  const workspacePermissionChildren: RouteRecordStringComponent[] = [];
+  for (const [_key, { module_code, route }] of Object.entries(
+    WORKSPACE_PERMISSION_CHILDREN,
+  )) {
+    if (canViewModule(module_code)) {
+      workspacePermissionChildren.push({ ...route });
+    }
+  }
+
+  // If there are permission-gated workspace children, add them to the Workspace route
+  if (workspacePermissionChildren.length > 0) {
+    const workspaceRoute = routes.find((r) => r.name === 'Workspace');
+    if (workspaceRoute) {
+      workspaceRoute.children = [
+        ...(workspaceRoute.children ?? []),
+        ...workspacePermissionChildren,
+      ];
+    }
+  }
+
+  // Helper: add a management route template if its module is enabled
+  const addRoute = (templateKey: string) => {
+    const template = MANAGEMENT_ROUTE_TEMPLATES[templateKey];
+    if (!template) return;
+
+    // Extract module_code from the key (strip _profile suffix for profile routes)
+    const moduleCode = templateKey.replace(/_profile$/, '');
+
+    if (!canViewModule(moduleCode)) return;
+
+    managementChildren.push({ ...template });
+  };
+
+  const managementChildren: RouteRecordStringComponent[] = [];
+
+  // Add management routes in a fixed order
+  addRoute('user_management');
+  addRoute('user_management_profile');
+  addRoute('leave_management');
+  addRoute('leave_workflows');
+  addRoute('approval_management');
+  addRoute('system_settings');
+  addRoute('data_migration');
+  addRoute('access_control');
+
+  // Only add the management parent route if it has visible children
+  if (managementChildren.length > 0) {
+    // Find first visible child's path for redirect
+    const firstChild = managementChildren[0];
+    const redirectPath = firstChild
+      ? `/employee/manage/${firstChild.path}`
+      : '/employee/manage';
+
+    routes.push({
+      name: 'EmployeeManage',
+      path: '/employee/manage',
+      component: 'BasicLayout',
+      redirect: redirectPath,
+      meta: {
+        icon: 'lucide:users',
+        order: 1,
+        title: $t('page.employees.title'),
+      },
+      children: managementChildren,
+    });
+  }
+
+  return routes;
+}
+
+/**
+ * @deprecated Use buildRoutesFromPermissions instead.
  * Filter admin routes based on user's module_permissions.
  * Routes whose corresponding module has can_view === false are removed.
  */

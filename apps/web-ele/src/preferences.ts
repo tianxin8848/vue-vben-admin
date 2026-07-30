@@ -10,6 +10,7 @@ import {
  */
 export const overridesPreferences = defineOverridesPreferences({
   app: {
+    accessMode: 'backend',
     defaultHomePath: '/employee',
     name: import.meta.env.VITE_APP_TITLE,
   },
