@@ -315,3 +315,29 @@ A: 用户登录后自动跳转的首页路径。admin 是 `/employee/manage`（�
 **Q: 为什么我把路由文件删了，菜单里还有？**
 
 A: 如果之前生成过路由（`isAccessChecked = true`），需要**清除浏览器缓存/localStorage**或重新登录。动态路由只生成一次。
+
+
+            
+          
+找到了！路由 `/employee/leave` 对应的组件在 [workspace.ts](file:///Users/xi/Documents/github/7-13/vue-vben-admin/apps/web-ele/src/router/routes/modules/workspace.ts#L39-L50) 中定义：
+
+**路由配置：**
+- **父路由**：`/employee`（第14行）
+- **子路由**：`leave`（第42行，名称 `EmployeeLeave`）
+- **组件**：`#/views/leave/list/index.vue`（第43行）
+
+所以完整路径 `/employee/leave` → 组件 [views/leave/list/index.vue](file:///Users/xi/Documents/github/7-13/vue-vben-admin/apps/web-ele/src/views/leave/list/index.vue)
+
+---
+
+**路由结构说明：**
+
+| URL 路径 | 组件 | 说明 |
+|---|---|---|
+| `/employee` | `views/workspace/index.vue` | 工作台首页 |
+| `/employee/leave` | `views/leave/list/index.vue` | 请假申请列表 |
+| `/employee/leave/detail/:id` | `views/leave/detail/index.vue` | 请假详情页（不在菜单中显示） |
+| `/employee/approvals` | `views/leave/my-approvals/index.vue` | 审批记录 |
+| `/employee/claims` | `views/claim/index.vue` | 报销管理 |
+
+路由文件位于 `src/router/routes/modules/workspace.ts`，这个项目将路由拆分到了多个模块文件中（workspace、leave-workflows 等），所以如果你只看 `api/index.ts` 或 `api/request.ts` 是找不到的——那些是 **API 请求** 的定义，路由配置在 `src/router/routes/modules/` 目录下。

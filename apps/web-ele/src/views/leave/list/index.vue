@@ -1,243 +1,505 @@
 <script lang="ts" setup>
 import type { LeaveRequestApi } from '#/api';
 
-import { reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+import { Page } from '@vben/common-ui';
 
 import {
   ElButton,
+  ElCard,
   ElDatePicker,
-  ElDialog,
   ElForm,
   ElFormItem,
   ElInput,
   ElMessage,
+  ElOption,
   ElSelect,
-  ElTable,
-  ElTableColumn,
+  ElTag,
 } from 'element-plus';
 
 import {
   createLeaveRequestApi,
-  getLeaveRequestsApi,
+  getAnnualLeaveSummaryApi,
+  getMyLeaveRequestsApi,
   withdrawLeaveRequestApi,
 } from '#/api';
 
+import CalendarPanel from '../calendar/components/CalendarPanel.vue';
+
 const router = useRouter();
 const loading = ref(false);
-const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 
-const searchForm = reactive({
-  approval_status: '',
-});
+// 请假类型映射
+const leaveTypeOptions: Record<string, string> = {
+  annual: '年假',
+  personal: '事假',
+  sick: '病假',
+  lieu: '调休',
+  long: '长假',
+};
 
-const showCreateModal = ref(false);
-const createForm = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
+// 请假时段映射
+const sessionOptions: Record<string, string> = {
+  full_day: '全天',
+  morning: '上午',
+  afternoon: '下午',
+};
+
+// 审批状态映射
+const statusOptions: Record<string, string> = {
+  pending: '待审批',
+  approved: '已批准',
+  rejected: '已驳回',
+  withdrawn: '已撤回',
+};
+
+// 表单数据
+const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
   leave_type: 'annual',
   start_date: '',
   end_date: '',
-  reason: '',
+  session: 'full_day',
+  handover_to: null,
+  reason: null,
 });
 
-const leaveTypeOptions = [
-  { label: '病假', value: 'sick' },
-  { label: '年假', value: 'annual' },
-  { label: '事假', value: 'personal' },
-  { label: '调休', value: 'lieu' },
-  { label: '长假', value: 'long' },
-];
+const submitting = ref(false);
 
-const statusOptions = [
-  { label: '待审批', value: 'pending' },
-  { label: '已批准', value: 'approved' },
-  { label: '已拒绝', value: 'rejected' },
-  { label: '已撤回', value: 'withdrawn' },
-];
+// 请假记录
+const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
+const hideWithdrawnOrRejected = ref(false);
 
-function formatLeaveType(type: string) {
-  return leaveTypeOptions.find((o) => o.value === type)?.label || type;
-}
+// 年假汇总
+const annualSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
 
-function formatStatus(status: string) {
-  return statusOptions.find((o) => o.value === status)?.label || status;
-}
+// 年历相关
+const currentYear = ref(new Date().getFullYear());
+const selectedDateKey = ref('');
 
-async function fetchLeaveRequests() {
-  loading.value = true;
-  try {
-    leaveRequests.value = await getLeaveRequestsApi({
-      approval_status: (searchForm.approval_status || undefined) as any,
+// 筛选后的请假记录
+const filteredLeaveRequests = computed(() => {
+  if (!hideWithdrawnOrRejected.value) {
+    return leaveRequests.value;
+  }
+  return leaveRequests.value.filter(
+    (item) =>
+      item.approval_status !== 'withdrawn' &&
+      item.approval_status !== 'rejected',
+  );
+});
+
+// 年历数据映射
+const dayMap = computed(() => {
+  const map: Record<string, LeaveRequestApi.LeaveRequest[]> = {};
+  filteredLeaveRequests.value.forEach((record) => {
+    (record.date_keys || []).forEach((dateKey) => {
+      if (!dateKey.startsWith(`${currentYear.value}-`)) return;
+      map[dateKey] = map[dateKey] || [];
+      map[dateKey].push({ ...record });
     });
+  });
+  return map;
+});
+
+// 统计数据
+const stats = computed(() => {
+  const yearRecords = filteredLeaveRequests.value.filter((item) =>
+    (item.date_keys || []).some((dateKey) =>
+      dateKey.startsWith(`${currentYear.value}-`),
+    ),
+  );
+
+  return {
+    recordCount: yearRecords.length,
+    dayCount: Object.keys(dayMap.value).length,
+    pendingCount: yearRecords.filter(
+      (item) => item.approval_status === 'pending',
+    ).length,
+    annualEntitlement: annualSummary.value?.entitlement_days ?? '-',
+    annualAvailable: annualSummary.value?.available_days ?? '-',
+  };
+});
+
+// 提交请假申请
+async function handleSubmit() {
+  if (!form.start_date || !form.end_date) {
+    ElMessage.warning('请完整选择请假日期');
+    return;
+  }
+
+  if (form.start_date > form.end_date) {
+    ElMessage.warning('开始日期不能晚于结束日期');
+    return;
+  }
+
+  if (form.session !== 'full_day' && form.start_date !== form.end_date) {
+    ElMessage.warning('上午或下午请假仅支持单日申请');
+    return;
+  }
+
+  submitting.value = true;
+  try {
+    await createLeaveRequestApi({
+      leave_type: form.leave_type,
+      start_date: form.start_date,
+      end_date: form.end_date,
+      session: form.session,
+      handover_to: form.handover_to || null,
+      reason: form.reason || null,
+    });
+
+    ElMessage.success('请假申请已提交');
+    resetForm();
+    await fetchData();
+  } catch {
+    ElMessage.error('提交失败');
   } finally {
-    loading.value = false;
+    submitting.value = false;
   }
 }
 
-function handleSearch() {
-  fetchLeaveRequests();
+// 重置表单
+function resetForm() {
+  form.leave_type = 'annual';
+  form.start_date = '';
+  form.end_date = '';
+  form.session = 'full_day';
+  form.handover_to = null;
+  form.reason = null;
 }
 
-function handleReset() {
-  searchForm.approval_status = '';
-  fetchLeaveRequests();
-}
-
-function viewDetail(id: string) {
-  router.push(`/employee/leave/detail/${id}`);
-}
-
+// 撤回请假申请
 async function handleWithdraw(id: string) {
+  const confirmed = window.confirm('确认撤回这条请假申请吗？撤回后将不再进入审批流程。');
+  if (!confirmed) return;
+
   try {
-    await withdrawLeaveRequestApi(id, { withdraw_comment: '' });
-    ElMessage.success('撤回成功');
-    fetchLeaveRequests();
+    await withdrawLeaveRequestApi(id);
+    ElMessage.success('已撤回');
+    await fetchData();
   } catch {
     ElMessage.error('撤回失败');
   }
 }
 
-async function handleCreate() {
-  if (!createForm.start_date || !createForm.end_date) {
-    ElMessage.warning('请选择日期');
-    return;
-  }
+// 加载数据
+async function fetchData() {
+  loading.value = true;
   try {
-    await createLeaveRequestApi(createForm);
-    ElMessage.success('提交成功');
-    showCreateModal.value = false;
-    createForm.leave_type = 'annual';
-    createForm.start_date = '';
-    createForm.end_date = '';
-    createForm.reason = '';
-    fetchLeaveRequests();
+    const [requests, summary] = await Promise.all([
+      getMyLeaveRequestsApi(),
+      getAnnualLeaveSummaryApi(currentYear.value),
+    ]);
+    leaveRequests.value = requests || [];
+    annualSummary.value = summary;
   } catch {
-    ElMessage.error('提交失败');
+    leaveRequests.value = [];
+    annualSummary.value = null;
+  } finally {
+    loading.value = false;
   }
 }
 
-fetchLeaveRequests();
+// 年份切换
+async function changeYear(year: number) {
+  currentYear.value = year;
+  selectedDateKey.value = '';
+  try {
+    annualSummary.value = await getAnnualLeaveSummaryApi(year);
+  } catch {
+    annualSummary.value = null;
+  }
+}
+
+// 日期选择
+function onSelectDate(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  selectedDateKey.value = `${y}-${m}-${d}`;
+}
+
+// 获取审批人标签
+function getApproverLabel(item: LeaveRequestApi.LeaveRequest) {
+  const chain = item.approval_chain || [];
+  const currentNode = chain.find(
+    (node: any) => node.user_id === item.current_approver_id,
+  );
+  if (!currentNode) return '-';
+
+  const level = chain.findIndex((node: any) => node.user_id === item.current_approver_id) + 1;
+  const prefix = level ? `第${level}级：` : '';
+  const name = (currentNode as any).full_name || (currentNode as any).username || '-';
+  return `${prefix}${name}`;
+}
+
+// 获取最新操作显示
+function getLatestActionDisplay(item: LeaveRequestApi.LeaveRequest) {
+  const history = item.approval_history || [];
+  if (!history.length) return '尚未处理';
+
+  const latest = history[history.length - 1] as any;
+  const actor = latest.approver_name || '-';
+  const atText = latest.at ? new Date(latest.at).toLocaleString('zh-CN') : '-';
+
+  const actionText = {
+    approved: '已通过',
+    rejected: '已驳回',
+    withdrawn: '已撤回',
+  }[(latest.action as string)] || latest.action;
+
+  return `${actor}${actionText} / ${atText}`;
+}
+
+// 返回工作台
+function goBack() {
+  router.push('/employee');
+}
+
+// 查看详情
+function viewDetail(id: string) {
+  router.push(`/employee/leave/detail/${id}`);
+}
+
+onMounted(() => {
+  fetchData();
+});
 </script>
 
 <template>
-  <div class="leave-list-page">
-    <h2>请假申请</h2>
-    <ElForm :model="searchForm" inline class="search-form">
-      <ElFormItem label="状态">
-        <ElSelect
-          v-model="searchForm.approval_status"
-          placeholder="请选择"
-          clearable
-        >
-          <ElOption
-            v-for="opt in statusOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-      </ElFormItem>
+  <Page title="我的请假" description="提交自己的请假申请,查看请假记录与年历" v-loading="loading">
+    <div style="margin-bottom: 16px">
+      <ElButton @click="goBack">返回工作台</ElButton>
+    </div>
 
-      <ElButton type="primary" @click="handleSearch">搜索</ElButton>
-      <ElButton @click="handleReset">重置</ElButton>
-      <ElButton type="primary" @click="showCreateModal = true">
-        提交申请
-      </ElButton>
-    </ElForm>
+    <div style="display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 18px">
+      <!-- 新增请假表单 -->
+      <ElCard header="新增请假">
+        <ElForm :model="form" label-width="100px">
+          <ElFormItem label="请假类型" required>
+            <ElSelect v-model="form.leave_type" style="width: 100%">
+              <ElOption
+                v-for="(label, value) in leaveTypeOptions"
+                :key="value"
+                :label="label"
+                :value="value"
+              />
+            </ElSelect>
+          </ElFormItem>
 
-    <ElTable :data="leaveRequests" border stripe v-loading="loading">
-      <ElTableColumn prop="employee_name" label="申请人" />
-      <ElTableColumn prop="leave_type" label="请假类型">
-        <template #default="{ row }">
-          {{ formatLeaveType(row.leave_type) }}
-        </template>
-      </ElTableColumn>
-      <ElTableColumn prop="start_date" label="开始日期" />
-      <ElTableColumn prop="end_date" label="结束日期" />
-      <ElTableColumn prop="approval_status" label="状态">
-        <template #default="{ row }">
-          <span class="status-tag" :class="[row.approval_status]">{{
-            formatStatus(row.approval_status)
-          }}</span>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn prop="created_at" label="申请时间" />
-      <ElTableColumn label="操作" width="200">
-        <template #default="{ row }">
-          <ElButton size="small" @click="viewDetail(row.id)">详情</ElButton>
-          <ElButton
-            v-if="row.approval_status === 'pending'"
-            size="small"
-            type="danger"
-            @click="handleWithdraw(row.id)"
-          >
-            撤回
-          </ElButton>
-        </template>
-      </ElTableColumn>
-    </ElTable>
-
-    <ElDialog v-model="showCreateModal" title="提交请假申请" width="500px">
-      <ElForm :model="createForm" label-width="100px">
-        <ElFormItem label="请假类型">
-          <ElSelect v-model="createForm.leave_type">
-            <ElOption
-              v-for="opt in leaveTypeOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
+          <ElFormItem label="开始日期" required>
+            <ElDatePicker
+              v-model="form.start_date"
+              type="date"
+              value-format="YYYY-MM-DD"
+              placeholder="选择开始日期"
+              style="width: 100%"
             />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="开始日期">
-          <ElDatePicker v-model="createForm.start_date" type="date" />
-        </ElFormItem>
-        <ElFormItem label="结束日期">
-          <ElDatePicker v-model="createForm.end_date" type="date" />
-        </ElFormItem>
-        <ElFormItem label="请假原因">
-          <ElInput v-model="createForm.reason" type="textarea" :rows="3" />
-        </ElFormItem>
-      </ElForm>
-      <template #footer>
-        <ElButton @click="showCreateModal = false">取消</ElButton>
-        <ElButton type="primary" @click="handleCreate">提交</ElButton>
+          </ElFormItem>
+
+          <ElFormItem label="结束日期" required>
+            <ElDatePicker
+              v-model="form.end_date"
+              type="date"
+              value-format="YYYY-MM-DD"
+              placeholder="选择结束日期"
+              style="width: 100%"
+            />
+          </ElFormItem>
+
+          <ElFormItem label="请假时段" required>
+            <ElSelect v-model="form.session" style="width: 100%">
+              <ElOption
+                v-for="(label, value) in sessionOptions"
+                :key="value"
+                :label="label"
+                :value="value"
+              />
+            </ElSelect>
+          </ElFormItem>
+
+          <ElFormItem label="工作交接人">
+            <ElInput
+              v-model="form.handover_to"
+              placeholder="选填"
+              clearable
+            />
+          </ElFormItem>
+
+          <ElFormItem label="请假说明">
+            <ElInput
+              v-model="form.reason"
+              type="textarea"
+              :rows="3"
+              placeholder="请填写请假原因"
+            />
+          </ElFormItem>
+
+          <ElFormItem>
+            <ElButton
+              type="primary"
+              :loading="submitting"
+              @click="handleSubmit"
+            >
+              提交请假申请
+            </ElButton>
+          </ElFormItem>
+        </ElForm>
+
+        <div style="color: #64748b; font-size: 13px; line-height: 1.7">
+          说明：半天请假仅支持单日申请；提交后会写入 leave_requests，审批状态默认是"待审批"。
+        </div>
+      </ElCard>
+
+      <!-- 我的请假记录 -->
+      <ElCard>
+        <template #header>
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h3 style="margin: 0">我的请假记录</h3>
+            <div style="display: flex; gap: 10px">
+              <ElButton size="small" @click="fetchData">刷新列表</ElButton>
+              <ElButton
+                size="small"
+                @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected"
+              >
+                {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
+              </ElButton>
+            </div>
+          </div>
+        </template>
+
+        <div v-if="filteredLeaveRequests.length === 0" style="padding: 20px; color: #64748b; text-align: center">
+          暂无请假记录
+        </div>
+
+        <div v-else style="display: flex; flex-direction: column; gap: 14px">
+          <div
+            v-for="item in filteredLeaveRequests"
+            :key="item.id"
+            style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #f8fafc"
+          >
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+              <div style="font-size: 16px; font-weight: 700">
+                {{ item.start_date === item.end_date ? item.start_date : `${item.start_date} 至 ${item.end_date}` }}
+              </div>
+              <ElTag
+                :type="{
+                  pending: 'warning',
+                  approved: 'success',
+                  rejected: 'danger',
+                  withdrawn: 'info',
+                }[item.approval_status] || 'info'"
+              >
+                {{ statusOptions[item.approval_status] }}
+              </ElTag>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px">
+              <ElTag type="info">{{ leaveTypeOptions[item.leave_type] }}</ElTag>
+              <ElTag>{{ sessionOptions[item.session] }}</ElTag>
+            </div>
+
+            <div style="color: #475569; font-size: 14px; line-height: 1.8">
+              <div>请假天数覆盖：{{ (item.date_keys || []).length }} 天</div>
+              <div>创建时间：{{ item.created_at ? new Date(item.created_at).toLocaleString('zh-CN') : '-' }}</div>
+            </div>
+
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #334155; font-size: 14px; line-height: 1.7">
+              <div>请假说明：{{ item.reason || '-' }}</div>
+              <div>工作交接人：{{ item.handover_to || '-' }}</div>
+              <div>当前审批人：{{ getApproverLabel(item) }}</div>
+              <div>最近处理：{{ getLatestActionDisplay(item) }}</div>
+            </div>
+
+            <div v-if="item.approval_status === 'pending'" style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px">
+              <ElButton size="small" @click="viewDetail(item.id)">查看详情</ElButton>
+              <ElButton size="small" type="danger" @click="handleWithdraw(item.id)">
+                撤回申请
+              </ElButton>
+            </div>
+          </div>
+        </div>
+      </ElCard>
+    </div>
+
+    <!-- 我的请假年历 -->
+    <ElCard style="margin-top: 18px">
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px">
+          <div>
+            <h3 style="margin: 0">我的请假年历</h3>
+            <p style="margin: 8px 0 0; color: #64748b; font-size: 14px">
+              按年查看自己的请假分布，直接看到每一天的请假类型和状态。
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <ElButton size="small" @click="changeYear(currentYear - 1)">上一年</ElButton>
+            <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 88px; padding: 10px 14px; border-radius: 10px; background: #e2e8f0; color: #0f172a; font-weight: 700">
+              {{ currentYear }}
+            </span>
+            <ElButton size="small" @click="changeYear(currentYear + 1)">下一年</ElButton>
+            <ElButton size="small" type="primary" @click="changeYear(new Date().getFullYear())">
+              回到今年
+            </ElButton>
+          </div>
+        </div>
       </template>
-    </ElDialog>
-  </div>
+
+      <!-- 统计数据 -->
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px">
+        <div style="padding: 14px 16px; border-radius: 14px; background: #f8fafc">
+          <div style="color: #64748b; font-size: 13px">当年请假记录</div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">{{ stats.recordCount }}</div>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 14px; background: #f8fafc">
+          <div style="color: #64748b; font-size: 13px">当年覆盖天数</div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">{{ stats.dayCount }}</div>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 14px; background: #f8fafc">
+          <div style="color: #64748b; font-size: 13px">待审批记录</div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">{{ stats.pendingCount }}</div>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 14px; background: #f8fafc">
+          <div style="color: #64748b; font-size: 13px">当年年假总计</div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">{{ stats.annualEntitlement }}</div>
+        </div>
+        <div style="padding: 14px 16px; border-radius: 14px; background: #f8fafc">
+          <div style="color: #64748b; font-size: 13px">当年年假可用</div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">{{ stats.annualAvailable }}</div>
+        </div>
+      </div>
+
+      <!-- 年历面板 -->
+      <CalendarPanel
+        :day-map="dayMap"
+        :selected-date-key="selectedDateKey"
+        :current-year="currentYear"
+        :search-form="{ view_mode: 'standard' }"
+        @select-date="onSelectDate"
+        @panel-change="() => {}"
+      />
+
+      <!-- 日期详情 -->
+      <div v-if="selectedDateKey" style="margin-top: 16px; padding: 16px; border-radius: 14px; background: #f8fafc">
+        <h4 style="margin: 0 0 12px; font-size: 16px">{{ selectedDateKey }} · 日期详情</h4>
+        <div v-if="!dayMap[selectedDateKey]?.length" style="color: #64748b">
+          当天没有请假记录。
+        </div>
+        <div v-else style="display: flex; flex-direction: column; gap: 10px">
+          <div
+            v-for="item in dayMap[selectedDateKey]"
+            :key="item.id"
+            style="padding: 10px 0; border-top: 1px solid #e2e8f0; font-size: 14px; line-height: 1.7"
+          >
+            <div>类型：{{ leaveTypeOptions[item.leave_type] }}</div>
+            <div>时段：{{ sessionOptions[item.session] }}</div>
+            <div>状态：{{ statusOptions[item.approval_status] }}</div>
+            <div>说明：{{ item.reason || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </ElCard>
+  </Page>
 </template>
-
-<style scoped>
-.leave-list-page {
-  padding: 20px;
-}
-
-.search-form {
-  margin-bottom: 20px;
-}
-
-.status-tag {
-  padding: 4px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-}
-
-.status-tag.pending {
-  color: #d97706;
-  background: #fef3c7;
-}
-
-.status-tag.approved {
-  color: #16a34a;
-  background: #dcfce7;
-}
-
-.status-tag.rejected {
-  color: #dc2626;
-  background: #fee2e2;
-}
-
-.status-tag.withdrawn {
-  color: #6b7280;
-  background: #f3f4f6;
-}
-</style>
