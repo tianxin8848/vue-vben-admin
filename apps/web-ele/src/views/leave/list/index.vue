@@ -16,6 +16,8 @@ import {
   ElMessage,
   ElOption,
   ElSelect,
+  ElTable,
+  ElTableColumn,
   ElTag,
 } from 'element-plus';
 
@@ -70,6 +72,23 @@ const submitting = ref(false);
 // 请假记录
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const hideWithdrawnOrRejected = ref(false);
+
+// 表格展开
+const tableRef = ref();
+
+function handleRowClick(row: LeaveRequestApi.LeaveRequest) {
+  tableRef.value?.toggleRowExpansion(row);
+}
+
+function statusTagType(status: string): 'danger' | 'info' | 'primary' | 'success' | 'warning' | undefined {
+  const map: Record<string, 'danger' | 'info' | 'primary' | 'success' | 'warning'> = {
+    pending: 'warning',
+    approved: 'success',
+    rejected: 'danger',
+    withdrawn: 'info',
+  };
+  return map[status] ?? 'info';
+}
 
 // 年假汇总
 const annualSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
@@ -238,7 +257,7 @@ function getApproverLabel(item: LeaveRequestApi.LeaveRequest) {
 // 获取最新操作显示
 function getLatestActionDisplay(item: LeaveRequestApi.LeaveRequest) {
   const history = item.approval_history || [];
-  if (!history.length) return '尚未处理';
+  if (history.length === 0) return '尚未处理';
 
   const latest = history[history.length - 1] as any;
   const actor = latest.approver_name || '-';
@@ -374,53 +393,70 @@ onMounted(() => {
           暂无请假记录
         </div>
 
-        <div v-else style="display: flex; flex-direction: column; gap: 14px">
-          <div
-            v-for="item in filteredLeaveRequests"
-            :key="item.id"
-            style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #f8fafc"
-          >
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-              <div style="font-size: 16px; font-weight: 700">
-                {{ item.start_date === item.end_date ? item.start_date : `${item.start_date} 至 ${item.end_date}` }}
+        <ElTable
+          v-else
+          ref="tableRef"
+          :data="filteredLeaveRequests"
+          row-key="id"
+          border
+          stripe
+          highlight-current-row
+          style="width: 100%"
+          @row-click="handleRowClick"
+        >
+          <ElTableColumn type="expand" width="44">
+            <template #default="{ row }">
+              <div style="padding: 12px 24px; color: #334155; font-size: 14px; line-height: 1.8">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px">
+                  <div>请假说明：{{ row.reason || '-' }}</div>
+                  <div>工作交接人：{{ row.handover_to || '-' }}</div>
+                  <div>当前审批人：{{ getApproverLabel(row as LeaveRequestApi.LeaveRequest) }}</div>
+                  <div>最近处理：{{ getLatestActionDisplay(row as LeaveRequestApi.LeaveRequest) }}</div>
+                  <div>请假天数覆盖：{{ (row.date_keys || []).length }} 天</div>
+                  <div>创建时间：{{ row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-' }}</div>
+                </div>
+                <div v-if="row.approval_status === 'pending'" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px">
+                  <ElButton size="small" @click="viewDetail(row.id)">查看详情</ElButton>
+                  <ElButton size="small" type="danger" @click="handleWithdraw(row.id)">
+                    撤回申请
+                  </ElButton>
+                </div>
               </div>
-              <ElTag
-                :type="{
-                  pending: 'warning',
-                  approved: 'success',
-                  rejected: 'danger',
-                  withdrawn: 'info',
-                }[item.approval_status] || 'info'"
-              >
-                {{ statusOptions[item.approval_status] }}
+            </template>
+          </ElTableColumn>
+
+          <ElTableColumn label="日期范围" min-width="200">
+            <template #default="{ row }">
+              {{ row.start_date === row.end_date ? row.start_date : `${row.start_date} 至 ${row.end_date}` }}
+            </template>
+          </ElTableColumn>
+
+          <ElTableColumn label="请假类型" width="120" align="center">
+            <template #default="{ row }">
+              <ElTag type="info">{{ leaveTypeOptions[row.leave_type] }}</ElTag>
+            </template>
+          </ElTableColumn>
+
+          <ElTableColumn label="时段" width="100" align="center">
+            <template #default="{ row }">
+              <ElTag>{{ sessionOptions[row.session] }}</ElTag>
+            </template>
+          </ElTableColumn>
+
+          <ElTableColumn label="状态" width="120" align="center">
+            <template #default="{ row }">
+              <ElTag :type="statusTagType(row.approval_status)">
+                {{ statusOptions[row.approval_status] }}
               </ElTag>
-            </div>
+            </template>
+          </ElTableColumn>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px">
-              <ElTag type="info">{{ leaveTypeOptions[item.leave_type] }}</ElTag>
-              <ElTag>{{ sessionOptions[item.session] }}</ElTag>
-            </div>
-
-            <div style="color: #475569; font-size: 14px; line-height: 1.8">
-              <div>请假天数覆盖：{{ (item.date_keys || []).length }} 天</div>
-              <div>创建时间：{{ item.created_at ? new Date(item.created_at).toLocaleString('zh-CN') : '-' }}</div>
-            </div>
-
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #334155; font-size: 14px; line-height: 1.7">
-              <div>请假说明：{{ item.reason || '-' }}</div>
-              <div>工作交接人：{{ item.handover_to || '-' }}</div>
-              <div>当前审批人：{{ getApproverLabel(item) }}</div>
-              <div>最近处理：{{ getLatestActionDisplay(item) }}</div>
-            </div>
-
-            <div v-if="item.approval_status === 'pending'" style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px">
-              <ElButton size="small" @click="viewDetail(item.id)">查看详情</ElButton>
-              <ElButton size="small" type="danger" @click="handleWithdraw(item.id)">
-                撤回申请
-              </ElButton>
-            </div>
-          </div>
-        </div>
+          <ElTableColumn label="创建时间" width="180">
+            <template #default="{ row }">
+              {{ row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-' }}
+            </template>
+          </ElTableColumn>
+        </ElTable>
       </ElCard>
     </div>
 
