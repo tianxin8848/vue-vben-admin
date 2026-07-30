@@ -8,6 +8,7 @@ import { ElButton, ElOption, ElSelect } from 'element-plus';
 
 import {
   deleteRegionalHolidayApi,
+  getAnnualLeaveSummaryApi,
   getEmployeesApi,
   getLeaveCalendarApi,
   getSystemSettingsApi,
@@ -43,6 +44,13 @@ const employeesDirectory = ref<any[]>([]);
 const regionalHolidays = ref<any[]>([]);
 
 const calendarRecords = ref<any[]>([]);
+
+const annualLeaveSummary = ref<{
+  available_days: number;
+  entitlement_days: number;
+  used_days: number;
+  year: number;
+} | null>(null);
 
 function toUTC8DateKey(date: Date): string {
   const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
@@ -125,7 +133,13 @@ function onSelectDate(date: Date) {
 
 function onPanelChange(date: Date) {
   const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
-  currentYear.value = utc8.getUTCFullYear();
+  const newYear = utc8.getUTCFullYear();
+  const yearChanged = newYear !== currentYear.value;
+  currentYear.value = newYear;
+  if (yearChanged) {
+    fetchCalendar();
+    loadAnnualLeaveSummary();
+  }
 }
 
 function formatNow() {
@@ -239,6 +253,15 @@ async function fetchCalendar() {
   }
 }
 
+async function loadAnnualLeaveSummary() {
+  try {
+    const data = await getAnnualLeaveSummaryApi(currentYear.value);
+    annualLeaveSummary.value = data;
+  } catch {
+    annualLeaveSummary.value = null;
+  }
+}
+
 async function loadSystemSettings() {
   try {
     const settings = await getSystemSettingsApi();
@@ -286,7 +309,7 @@ function goToWorkflow() {
 
 onMounted(() => {
   startLiveClock();
-  Promise.all([fetchCalendar(), loadSystemSettings(), loadEmployees()]);
+  Promise.all([fetchCalendar(), loadSystemSettings(), loadEmployees(), loadAnnualLeaveSummary()]);
 });
 
 onUnmounted(() => {
@@ -363,7 +386,7 @@ onUnmounted(() => {
     </div>
 
     <div style="margin-bottom: 16px">
-      <StatsPanel :stats="stats" />
+      <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
     </div>
 
     <div style="margin-bottom: 16px">
