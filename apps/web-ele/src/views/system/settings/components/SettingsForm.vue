@@ -296,15 +296,7 @@ gridApi.setState({
       </VxeTable>
     </ElFormItem>
     <ElFormItem label="模块列表">
-      <div
-        style="
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
-          margin-bottom: 12px;
-        "
-      >
+      <div>
         <ElButton size="small" type="default" @click="selectAllModules">
           全选模块
         </ElButton>

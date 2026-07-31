@@ -78,6 +78,8 @@ const sortOrder = ref<'ascending' | 'descending'>('ascending');
 const departmentOptions = ref<{ label: string; value: string }[]>([]);
 const positionOptions = ref<{ label: string; value: string }[]>([]);
 const regionOptions = ref<{ label: string; value: string }[]>([]);
+const moduleOptions = ref<SystemSettingsApi.SystemModuleItem[]>([]);
+const selectedModuleCodes = ref<string[]>([]);
 
 async function fetchSystemSettings() {
   try {
@@ -95,6 +97,7 @@ async function fetchSystemSettings() {
       label: r,
       value: r,
     }));
+    moduleOptions.value = settings.modules || [];
   } catch {
     // 获取系统设置失败时保持空选项
   }
@@ -240,7 +243,18 @@ async function handleCreate() {
     return;
   }
   try {
-    await createEmployeeApi(createForm);
+    const payload: EmployeeApi.EmployeeCreate = {
+      username: createForm.username,
+      email: createForm.email,
+      full_name: createForm.full_name,
+      department: createForm.department,
+      phone: createForm.phone || undefined,
+      position: createForm.position || undefined,
+      region: createForm.region || undefined,
+      is_admin: createForm.is_admin,
+      module_permissions: buildModulePermissions(),
+    };
+    await createEmployeeApi(payload);
     ElMessage.success('创建成功');
     createForm.username = '';
     createForm.email = '';
@@ -250,10 +264,11 @@ async function handleCreate() {
     createForm.position = '';
     createForm.region = '';
     createForm.is_admin = false;
+    selectedModuleCodes.value = [];
     fetchEmployees();
-  } catch (e: any) {
+  } catch (error: any) {
     // 拦截器已显示具体错误信息，此处无需重复提示
-    console.error('创建员工失败:', e);
+    console.error('创建员工失败:', error);
   }
 }
 
@@ -273,6 +288,39 @@ function getPermissionLabels(permissions: EmployeeApi.ModulePermission[]) {
     )
     .map((p) => p.module_name)
     .join(', ');
+}
+
+function toggleModule(moduleCode: string) {
+  if (selectedModuleCodes.value.includes(moduleCode)) {
+    selectedModuleCodes.value = selectedModuleCodes.value.filter(
+      (c) => c !== moduleCode,
+    );
+  } else {
+    selectedModuleCodes.value.push(moduleCode);
+  }
+}
+
+function selectAllModules() {
+  selectedModuleCodes.value = moduleOptions.value.map((m) => m.module_code);
+}
+
+function clearModules() {
+  selectedModuleCodes.value = [];
+}
+
+function buildModulePermissions(): EmployeeApi.ModulePermission[] {
+  const selectedSet = new Set(selectedModuleCodes.value);
+  return moduleOptions.value
+    .filter((m) => selectedSet.has(m.module_code))
+    .map((m) => ({
+      module_code: m.module_code,
+      module_name: m.module_name,
+      can_view: true,
+      can_create: false,
+      can_edit: false,
+      can_delete: false,
+      can_approve: false,
+    }));
 }
 
 fetchSystemSettings();
@@ -307,9 +355,6 @@ fetchEmployees();
     </div>
 
     <ElCard class="create-card" header="新增员工">
-      <p class="card-desc">
-        用于快速创建员工账号，系统会自动生成复杂初始密码。
-      </p>
       <ElForm :model="createForm" label-width="100px" inline>
         <ElFormItem label="用户名 *">
           <ElInput
@@ -385,6 +430,40 @@ fetchEmployees();
         </ElFormItem>
         <ElFormItem>
           <ElCheckbox v-model="createForm.is_admin" label="创建为管理员" />
+        </ElFormItem>
+        <ElFormItem label="模块权限" class="module-permissions-item">
+          <div v-if="moduleOptions.length" class="module-permissions-box">
+            <div class="module-permissions-actions">
+              <ElButton size="small" type="default" @click="selectAllModules">
+                全选模块
+              </ElButton>
+              <ElButton size="small" type="default" @click="clearModules">
+                清空选择
+              </ElButton>
+              <span class="module-permissions-summary">
+                已选择 {{ selectedModuleCodes.length }} 个模块
+              </span>
+            </div>
+            <div class="module-options-grid">
+              <ElCheckbox
+                v-for="mod in moduleOptions"
+                :key="mod.module_code"
+                :model-value="selectedModuleCodes.includes(mod.module_code)"
+                @change="toggleModule(mod.module_code)"
+              >
+                <span class="module-option-label">
+                  <strong>{{ mod.module_name }}</strong>
+                  <small>{{ mod.module_code }}</small>
+                </span>
+              </ElCheckbox>
+            </div>
+            <p class="module-permissions-hint">
+              勾选后默认开通该模块的查看权限
+            </p>
+          </div>
+          <div v-else class="module-permissions-empty">
+            暂无可选模块，请先到"系统参数维护"中配置
+          </div>
         </ElFormItem>
         <ElFormItem>
           <ElButton type="primary" @click="handleCreate">创建员工</ElButton>
@@ -635,23 +714,21 @@ fetchEmployees();
     </ElCard>
 
     <ElDialog v-model="showResetModal" title="重置密码" width="400px">
-      <div v-if="resetResult" style=" padding: 20px 0;text-align: center">
+      <div v-if="resetResult" style="padding: 20px 0; text-align: center">
         <p style="margin-bottom: 12px">密码已重置成功！</p>
         <p>
           临时密码：
           <ElTag type="warning" size="large">
-{{
-            resetResult.temporary_password
-          }}
-</ElTag>
+            {{ resetResult.temporary_password }}
+          </ElTag>
         </p>
-        <p style=" margin-top: 8px; font-size: 12px;color: #999">
+        <p style="margin-top: 8px; font-size: 12px; color: #999">
           请通知用户使用该临时密码登录并及时修改
         </p>
       </div>
-      <div v-else style=" padding: 20px 0;text-align: center">
+      <div v-else style="padding: 20px 0; text-align: center">
         <p>确认重置该员工密码？</p>
-        <p style=" font-size: 12px;color: #999">系统将自动生成临时密码</p>
+        <p style="font-size: 12px; color: #999">系统将自动生成临时密码</p>
       </div>
       <template #footer>
         <ElButton @click="showResetModal = false">
@@ -668,3 +745,58 @@ fetchEmployees();
     </ElDialog>
   </Page>
 </template>
+
+<style scoped>
+.module-permissions-item {
+  width: 100%;
+}
+
+.module-permissions-box {
+  width: 100%;
+}
+
+.module-permissions-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.module-permissions-summary {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.module-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e4e7eb;
+  border-radius: 8px;
+}
+
+.module-option-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.module-option-label small {
+  font-size: 12px;
+  color: #909399;
+}
+
+.module-permissions-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #909399;
+}
+
+.module-permissions-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: #909399;
+}
+</style>
