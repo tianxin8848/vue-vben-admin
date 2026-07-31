@@ -4,6 +4,8 @@ import type { EmployeeApi } from '#/api';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { Page } from '@vben/common-ui';
+
 import { ElCard, ElTag } from 'element-plus';
 
 import { getUserInfoApi } from '#/api';
@@ -54,11 +56,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="员工工作台" description="员工登录后的默认页面" v-loading="loading">
+  <Page
+    title="员工工作台"
+    description="员工登录后的默认页面"
+    v-loading="loading"
+  >
     <div class="quick-actions">
       <div class="action-card" @click="goToProfile">
         <div class="action-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
         </div>
         <span class="action-text">个人信息维护</span>
       </div>
@@ -120,7 +139,10 @@ onMounted(() => {
               <span v-if="perm.can_approve" class="action-tag approve">审批</span>
             </div>
           </div>
-          <div v-if="userInfo.module_permissions.length === 0" class="empty-permissions">
+          <div
+            v-if="userInfo.module_permissions.length === 0"
+            class="empty-permissions"
+          >
             暂无模块权限
           </div>
         </div>
@@ -130,7 +152,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
 .quick-actions {
   display: flex;
   gap: 16px;
@@ -139,25 +160,25 @@ onMounted(() => {
 
 .action-card {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
   padding: 16px 24px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all 0.3s ease;
+  background: #fff;
   border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+  transition: all 0.3s ease;
 }
 
 .action-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #409eff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 
 .action-icon {
-  color: #409eff;
   font-size: 24px;
+  color: #409eff;
 }
 
 .action-text {
@@ -201,8 +222,8 @@ onMounted(() => {
 
 .info-value {
   font-size: 14px;
-  color: #303133;
   font-weight: 500;
+  color: #303133;
 }
 
 .permissions-card {
@@ -217,8 +238,8 @@ onMounted(() => {
 
 .permission-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 12px;
   background: #fafafa;
   border-radius: 6px;
@@ -226,8 +247,8 @@ onMounted(() => {
 
 .permission-name {
   font-size: 14px;
-  color: #303133;
   font-weight: 500;
+  color: #303133;
 }
 
 .permission-actions {
@@ -236,40 +257,40 @@ onMounted(() => {
 }
 
 .action-tag {
-  font-size: 12px;
   padding: 2px 8px;
+  font-size: 12px;
   border-radius: 4px;
 }
 
 .action-tag.view {
-  background: #e8f4fd;
   color: #409eff;
+  background: #e8f4fd;
 }
 
 .action-tag.create {
-  background: #e8f5e9;
   color: #67c23a;
+  background: #e8f5e9;
 }
 
 .action-tag.edit {
-  background: #fff3e0;
   color: #e6a23c;
+  background: #fff3e0;
 }
 
 .action-tag.delete {
-  background: #fee2e2;
   color: #f56c6c;
+  background: #fee2e2;
 }
 
 .action-tag.approve {
-  background: #f3e8ff;
   color: #9b59b6;
+  background: #f3e8ff;
 }
 
 .empty-permissions {
-  text-align: center;
   padding: 20px;
-  color: #909399;
   font-size: 14px;
+  color: #909399;
+  text-align: center;
 }
 </style>

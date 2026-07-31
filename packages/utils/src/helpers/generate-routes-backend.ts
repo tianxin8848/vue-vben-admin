@@ -38,8 +38,19 @@ async function generateRoutesByBackend(
     const normalizePageMap: ComponentRecordType = {};
 
     for (const [key, value] of Object.entries(pageMap)) {
-      normalizePageMap[normalizeViewPath(key)] = value;
+      const normalizedKey = normalizeViewPath(key);
+      normalizePageMap[normalizedKey] = value;
     }
+    // #region debug-point page-map
+    console.warn(
+      '[DEBUG] pageMap sample keys (first 5):',
+      Object.keys(pageMap).slice(0, 5),
+    );
+    console.warn(
+      '[DEBUG] normalizedPageMap sample keys (first 5):',
+      Object.keys(normalizePageMap).slice(0, 5),
+    );
+    // #endregion
 
     let routes = convertRoutes(menuRoutes, layoutMap, normalizePageMap);
 
@@ -65,22 +76,41 @@ function convertRoutes(
   pageMap: ComponentRecordType,
 ): RouteRecordRaw[] {
   return mapTree(routes, (node) => {
-    const route = node as unknown as RouteRecordRaw;
+    // Create a new object to avoid mutating the original template
+    const route = { ...node } as unknown as RouteRecordRaw;
     const { component, name } = node;
 
     if (!name) {
       console.error('route name is required', route);
     }
 
+    // Safety guard: skip if component is already resolved (not a string)
+    if (typeof component !== 'string') {
+      return route;
+    }
+
     // layout转换
-    if (component && layoutMap[component]) {
+    if (layoutMap[component]) {
       route.component = layoutMap[component];
       // 页面组件转换
-    } else if (component) {
+    } else {
       const normalizePath = normalizeViewPath(component);
       const pageKey = normalizePath.endsWith('.vue')
         ? normalizePath
         : `${normalizePath}.vue`;
+      // #region debug-point convert-routes
+      const found = !!pageMap[pageKey];
+      if (!found) {
+        console.warn('[DEBUG] component lookup FAILED:', {
+          component,
+          normalizePath,
+          pageKey,
+          availableKeysSample: Object.keys(pageMap)
+            .filter((k) => k.includes('workspace') || k.includes('leave'))
+            .slice(0, 5),
+        });
+      }
+      // #endregion
       if (pageMap[pageKey]) {
         route.component = pageMap[pageKey];
       } else {

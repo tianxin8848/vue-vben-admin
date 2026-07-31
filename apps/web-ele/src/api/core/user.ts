@@ -43,6 +43,15 @@ export async function getUserInfoApi(): Promise<
     user_id: number;
     username: string;
   }>('/auth/me');
+  // #region debug-point user-info
+  console.warn('[DEBUG][getUserInfoApi]', {
+    resultKeys: result ? Object.keys(result).slice(0, 15) : null,
+    hasModulePermissions: !!(result && result.module_permissions),
+    modulePermissionsLength: result?.module_permissions?.length ?? 0,
+    isAdmin: result?.is_admin,
+    username: result?.username,
+  });
+  // #endregion
   const isAdmin =
     result.is_admin === true ||
     result.username === 'admin' ||

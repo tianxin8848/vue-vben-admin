@@ -129,11 +129,46 @@ function setupAccessGuard(router: Router) {
 
     // 获取用户信息（包含 module_permissions）
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
+    // #region debug-point guard-userinfo
+    console.warn('[DEBUG][guard] userInfo:', {
+      hasUserInfo: !!userInfo,
+      userInfoKeys: userInfo ? Object.keys(userInfo).slice(0, 15) : null,
+      hasModulePermissions: !!(
+        userInfo && (userInfo as any).module_permissions
+      ),
+      modulePermissionsLength:
+        (userInfo as any)?.module_permissions?.length ?? 0,
+    });
+    // #endregion
 
     // 构建动态路由：根据后端返回的 module_permissions 生成路由树
     const fetchMenuListAsync = async () => {
-      const modulePermissions =
-        (userInfo as any)?.module_permissions || [];
+      let modulePermissions = (userInfo as any)?.module_permissions || [];
+
+      // 超级管理员（admin 角色）如果没有 module_permissions，默认授予所有模块权限
+      if (
+        modulePermissions.length === 0 &&
+        userInfo?.roles?.includes('admin')
+      ) {
+        console.warn(
+          '[DEBUG] admin user with empty permissions, granting all module access',
+        );
+        const allModules = [
+          'user_management',
+          'leave_calendar',
+          'leave_workflows',
+          'approval_management',
+          'system_settings',
+          'data_migration',
+          'access_control',
+          'claim_management',
+        ];
+        modulePermissions = allModules.map((code) => ({
+          module_code: code,
+          can_view: true,
+        }));
+      }
+
       console.warn(
         '[DEBUG] module_permissions:',
         modulePermissions.map(

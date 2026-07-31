@@ -38,10 +38,23 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
   client.addResponseInterceptor({
     fulfilled: (response) => {
-      if (response.data && response.data.data !== undefined) {
-        return response.data.data;
+      // #region debug-point response-interceptor
+      const url = response.config?.url || '';
+      const rawData = response.data;
+      const hasDataWrapper = !!(rawData && rawData.data !== undefined);
+      console.warn('[DEBUG][request]', {
+        url,
+        status: response.status,
+        hasDataWrapper,
+        topLevelKeys: rawData ? Object.keys(rawData).slice(0, 10) : null,
+        hasModulePermissions: !!(rawData && rawData.module_permissions),
+        modulePermissionsLength: rawData?.module_permissions?.length ?? 0,
+      });
+      // #endregion
+      if (rawData && rawData.data !== undefined) {
+        return rawData.data;
       }
-      return response.data;
+      return rawData;
     },
     rejected: (error) => {
       const config = error?.config;

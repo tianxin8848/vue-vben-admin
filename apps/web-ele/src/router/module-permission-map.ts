@@ -3,6 +3,26 @@ import type { RouteRecordStringComponent } from '@vben/types';
 import { $t } from '#/locales';
 
 /**
+ * Deep clone route objects to prevent mutation of template constants
+ * when convertRoutes changes component from string to function.
+ */
+function cloneRoute(
+  route: RouteRecordStringComponent,
+): RouteRecordStringComponent {
+  const cloned: RouteRecordStringComponent = { ...route };
+  if (route.children) {
+    cloned.children = route.children.map((child) => cloneRoute(child));
+  }
+  return cloned;
+}
+
+function cloneRoutes(
+  routes: RouteRecordStringComponent[],
+): RouteRecordStringComponent[] {
+  return routes.map((r) => cloneRoute(r));
+}
+
+/**
  * Route name -> module_code mapping table
  *
  * Backend /auth/me returns UserResponse.module_permissions,
@@ -21,7 +41,7 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
   EmployeeManageSettings: 'system_settings',
   EmployeeManageUserProfile: 'user_management',
   EmployeeManageUsers: 'user_management',
-  LeaveManageAdmin: 'leave_management',
+  LeaveManageAdmin: 'leave_calendar',
   LeaveManageApprovals: 'approval_management',
   LeaveManageWorkflows: 'leave_workflows',
 };
@@ -168,7 +188,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
       title: '数据处理维护',
     },
   },
-  leave_management: {
+  leave_calendar: {
     name: 'LeaveManageAdmin',
     path: 'leave',
     component: 'leave/admin-manage/index',
@@ -235,7 +255,10 @@ export function buildRoutesFromPermissions(
     module_code: string;
   }>,
 ): RouteRecordStringComponent[] {
-  const routes: RouteRecordStringComponent[] = [...ALWAYS_VISIBLE_ROUTES];
+  // Deep clone to prevent convertRoutes from mutating template constants
+  const routes: RouteRecordStringComponent[] = cloneRoutes(
+    ALWAYS_VISIBLE_ROUTES,
+  );
 
   // Build permission map: module_code -> can_view
   const permissionMap = new Map<string, boolean>();
@@ -257,7 +280,7 @@ export function buildRoutesFromPermissions(
     WORKSPACE_PERMISSION_CHILDREN,
   )) {
     if (canViewModule(module_code)) {
-      workspacePermissionChildren.push({ ...route });
+      workspacePermissionChildren.push(cloneRoute(route));
     }
   }
 
@@ -282,7 +305,7 @@ export function buildRoutesFromPermissions(
 
     if (!canViewModule(moduleCode)) return;
 
-    managementChildren.push({ ...template });
+    managementChildren.push(cloneRoute(template));
   };
 
   const managementChildren: RouteRecordStringComponent[] = [];
@@ -290,7 +313,7 @@ export function buildRoutesFromPermissions(
   // Add management routes in a fixed order
   addRoute('user_management');
   addRoute('user_management_profile');
-  addRoute('leave_management');
+  addRoute('leave_calendar');
   addRoute('leave_workflows');
   addRoute('approval_management');
   addRoute('system_settings');

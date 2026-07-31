@@ -11,8 +11,17 @@ import { BasicLayout, IFrameView } from '#/layouts';
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
+  const hasFetchMenuListAsync = !!options.fetchMenuListAsync;
+  // 当提供了 fetchMenuListAsync 时，强制使用 backend 模式
+  // 这确保即使 preferences 尚未完全加载，也能正确生成动态路由
+  const accessMode = hasFetchMenuListAsync
+    ? 'backend'
+    : preferences.app.accessMode;
+
   console.warn('[DEBUG] generateAccess 调用:', {
-    accessMode: preferences.app.accessMode,
+    accessMode,
+    preferencesAccessMode: preferences.app.accessMode,
+    hasFetchMenuListAsync,
     roles: options.roles,
     routeCount: options.routes.length,
   });
@@ -25,7 +34,7 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
     IFrameView,
   };
 
-  const result = await generateAccessible(preferences.app.accessMode, {
+  const result = await generateAccessible(accessMode, {
     ...options,
     forbiddenComponent,
     layoutMap,
