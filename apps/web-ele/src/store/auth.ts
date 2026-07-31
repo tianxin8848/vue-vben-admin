@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { ElNotification } from 'element-plus';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { getUserInfoApi, loginApi, logoutApi } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -30,24 +30,20 @@ export const useAuthStore = defineStore('auth', () => {
     onSuccess?: () => Promise<void> | void,
   ) {
     // 异步处理用户登录操作并获取 accessToken
-    let userInfo: null | UserInfo = null;
+    let userInfo: UserInfo;
     try {
       loginLoading.value = true;
       // 后端使用 session cookie 认证，登录成功后直接获取用户信息
       await loginApi(params as any);
 
       // 获取用户信息并存储到 accessStore 中
-      const [fetchUserInfoResult, accessCodes] = await Promise.all([
-        fetchUserInfo(),
-        getAccessCodesApi(),
-      ]);
-
-      userInfo = fetchUserInfoResult;
+      // 后端未提供 /auth/codes 接口，直接使用空数组避免 404 弹窗
+      userInfo = await fetchUserInfo();
 
       // 设置一个伪 token 以满足框架要求
       accessStore.setAccessToken(`session-${Date.now()}`);
       userStore.setUserInfo(userInfo);
-      accessStore.setAccessCodes(accessCodes);
+      accessStore.setAccessCodes([]);
 
       if (accessStore.loginExpired) {
         accessStore.setLoginExpired(false);

@@ -18,7 +18,7 @@ interface MonthData {
 interface CalendarRecord {
   id: string;
   employee_name: string;
-  employee_department: string;
+  employee_department: null | string;
   leave_type: string;
   approval_status: string;
   session: string;
@@ -26,12 +26,12 @@ interface CalendarRecord {
 }
 
 interface SearchForm {
-  team: string;
-  region: string;
-  employee_keyword: string;
-  approval_status: string;
-  risk_threshold: number;
-  view_mode: 'standard' | 'detail';
+  team?: string;
+  region?: string;
+  employee_keyword?: string;
+  approval_status?: string;
+  risk_threshold?: number;
+  view_mode: 'detail' | 'standard';
 }
 
 interface Props {
@@ -44,14 +44,23 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'select-date', date: Date): void;
-  (e: 'panel-change', date: Date): void;
+  (e: 'panelChange' | 'selectDate', date: Date): void;
 }>();
 
 const WEEK_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
 const MONTH_NAMES = [
-  '一月', '二月', '三月', '四月', '五月', '六月',
-  '七月', '八月', '九月', '十月', '十一月', '十二月',
+  '一月',
+  '二月',
+  '三月',
+  '四月',
+  '五月',
+  '六月',
+  '七月',
+  '八月',
+  '九月',
+  '十月',
+  '十一月',
+  '十二月',
 ];
 
 const leaveTypeColorMap: Record<string, string> = {
@@ -89,13 +98,13 @@ function onYearMonthChange(val: null | string) {
   const [y, m] = val.split('-');
   selectedYear.value = Number(y);
   selectedMonth.value = Number(m);
-  emit('panel-change', new Date(Number(y), Number(m) - 1, 1));
+  emit('panelChange', new Date(Number(y), Number(m) - 1, 1));
 }
 
 function toggleViewMode() {
   viewMode.value = viewMode.value === 'month' ? 'year' : 'month';
   if (viewMode.value === 'year') {
-    emit('panel-change', new Date(selectedYear.value, 0, 1));
+    emit('panelChange', new Date(selectedYear.value, 0, 1));
   }
 }
 
@@ -103,7 +112,7 @@ function selectMonth(month: number) {
   selectedMonth.value = month;
   viewMode.value = 'month';
   yearMonthValue.value = `${selectedYear.value}-${String(month).padStart(2, '0')}`;
-  emit('panel-change', new Date(selectedYear.value, month - 1, 1));
+  emit('panelChange', new Date(selectedYear.value, month - 1, 1));
 }
 
 function generateMonthCells(year: number, month: number): CalendarCell[] {
@@ -165,7 +174,6 @@ const yearCalendarData = computed<MonthData[]>(() => {
 const yearSummary = computed(() => {
   const year = selectedYear.value;
   let recordCount = 0;
-  let dayCount = 0;
   let pendingCount = 0;
 
   const seenDates = new Set<string>();
@@ -178,7 +186,9 @@ const yearSummary = computed(() => {
 
   Object.values(props.dayMap).forEach((entries) => {
     entries.forEach((entry) => {
-      if ((entry.date_keys || []).some((dk: string) => dk.startsWith(`${year}-`))) {
+      if (
+        (entry.date_keys || []).some((dk: string) => dk.startsWith(`${year}-`))
+      ) {
         recordCount++;
         if (entry.approval_status === 'pending') {
           pendingCount++;
@@ -187,18 +197,18 @@ const yearSummary = computed(() => {
     });
   });
 
-  dayCount = seenDates.size;
+  const dayCount = seenDates.size;
 
-  return { recordCount, dayCount, pendingCount };
+  return { dayCount, pendingCount, recordCount };
 });
 
 function getLeaveTypeColor(type: string, status?: string) {
   const baseColor = leaveTypeColorMap[type] || '#94a3b8';
   if (status === 'approved' || !status) return baseColor;
   const hex = baseColor.replace('#', '');
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, 0.55)`;
 }
 
@@ -208,7 +218,7 @@ function getEntriesForDate(dateKey: string): CalendarRecord[] {
 
 function isWeekend(dateKey: string): boolean {
   if (!dateKey) return false;
-  const d = new Date(dateKey + 'T00:00:00');
+  const d = new Date(`${dateKey}T00:00:00`);
   const day = d.getDay();
   return day === 0 || day === 6;
 }
@@ -224,8 +234,8 @@ function isSelected(dateKey: string): boolean {
 
 function onCellClick(cell: CalendarCell) {
   if (!cell.day || !cell.date) return;
-  const d = new Date(cell.date + 'T00:00:00');
-  emit('select-date', d);
+  const d = new Date(`${cell.date}T00:00:00`);
+  emit('selectDate', d);
 }
 
 function getDisplayLimit(entryCount: number): number {
@@ -251,13 +261,13 @@ function getUniqueLeaveTypes(entries: CalendarRecord[]): string[] {
 function goPrevYear() {
   selectedYear.value--;
   yearMonthValue.value = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
-  emit('panel-change', new Date(selectedYear.value, selectedMonth.value - 1, 1));
+  emit('panelChange', new Date(selectedYear.value, selectedMonth.value - 1, 1));
 }
 
 function goNextYear() {
   selectedYear.value++;
   yearMonthValue.value = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
-  emit('panel-change', new Date(selectedYear.value, selectedMonth.value - 1, 1));
+  emit('panelChange', new Date(selectedYear.value, selectedMonth.value - 1, 1));
 }
 
 function goCurrentYear() {
@@ -265,7 +275,7 @@ function goCurrentYear() {
   selectedYear.value = now.getFullYear();
   selectedMonth.value = now.getMonth() + 1;
   yearMonthValue.value = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
-  emit('panel-change', now);
+  emit('panelChange', now);
 }
 </script>
 
@@ -291,7 +301,9 @@ function goCurrentYear() {
         <ElButton size="small" @click="goPrevYear">上一年</ElButton>
         <span class="year-badge">{{ selectedYear }}</span>
         <ElButton size="small" @click="goNextYear">下一年</ElButton>
-        <ElButton size="small" type="primary" @click="goCurrentYear">回到今年</ElButton>
+        <ElButton size="small" type="primary" @click="goCurrentYear">
+回到今年
+</ElButton>
       </div>
     </div>
 
@@ -299,7 +311,11 @@ function goCurrentYear() {
     <div v-if="viewMode === 'month'">
       <div class="month-view-grid">
         <div class="week-header">
-          <div v-for="(label, idx) in WEEK_DAYS" :key="idx" class="week-day-label">
+          <div
+            v-for="(label, idx) in WEEK_DAYS"
+            :key="idx"
+            class="week-day-label"
+          >
             周{{ label }}
           </div>
         </div>
@@ -333,14 +349,21 @@ function goCurrentYear() {
               </div>
               <div class="leave-list">
                 <div
-                  v-for="entry in getVisibleEntries(getEntriesForDate(cell.date))"
+                  v-for="entry in getVisibleEntries(
+                    getEntriesForDate(cell.date),
+                  )"
                   :key="entry.id"
                   class="leave-item"
                   :class="{ dimmed: entry.approval_status === 'pending' }"
                 >
                   <span
                     class="type-dot"
-                    :style="{ background: getLeaveTypeColor(entry.leave_type, entry.approval_status) }"
+                    :style="{
+                      background: getLeaveTypeColor(
+                        entry.leave_type,
+                        entry.approval_status,
+                      ),
+                    }"
                   ></span>
                   <span class="leave-name">{{ entry.employee_name }}</span>
                 </div>
@@ -356,7 +379,9 @@ function goCurrentYear() {
                 class="day-bars"
               >
                 <span
-                  v-for="type in getUniqueLeaveTypes(getEntriesForDate(cell.date))"
+                  v-for="type in getUniqueLeaveTypes(
+                    getEntriesForDate(cell.date),
+                  )"
                   :key="type"
                   class="day-bar"
                   :style="{ background: getLeaveTypeColor(type, 'approved') }"
@@ -421,7 +446,8 @@ function goCurrentYear() {
                     'is-empty': !cell.day,
                     'is-weekend': cell.day && isWeekend(cell.date),
                     'is-selected': cell.day && isSelected(cell.date),
-                    'has-leave': cell.day && getEntriesForDate(cell.date).length > 0,
+                    'has-leave':
+                      cell.day && getEntriesForDate(cell.date).length > 0,
                     'is-risk': cell.day && isRiskDay(cell.date),
                   }"
                   @click.stop="onCellClick(cell)"
@@ -439,10 +465,14 @@ function goCurrentYear() {
                       class="mini-dots"
                     >
                       <span
-                        v-for="type in getUniqueLeaveTypes(getEntriesForDate(cell.date))"
+                        v-for="type in getUniqueLeaveTypes(
+                          getEntriesForDate(cell.date),
+                        )"
                         :key="type"
                         class="mini-dot"
-                        :style="{ background: getLeaveTypeColor(type, 'approved') }"
+                        :style="{
+                          background: getLeaveTypeColor(type, 'approved'),
+                        }"
                       ></span>
                     </div>
                   </template>
@@ -463,42 +493,42 @@ function goCurrentYear() {
 
 .calendar-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
 .calendar-header-left {
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
 }
 
 .calendar-header-right {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .year-badge {
   display: inline-block;
+  min-width: 60px;
   padding: 4px 12px;
   font-size: 15px;
   font-weight: 700;
   color: #2563eb;
+  text-align: center;
   background: #eff6ff;
   border-radius: 6px;
-  min-width: 60px;
-  text-align: center;
 }
 
 /* ===== 月视图 ===== */
 .month-view-grid {
+  overflow: hidden;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .week-header {
@@ -510,10 +540,10 @@ function goCurrentYear() {
 
 .week-day-label {
   padding: 10px 0;
-  text-align: center;
   font-size: 13px;
   font-weight: 600;
   color: #64748b;
+  text-align: center;
 }
 
 .week-row {
@@ -527,12 +557,12 @@ function goCurrentYear() {
 }
 
 .calendar-cell {
+  position: relative;
   min-height: 90px;
   padding: 6px;
-  border-right: 1px solid #f1f5f9;
   cursor: pointer;
+  border-right: 1px solid #f1f5f9;
   transition: background 0.15s;
-  position: relative;
 }
 
 .calendar-cell:last-child {
@@ -544,8 +574,8 @@ function goCurrentYear() {
 }
 
 .calendar-cell.is-empty {
-  background: #fafbfc;
   cursor: default;
+  background: #fafbfc;
 }
 
 .calendar-cell.is-weekend {
@@ -553,9 +583,9 @@ function goCurrentYear() {
 }
 
 .calendar-cell.is-selected {
-  background: #eff6ff;
   outline: 2px solid #3b82f6;
   outline-offset: -2px;
+  background: #eff6ff;
 }
 
 .calendar-cell.is-risk {
@@ -568,8 +598,8 @@ function goCurrentYear() {
 
 .cell-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 4px;
 }
 
@@ -601,12 +631,12 @@ function goCurrentYear() {
 
 .leave-item {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
+  padding: 1px 2px;
   font-size: 11px;
   line-height: 1.3;
   color: #334155;
-  padding: 1px 2px;
   border-radius: 3px;
 }
 
@@ -616,10 +646,10 @@ function goCurrentYear() {
 
 .type-dot {
   display: inline-block;
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .leave-name {
@@ -629,25 +659,25 @@ function goCurrentYear() {
 }
 
 .more-line {
+  padding-left: 12px;
   font-size: 10px;
   color: #64748b;
-  padding-left: 12px;
 }
 
 .day-bars {
   position: absolute;
+  right: 4px;
   bottom: 2px;
   left: 4px;
-  right: 4px;
   display: flex;
   gap: 2px;
 }
 
 .day-bar {
   flex: 1;
+  min-width: 6px;
   height: 3px;
   border-radius: 2px;
-  min-width: 6px;
 }
 
 /* ===== 年视图 ===== */
@@ -655,11 +685,11 @@ function goCurrentYear() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
   padding: 14px 18px;
+  margin-bottom: 16px;
   background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%);
-  border-radius: 10px;
   border: 1px solid #dbeafe;
+  border-radius: 10px;
 }
 
 .summary-item {
@@ -673,9 +703,9 @@ function goCurrentYear() {
 }
 
 .summary-label {
+  margin-top: 2px;
   font-size: 12px;
   color: #64748b;
-  margin-top: 2px;
 }
 
 .year-grid {
@@ -685,25 +715,25 @@ function goCurrentYear() {
 }
 
 .month-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
   padding: 8px;
   cursor: pointer;
-  transition: all 0.15s;
   background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.15s;
 }
 
 .month-card:hover {
   border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 2px 8px rgb(59 130 246 / 12%);
 }
 
 .month-title {
-  text-align: center;
-  font-weight: 700;
-  font-size: 13px;
-  color: #0f172a;
   margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
 }
 
 .mini-calendar {
@@ -718,10 +748,10 @@ function goCurrentYear() {
 }
 
 .mini-week-day {
-  text-align: center;
+  padding: 1px 0;
   font-size: 10px;
   color: #94a3b8;
-  padding: 1px 0;
+  text-align: center;
 }
 
 .mini-body {
@@ -736,15 +766,15 @@ function goCurrentYear() {
 
 .mini-cell {
   position: relative;
-  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 1;
   padding: 1px;
   font-size: 10px;
-  border-radius: 3px;
   cursor: pointer;
+  border-radius: 3px;
   transition: background 0.1s;
 }
 
@@ -757,9 +787,9 @@ function goCurrentYear() {
 }
 
 .mini-cell.is-selected {
-  background: #dbeafe;
   outline: 1.5px solid #3b82f6;
   outline-offset: -1px;
+  background: #dbeafe;
 }
 
 .mini-cell.has-leave {
@@ -777,26 +807,26 @@ function goCurrentYear() {
 
 .mini-day-number {
   font-size: 10px;
-  color: #334155;
   line-height: 1;
+  color: #334155;
 }
 
 .mini-badge {
   position: absolute;
   top: 0;
   right: 1px;
-  font-size: 8px;
-  font-weight: 700;
-  color: #fff;
-  background: #3b82f6;
-  border-radius: 6px;
-  min-width: 10px;
-  height: 11px;
-  padding: 0 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 10px;
+  height: 11px;
+  padding: 0 2px;
+  font-size: 8px;
+  font-weight: 700;
   line-height: 1;
+  color: #fff;
+  background: #3b82f6;
+  border-radius: 6px;
 }
 
 .mini-dots {
