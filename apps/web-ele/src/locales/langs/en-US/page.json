@@ -12,6 +12,11 @@
     "analytics": "Analytics",
     "workspace": "Workspace"
   },
+  "workspace": {
+    "title": "Profile",
+    "home": "Home",
+    "profile": "Profile Settings"
+  },
   "employees": {
     "title": "Employee Management",
     "list": "Employee List",
@@ -37,7 +42,148 @@
     "personal": "Personal Leave",
     "maternity": "Maternity Leave",
     "paternity": "Paternity Leave",
-    "other": "Other"
+    "other": "Other",
+    "myLeave": "My Leave",
+    "myApprovals": "My Pending Approvals",
+    "myRecords": "My Approval Records",
+    "calendar": "Leave Calendar",
+    "leaveTypes": {
+      "annual": "Annual Leave",
+      "personal": "Personal Leave",
+      "sick": "Sick Leave",
+      "lieu": "Lieu Leave",
+      "long": "Long Leave"
+    },
+    "approvalStatus": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "session": {
+      "full_day": "Full Day",
+      "morning": "Morning",
+      "afternoon": "Afternoon"
+    },
+    "calendarView": {
+      "description": "Leave management includes \"Leave Calendar\" and \"Workflow Maintenance\". Currently in calendar view.",
+      "backToWorkspace": "Back to Workspace",
+      "workflowMaintenance": "Workflow Maintenance",
+      "allRegions": "Overview (All Regions)",
+      "unsetRegion": "Unset Region",
+      "ungrouped": "Ungrouped",
+      "weekdays": {
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday"
+      },
+      "weekShort": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "weekPrefix": "",
+      "monthNames": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ],
+      "selectYearMonth": "Select year and month",
+      "yearView": "Year View",
+      "monthView": "Month View",
+      "prevYear": "Previous Year",
+      "nextYear": "Next Year",
+      "backToCurrentYear": "Back to Current Year",
+      "summary": {
+        "leaveRecords": "Leave Records",
+        "coveredDays": "Covered Days",
+        "pending": "Pending",
+        "currentYear": "Current Year"
+      },
+      "stats": {
+        "visibleMembers": "Visible Members",
+        "annualLeaveRecords": "Annual Leave Records",
+        "riskDayCount": "Risk Days",
+        "peakDate": "Peak Date",
+        "annualLeaveTotal": "Annual Leave Total",
+        "annualLeaveAvailable": "Annual Leave Available",
+        "personUnit": ""
+      },
+      "filter": {
+        "title": "Filter Controls",
+        "team": "Team",
+        "allMembers": "All Members",
+        "employeeSearch": "Employee Search",
+        "searchPlaceholder": "Enter name to highlight annual leave",
+        "riskThreshold": "Risk Threshold",
+        "viewMode": "View Mode",
+        "standard": "Standard",
+        "detail": "Detail",
+        "approvalStatus": "Approval Status",
+        "allStatus": "All Status",
+        "approvedOnly": "Approved Only",
+        "pendingOnly": "Pending Only",
+        "reset": "Reset Filters",
+        "legendWeekend": "Weekend/Holiday background",
+        "legendPending": "Pending is semi-transparent",
+        "legendRegionalHoliday": "Regional Holiday",
+        "legendRiskReached": "Risk threshold reached"
+      },
+      "detail": {
+        "dateDetail": "Date Detail",
+        "emptyHint": "Click any date cell to view the leave list, leave type, session and approval status for that day.",
+        "noRecordsForDay": "No leave records for this day. It can be treated as a regular working day.",
+        "leaveDetail": "Leave Detail",
+        "regionalHolidayPrefix": "Regional Holiday: ",
+        "holidayMaintenance": "Regional Holiday Maintenance",
+        "selectRegionFirst": "Please select a specific region above, then click a day to set the holiday for that region.",
+        "currentHolidaySet": "Current holiday set: ",
+        "noHolidaySet": "No regional holiday set.",
+        "setHoliday": "Set Holiday",
+        "unsetHoliday": "Unset",
+        "selectRegionAndDateFirst": "Please select a region and date first",
+        "usageInstructions": "Usage Instructions",
+        "instructionOverviewTitle": "Overview Reading",
+        "instructionOverviewBody": "Each day cell shows the leave names directly. The color dot indicates the leave type, and the badge in the upper right shows the total number of leaves for that day.",
+        "instructionRiskTitle": "Risk Rule",
+        "instructionRiskBody": "When the number of leaves on a single day reaches the threshold, the date cell will be highlighted with a red border to help you quickly identify staffing shortages.",
+        "instructionFilterTitle": "Filtering",
+        "instructionFilterBody": "You can view annual schedules by team, or search for an employee to highlight all their leave dates throughout the year.",
+        "instructionFutureTitle": "Future Integration",
+        "instructionFutureBody": "The leave calendar API is now integrated. Future work may add entry, approval, and quick actions on date clicks."
+      },
+      "holidayNames": {
+        "newYear": "New Year's Day",
+        "springFestival": "Spring Festival",
+        "qingming": "Qingming Festival",
+        "laborDay": "Labor Day",
+        "dragonBoat": "Dragon Boat Festival",
+        "midAutumn": "Mid-Autumn Festival",
+        "nationalDay": "National Day",
+        "christmas": "Christmas",
+        "publicHoliday": "Public Holiday",
+        "companyHoliday": "Company Holiday",
+        "makeupDay": "Makeup Day",
+        "other": "Other Holiday"
+      }
+    }
   },
   "system": {
     "title": "System Settings",

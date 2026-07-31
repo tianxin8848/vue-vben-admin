@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue';
 
 import { ElButton, ElDatePicker } from 'element-plus';
 
+import { $t } from '#/locales';
+
 interface CalendarCell {
   day: null | number;
   date: string;
@@ -47,21 +49,14 @@ const emit = defineEmits<{
   (e: 'panelChange' | 'selectDate', date: Date): void;
 }>();
 
-const WEEK_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
-const MONTH_NAMES = [
-  '一月',
-  '二月',
-  '三月',
-  '四月',
-  '五月',
-  '六月',
-  '七月',
-  '八月',
-  '九月',
-  '十月',
-  '十一月',
-  '十二月',
-];
+const WEEK_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const WEEK_DAYS = computed(() =>
+  WEEK_KEYS.map((k) => $t(`page.leave.calendarView.weekShort.${k}`) as string),
+);
+const MONTH_NAMES = computed(() => {
+  const names = $t('page.leave.calendarView.monthNames');
+  return Array.isArray(names) ? names : [];
+});
 
 const leaveTypeColorMap: Record<string, string> = {
   annual: '#60a5fa',
@@ -159,7 +154,7 @@ const yearCalendarData = computed<MonthData[]>(() => {
       rows.push(cells.slice(i, i + 7));
     }
     const idx = m - 1;
-    const monthName = MONTH_NAMES[idx] || '';
+    const monthName = MONTH_NAMES.value[idx] || '';
     months.push({
       month: m,
       monthName,
@@ -286,24 +281,32 @@ function goCurrentYear() {
         <ElDatePicker
           v-model="yearMonthValue"
           type="month"
-          format="YYYY 年 MM 月"
+          format="YYYY-MM"
           value-format="YYYY-MM"
-          placeholder="选择年月"
+          :placeholder="$t('page.leave.calendarView.selectYearMonth')"
           :clearable="false"
           style="width: 200px"
           @change="onYearMonthChange"
         />
         <ElButton size="small" @click="toggleViewMode">
-          {{ viewMode === 'month' ? '年视图' : '月视图' }}
+          {{
+            viewMode === 'month'
+              ? $t('page.leave.calendarView.yearView')
+              : $t('page.leave.calendarView.monthView')
+          }}
         </ElButton>
       </div>
       <div v-if="viewMode === 'year'" class="calendar-header-right">
-        <ElButton size="small" @click="goPrevYear">上一年</ElButton>
+        <ElButton size="small" @click="goPrevYear">
+          {{ $t('page.leave.calendarView.prevYear') }}
+        </ElButton>
         <span class="year-badge">{{ selectedYear }}</span>
-        <ElButton size="small" @click="goNextYear">下一年</ElButton>
+        <ElButton size="small" @click="goNextYear">
+          {{ $t('page.leave.calendarView.nextYear') }}
+        </ElButton>
         <ElButton size="small" type="primary" @click="goCurrentYear">
-回到今年
-</ElButton>
+          {{ $t('page.leave.calendarView.backToCurrentYear') }}
+        </ElButton>
       </div>
     </div>
 
@@ -316,7 +319,7 @@ function goCurrentYear() {
             :key="idx"
             class="week-day-label"
           >
-            周{{ label }}
+            {{ $t('page.leave.calendarView.weekPrefix') }}{{ label }}
           </div>
         </div>
         <div
@@ -398,19 +401,27 @@ function goCurrentYear() {
       <div class="year-summary-bar">
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.recordCount }}</div>
-          <div class="summary-label">请假记录</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.leaveRecords') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.dayCount }}</div>
-          <div class="summary-label">覆盖天数</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.coveredDays') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.pendingCount }}</div>
-          <div class="summary-label">待审批</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.pending') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ selectedYear }}</div>
-          <div class="summary-label">当前年份</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.currentYear') }}
+          </div>
         </div>
       </div>
 

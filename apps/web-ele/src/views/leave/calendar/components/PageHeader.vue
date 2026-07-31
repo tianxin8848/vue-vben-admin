@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { ElButton, ElSelect, ElOption, ElTag } from 'element-plus';
+import { ElButton, ElOption, ElSelect, ElTag } from 'element-plus';
+
+import { $t } from '#/locales';
 
 interface Props {
   currentTime: string;
@@ -11,9 +13,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'goBackHome'): void;
   (e: 'changeYear', delta: number): void;
-  (e: 'goToCurrentYear'): void;
+  (e: 'goBackHome' | 'goToCurrentYear'): void;
   (e: 'update:region', value: string): void;
 }>();
 </script>
@@ -22,21 +23,41 @@ const emit = defineEmits<{
   <ElCard :shadow="false" class="page-header-card">
     <div class="page-header">
       <div class="header-info">
-        <h2>请假管理</h2>
-        <p>请假管理包含"请假日历"和"流程维护"，当前为日历视图。</p>
+        <h2>{{ $t('page.leave.title') }}</h2>
+        <p>{{ $t('page.leave.calendarView.description') }}</p>
         <ElTag type="info" size="small">{{ currentTime }}</ElTag>
       </div>
       <div class="header-actions">
-        <ElButton @click="emit('goBackHome')">返回工作台</ElButton>
-        <ElSelect v-model="props.region" @change="emit('update:region', $event)" style="width: 180px">
-          <ElOption label="总览（全部地区）" value="" />
-          <ElOption label="未设置地区" value="__unset__" />
+        <ElButton @click="emit('goBackHome')">
+          {{ $t('page.leave.calendarView.backToWorkspace') }}
+        </ElButton>
+        <ElSelect
+          :model-value="region"
+          style="width: 180px"
+          @update:model-value="emit('update:region', $event)"
+        >
+          <ElOption
+            :label="$t('page.leave.calendarView.allRegions')"
+            value=""
+          />
+          <ElOption
+            :label="$t('page.leave.calendarView.unsetRegion')"
+            value="__unset__"
+          />
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
-        <ElButton @click="emit('changeYear', -1)">上一年</ElButton>
-        <ElTag size="large" type="primary" effect="dark">{{ currentYear }}</ElTag>
-        <ElButton @click="emit('changeYear', 1)">下一年</ElButton>
-        <ElButton type="primary" @click="emit('goToCurrentYear')">回到今年</ElButton>
+        <ElButton @click="emit('changeYear', -1)">
+          {{ $t('page.leave.calendarView.prevYear') }}
+        </ElButton>
+        <ElTag size="large" type="primary" effect="dark">
+          {{ currentYear }}
+        </ElTag>
+        <ElButton @click="emit('changeYear', 1)">
+          {{ $t('page.leave.calendarView.nextYear') }}
+        </ElButton>
+        <ElButton type="primary" @click="emit('goToCurrentYear')">
+          {{ $t('page.leave.calendarView.backToCurrentYear') }}
+        </ElButton>
       </div>
     </div>
   </ElCard>
@@ -49,9 +70,9 @@ const emit = defineEmits<{
 
 .page-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .header-info h2 {
@@ -62,14 +83,14 @@ const emit = defineEmits<{
 
 .header-info p {
   margin: 8px 0 12px;
-  color: #64748b;
   font-size: 14px;
+  color: #64748b;
 }
 
 .header-actions {
   display: flex;
-  align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 </style>
