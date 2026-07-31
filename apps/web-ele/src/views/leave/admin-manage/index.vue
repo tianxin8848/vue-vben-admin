@@ -1,508 +1,393 @@
 <script lang="ts" setup>
-import type { LeaveRequestApi } from '#/api';
-
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import {
-  ElButton,
-  ElCard,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-  ElOption,
-  ElSelect,
-  ElTable,
-  ElTableColumn,
-  ElTag,
-} from 'element-plus';
+import { ElButton, ElCard, ElOption, ElSelect } from 'element-plus';
 
 import {
-  getLeaveRequestsApi,
+  deleteRegionalHolidayApi,
+  getAnnualLeaveSummaryApi,
+  getEmployeesApi,
+  getLeaveCalendarApi,
   getSystemSettingsApi,
-  reviewLeaveRequestApi,
-  withdrawLeaveRequestApi,
+  upsertRegionalHolidayApi,
 } from '#/api';
+import { $t } from '#/locales';
+
+import CalendarPanel from '../calendar/components/CalendarPanel.vue';
+import DetailPanel from '../calendar/components/DetailPanel.vue';
+import FilterPanel from '../calendar/components/FilterPanel.vue';
+import StatsPanel from '../calendar/components/StatsPanel.vue';
 
 const router = useRouter();
 const loading = ref(false);
-const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
+
+const currentTime = ref('');
+let timer: null | number = null;
+
+const currentYear = ref(2026);
+const selectedDateKey = ref('');
 
 const searchForm = reactive({
-  keyword: '',
-  status: '',
-  leave_type: '',
-  department: '',
+  team: '',
   region: '',
+  employee_keyword: '',
+  approval_status: '',
+  risk_threshold: 5,
+  view_mode: 'standard' as 'detail' | 'standard',
 });
 
-const showDetailModal = ref(false);
-const showReviewModal = ref(false);
-const showWithdrawModal = ref(false);
-const currentRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
-const reviewForm = reactive({ reviewComment: '' });
-const withdrawForm = reactive({ withdrawComment: '' });
+const regions = ref<string[]>([]);
+const teams = ref<string[]>([]);
+const employeesDirectory = ref<any[]>([]);
+const regionalHolidays = ref<any[]>([]);
 
-const departmentOptions = ref<{ label: string; value: string }[]>([]);
-const regionOptions = ref<{ label: string; value: string }[]>([]);
+const calendarRecords = ref<any[]>([]);
 
-const leaveTypeLabelMap: Record<string, string> = {
-  annual: '年假',
-  personal: '事假',
-  sick: '病假',
-  lieu: '调休',
-  long: '长假',
-};
+const annualLeaveSummary = ref<null | {
+  available_days: number;
+  entitlement_days: number;
+  used_days: number;
+  year: number;
+}>(null);
 
-const sessionLabelMap: Record<string, string> = {
-  full_day: '全天',
-  morning: '上午',
-  afternoon: '下午',
-};
+function toUTC8DateKey(date: Date): string {
+  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
+  const y = utc8.getUTCFullYear();
+  const m = String(utc8.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utc8.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
-const statusLabelMap: Record<string, string> = {
-  pending: '待审批',
-  approved: '已通过',
-  rejected: '已驳回',
-  withdrawn: '已撤回',
-};
+function getUTC8Now(): Date {
+  return new Date(Date.now() + 8 * 3600 * 1000);
+}
 
-const statusTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> =
-  {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'danger',
-    withdrawn: 'info',
+const dayMap = computed(() => {
+  const map: Record<string, any[]> = {};
+  calendarRecords.value.forEach((record) => {
+    (record.date_keys || []).forEach((dateKey: string) => {
+      if (!dateKey.startsWith(`${currentYear.value}-`)) return;
+      map[dateKey] = map[dateKey] || [];
+      map[dateKey].push({ ...record });
+    });
+  });
+  Object.values(map).forEach((entries) => {
+    entries.sort((left: any, right: any) =>
+      left.employee_name.localeCompare(right.employee_name, 'zh-CN'),
+    );
+  });
+  return map;
+});
+
+const filteredEmployees = computed(() => {
+  const keyword = searchForm.employee_keyword.trim();
+  const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
+  const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
+  let source = employeesDirectory.value;
+  if (source.length === 0) {
+    source = calendarRecords.value.map((item) => ({
+      id: item.id,
+      username: item.employee_username,
+      name: item.employee_name,
+      team: item.employee_department || ungroupedLabel,
+      region: item.employee_region || unsetRegionLabel,
+    }));
+  }
+  return source.filter((employee) => {
+    const matchesTeam =
+      searchForm.team === '' ||
+      searchForm.team === 'all' ||
+      employee.team === searchForm.team;
+    const matchesRegion =
+      searchForm.region === '' ||
+      searchForm.region === 'all' ||
+      (searchForm.region === '__unset__'
+        ? employee.region === unsetRegionLabel
+        : employee.region === searchForm.region);
+    const matchesKeyword =
+      !keyword ||
+      employee.name.includes(keyword) ||
+      employee.username.includes(keyword);
+    return matchesTeam && matchesRegion && matchesKeyword;
+  });
+});
+
+const stats = computed(() => {
+  const riskyDates = Object.entries(dayMap.value).filter(
+    ([, entries]) => entries.length >= searchForm.risk_threshold,
+  );
+  const peak = riskyDates.toSorted(
+    (left, right) => right[1].length - left[1].length,
+  )[0];
+  const personUnit = $t('page.leave.calendarView.stats.personUnit');
+  return {
+    visibleEmployeeCount: filteredEmployees.value.length,
+    leaveRecordCount: calendarRecords.value.length,
+    riskDayCount: riskyDates.length,
+    peakDayText: peak
+      ? `${peak[0].slice(5)} · ${peak[1].length}${personUnit}`
+      : '-',
   };
+});
 
-async function fetchSystemSettings() {
-  try {
-    const settings = await getSystemSettingsApi();
-    departmentOptions.value = (settings.departments || []).map((d) => ({
-      label: d,
-      value: d,
-    }));
-    regionOptions.value = (settings.regions || []).map((r) => ({
-      label: r,
-      value: r,
-    }));
-  } catch {
-    // 获取系统设置失败时保持空选项
+function onSelectDate(date: Date) {
+  selectedDateKey.value = toUTC8DateKey(date);
+}
+
+function onPanelChange(date: Date) {
+  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
+  const newYear = utc8.getUTCFullYear();
+  const yearChanged = newYear !== currentYear.value;
+  currentYear.value = newYear;
+  if (yearChanged) {
+    fetchCalendar();
+    loadAnnualLeaveSummary();
   }
 }
 
-const filteredRequests = computed(() => {
-  let list = [...leaveRequests.value];
+function formatNow() {
+  const utc8Now = getUTC8Now();
+  const weekKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const weekLabels = weekKeys.map(
+    (k) => $t(`page.leave.calendarView.weekdays.${k}`) as string,
+  );
+  const year = utc8Now.getUTCFullYear();
+  const month = String(utc8Now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utc8Now.getUTCDate()).padStart(2, '0');
+  const hours = String(utc8Now.getUTCHours()).padStart(2, '0');
+  const minutes = String(utc8Now.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(utc8Now.getUTCSeconds()).padStart(2, '0');
+  const dayOfWeek = utc8Now.getUTCDay();
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[dayOfWeek]}`;
+}
 
-  if (searchForm.keyword) {
-    const kw = searchForm.keyword.toLowerCase();
-    list = list.filter(
-      (e) =>
-        e.employee_name.toLowerCase().includes(kw) ||
-        e.employee_username.toLowerCase().includes(kw) ||
-        e.employee_code?.toLowerCase().includes(kw),
-    );
+function startLiveClock() {
+  currentTime.value = formatNow();
+  timer = window.setInterval(() => {
+    currentTime.value = formatNow();
+  }, 1000);
+}
+
+function resetFilters() {
+  searchForm.team = '';
+  searchForm.region = '';
+  searchForm.employee_keyword = '';
+  searchForm.approval_status = '';
+  searchForm.risk_threshold = 5;
+  searchForm.view_mode = 'standard';
+  selectedDateKey.value = '';
+  fetchCalendar();
+}
+
+function updateSearchForm(value: typeof searchForm) {
+  Object.assign(searchForm, value);
+}
+
+function getActiveRegionKey() {
+  if (
+    !searchForm.region ||
+    searchForm.region === '' ||
+    searchForm.region === 'all'
+  )
+    return '';
+  if (searchForm.region === '__unset__') return '';
+  return searchForm.region;
+}
+
+async function setHoliday() {
+  const activeRegion = getActiveRegionKey();
+  const dateKey = selectedDateKey.value;
+  if (!activeRegion || !dateKey) return;
+  try {
+    await upsertRegionalHolidayApi({
+      region: activeRegion,
+      date: dateKey,
+      holiday_name: $t('page.leave.calendarView.holidayNames.newYear'),
+    });
+    await loadSystemSettings();
+  } catch {
+    // handled in component
   }
+}
 
-  if (searchForm.status) {
-    list = list.filter((e) => e.approval_status === searchForm.status);
+async function removeHoliday() {
+  const activeRegion = getActiveRegionKey();
+  const holiday = regionalHolidays.value.find(
+    (h: any) => h.region === activeRegion && h.date === selectedDateKey.value,
+  );
+  if (!holiday) return;
+  try {
+    await deleteRegionalHolidayApi({
+      region: activeRegion,
+      date: selectedDateKey.value,
+    });
+    await loadSystemSettings();
+  } catch {
+    // handled in component
   }
+}
 
-  if (searchForm.leave_type) {
-    list = list.filter((e) => e.leave_type === searchForm.leave_type);
-  }
-
-  if (searchForm.department) {
-    list = list.filter((e) => e.employee_department === searchForm.department);
-  }
-
-  if (searchForm.region) {
-    list = list.filter((e) => e.employee_region === searchForm.region);
-  }
-
-  return list;
-});
-
-async function fetchLeaveRequests() {
+async function fetchCalendar() {
   loading.value = true;
   try {
-    leaveRequests.value = await getLeaveRequestsApi({
-      approval_status: searchForm.status
-        ? (searchForm.status as LeaveRequestApi.ApprovalStatus)
-        : null,
-      employee_keyword: searchForm.keyword || undefined,
-      region: searchForm.region || undefined,
-      team: searchForm.department || undefined,
-    });
+    const params: Record<string, string> = { year: String(currentYear.value) };
+    if (searchForm.team && searchForm.team !== 'all')
+      params.team = searchForm.team;
+    if (searchForm.region && searchForm.region !== 'all')
+      params.region = searchForm.region;
+    if (searchForm.employee_keyword)
+      params.employee_keyword = searchForm.employee_keyword;
+    if (searchForm.approval_status && searchForm.approval_status !== 'all')
+      params.approval_status = searchForm.approval_status;
+
+    const data = await getLeaveCalendarApi(currentYear.value, params);
+    calendarRecords.value = (data.items || []).filter(
+      (item: any) => item.approval_status !== 'withdrawn',
+    );
+  } catch {
+    calendarRecords.value = [];
   } finally {
     loading.value = false;
   }
 }
 
-function handleSearch() {
-  fetchLeaveRequests();
-}
-
-function handleReset() {
-  searchForm.keyword = '';
-  searchForm.status = '';
-  searchForm.leave_type = '';
-  searchForm.department = '';
-  searchForm.region = '';
-  fetchLeaveRequests();
-}
-
-function openDetailModal(request: LeaveRequestApi.LeaveRequest) {
-  currentRequest.value = request;
-  showDetailModal.value = true;
-}
-
-function openReviewModal(request: LeaveRequestApi.LeaveRequest) {
-  currentRequest.value = request;
-  reviewForm.reviewComment = '';
-  showReviewModal.value = true;
-}
-
-function openWithdrawModal(request: LeaveRequestApi.LeaveRequest) {
-  currentRequest.value = request;
-  withdrawForm.withdrawComment = '';
-  showWithdrawModal.value = true;
-}
-
-async function handleReview(action: 'approved' | 'rejected') {
-  if (!currentRequest.value) return;
-  if (action === 'rejected' && !reviewForm.reviewComment.trim()) {
-    ElMessage.warning('驳回必须填写原因');
-    return;
-  }
+async function loadAnnualLeaveSummary() {
   try {
-    await reviewLeaveRequestApi(currentRequest.value.id, {
-      approval_status: action,
-      review_comment: reviewForm.reviewComment.trim() || null,
-    });
-    ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
-    showReviewModal.value = false;
-    fetchLeaveRequests();
+    const data = await getAnnualLeaveSummaryApi(currentYear.value);
+    annualLeaveSummary.value = data;
   } catch {
-    ElMessage.error('操作失败');
+    annualLeaveSummary.value = null;
   }
 }
 
-async function handleWithdraw() {
-  if (!currentRequest.value) return;
+async function loadSystemSettings() {
   try {
-    await withdrawLeaveRequestApi(currentRequest.value.id, {
-      withdraw_comment: withdrawForm.withdrawComment.trim() || null,
-    });
-    ElMessage.success('已撤回');
-    showWithdrawModal.value = false;
-    fetchLeaveRequests();
+    const settings = await getSystemSettingsApi();
+    regions.value = settings.regions || [];
+    regionalHolidays.value = settings.regional_holidays || [];
   } catch {
-    ElMessage.error('操作失败');
+    regions.value = [];
+    regionalHolidays.value = [];
   }
 }
 
-function goBack() {
+async function loadEmployees() {
+  try {
+    const data = await getEmployeesApi();
+    const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
+    const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
+    employeesDirectory.value = data
+      .map((item: any) => ({
+        id: item.id,
+        username: item.username,
+        name: item.full_name || item.username,
+        team: item.department || ungroupedLabel,
+        region: item.region || unsetRegionLabel,
+        isActive: item.is_active !== false,
+      }))
+      .filter((item: any) => item.isActive);
+
+    const teamSet = new Set(
+      employeesDirectory.value.map((item: any) => item.team).filter(Boolean),
+    );
+    teams.value = [...teamSet].toSorted((a: string, b: string) =>
+      a.localeCompare(b, 'zh-CN'),
+    );
+  } catch {
+    employeesDirectory.value = [];
+    teams.value = [];
+  }
+}
+
+function goBackHome() {
   router.push('/employee/manage/users');
 }
 
-fetchSystemSettings();
-fetchLeaveRequests();
+function goToWorkflow() {
+  router.push('/employee/manage/leave-workflows');
+}
+
+onMounted(() => {
+  startLiveClock();
+  Promise.all([
+    fetchCalendar(),
+    loadSystemSettings(),
+    loadEmployees(),
+    loadAnnualLeaveSummary(),
+  ]);
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <template>
   <Page
-    title="请假管理"
-    description="管理所有员工的请假申请，支持审批和撤回操作"
+    :title="$t('page.leave.title')"
+    :description="$t('page.leave.calendarView.description')"
+    v-loading="loading"
   >
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
-
-    <ElCard class="search-card">
-      <div class="search-bar">
-        <ElInput
-          v-model="searchForm.keyword"
-          placeholder="搜索员工姓名 / 账号 / 工号"
-          style="width: 250px"
-          clearable
-          @keyup.enter="handleSearch"
-        />
-        <ElSelect
-          v-model="searchForm.status"
-          placeholder="全部状态"
-          style="width: 120px"
-        >
-          <ElOption label="全部状态" value="" />
-          <ElOption label="待审批" value="pending" />
-          <ElOption label="已通过" value="approved" />
-          <ElOption label="已驳回" value="rejected" />
-          <ElOption label="已撤回" value="withdrawn" />
-        </ElSelect>
-        <ElSelect
-          v-model="searchForm.leave_type"
-          placeholder="全部类型"
-          style="width: 120px"
-        >
-          <ElOption label="全部类型" value="" />
-          <ElOption label="年假" value="annual" />
-          <ElOption label="事假" value="personal" />
-          <ElOption label="病假" value="sick" />
-          <ElOption label="调休" value="lieu" />
-          <ElOption label="长假" value="long" />
-        </ElSelect>
-        <ElSelect
-          v-model="searchForm.department"
-          placeholder="全部部门"
-          style="width: 140px"
-          clearable
-        >
-          <ElOption label="全部部门" value="" />
-          <ElOption
-            v-for="opt in departmentOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
+    <ElCard>
+      <template #header>
+        <span>{{ currentTime }}</span>
+        <ElButton @click="goBackHome">
+          {{ $t('page.leave.calendarView.backToWorkspace') }}
+        </ElButton>
         <ElSelect
           v-model="searchForm.region"
-          placeholder="全部地区"
-          style="width: 120px"
-          clearable
+          @change="searchForm.region = $event"
         >
-          <ElOption label="全部地区" value="" />
           <ElOption
-            v-for="opt in regionOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
+            :label="$t('page.leave.calendarView.allRegions')"
+            value=""
           />
+          <ElOption
+            :label="$t('page.leave.calendarView.unsetRegion')"
+            value="__unset__"
+          />
+          <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
-        <ElButton type="primary" @click="handleSearch">搜索</ElButton>
-        <ElButton @click="handleReset">重置筛选</ElButton>
-        <ElButton @click="fetchLeaveRequests">刷新列表</ElButton>
-      </div>
-    </ElCard>
-
-    <ElCard class="table-card" header="请假列表">
-      <ElTable
-        :data="filteredRequests"
-        border
-        stripe
-        v-loading="loading"
-        size="small"
-      >
-        <ElTableColumn prop="employee_name" label="申请人" width="100" />
-        <ElTableColumn prop="employee_username" label="账号" width="120" />
-        <ElTableColumn prop="employee_code" label="工号" width="100" />
-        <ElTableColumn prop="employee_department" label="部门" width="140" />
-        <ElTableColumn prop="employee_region" label="地区" width="100" />
-        <ElTableColumn prop="leave_type" label="类型" width="80">
-          <template #default="{ row }">
-            {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn prop="session" label="时段" width="80">
-          <template #default="{ row }">
-            {{ sessionLabelMap[row.session] || row.session }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="时间范围" min-width="180">
-          <template #default="{ row }">
-            {{ row.start_date }} ~ {{ row.end_date }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn
-          prop="reason"
-          label="原因"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <ElTableColumn prop="approval_status" label="状态" width="100">
-          <template #default="{ row }">
-            <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-              {{ statusLabelMap[row.approval_status] || row.approval_status }}
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn
-          prop="review_comment"
-          label="审批意见"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <ElTableColumn label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <ElButton
-              size="small"
-              @click="openDetailModal(row as LeaveRequestApi.LeaveRequest)"
-              >
-详情
-</ElButton>
-            <ElButton
-              v-if="
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                'pending'
-              "
-              size="small"
-              type="primary"
-              @click="openReviewModal(row as LeaveRequestApi.LeaveRequest)"
-            >
-              审批
-            </ElButton>
-            <ElButton
-              v-if="
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                  'pending' ||
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                  'approved'
-              "
-              size="small"
-              type="danger"
-              @click="openWithdrawModal(row as LeaveRequestApi.LeaveRequest)"
-            >
-              撤回
-            </ElButton>
-          </template>
-        </ElTableColumn>
-      </ElTable>
-    </ElCard>
-
-    <ElDialog v-model="showDetailModal" title="请假详情" width="600px">
-      <div v-if="currentRequest" style="padding: 10px 0">
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">申请人：</span>
-            <strong>{{ currentRequest.employee_name }}</strong>（{{ currentRequest.employee_username }}）
-          </div>
-          <div class="info-item">
-            <span class="info-label">工号：</span>
-            {{ currentRequest.employee_code || '-' }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">部门/地区：</span>
-            {{ currentRequest.employee_department || '-' }} /
-            {{ currentRequest.employee_region || '-' }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">请假类型：</span>
-            {{
-              leaveTypeLabelMap[currentRequest.leave_type] ||
-              currentRequest.leave_type
-            }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">时段：</span>
-            {{
-              sessionLabelMap[currentRequest.session] || currentRequest.session
-            }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">时间范围：</span>
-            {{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">原因：</span>
-            {{ currentRequest.reason || '无' }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">交接人：</span>
-            {{ currentRequest.handover_to || '无' }}
-          </div>
-          <div class="info-item">
-            <span class="info-label">状态：</span>
-            <ElTag
-              :type="statusTypeMap[currentRequest.approval_status] || 'info'"
-            >
-              {{
-                statusLabelMap[currentRequest.approval_status] ||
-                currentRequest.approval_status
-              }}
-            </ElTag>
-          </div>
-          <div class="info-item">
-            <span class="info-label">审批意见：</span>
-            {{ currentRequest.review_comment || '无' }}
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <ElButton @click="showDetailModal = false">关闭</ElButton>
       </template>
-    </ElDialog>
 
-    <ElDialog v-model="showReviewModal" title="审批请假" width="500px">
-      <div v-if="currentRequest" style="padding: 10px 0">
-        <p>
-          申请人：{{ currentRequest.employee_name }}（{{
-            currentRequest.employee_username
-          }}）
-        </p>
-        <p>
-          请假类型：{{ leaveTypeLabelMap[currentRequest.leave_type] }} |
-          {{ sessionLabelMap[currentRequest.session] }}
-        </p>
-        <p>
-          时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
-        </p>
-        <ElForm :model="reviewForm" label-width="80px" style="margin-top: 16px">
-          <ElFormItem label="审批备注">
-            <ElInput
-              v-model="reviewForm.reviewComment"
-              type="textarea"
-              :rows="4"
-              placeholder="通过可不填；驳回必须填写原因"
-            />
-          </ElFormItem>
-        </ElForm>
-      </div>
-      <template #footer>
-        <ElButton @click="showReviewModal = false">取消</ElButton>
-        <ElButton type="danger" @click="handleReview('rejected')">
-          驳回
+      <div>
+        <ElButton type="primary" plain>
+          {{ $t('page.leave.calendar') }}
         </ElButton>
-        <ElButton type="primary" @click="handleReview('approved')">
-          通过
+        <ElButton @click="goToWorkflow">
+          {{ $t('page.leave.calendarView.workflowMaintenance') }}
         </ElButton>
-      </template>
-    </ElDialog>
-
-    <ElDialog v-model="showWithdrawModal" title="撤回请假" width="500px">
-      <div v-if="currentRequest" style="padding: 10px 0">
-        <p>
-          申请人：{{ currentRequest.employee_name }}（{{
-            currentRequest.employee_username
-          }}）
-        </p>
-        <p>
-          请假类型：{{ leaveTypeLabelMap[currentRequest.leave_type] }} |
-          {{ sessionLabelMap[currentRequest.session] }}
-        </p>
-        <p>
-          时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
-        </p>
-        <ElForm
-          :model="withdrawForm"
-          label-width="80px"
-          style="margin-top: 16px"
-        >
-          <ElFormItem label="撤回原因">
-            <ElInput
-              v-model="withdrawForm.withdrawComment"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入撤回原因"
-            />
-          </ElFormItem>
-        </ElForm>
       </div>
-      <template #footer>
-        <ElButton @click="showWithdrawModal = false">取消</ElButton>
-        <ElButton type="danger" @click="handleWithdraw">确认撤回</ElButton>
-      </template>
-    </ElDialog>
+
+      <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
+
+      <FilterPanel
+        :search-form="searchForm"
+        :teams="teams"
+        @update:search-form="updateSearchForm"
+        @reset-filters="resetFilters"
+      />
+
+      <CalendarPanel
+        :day-map="dayMap"
+        :selected-date-key="selectedDateKey"
+        :current-year="currentYear"
+        :search-form="searchForm"
+        @select-date="onSelectDate"
+        @panel-change="onPanelChange"
+      />
+
+      <DetailPanel
+        :day-map="dayMap"
+        :selected-date-key="selectedDateKey"
+        :region="searchForm.region"
+        :regional-holidays="regionalHolidays"
+        @set-holiday="setHoliday"
+        @remove-holiday="removeHoliday"
+      />
+    </ElCard>
   </Page>
 </template>

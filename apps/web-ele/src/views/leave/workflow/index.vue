@@ -47,7 +47,11 @@ const workflowForm = reactive({
     department: '',
     position: '',
   },
-  approvers: [] as { full_name: null | string; user_id: string; username: string; }[],
+  approvers: [] as {
+    full_name: null | string;
+    user_id: string;
+    username: string;
+  }[],
 });
 
 const approverLevels = ref<string[][]>([['']]);
@@ -63,7 +67,15 @@ const employeeOptions = computed(() => {
 
 function formatNow() {
   const now = new Date();
-  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const weekLabels = [
+    '星期日',
+    '星期一',
+    '星期二',
+    '星期三',
+    '星期四',
+    '星期五',
+    '星期六',
+  ];
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
@@ -84,7 +96,9 @@ function buildMatchText(match: any) {
   const parts: string[] = [];
   if (match.employee_id) {
     const emp = employees.value.find((e) => e.id === match.employee_id);
-    parts.push(`员工：${emp ? `${emp.username} / ${emp.full_name || '未命名'}` : match.employee_id}`);
+    parts.push(
+      `员工：${emp ? `${emp.username} / ${emp.full_name || '未命名'}` : match.employee_id}`,
+    );
   }
   if (match.region) parts.push(`地区：${match.region}`);
   if (match.department) parts.push(`部门：${match.department}`);
@@ -122,11 +136,18 @@ function syncApproversFromLevels() {
         full_name: emp.full_name,
       };
     })
-    .filter((a): a is { full_name: null | string; user_id: string; username: string; } => a !== null);
+    .filter(
+      (
+        a,
+      ): a is { full_name: null | string; user_id: string; username: string } =>
+        a !== null,
+    );
 }
 
 function validateApprovers() {
-  const selectedIds = approverLevels.value.map((level) => level[0]).filter((id): id is string => !!id);
+  const selectedIds = approverLevels.value
+    .map((level) => level[0])
+    .filter((id): id is string => !!id);
   if (selectedIds.length === 0) {
     ElMessage.error('请至少添加 1 级审批人');
     return false;
@@ -208,7 +229,9 @@ function startEdit(workflow: any) {
     department: (workflow.match && workflow.match.department) || '',
     position: (workflow.match && workflow.match.position) || '',
   };
-  approverLevels.value = (workflow.approvers || []).map((a: any) => [a.user_id]);
+  approverLevels.value = (workflow.approvers || []).map((a: any) => [
+    a.user_id,
+  ]);
   if (approverLevels.value.length === 0) {
     approverLevels.value = [['']];
   }
@@ -217,7 +240,9 @@ function startEdit(workflow: any) {
 async function toggleWorkflowStatus(workflow: any) {
   loading.value = true;
   try {
-    await updateLeaveWorkflowApi(workflow.id, { is_active: !workflow.is_active });
+    await updateLeaveWorkflowApi(workflow.id, {
+      is_active: !workflow.is_active,
+    });
     await fetchWorkflows();
     ElMessage.success(workflow.is_active ? '流程已禁用' : '流程已启用');
   } catch {
@@ -304,371 +329,212 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="workflow-page" v-loading="loading">
-    <div class="page-header">
-      <div class="header-info">
-        <h2>请假流程维护</h2>
-        <p class="page-subtitle">为不同员工维护不同审批路线。优先级数字越小越优先匹配。</p>
-        <div class="live-time">{{ currentTime }}</div>
-      </div>
-      <div class="header-actions">
+  <Page v-loading="loading">
+    <template #title>请假流程维护</template>
+    <template #description>
+为不同员工维护不同审批路线。优先级数字越小越优先匹配。
+</template>
+    <template #extra>
+      <div style="display: flex; gap: 12px; align-items: center">
+        <span style="font-size: 14px; font-weight: 700">{{ currentTime }}</span>
         <ElButton @click="goBackHome">返回工作台</ElButton>
         <ElButton @click="fetchWorkflows">刷新</ElButton>
       </div>
-    </div>
+    </template>
 
-    <div class="subnav">
-      <span class="subnav-link" @click="goToCalendar">请假日历</span>
-      <span class="subnav-link active">流程维护</span>
-    </div>
+    <span class="subnav-link" @click="goToCalendar">请假日历</span>
+    <span class="subnav-link active">流程维护</span>
 
-    <div class="panel-grid">
-      <ElCard class="card form-panel">
-        <template #header>
-          <h3>{{ formTitle }}</h3>
-        </template>
+    <ElCard class="card form-panel">
+      <template #header>
+        <h3>{{ formTitle }}</h3>
+      </template>
 
-        <ElForm :model="workflowForm" label-width="100px">
-          <ElFormItem label="流程名称" required>
-            <ElInput v-model="workflowForm.name" placeholder="例如：大陆-研发部-经理审批" />
+      <ElForm :model="workflowForm" label-width="100px">
+        <ElFormItem label="流程名称" required>
+          <ElInput
+            v-model="workflowForm.name"
+            placeholder="例如：大陆-研发部-经理审批"
+          />
+        </ElFormItem>
+
+        <div class="field-row">
+          <ElFormItem label="优先级">
+            <ElInput
+              v-model.number="workflowForm.priority"
+              type="number"
+              :min="1"
+              :max="9999"
+            />
           </ElFormItem>
-
-          <div class="field-row">
-            <ElFormItem label="优先级">
-              <ElInput v-model.number="workflowForm.priority" type="number" :min="1" :max="9999" />
-            </ElFormItem>
-            <ElFormItem label="指定员工">
-              <ElSelect v-model="workflowForm.match.employee_id" placeholder="不指定" clearable>
-                <ElOption v-for="emp in employeeOptions" :key="emp.value" :label="emp.label" :value="emp.value" />
-              </ElSelect>
-            </ElFormItem>
-          </div>
-
-          <div class="field-row">
-            <ElFormItem label="地区">
-              <ElSelect v-model="workflowForm.match.region" placeholder="不限制" clearable>
-                <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
-              </ElSelect>
-            </ElFormItem>
-            <ElFormItem label="部门">
-              <ElSelect v-model="workflowForm.match.department" placeholder="不限制" clearable>
-                <ElOption v-for="d in departments" :key="d" :label="d" :value="d" />
-              </ElSelect>
-            </ElFormItem>
-          </div>
-
-          <ElFormItem label="岗位">
-            <ElSelect v-model="workflowForm.match.position" placeholder="不限制" clearable>
-              <ElOption v-for="p in positions" :key="p" :label="p" :value="p" />
+          <ElFormItem label="指定员工">
+            <ElSelect
+              v-model="workflowForm.match.employee_id"
+              placeholder="不指定"
+              clearable
+            >
+              <ElOption
+                v-for="emp in employeeOptions"
+                :key="emp.value"
+                :label="emp.label"
+                :value="emp.value"
+              />
             </ElSelect>
           </ElFormItem>
+        </div>
 
-          <ElFormItem label="审批人链">
-            <div class="multi-select-box">
-              <div class="multi-select-actions">
-                <ElButton type="primary" @click="addApproverLevel">+ 添加一级</ElButton>
-                <ElButton @click="clearApproverLevels">清空</ElButton>
-                <span class="multi-select-summary">{{ getApproverLevelsSummary() }}</span>
-              </div>
-              <div class="approver-levels">
-                <div v-for="(level, index) in approverLevels" :key="index" class="approver-level-row">
-                  <span class="approver-level-badge">第{{ index + 1 }}级</span>
-                  <ElSelect v-model="level[0]" placeholder="请选择审批人" clearable>
-                    <ElOption v-for="emp in employeeOptions" :key="emp.value" :label="emp.label" :value="emp.value" />
-                  </ElSelect>
-                  <ElButton @click="removeApproverLevel(index)" :disabled="approverLevels.length <= 1">删除</ElButton>
-                </div>
+        <div class="field-row">
+          <ElFormItem label="地区">
+            <ElSelect
+              v-model="workflowForm.match.region"
+              placeholder="不限制"
+              clearable
+            >
+              <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
+            </ElSelect>
+          </ElFormItem>
+          <ElFormItem label="部门">
+            <ElSelect
+              v-model="workflowForm.match.department"
+              placeholder="不限制"
+              clearable
+            >
+              <ElOption
+                v-for="d in departments"
+                :key="d"
+                :label="d"
+                :value="d"
+              />
+            </ElSelect>
+          </ElFormItem>
+        </div>
+
+        <ElFormItem label="岗位">
+          <ElSelect
+            v-model="workflowForm.match.position"
+            placeholder="不限制"
+            clearable
+          >
+            <ElOption v-for="p in positions" :key="p" :label="p" :value="p" />
+          </ElSelect>
+        </ElFormItem>
+
+        <ElFormItem label="审批人链">
+          <div class="multi-select-box">
+            <div class="multi-select-actions">
+              <ElButton type="primary" @click="addApproverLevel">
++ 添加一级
+</ElButton>
+              <ElButton @click="clearApproverLevels">清空</ElButton>
+              <span class="multi-select-summary">{{
+                getApproverLevelsSummary()
+              }}</span>
+            </div>
+            <div class="approver-levels">
+              <div
+                v-for="(level, index) in approverLevels"
+                :key="index"
+                class="approver-level-row"
+              >
+                <span class="approver-level-badge">第{{ index + 1 }}级</span>
+                <ElSelect
+                  v-model="level[0]"
+                  placeholder="请选择审批人"
+                  clearable
+                >
+                  <ElOption
+                    v-for="emp in employeeOptions"
+                    :key="emp.value"
+                    :label="emp.label"
+                    :value="emp.value"
+                  />
+                </ElSelect>
+                <ElButton
+                  @click="removeApproverLevel(index)"
+                  :disabled="approverLevels.length <= 1"
+                  >
+删除
+</ElButton>
               </div>
             </div>
-            <div class="hint">审批会按第 1 级 → 第 N 级依次流转。流程会按"优先级 + 条件匹配"选择一条审批路线。</div>
-          </ElFormItem>
-
-          <div class="form-actions">
-            <ElButton type="primary" @click="saveWorkflow">{{ editingId ? '更新流程' : '保存流程' }}</ElButton>
-            <ElButton v-if="editingId" @click="resetForm">取消编辑</ElButton>
           </div>
-        </ElForm>
-      </ElCard>
+          <div class="hint">
+            审批会按第 1 级 → 第 N 级依次流转。流程会按"优先级 +
+            条件匹配"选择一条审批路线。
+          </div>
+        </ElFormItem>
 
-      <ElCard class="card list-panel">
-        <template #header>
-          <h3>流程列表</h3>
-        </template>
-
-        <div class="hint" style="margin-bottom:14px;">共 {{ workflows.length }} 条流程</div>
-
-        <div class="table-container">
-          <table class="workflow-table">
-            <thead>
-              <tr>
-                <th>名称</th>
-                <th>匹配条件</th>
-                <th>审批链</th>
-                <th>状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="workflows.length === 0">
-                <td colspan="5" style="color:#64748b;">暂无数据</td>
-              </tr>
-              <tr v-for="workflow in workflows" :key="workflow.id">
-                <td>
-                  <strong>{{ workflow.name }}</strong>
-                  <div class="hint" style="margin:6px 0 0;font-size:12px;">优先级：{{ workflow.priority }}</div>
-                </td>
-                <td>{{ buildMatchText(workflow.match) }}</td>
-                <td>
-                  <span v-for="(item, index) in workflow.approvers" :key="index" class="tag">
-                    {{ (index as number) + 1 }}级：{{ item.username }}
-                  </span>
-                  <span v-if="!workflow.approvers.length">-</span>
-                </td>
-                <td>
-                  <span class="tag" :class="[workflow.is_active ? 'tag-success' : 'tag-danger']">
-                    {{ workflow.is_active ? '启用' : '禁用' }}
-                  </span>
-                </td>
-                <td>
-                  <span class="row-action" @click="startEdit(workflow)">编辑</span>
-                  <br />
-                  <span class="row-action muted" @click="toggleWorkflowStatus(workflow)">
-                    {{ workflow.is_active ? '禁用' : '启用' }}
-                  </span>
-                  <br />
-                  <span class="row-action muted" @click="deleteWorkflow(workflow)">删除</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="form-actions">
+          <ElButton type="primary" @click="saveWorkflow">
+{{
+            editingId ? '更新流程' : '保存流程'
+          }}
+</ElButton>
+          <ElButton v-if="editingId" @click="resetForm">取消编辑</ElButton>
         </div>
-      </ElCard>
-    </div>
-  </div>
+      </ElForm>
+    </ElCard>
+
+    <ElCard class="card list-panel">
+      <template #header>
+        <h3>流程列表</h3>
+      </template>
+
+      <div>共 {{ workflows.length }} 条流程</div>
+
+      <thead>
+        <tr>
+          <th>名称</th>
+          <th>匹配条件</th>
+          <th>审批链</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="workflows.length === 0">
+          <td colspan="5">暂无数据</td>
+        </tr>
+        <tr v-for="workflow in workflows" :key="workflow.id">
+          <td>
+            <strong>{{ workflow.name }}</strong>
+            <div class="hint" style="margin: 6px 0 0; font-size: 12px">
+              优先级：{{ workflow.priority }}
+            </div>
+          </td>
+          <td>{{ buildMatchText(workflow.match) }}</td>
+          <td>
+            <span
+              v-for="(item, index) in workflow.approvers"
+              :key="index"
+              class="tag"
+            >
+              {{ (index as number) + 1 }}级：{{ item.username }}
+            </span>
+            <span v-if="!workflow.approvers.length">-</span>
+          </td>
+          <td>
+            <span
+              class="tag"
+              :class="[workflow.is_active ? 'tag-success' : 'tag-danger']"
+            >
+              {{ workflow.is_active ? '启用' : '禁用' }}
+            </span>
+          </td>
+          <td>
+            <span class="row-action" @click="startEdit(workflow)">编辑</span>
+            <br />
+            <span
+              class="row-action muted"
+              @click="toggleWorkflowStatus(workflow)"
+            >
+              {{ workflow.is_active ? '禁用' : '启用' }}
+            </span>
+            <br />
+            <span class="row-action muted" @click="deleteWorkflow(workflow)">删除</span>
+          </td>
+        </tr>
+      </tbody>
+    </ElCard>
+  </Page>
 </template>
-
-<style scoped>
-.workflow-page {
-  padding: 32px;
-  background: #f8fafc;
-  min-height: calc(100vh - 80px);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-
-.header-info h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.live-time {
-  margin-top: 10px;
-  color: #2563eb;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.subnav {
-  display: inline-flex;
-  gap: 10px;
-  margin: 6px 0 18px;
-  padding: 6px;
-  border-radius: 14px;
-  background: #e2e8f0;
-}
-
-.subnav-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 12px;
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.subnav-link.active {
-  background: #2563eb;
-  color: #fff;
-}
-
-.panel-grid {
-  display: grid;
-  grid-template-columns: minmax(380px, 0.9fr) 1.1fr;
-  gap: 18px;
-}
-
-.card {
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.card :deep(.el-card__header) {
-  padding: 0 0 12px;
-  border-bottom: none;
-}
-
-.card :deep(.el-card__header) h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.card :deep(.el-card__body) {
-  padding: 0;
-}
-
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.hint {
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
-  margin-top: 8px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.multi-select-box {
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 12px 14px;
-  background: #f8fafc;
-}
-
-.multi-select-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.multi-select-summary {
-  color: #475569;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.approver-levels {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.approver-level-row {
-  display: grid;
-  grid-template-columns: 84px 1fr 72px;
-  gap: 10px;
-  align-items: center;
-}
-
-.approver-level-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.workflow-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.workflow-table th,
-.workflow-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-  vertical-align: top;
-}
-
-.workflow-table th {
-  color: #475569;
-  font-weight: 700;
-}
-
-.tag {
-  display: inline-block;
-  margin: 2px 6px 2px 0;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #e0f2fe;
-  color: #0369a1;
-  font-size: 12px;
-}
-
-.tag-success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.tag-danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.row-action {
-  color: #2563eb;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.row-action.muted {
-  color: #475569;
-}
-
-@media (max-width: 1280px) {
-  .panel-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .field-row {
-    grid-template-columns: 1fr;
-  }
-  .approver-level-row {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
