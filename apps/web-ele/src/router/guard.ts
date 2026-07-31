@@ -145,25 +145,22 @@ function setupAccessGuard(router: Router) {
     const fetchMenuListAsync = async () => {
       let modulePermissions = (userInfo as any)?.module_permissions || [];
 
-      // 超级管理员（admin 角色）如果没有 module_permissions，默认授予所有模块权限
+      // 超级管理员（admin 角色）如果没有 module_permissions，
+      // 只授予核心管理模块权限（用户管理、系统参数、数据处理、门禁维护）
       if (
         modulePermissions.length === 0 &&
         userInfo?.roles?.includes('admin')
       ) {
         console.warn(
-          '[DEBUG] admin user with empty permissions, granting all module access',
+          '[DEBUG] admin user with empty permissions, granting core modules only',
         );
-        const allModules = [
+        const coreModules = [
           'user_management',
-          'leave_calendar',
-          'leave_workflows',
-          'approval_management',
           'system_settings',
           'data_migration',
           'access_control',
-          'claim_management',
         ];
-        modulePermissions = allModules.map((code) => ({
+        modulePermissions = coreModules.map((code) => ({
           module_code: code,
           can_view: true,
         }));

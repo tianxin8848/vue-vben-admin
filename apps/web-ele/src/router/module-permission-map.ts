@@ -48,9 +48,9 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
 
 /**
  * Routes that are always visible (no module permission check required).
- * These are the workspace and profile routes available to all authenticated users.
+ * These are the base workspace and profile routes available to all authenticated users.
  *
- * Note: Employee sub-routes that require module permissions (e.g. approvals)
+ * Note: Employee sub-routes that require module permissions (e.g. leave, claims, approvals)
  * are NOT included here. They are added by buildRoutesFromPermissions() based
  * on the user's module_permissions from the backend.
  */
@@ -85,36 +85,6 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
           title: $t('page.workspace.profile'),
         },
       },
-      {
-        name: 'EmployeeLeave',
-        path: 'leave',
-        component: 'leave/list/index',
-        meta: {
-          affixTab: false,
-          icon: 'lucide:calendar',
-          title: '请假申请',
-        },
-      },
-      {
-        name: 'EmployeeClaims',
-        path: 'claims',
-        component: 'claim/index',
-        meta: {
-          affixTab: false,
-          icon: 'lucide:receipt',
-          title: '报销管理',
-        },
-      },
-      {
-        name: 'LeaveDetail',
-        path: 'leave/detail/:id',
-        component: 'leave/detail/index',
-        meta: {
-          hideInMenu: true,
-          icon: 'lucide:file-text',
-          title: $t('page.leave.detail'),
-        },
-      },
     ],
   },
   {
@@ -132,24 +102,66 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
 
 /**
  * Workspace child routes that require backend module permissions.
- * key = template key (used with addRoute helper), value = { route, module_code }
+ * key = template key, value = { route, module_code }
  */
 const WORKSPACE_PERMISSION_CHILDREN: Record<
   string,
-  { module_code: string; route: RouteRecordStringComponent }
+  { module_code: string; routes: RouteRecordStringComponent[] }
 > = {
+  employee_leave: {
+    module_code: 'employee_leave',
+    routes: [
+      {
+        name: 'EmployeeLeave',
+        path: 'leave',
+        component: 'leave/list/index',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:calendar',
+          title: '请假申请',
+        },
+      },
+      {
+        name: 'LeaveDetail',
+        path: 'leave/detail/:id',
+        component: 'leave/detail/index',
+        meta: {
+          hideInMenu: true,
+          icon: 'lucide:file-text',
+          title: $t('page.leave.detail'),
+        },
+      },
+    ],
+  },
+  employee_claims: {
+    module_code: 'claim_management',
+    routes: [
+      {
+        name: 'EmployeeClaims',
+        path: 'claims',
+        component: 'claim/index',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:receipt',
+          title: '报销管理',
+        },
+      },
+    ],
+  },
   employee_approvals: {
     module_code: 'approval_management',
-    route: {
-      name: 'EmployeeApprovals',
-      path: 'approvals',
-      component: 'leave/my-approvals/index',
-      meta: {
-        affixTab: false,
-        icon: 'lucide:clipboard-check',
-        title: '审批记录',
+    routes: [
+      {
+        name: 'EmployeeApprovals',
+        path: 'approvals',
+        component: 'leave/my-approvals/index',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:clipboard-check',
+          title: '审批记录',
+        },
       },
-    },
+    ],
   },
 };
 
@@ -276,11 +288,13 @@ export function buildRoutesFromPermissions(
 
   // Add permission-gated children to the Workspace route
   const workspacePermissionChildren: RouteRecordStringComponent[] = [];
-  for (const [_key, { module_code, route }] of Object.entries(
+  for (const [_key, { module_code, routes: permRoutes }] of Object.entries(
     WORKSPACE_PERMISSION_CHILDREN,
   )) {
     if (canViewModule(module_code)) {
-      workspacePermissionChildren.push(cloneRoute(route));
+      for (const r of permRoutes) {
+        workspacePermissionChildren.push(cloneRoute(r));
+      }
     }
   }
 
