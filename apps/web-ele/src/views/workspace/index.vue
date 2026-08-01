@@ -6,7 +6,15 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { ElCard, ElTag } from 'element-plus';
+import {
+  ElButton,
+  ElCard,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElEmpty,
+  ElSpace,
+  ElTag,
+} from 'element-plus';
 
 import { getUserInfoApi } from '#/api';
 
@@ -61,91 +69,91 @@ onMounted(() => {
     description="员工登录后的默认页面"
     v-loading="loading"
   >
-    <div class="quick-actions">
-      <div class="action-card" @click="goToProfile">
-        <div class="action-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </div>
-        <span class="action-text">个人信息维护</span>
-      </div>
-    </div>
+    <ElButton size="large" @click="goToProfile">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <span class="ml-2">个人信息维护</span>
+    </ElButton>
 
-    <div class="content-grid">
-      <ElCard class="info-card" header="个人信息">
-        <div v-if="userInfo" class="info-grid">
-          <div class="info-item">
-            <span class="info-label">姓名</span>
-            <span class="info-value">{{ userInfo.full_name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">账号</span>
-            <span class="info-value">{{ userInfo.username }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">邮箱</span>
-            <span class="info-value">{{ userInfo.email }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">手机号</span>
-            <span class="info-value">{{ userInfo.phone || '-' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">部门</span>
-            <span class="info-value">{{ userInfo.department || '-' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">职位</span>
-            <span class="info-value">{{ userInfo.position || '-' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">区域</span>
-            <span class="info-value">{{ userInfo.region || '-' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">身份</span>
+    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <ElCard header="个人信息">
+        <ElDescriptions v-if="userInfo" :column="2" border>
+          <ElDescriptionsItem label="姓名">
+            {{ userInfo.full_name }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="账号">
+            {{ userInfo.username }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="邮箱">
+            {{ userInfo.email }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="手机号">
+            {{ userInfo.phone || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="部门">
+            {{ userInfo.department || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="职位">
+            {{ userInfo.position || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="区域">
+            {{ userInfo.region || '-' }}
+          </ElDescriptionsItem>
+          <ElDescriptionsItem label="身份">
             <ElTag :type="userInfo.is_admin ? 'danger' : 'info'" size="small">
               {{ userInfo.is_admin ? '管理员' : '普通员工' }}
             </ElTag>
-          </div>
-        </div>
+          </ElDescriptionsItem>
+        </ElDescriptions>
       </ElCard>
 
-      <ElCard class="permissions-card" header="模块权限">
-        <div v-if="userInfo" class="permissions-list">
-          <div
+      <ElCard header="模块权限">
+        <ElDescriptions
+          v-if="userInfo && userInfo.module_permissions.length > 0"
+          :column="1"
+          border
+        >
+          <ElDescriptionsItem
             v-for="perm in userInfo.module_permissions"
             :key="perm.module_code"
-            class="permission-item"
+            :label="perm.module_name"
           >
-            <span class="permission-name">{{ perm.module_name }}</span>
-            <div class="permission-actions">
-              <span v-if="perm.can_view" class="action-tag view">查看</span>
-              <span v-if="perm.can_create" class="action-tag create">创建</span>
-              <span v-if="perm.can_edit" class="action-tag edit">编辑</span>
-              <span v-if="perm.can_delete" class="action-tag delete">删除</span>
-              <span v-if="perm.can_approve" class="action-tag approve">审批</span>
-            </div>
-          </div>
-          <div
-            v-if="userInfo.module_permissions.length === 0"
-            class="empty-permissions"
-          >
-            暂无模块权限
-          </div>
-        </div>
+            <ElSpace :size="4" wrap>
+              <ElTag v-if="perm.can_view" type="info" size="small">
+                查看
+              </ElTag>
+              <ElTag v-if="perm.can_create" type="success" size="small">
+                创建
+              </ElTag>
+              <ElTag v-if="perm.can_edit" type="warning" size="small">
+                编辑
+              </ElTag>
+              <ElTag v-if="perm.can_delete" type="danger" size="small">
+                删除
+              </ElTag>
+              <ElTag v-if="perm.can_approve" type="primary" size="small">
+                审批
+              </ElTag>
+            </ElSpace>
+          </ElDescriptionsItem>
+        </ElDescriptions>
+        <ElEmpty
+          v-else-if="userInfo"
+          description="暂无模块权限"
+          :image-size="80"
+        />
       </ElCard>
     </div>
   </Page>
