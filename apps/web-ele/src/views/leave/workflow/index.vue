@@ -1,6 +1,11 @@
 <script lang="ts" setup>
+import type { VxeGridProps } from '#/adapter/vxe-table';
+import type { LeaveWorkflowApi } from '#/api';
+
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+import { Page } from '@vben/common-ui';
 
 import {
   ElButton,
@@ -12,8 +17,10 @@ import {
   ElMessageBox,
   ElOption,
   ElSelect,
+  ElTag,
 } from 'element-plus';
 
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createLeaveWorkflowApi,
   deleteLeaveWorkflowApi,
@@ -55,6 +62,73 @@ const workflowForm = reactive({
 });
 
 const approverLevels = ref<string[][]>([['']]);
+
+const gridOptions: VxeGridProps<LeaveWorkflowApi.LeaveWorkflow> = {
+  id: 'leave-workflow-index',
+  rowConfig: {
+    keyField: 'id',
+  },
+  columns: [
+    {
+      field: 'name',
+      title: '名称',
+      minWidth: 180,
+      slots: { default: 'name' },
+    },
+    { field: 'priority', title: '优先级', width: 90 },
+    {
+      title: '匹配条件',
+      minWidth: 220,
+      slots: { default: 'match' },
+    },
+    {
+      title: '审批链',
+      minWidth: 260,
+      slots: { default: 'approvers' },
+    },
+    {
+      field: 'is_active',
+      title: '状态',
+      width: 90,
+      slots: { default: 'status' },
+    },
+    {
+      title: '操作',
+      width: 180,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
+  ],
+  proxyConfig: {
+    enabled: false,
+  },
+  toolbarConfig: {
+    zoom: true,
+    custom: true,
+    tools: [
+      {
+        code: 'manual-refresh',
+        icon: 'vxe-icon-refresh',
+        circle: true,
+        name: '刷新',
+      },
+    ],
+  },
+  customConfig: {
+    storage: false,
+  },
+};
+
+const [BasicTable, tableApi] = useVbenVxeGrid({
+  gridOptions,
+  gridEvents: {
+    toolbarToolClick(event: { code: string }) {
+      if (event.code === 'manual-refresh') {
+        fetchWorkflows();
+      }
+    },
+  },
+});
 
 const employeeOptions = computed(() => {
   return employees.value.map((emp) => ({
@@ -281,8 +355,10 @@ async function fetchWorkflows() {
   loading.value = true;
   try {
     workflows.value = await getLeaveWorkflowsApi();
+    tableApi.setGridOptions({ data: workflows.value });
   } catch {
     workflows.value = [];
+    tableApi.setGridOptions({ data: [] });
   } finally {
     loading.value = false;
   }
@@ -332,8 +408,8 @@ onUnmounted(() => {
   <Page v-loading="loading">
     <template #title>请假流程维护</template>
     <template #description>
-为不同员工维护不同审批路线。优先级数字越小越优先匹配。
-</template>
+      为不同员工维护不同审批路线。优先级数字越小越优先匹配。
+    </template>
     <template #extra>
       <div style="display: flex; gap: 12px; align-items: center">
         <span style="font-size: 14px; font-weight: 700">{{ currentTime }}</span>
@@ -423,8 +499,8 @@ onUnmounted(() => {
           <div class="multi-select-box">
             <div class="multi-select-actions">
               <ElButton type="primary" @click="addApproverLevel">
-+ 添加一级
-</ElButton>
+                + 添加一级
+              </ElButton>
               <ElButton @click="clearApproverLevels">清空</ElButton>
               <span class="multi-select-summary">{{
                 getApproverLevelsSummary()
@@ -452,9 +528,9 @@ onUnmounted(() => {
                 <ElButton
                   @click="removeApproverLevel(index)"
                   :disabled="approverLevels.length <= 1"
-                  >
-删除
-</ElButton>
+                >
+                  删除
+                </ElButton>
               </div>
             </div>
           </div>
@@ -466,75 +542,53 @@ onUnmounted(() => {
 
         <div class="form-actions">
           <ElButton type="primary" @click="saveWorkflow">
-{{
-            editingId ? '更新流程' : '保存流程'
-          }}
-</ElButton>
+            {{ editingId ? '更新流程' : '保存流程' }}
+          </ElButton>
           <ElButton v-if="editingId" @click="resetForm">取消编辑</ElButton>
         </div>
       </ElForm>
     </ElCard>
 
-    <ElCard class="card list-panel">
-      <template #header>
-        <h3>流程列表</h3>
+    <BasicTable :table-title="`流程列表（共 ${workflows.length} 条）`">
+      <template #name="{ row }">
+        <strong>{{ row.name }}</strong>
       </template>
-
-      <div>共 {{ workflows.length }} 条流程</div>
-
-      <thead>
-        <tr>
-          <th>名称</th>
-          <th>匹配条件</th>
-          <th>审批链</th>
-          <th>状态</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="workflows.length === 0">
-          <td colspan="5">暂无数据</td>
-        </tr>
-        <tr v-for="workflow in workflows" :key="workflow.id">
-          <td>
-            <strong>{{ workflow.name }}</strong>
-            <div class="hint" style="margin: 6px 0 0; font-size: 12px">
-              优先级：{{ workflow.priority }}
-            </div>
-          </td>
-          <td>{{ buildMatchText(workflow.match) }}</td>
-          <td>
-            <span
-              v-for="(item, index) in workflow.approvers"
-              :key="index"
-              class="tag"
-            >
-              {{ (index as number) + 1 }}级：{{ item.username }}
-            </span>
-            <span v-if="!workflow.approvers.length">-</span>
-          </td>
-          <td>
-            <span
-              class="tag"
-              :class="[workflow.is_active ? 'tag-success' : 'tag-danger']"
-            >
-              {{ workflow.is_active ? '启用' : '禁用' }}
-            </span>
-          </td>
-          <td>
-            <span class="row-action" @click="startEdit(workflow)">编辑</span>
-            <br />
-            <span
-              class="row-action muted"
-              @click="toggleWorkflowStatus(workflow)"
-            >
-              {{ workflow.is_active ? '禁用' : '启用' }}
-            </span>
-            <br />
-            <span class="row-action muted" @click="deleteWorkflow(workflow)">删除</span>
-          </td>
-        </tr>
-      </tbody>
-    </ElCard>
+      <template #match="{ row }">
+        {{ buildMatchText(row.match) }}
+      </template>
+      <template #approvers="{ row }">
+        <ElTag
+          v-for="(item, index) in row.approvers"
+          :key="index"
+          size="small"
+          type="info"
+          style="margin-right: 4px"
+        >
+          {{ index + 1 }}级：{{ item.username }}
+        </ElTag>
+        <span v-if="!row.approvers.length">-</span>
+      </template>
+      <template #status="{ row }">
+        <ElTag :type="row.is_active ? 'success' : 'danger'" size="small">
+          {{ row.is_active ? '启用' : '禁用' }}
+        </ElTag>
+      </template>
+      <template #action="{ row }">
+        <ElButton size="small" link type="primary" @click="startEdit(row)">
+          编辑
+        </ElButton>
+        <ElButton
+          size="small"
+          link
+          type="primary"
+          @click="toggleWorkflowStatus(row)"
+        >
+          {{ row.is_active ? '禁用' : '启用' }}
+        </ElButton>
+        <ElButton size="small" link type="danger" @click="deleteWorkflow(row)">
+          删除
+        </ElButton>
+      </template>
+    </BasicTable>
   </Page>
 </template>

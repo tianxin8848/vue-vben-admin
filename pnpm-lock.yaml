@@ -469,6 +469,7 @@ overrides:
   clsx: ^2.1.1
   pinia: ^3.0.4
   vue: ^3.5.38
+  '@vxe-ui/core': 4.4.14
 
 importers:
 
@@ -5007,11 +5008,6 @@ packages:
 
   '@vxe-ui/core@4.4.14':
     resolution: {integrity: sha512-bEMnvZl+R39+midxlz0vcpWS/w4WsdN9bOfjxWIfz7o95FyxOQWUjHs63IT9wNeUP09WhLkmUDKKjdl7BQYUMw==}
-    peerDependencies:
-      vue: ^3.5.38
-
-  '@vxe-ui/core@4.4.18':
-    resolution: {integrity: sha512-1w9eSWxUe5gIgkZB9QTTWiAcYd9fnnhWeyZNILIp7SwYA8s8962S6bNi2xYv4FFj5ipXrZjfIXdOUJzb3d3aYw==}
     peerDependencies:
       vue: ^3.5.38
 
@@ -9670,9 +9666,6 @@ packages:
   xe-utils@4.0.11:
     resolution: {integrity: sha512-r3v1o10AnHXKRZ5ikuAOQ+Mxw/hy1XWjFr2/Q9L+LEZYq/PRxmiZ6/J53DEH53XqklEXddsmx1vYjOaOACq8IQ==}
 
-  xe-utils@4.0.9:
-    resolution: {integrity: sha512-LLO3Otzg2i9ArUoBdsjse9Tw7cwE0XvvoP98IMjoqL8l4UELO/a8c041Mq9cAfaUdd6ksamSvGF5luZkwVArqw==}
-
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
     engines: {node: '>=12'}
@@ -12923,12 +12916,6 @@ snapshots:
       vue: 3.5.38(typescript@6.0.3)
 
   '@vxe-ui/core@4.4.14(vue@3.5.38(typescript@6.0.3))':
-    dependencies:
-      dom-zindex: 1.0.7
-      vue: 3.5.38(typescript@6.0.3)
-      xe-utils: 4.0.9
-
-  '@vxe-ui/core@4.4.18(vue@3.5.38(typescript@6.0.3))':
     dependencies:
       dom-zindex: 1.0.7
       vue: 3.5.38(typescript@6.0.3)
@@ -17701,7 +17688,7 @@ snapshots:
 
   vxe-pc-ui@4.16.20(vue@3.5.38(typescript@6.0.3)):
     dependencies:
-      '@vxe-ui/core': 4.4.18(vue@3.5.38(typescript@6.0.3))
+      '@vxe-ui/core': 4.4.14(vue@3.5.38(typescript@6.0.3))
     transitivePeerDependencies:
       - vue
 
@@ -17961,8 +17948,6 @@ snapshots:
   xe-utils@3.9.1: {}
 
   xe-utils@4.0.11: {}
-
-  xe-utils@4.0.9: {}
 
   xml-name-validator@4.0.0: {}
 
