@@ -386,10 +386,6 @@ async function loadSystemSettings() {
   }
 }
 
-function goBackHome() {
-  router.push('/employee');
-}
-
 function goToCalendar() {
   router.push('/employee/manage/leave');
 }
@@ -413,7 +409,6 @@ onUnmounted(() => {
     <template #extra>
       <div style="display: flex; gap: 12px; align-items: center">
         <span style="font-size: 14px; font-weight: 700">{{ currentTime }}</span>
-        <ElButton @click="goBackHome">返回工作台</ElButton>
         <ElButton @click="fetchWorkflows">刷新</ElButton>
       </div>
     </template>

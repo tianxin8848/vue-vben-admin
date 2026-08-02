@@ -2,7 +2,6 @@
 import type { EmployeeApi } from '#/api';
 
 import { onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
@@ -24,7 +23,6 @@ import {
   updateMyProfileApi,
 } from '#/api';
 
-const router = useRouter();
 const loading = ref(false);
 
 const employee = ref<null | {
@@ -122,10 +120,6 @@ async function handleUpdateProfile() {
   }
 }
 
-function goBack() {
-  router.push('/employee');
-}
-
 onMounted(() => {
   fetchData();
 });
@@ -133,8 +127,6 @@ onMounted(() => {
 
 <template>
   <Page title="个人信息维护2" v-loading="loading">
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回工作台</ElButton>
-
     <ElCard v-if="employee" header="基本信息">
       <ElForm :model="basicInfoForm" label-width="120px">
         <ElFormItem label="账号">

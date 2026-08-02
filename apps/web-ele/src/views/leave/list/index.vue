@@ -290,11 +290,6 @@ function getLatestActionDisplay(item: LeaveRequestApi.LeaveRequest) {
   return `${actor}${actionText} / ${atText}`;
 }
 
-// 返回工作台
-function goBack() {
-  router.push('/employee');
-}
-
 // 查看详情
 function viewDetail(id: string) {
   router.push(`/employee/leave/detail/${id}`);
@@ -314,7 +309,6 @@ onMounted(() => {
     <div
       style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px"
     >
-      <ElButton @click="goBack">返回工作台</ElButton>
       <VbenButton @click="() => modalApi.open()">填写请假单</VbenButton>
     </div>
 
