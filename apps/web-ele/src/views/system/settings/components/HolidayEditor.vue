@@ -4,6 +4,7 @@ import type { SystemSettingsApi } from '#/api';
 import { reactive, watch } from 'vue';
 
 import {
+  ElAlert,
   ElButton,
   ElDatePicker,
   ElForm,
@@ -130,11 +131,9 @@ initStartDate();
 </script>
 
 <template>
-  <div
-    style="padding-top: 24px; margin-top: 24px; border-top: 1px solid #e2e8f0"
-  >
-    <h3 style="margin: 0 0 12px; font-size: 18px">地区假期维护</h3>
-    <p style="margin: 0 0 18px; color: #64748b">
+  <section class="mt-6 border-t border-border pt-6">
+    <h3 class="mb-3 text-lg">地区假期维护</h3>
+    <p class="mb-4 text-sm text-muted-foreground">
       在这里维护各个地区的节假日。可选择年份、日期区间（可只填一天）、假期名称和地区，保存后请假管理日历会直接读取。
     </p>
 
@@ -142,7 +141,7 @@ initStartDate();
       <ElFormItem label="地区">
         <ElSelect
           v-model="holidayForm.region"
-          style="width: 140px"
+          class="w-[140px]"
           @change="buildHolidayNameOptions"
         >
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
@@ -151,7 +150,7 @@ initStartDate();
       <ElFormItem label="年份">
         <ElSelect
           v-model="holidayForm.year"
-          style="width: 100px"
+          class="w-[100px]"
           @change="syncHolidayDatesToYear"
         >
           <ElOption
@@ -166,7 +165,7 @@ initStartDate();
         <ElDatePicker
           v-model="holidayForm.startDate"
           type="date"
-          style="width: 140px"
+          class="w-[140px]"
           @change="syncHolidayYearToDates"
         />
       </ElFormItem>
@@ -174,12 +173,12 @@ initStartDate();
         <ElDatePicker
           v-model="holidayForm.endDate"
           type="date"
-          style="width: 140px"
+          class="w-[140px]"
           @change="syncHolidayYearToDates"
         />
       </ElFormItem>
       <ElFormItem label="假期名称">
-        <ElSelect v-model="holidayForm.holidayName" style="width: 120px">
+        <ElSelect v-model="holidayForm.holidayName" class="w-[120px]">
           <ElOption
             v-for="name in resolveHolidayCatalogByRegion(holidayForm.region)"
             :key="name"
@@ -193,24 +192,16 @@ initStartDate();
       </ElFormItem>
     </ElForm>
 
-    <p style="margin-top: 8px; font-size: 12px; color: #64748b">
+    <p class="mt-2 text-xs text-muted-foreground">
       说明：同一地区同一天只保留一条假期记录；如果选择日期区间，会一次性写入多天并覆盖该区间内原有假期名称。
     </p>
-    <div
+    <ElAlert
       v-if="message"
-      style="
-        padding: 12px 14px;
-        margin-top: 12px;
-        white-space: pre-wrap;
-        border-radius: 10px;
-      "
-      :style="
-        messageType === 'success'
-          ? 'background: #dcfce7; color: #166534;'
-          : 'background: #fee2e2; color: #991b1b;'
-      "
-    >
-      {{ message }}
-    </div>
-  </div>
+      :title="message"
+      :type="messageType === 'success' ? 'success' : 'error'"
+      show-icon
+      :closable="false"
+      class="mt-3 whitespace-pre-wrap"
+    />
+  </section>
 </template>
