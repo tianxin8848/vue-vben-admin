@@ -445,22 +445,62 @@ curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/employees/{
 
 ---
 
-### 17. 更新员工门禁ID
+### 17. 获取门禁员工列表
 
-**PATCH** `/api/v1/employees/{employee_id}/access-control-id`
+**GET** `/api/v1/access-control/employees`
 
-**请求体 (application/json):**
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| access_control_id | string | 门禁ID |
+> 走 `access_control` 模块查看权限（非 `user_management`），适用于仅授权门禁管理的角色。
 
 **curl 示例:**
 ```bash
-curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/employees/{employee_id}/access-control-id' \
+curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/access-control/employees'
+```
+
+**响应 (200):** 返回员工数组（精简结构）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | string | 员工唯一ID |
+| username | string | 登录用户名 |
+| full_name | string \| null | 全名 |
+| access_control_id | string \| null | 门禁ID |
+
+**响应示例:**
+```json
+[
+  {"id":"6a2f6acd8d8c88ae7d154c29","username":"lin","full_name":"lin","access_control_id":"31"},
+  {"id":"6a2f6aae8d8c88ae7d154c28","username":"mike","full_name":"mike","access_control_id":null}
+]
+```
+
+---
+
+### 18. 更新员工门禁ID
+
+**PATCH** `/api/v1/access-control/employees/{employee_id}`
+
+> 走 `access_control` 模块权限。旧路径 `/api/v1/employees/{employee_id}/access-control-id` 已下线（404）。
+
+**路径参数:**
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| employee_id | string | ✅ | 员工唯一ID |
+
+**请求体 (application/json):**
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| access_control_id | string \| null | ❌ | 门禁ID，传 `""` 或 `null` 可清空 |
+
+**curl 示例:**
+```bash
+curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/access-control/employees/{employee_id}' \
   -H 'Content-Type: application/json' \
   -d '{"access_control_id":"AC20260001"}'
 ```
+
+**响应 (200):** 返回完整员工对象（同 `EmployeeResponse`）
 
 ---
 
@@ -1786,20 +1826,27 @@ curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/employees/{
   -d '{"is_active":false}'
 ```
 
-### 17. 更新员工门禁ID
+### 17. 获取门禁员工列表
 ```bash
-curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/employees/{employee_id}/access-control-id' \
+curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/access-control/employees'
+```
+**Response (200):** 精简员工数组（`id`, `username`, `full_name`, `access_control_id`），走 `access_control` 模块权限。
+
+### 18. 更新员工门禁ID
+```bash
+curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/access-control/employees/{employee_id}' \
   -H 'Content-Type: application/json' \
   -d '{"access_control_id":"AC20260001"}'
 ```
+> 旧路径 `/api/v1/employees/{employee_id}/access-control-id` 已下线（404）。
 
-### 18. 删除员工
+### 19. 删除员工
 ```bash
 curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/employees/{employee_id}'
 ```
 **Response (204):** 无内容
 
-### 19. 获取员工头像
+### 20. 获取员工头像
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/employees/avatars/{username}/{file_name}'
 ```

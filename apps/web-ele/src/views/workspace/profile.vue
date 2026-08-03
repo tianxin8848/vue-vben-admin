@@ -1,20 +1,12 @@
 <script lang="ts" setup>
-import type { EmployeeApi } from '#/api';
+import type { VbenFormSchema } from '#/adapter/form';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, Profile, ProfileBaseSetting } from '@vben/common-ui';
+import { useUserStore } from '@vben/stores';
 
-import {
-  ElButton,
-  ElCard,
-  ElDatePicker,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-  ElSelect,
-} from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 import {
   getMyProfileApi,
@@ -23,27 +15,29 @@ import {
   updateMyProfileApi,
 } from '#/api';
 
+const userStore = useUserStore();
+
 const loading = ref(false);
 
-const employee = ref<null | {
-  department: null | string;
-  email: string;
-  full_name: string;
-  phone: null | string;
-  position: null | string;
-  region: null | string;
-  username: string;
-}>(null);
+const activeTab = ref<'basic' | 'profile'>('basic');
 
-const profile = ref<EmployeeApi.EmployeeProfileResponse | null>(null);
+const basicFormRef = ref();
+const profileFormRef = ref();
 
-const basicInfoForm = reactive<EmployeeApi.EmployeeBasicInfoUpdate>({
+const userInfo = computed(() => ({
+  avatar: userStore.userInfo?.avatar ?? '',
+  realName: userStore.userInfo?.realName ?? '',
+  userId: userStore.userInfo?.userId ?? '',
+  username: userStore.userInfo?.username ?? '',
+}));
+
+const basicInfoForm = reactive({
   department: '',
   position: '',
   region: '',
 });
 
-const profileForm = reactive<Partial<EmployeeApi.EmployeeProfileUpdate>>({
+const profileForm = reactive({
   address: '',
   birth_date: '',
   emergency_contact_name: '',
@@ -60,6 +54,117 @@ const departmentOptions = [
   { label: '市场部', value: '市场部' },
 ];
 
+const tabs = [
+  { label: '基本信息', value: 'basic' },
+  { label: '档案信息', value: 'profile' },
+];
+
+const basicSchema: VbenFormSchema[] = [
+  {
+    component: 'Input',
+    componentProps: { disabled: true },
+    fieldName: 'username',
+    label: '账号',
+  },
+  {
+    component: 'Input',
+    componentProps: { disabled: true },
+    fieldName: 'full_name',
+    label: '姓名',
+  },
+  {
+    component: 'Input',
+    componentProps: { disabled: true },
+    fieldName: 'email',
+    label: '邮箱',
+  },
+  {
+    component: 'Input',
+    componentProps: { disabled: true },
+    fieldName: 'phone',
+    label: '手机号',
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      clearable: true,
+      options: departmentOptions,
+      placeholder: '请选择部门',
+    },
+    fieldName: 'department',
+    label: '部门',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入职位' },
+    fieldName: 'position',
+    label: '职位',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入区域' },
+    fieldName: 'region',
+    label: '区域',
+  },
+];
+
+const profileSchema: VbenFormSchema[] = [
+  {
+    component: 'DatePicker',
+    componentProps: {
+      placeholder: '请选择日期',
+      type: 'date',
+      valueFormat: 'YYYY-MM-DD',
+    },
+    fieldName: 'hire_date',
+    label: '入职日期',
+  },
+  {
+    component: 'DatePicker',
+    componentProps: {
+      placeholder: '请选择日期',
+      type: 'date',
+      valueFormat: 'YYYY-MM-DD',
+    },
+    fieldName: 'work_start_date',
+    label: '工作开始日期',
+  },
+  {
+    component: 'DatePicker',
+    componentProps: {
+      placeholder: '请选择日期',
+      type: 'date',
+      valueFormat: 'YYYY-MM-DD',
+    },
+    fieldName: 'birth_date',
+    label: '出生日期',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入身份证号' },
+    fieldName: 'id_number',
+    label: '身份证号',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入住址' },
+    fieldName: 'address',
+    label: '住址',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入紧急联系人' },
+    fieldName: 'emergency_contact_name',
+    label: '紧急联系人',
+  },
+  {
+    component: 'Input',
+    componentProps: { placeholder: '请输入紧急联系电话' },
+    fieldName: 'emergency_contact_phone',
+    label: '紧急联系电话',
+  },
+];
+
 async function fetchData() {
   loading.value = true;
   try {
@@ -67,54 +172,62 @@ async function fetchData() {
       getUserInfoApi(),
       getMyProfileApi(),
     ]);
-    employee.value = {
-      username: userRes.username,
-      full_name: userRes.realName,
+
+    basicInfoForm.department = userRes.department || '';
+    basicInfoForm.position = userRes.position || '';
+    basicInfoForm.region = userRes.region || '';
+
+    Object.assign(profileForm, {
+      address: profileRes.address || '',
+      birth_date: profileRes.birth_date || '',
+      emergency_contact_name: profileRes.emergency_contact_name || '',
+      emergency_contact_phone: profileRes.emergency_contact_phone || '',
+      hire_date: profileRes.hire_date || '',
+      id_number: profileRes.id_number || '',
+      work_start_date: profileRes.work_start_date || '',
+    });
+
+    basicFormRef.value?.getFormApi().setValues({
+      ...basicInfoForm,
       email: userRes.email,
-      phone: userRes.phone || null,
-      department: userRes.department || null,
-      position: userRes.position || null,
-      region: userRes.region || null,
-    };
-    profile.value = profileRes;
+      full_name: userRes.realName,
+      phone: userRes.phone || '',
+      username: userRes.username,
+    });
 
-    if (employee.value) {
-      basicInfoForm.department = employee.value.department || '';
-      basicInfoForm.position = employee.value.position || '';
-      basicInfoForm.region = employee.value.region || '';
-    }
-
-    if (profile.value) {
-      Object.assign(profileForm, {
-        address: profile.value.address || '',
-        birth_date: profile.value.birth_date || '',
-        emergency_contact_name: profile.value.emergency_contact_name || '',
-        emergency_contact_phone: profile.value.emergency_contact_phone || '',
-        hire_date: profile.value.hire_date || '',
-        id_number: profile.value.id_number || '',
-        work_start_date: profile.value.work_start_date || '',
-      });
-    }
+    profileFormRef.value?.getFormApi().setValues({ ...profileForm });
   } finally {
     loading.value = false;
   }
 }
 
-async function handleUpdateBasicInfo() {
+async function handleUpdateBasicInfo(values: Record<string, any>) {
   try {
-    await updateMyBasicInfoApi(basicInfoForm);
+    await updateMyBasicInfoApi({
+      department: values.department || '',
+      position: values.position || '',
+      region: values.region || '',
+    });
     ElMessage.success('基本信息更新成功');
-    fetchData();
+    await fetchData();
   } catch {
     ElMessage.error('更新失败');
   }
 }
 
-async function handleUpdateProfile() {
+async function handleUpdateProfile(values: Record<string, any>) {
   try {
-    await updateMyProfileApi(profileForm);
+    await updateMyProfileApi({
+      address: values.address || null,
+      birth_date: values.birth_date || null,
+      emergency_contact_name: values.emergency_contact_name || null,
+      emergency_contact_phone: values.emergency_contact_phone || null,
+      hire_date: values.hire_date || null,
+      id_number: values.id_number || null,
+      work_start_date: values.work_start_date || null,
+    });
     ElMessage.success('档案信息更新成功');
-    fetchData();
+    await fetchData();
   } catch {
     ElMessage.error('更新失败');
   }
@@ -126,86 +239,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="个人信息维护2" v-loading="loading">
-    <ElCard v-if="employee" header="基本信息">
-      <ElForm :model="basicInfoForm" label-width="120px">
-        <ElFormItem label="账号">
-          <ElInput :model-value="employee.username" disabled />
-        </ElFormItem>
-        <ElFormItem label="姓名">
-          <ElInput :model-value="employee.full_name" disabled />
-        </ElFormItem>
-        <ElFormItem label="邮箱">
-          <ElInput :model-value="employee.email" disabled />
-        </ElFormItem>
-        <ElFormItem label="手机号">
-          <ElInput :model-value="employee.phone || ''" disabled />
-        </ElFormItem>
-        <ElFormItem label="部门">
-          <ElSelect v-model="basicInfoForm.department" clearable>
-            <ElOption
-              v-for="opt in departmentOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="职位">
-          <ElInput v-model="basicInfoForm.position" />
-        </ElFormItem>
-        <ElFormItem label="区域">
-          <ElInput v-model="basicInfoForm.region" />
-        </ElFormItem>
-        <ElFormItem>
-          <ElButton type="primary" @click="handleUpdateBasicInfo">
-            保存基本信息
-          </ElButton>
-        </ElFormItem>
-      </ElForm>
-    </ElCard>
-
-    <ElCard v-if="profile" header="档案信息" style="margin-top: 20px">
-      <ElForm :model="profileForm" label-width="120px">
-        <ElFormItem label="入职日期">
-          <ElDatePicker
-            v-model="profileForm.hire_date"
-            type="date"
-            value-format="YYYY-MM-DD"
-          />
-        </ElFormItem>
-        <ElFormItem label="工作开始日期">
-          <ElDatePicker
-            v-model="profileForm.work_start_date"
-            type="date"
-            value-format="YYYY-MM-DD"
-          />
-        </ElFormItem>
-        <ElFormItem label="出生日期">
-          <ElDatePicker
-            v-model="profileForm.birth_date"
-            type="date"
-            value-format="YYYY-MM-DD"
-          />
-        </ElFormItem>
-        <ElFormItem label="身份证号">
-          <ElInput v-model="profileForm.id_number" />
-        </ElFormItem>
-        <ElFormItem label="住址">
-          <ElInput v-model="profileForm.address" />
-        </ElFormItem>
-        <ElFormItem label="紧急联系人">
-          <ElInput v-model="profileForm.emergency_contact_name" />
-        </ElFormItem>
-        <ElFormItem label="紧急联系电话">
-          <ElInput v-model="profileForm.emergency_contact_phone" />
-        </ElFormItem>
-        <ElFormItem>
-          <ElButton type="primary" @click="handleUpdateProfile">
-            保存档案信息
-          </ElButton>
-        </ElFormItem>
-      </ElForm>
-    </ElCard>
+  <Page v-loading="loading">
+    <Profile
+      v-model:model-value="activeTab"
+      title="个人信息维护"
+      :user-info="userInfo"
+      :tabs="tabs"
+    >
+      <template #content>
+        <ProfileBaseSetting
+          v-if="activeTab === 'basic'"
+          ref="basicFormRef"
+          :form-schema="basicSchema"
+          @submit="handleUpdateBasicInfo"
+        />
+        <ProfileBaseSetting
+          v-else-if="activeTab === 'profile'"
+          ref="profileFormRef"
+          :form-schema="profileSchema"
+          @submit="handleUpdateProfile"
+        />
+      </template>
+    </Profile>
   </Page>
 </template>
