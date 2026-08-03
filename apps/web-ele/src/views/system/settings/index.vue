@@ -3,7 +3,7 @@ import type { SystemSettingsApi } from '#/api';
 
 import { onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { ColPage } from '@vben/common-ui';
 
 import { ElAlert, ElCard } from 'element-plus';
 
@@ -216,14 +216,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page
+  <ColPage
     title="系统参数维护"
     description="统一维护部门、岗位、地区和模块清单，用户管理页面会直接读取这些配置。"
     v-loading="loading"
+    :left-width="58"
+    :right-width="42"
+    resizable
   >
-    <div
-      class="grid gap-5 lg:grid-cols-[minmax(420px,1.15fr)_minmax(320px,0.85fr)]"
-    >
+    <template #left>
       <ElCard>
         <template #header>
           <span class="text-base font-bold">参数配置</span>
@@ -268,11 +269,11 @@ onMounted(() => {
           @save="handleSaveCatalog"
         />
       </ElCard>
+    </template>
 
-      <SettingsPreview
-        :settings="settings"
-        @delete-holiday="handleDeleteHoliday"
-      />
-    </div>
-  </Page>
+    <SettingsPreview
+      :settings="settings"
+      @delete-holiday="handleDeleteHoliday"
+    />
+  </ColPage>
 </template>

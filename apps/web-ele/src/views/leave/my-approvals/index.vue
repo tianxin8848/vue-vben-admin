@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
+import { Page, VbenButton } from '@vben/common-ui';
+
 import {
-  ElButton,
   ElCard,
   ElDialog,
   ElInput,
   ElMessage,
+  ElOption,
   ElSelect,
   ElTable,
   ElTableColumn,
@@ -284,21 +286,19 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="my-approvals-page" v-loading="loading">
-    <div class="page-header">
-      <div class="header-info">
-        <h2>我的待办（请假）</h2>
-        <p class="page-subtitle">
-          无需管理员身份，只要在审批链条里，就能在这里处理自己的审批任务。
-        </p>
-        <div class="live-time">{{ currentTime }}</div>
+  <Page
+    title="我的待办（请假）"
+    description="无需管理员身份，只要在审批链条里，就能在这里处理自己的审批任务。"
+    v-loading="loading"
+  >
+    <template #extra>
+      <div class="extra-actions">
+        <span class="live-time">{{ currentTime }}</span>
+        <VbenButton @click="fetchData">刷新</VbenButton>
       </div>
-      <div class="header-actions">
-        <ElButton @click="fetchData">刷新</ElButton>
-      </div>
-    </div>
+    </template>
 
-    <ElCard class="card">
+    <ElCard class="mb-4">
       <template #header>
         <h3>待审批列表</h3>
       </template>
@@ -383,16 +383,16 @@ onUnmounted(() => {
           <ElTableColumn label="操作" width="140">
             <template #default="{ row }">
               <div class="action-group">
-                <ElButton
-                  size="small"
+                <VbenButton
+                  size="sm"
                   type="primary"
                   @click="openModal(row.id, true)"
                 >
                   审批
-                </ElButton>
-                <ElButton size="small" @click="openModal(row.id, false)">
+                </VbenButton>
+                <VbenButton size="sm" @click="openModal(row.id, false)">
                   查看
-                </ElButton>
+                </VbenButton>
               </div>
             </template>
           </ElTableColumn>
@@ -401,7 +401,7 @@ onUnmounted(() => {
       </div>
     </ElCard>
 
-    <ElCard class="card" style="margin-top: 16px">
+    <ElCard>
       <template #header>
         <h3>我的已处理记录</h3>
       </template>
@@ -518,77 +518,31 @@ onUnmounted(() => {
       </div>
 
       <template #footer>
-        <ElButton @click="closeModal">关闭</ElButton>
+        <VbenButton @click="closeModal">关闭</VbenButton>
         <template v-if="allowAction">
-          <ElButton type="danger" @click="submitDecision('rejected')">
+          <VbenButton type="danger" @click="submitDecision('rejected')">
             驳回
-          </ElButton>
-          <ElButton type="primary" @click="submitDecision('approved')">
+          </VbenButton>
+          <VbenButton type="primary" @click="submitDecision('approved')">
             通过
-          </ElButton>
+          </VbenButton>
         </template>
       </template>
     </ElDialog>
-  </div>
+  </Page>
 </template>
 
 <style scoped>
-.my-approvals-page {
-  min-height: calc(100vh - 80px);
-  padding: 32px;
-  background: #f8fafc;
-}
-
-.page-header {
+.extra-actions {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.header-info h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: #64748b;
+  gap: 12px;
+  align-items: center;
 }
 
 .live-time {
-  margin-top: 10px;
   font-size: 14px;
-  font-weight: 700;
-  color: #2563eb;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.card {
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 8%);
-}
-
-.card :deep(.el-card__header) {
-  padding: 0 0 16px;
-  border-bottom: none;
-}
-
-.card :deep(.el-card__header) h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.card :deep(.el-card__body) {
-  padding: 0;
+  font-weight: 600;
+  color: hsl(221deg 83% 53%);
 }
 
 .filters {
@@ -696,15 +650,5 @@ onUnmounted(() => {
 
 .info-label {
   color: #64748b;
-}
-
-@media (max-width: 980px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .header-actions {
-    justify-content: flex-start;
-  }
 }
 </style>

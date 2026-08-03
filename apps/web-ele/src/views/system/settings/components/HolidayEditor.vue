@@ -141,7 +141,7 @@ initStartDate();
       <ElFormItem label="地区">
         <ElSelect
           v-model="holidayForm.region"
-          class="w-[140px]"
+          style="width: 200px"
           @change="buildHolidayNameOptions"
         >
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
@@ -150,7 +150,7 @@ initStartDate();
       <ElFormItem label="年份">
         <ElSelect
           v-model="holidayForm.year"
-          class="w-[100px]"
+          style="width: 160px"
           @change="syncHolidayDatesToYear"
         >
           <ElOption
@@ -165,7 +165,7 @@ initStartDate();
         <ElDatePicker
           v-model="holidayForm.startDate"
           type="date"
-          class="w-[140px]"
+          style="width: 200px"
           @change="syncHolidayYearToDates"
         />
       </ElFormItem>
@@ -173,12 +173,12 @@ initStartDate();
         <ElDatePicker
           v-model="holidayForm.endDate"
           type="date"
-          class="w-[140px]"
+          style="width: 200px"
           @change="syncHolidayYearToDates"
         />
       </ElFormItem>
       <ElFormItem label="假期名称">
-        <ElSelect v-model="holidayForm.holidayName" class="w-[120px]">
+        <ElSelect v-model="holidayForm.holidayName" style="width: 180px">
           <ElOption
             v-for="name in resolveHolidayCatalogByRegion(holidayForm.region)"
             :key="name"
