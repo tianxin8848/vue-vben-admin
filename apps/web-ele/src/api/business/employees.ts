@@ -178,6 +178,34 @@ export async function updateEmployeeAccessControlApi(
   );
 }
 
+// ─── 门禁专用接口（走 access_control 模块权限） ────────────────────────────
+
+/** 门禁员工列表项（精简结构） */
+export interface AccessControlEmployeeItem {
+  access_control_id: null | string;
+  full_name: null | string;
+  id: string;
+  username: string;
+}
+
+/** 获取门禁员工列表（走 access_control 模块权限，非 user_management） */
+export async function getAccessControlEmployeesApi() {
+  return requestClient.get<AccessControlEmployeeItem[]>(
+    '/access-control/employees',
+  );
+}
+
+/** 更新员工门禁ID（走 access_control 模块权限） */
+export async function updateEmployeeAccessControlV2Api(
+  employeeId: string,
+  data: EmployeeApi.EmployeeAccessControlUpdate,
+) {
+  return requestClient.request<EmployeeApi.EmployeeResponse>(
+    `/access-control/employees/${employeeId}`,
+    { method: 'PATCH', data },
+  );
+}
+
 // ─── 基本信息 ────────────────────────────────────────────────────────────────
 
 /** 更新我的基本信息 */
