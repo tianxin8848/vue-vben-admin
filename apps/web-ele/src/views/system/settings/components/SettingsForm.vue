@@ -91,6 +91,7 @@ function handleDeptAdd() {
   deptTableApi.setGridOptions({ data: deptList.value });
   newDeptName.value = '';
   showDeptDialog.value = false;
+  emit('save');
 }
 
 function handlePosAdd() {
@@ -107,6 +108,7 @@ function handlePosAdd() {
   posTableApi.setGridOptions({ data: posList.value });
   newPosName.value = '';
   showPosDialog.value = false;
+  emit('save');
 }
 
 function handleRegionAdd() {
@@ -123,6 +125,7 @@ function handleRegionAdd() {
   regionTableApi.setGridOptions({ data: regionList.value });
   newRegionName.value = '';
   showRegionDialog.value = false;
+  emit('save');
 }
 
 async function updateCheckboxState() {

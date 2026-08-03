@@ -31,12 +31,22 @@ export namespace SystemSettingsApi {
     to_hkd_rate: number;
   }
 
+  /** 员工档案字段目录项 */
+  export interface EmployeeEditableFieldItem {
+    code: string;
+    group: string;
+    label: string;
+  }
+
   /** 系统设置响应 */
   export interface SystemSettingsResponse {
     claim_currencies: ClaimCurrencyItem[];
     claim_reasons: ClaimReasonItem[];
     created_at: null | string;
     departments: string[];
+    employee_profile_field_catalog: EmployeeEditableFieldItem[];
+    employee_self_editable_fields: string[];
+    employee_self_editable_fields_initialized: boolean;
     id: string;
     modules: SystemModuleItem[];
     positions: string[];
@@ -51,6 +61,7 @@ export namespace SystemSettingsApi {
     claim_currencies?: ClaimCurrencyItem[];
     claim_reasons?: ClaimReasonItem[];
     departments?: string[];
+    employee_self_editable_fields?: string[];
     modules?: SystemModuleItem[];
     positions?: string[];
     regional_holiday_catalogs?: RegionalHolidayCatalogItem[];

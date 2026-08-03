@@ -32,6 +32,7 @@ const claimReasonsStr = ref('');
 const claimCurrenciesStr = ref('');
 
 const selectedModules = ref<string[]>([]);
+const selectedEditableFields = ref<string[]>([]);
 
 const formMessage = ref('');
 const formMessageType = ref<'' | 'error' | 'success'>('');
@@ -103,7 +104,12 @@ async function fetchSettings() {
         .join('\n');
 
       selectedModules.value = settings.value.modules.map((m) => m.module_code);
+      selectedEditableFields.value = [
+        ...(settings.value.employee_self_editable_fields || []),
+      ];
     }
+  } catch (error: any) {
+    console.error('[Settings][fetchSettings] 请求失败', error);
   } finally {
     loading.value = false;
   }
@@ -130,6 +136,7 @@ async function handleSaveSettings() {
           module_code: m.module_code,
           module_name: m.module_name,
         })),
+      employee_self_editable_fields: [...selectedEditableFields.value],
       claim_reasons: parseLineList(claimReasonsStr.value).map((name) => ({
         name,
       })),
@@ -142,6 +149,7 @@ async function handleSaveSettings() {
     showFormMessage('success', '保存成功');
     fetchSettings();
   } catch (error: any) {
+    console.error('[Settings][handleSaveSettings] 保存失败', error);
     showFormMessage('error', error.message || '保存失败');
   }
 }
@@ -248,6 +256,11 @@ onMounted(() => {
           show-icon
           :closable="false"
           class="mt-4 whitespace-pre-wrap"
+        />
+
+        <EmployeeEditableFieldsEditor
+          v-model="selectedEditableFields"
+          :catalog="settings?.employee_profile_field_catalog || []"
         />
 
         <ClaimReasonEditor v-model="claimReasonsStr" />

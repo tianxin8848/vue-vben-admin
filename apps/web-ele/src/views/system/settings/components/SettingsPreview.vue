@@ -22,6 +22,7 @@ interface SummaryRow {
 }
 
 interface HolidayRow {
+  _key: string;
   end_date: string;
   holiday_name: string;
   region: string;
@@ -51,6 +52,12 @@ const holidayYearFilter = ref(new Date().getFullYear());
 const summaryRows = computed<SummaryRow[]>(() => {
   const s = props.settings;
   if (!s) return [];
+  const fieldLabelMap = new Map<string, string>(
+    (s.employee_profile_field_catalog || []).map((item) => [
+      item.code,
+      item.label,
+    ]),
+  );
   return [
     {
       type: '部门',
@@ -69,6 +76,13 @@ const summaryRows = computed<SummaryRow[]>(() => {
       items: (s.modules || []).map((m) => ({
         code: m.module_code,
         name: m.module_name,
+      })),
+    },
+    {
+      type: '员工可自编辑字段',
+      items: (s.employee_self_editable_fields || []).map((code) => ({
+        code,
+        name: fieldLabelMap.get(code) || code,
       })),
     },
     {
@@ -131,6 +145,7 @@ const groupedHolidays = computed<HolidayRow[]>(() => {
       continue;
     }
     grouped.push({
+      _key: `${region}|${holidayName}|${dateText}`,
       region,
       holiday_name: holidayName,
       start_date: dateText,
@@ -181,7 +196,7 @@ const summaryGridOptions: VxeGridProps<SummaryRow> = {
 
 const holidayGridOptions: VxeGridProps<HolidayRow> = {
   id: 'settings-preview-holiday',
-  rowConfig: { keyField: 'start_date' },
+  rowConfig: { keyField: '_key' },
   columns: [
     { field: 'region', title: '地区', width: 120 },
     { field: 'start_date', title: '开始日期', minWidth: 120 },
@@ -264,6 +279,9 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
             class="mr-1 mb-1"
           >
             <template v-if="row.type === '模块'">
+              {{ item.name }}（{{ item.code }}）
+            </template>
+            <template v-else-if="row.type === '员工可自编辑字段'">
               {{ item.name }}（{{ item.code }}）
             </template>
             <template v-else-if="row.type === '币种与港币汇率'">
