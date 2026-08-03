@@ -779,7 +779,7 @@ onMounted(() => {
             v-model="createForm.amount"
             :min="0.01"
             :precision="2"
-            :step="100"
+            :step="1"
             class="w-full"
           />
         </template>

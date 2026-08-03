@@ -211,8 +211,8 @@ function removeHoliday() {
         style="
           padding: 16px;
           font-size: 13px;
-          color: #64748b;
-          background: #f8fafc;
+          color: hsl(var(--muted-foreground));
+          background: hsl(var(--muted));
           border-radius: 8px;
         "
       >
@@ -227,7 +227,7 @@ function removeHoliday() {
             {{ $t('page.leave.calendarView.detail.regionalHolidayPrefix')
             }}{{ (calendarDetail.content as any).holiday.holiday_name }}
           </ElTag>
-          <div style="font-size: 13px; color: #64748b">
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
             {{ (calendarDetail.content as any).holiday.region }} ·
             {{ (calendarDetail.content as any).holiday.date }}
           </div>
@@ -254,7 +254,7 @@ function removeHoliday() {
             >
               {{ getLeaveTypeLabel(String(type)) }}
             </ElTag>
-            <span style="font-size: 13px; color: #64748b">{{ entries.length }}
+            <span style="font-size: 13px; color: hsl(var(--muted-foreground))">{{ entries.length }}
               {{ $t('page.leave.calendarView.stats.personUnit') }}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px">
@@ -266,11 +266,11 @@ function removeHoliday() {
                 align-items: center;
                 justify-content: space-between;
                 padding: 8px 12px;
-                background: #f8fafc;
+                background: hsl(var(--muted));
                 border-radius: 8px;
               "
             >
-              <span style="font-size: 14px; color: #0f172a">{{ entry.employee_name }} ·
+              <span style="font-size: 14px; color: hsl(var(--foreground))">{{ entry.employee_name }} ·
                 {{
                   entry.employee_department ||
                   $t('page.leave.calendarView.ungrouped')
@@ -283,7 +283,7 @@ function removeHoliday() {
                   font-size: 13px;
                 "
               >
-                <span style="color: #64748b">{{
+                <span style="color: hsl(var(--muted-foreground))">{{
                   getSessionLabel(entry.session)
                 }}</span>
                 <ElTag
@@ -310,8 +310,8 @@ function removeHoliday() {
         style="
           padding: 16px;
           font-size: 13px;
-          color: #64748b;
-          background: #f8fafc;
+          color: hsl(var(--muted-foreground));
+          background: hsl(var(--muted));
           border-radius: 8px;
         "
       >
@@ -321,7 +321,13 @@ function removeHoliday() {
         <div style="margin-bottom: 8px; font-size: 14px; font-weight: 600">
           {{ getActiveRegionKey() }} · {{ selectedDateKey }}
         </div>
-        <div style="margin-bottom: 12px; font-size: 13px; color: #64748b">
+        <div
+          style="
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: hsl(var(--muted-foreground));
+          "
+        >
           <template
             v-if="getHolidayForDate(selectedDateKey, getActiveRegionKey())"
           >
@@ -368,26 +374,50 @@ function removeHoliday() {
         {{ $t('page.leave.calendarView.detail.usageInstructions') }}
       </h3>
       <div style="display: flex; flex-direction: column; gap: 12px">
-        <div style="font-size: 13px; line-height: 1.6; color: #475569">
-          <strong style="color: #0f172a">{{
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
             $t('page.leave.calendarView.detail.instructionOverviewTitle')
           }}</strong>
           {{ $t('page.leave.calendarView.detail.instructionOverviewBody') }}
         </div>
-        <div style="font-size: 13px; line-height: 1.6; color: #475569">
-          <strong style="color: #0f172a">{{
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
             $t('page.leave.calendarView.detail.instructionRiskTitle')
           }}</strong>
           {{ $t('page.leave.calendarView.detail.instructionRiskBody') }}
         </div>
-        <div style="font-size: 13px; line-height: 1.6; color: #475569">
-          <strong style="color: #0f172a">{{
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
             $t('page.leave.calendarView.detail.instructionFilterTitle')
           }}</strong>
           {{ $t('page.leave.calendarView.detail.instructionFilterBody') }}
         </div>
-        <div style="font-size: 13px; line-height: 1.6; color: #475569">
-          <strong style="color: #0f172a">{{
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
             $t('page.leave.calendarView.detail.instructionFutureTitle')
           }}</strong>
           {{ $t('page.leave.calendarView.detail.instructionFutureBody') }}

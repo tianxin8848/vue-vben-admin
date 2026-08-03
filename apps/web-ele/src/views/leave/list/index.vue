@@ -336,7 +336,11 @@ onMounted(() => {
 
       <div
         v-if="filteredLeaveRequests.length === 0"
-        style="padding: 20px; color: #64748b; text-align: center"
+        style="
+          padding: 20px;
+          color: hsl(var(--muted-foreground));
+          text-align: center;
+        "
       >
         暂无请假记录
       </div>
@@ -359,7 +363,7 @@ onMounted(() => {
                 padding: 12px 24px;
                 font-size: 14px;
                 line-height: 1.8;
-                color: #334155;
+                color: hsl(var(--foreground));
               "
             >
               <div
@@ -398,7 +402,7 @@ onMounted(() => {
                   justify-content: flex-end;
                   padding-top: 12px;
                   margin-top: 14px;
-                  border-top: 1px solid #e2e8f0;
+                  border-top: 1px solid hsl(var(--border));
                 "
               >
                 <ElButton size="small" @click="viewDetail(row.id)">
@@ -472,7 +476,13 @@ onMounted(() => {
         >
           <div>
             <h3 style="margin: 0">我的请假年历</h3>
-            <p style="margin: 8px 0 0; font-size: 14px; color: #64748b">
+            <p
+              style="
+                margin: 8px 0 0;
+                font-size: 14px;
+                color: hsl(var(--muted-foreground));
+              "
+            >
               按年查看自己的请假分布，直接看到每一天的请假类型和状态。
             </p>
           </div>
@@ -495,8 +505,8 @@ onMounted(() => {
                 min-width: 88px;
                 padding: 10px 14px;
                 font-weight: 700;
-                color: #0f172a;
-                background: #e2e8f0;
+                color: hsl(var(--foreground));
+                background: hsl(var(--accent));
                 border-radius: 10px;
               "
             >
@@ -526,41 +536,71 @@ onMounted(() => {
         "
       >
         <div
-          style="padding: 14px 16px; background: #f8fafc; border-radius: 14px"
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
         >
-          <div style="font-size: 13px; color: #64748b">当年请假记录</div>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年请假记录
+          </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.recordCount }}
           </div>
         </div>
         <div
-          style="padding: 14px 16px; background: #f8fafc; border-radius: 14px"
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
         >
-          <div style="font-size: 13px; color: #64748b">当年覆盖天数</div>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年覆盖天数
+          </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.dayCount }}
           </div>
         </div>
         <div
-          style="padding: 14px 16px; background: #f8fafc; border-radius: 14px"
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
         >
-          <div style="font-size: 13px; color: #64748b">待审批记录</div>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            待审批记录
+          </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.pendingCount }}
           </div>
         </div>
         <div
-          style="padding: 14px 16px; background: #f8fafc; border-radius: 14px"
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
         >
-          <div style="font-size: 13px; color: #64748b">当年年假总计</div>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年年假总计
+          </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.annualEntitlement }}
           </div>
         </div>
         <div
-          style="padding: 14px 16px; background: #f8fafc; border-radius: 14px"
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
         >
-          <div style="font-size: 13px; color: #64748b">当年年假可用</div>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年年假可用
+          </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.annualAvailable }}
           </div>
@@ -583,14 +623,17 @@ onMounted(() => {
         style="
           padding: 16px;
           margin-top: 16px;
-          background: #f8fafc;
+          background: hsl(var(--muted));
           border-radius: 14px;
         "
       >
         <h4 style="margin: 0 0 12px; font-size: 16px">
           {{ selectedDateKey }} · 日期详情
         </h4>
-        <div v-if="!dayMap[selectedDateKey]?.length" style="color: #64748b">
+        <div
+          v-if="!dayMap[selectedDateKey]?.length"
+          style="color: hsl(var(--muted-foreground))"
+        >
           当天没有请假记录。
         </div>
         <div v-else style="display: flex; flex-direction: column; gap: 10px">
@@ -601,7 +644,7 @@ onMounted(() => {
               padding: 10px 0;
               font-size: 14px;
               line-height: 1.7;
-              border-top: 1px solid #e2e8f0;
+              border-top: 1px solid hsl(var(--border));
             "
           >
             <div>类型：{{ leaveTypeOptions[item.leave_type] }}</div>
@@ -670,7 +713,13 @@ onMounted(() => {
           />
         </ElFormItem>
 
-        <div style="font-size: 13px; line-height: 1.7; color: #64748b">
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.7;
+            color: hsl(var(--muted-foreground));
+          "
+        >
           说明：半天请假仅支持单日申请；提交后会写入
           leave_requests，审批状态默认是"待审批"。
         </div>

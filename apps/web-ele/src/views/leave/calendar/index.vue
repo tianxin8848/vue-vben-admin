@@ -342,7 +342,9 @@ onUnmounted(() => {
       "
     >
       <div>
-        <span style="font-size: 14px; color: #64748b">{{ currentTime }}</span>
+        <span style="font-size: 14px; color: hsl(var(--muted-foreground))">{{
+          currentTime
+        }}</span>
       </div>
       <div
         style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center"
@@ -374,9 +376,9 @@ onUnmounted(() => {
           padding: 8px 16px;
           font-size: 14px;
           font-weight: 600;
-          color: #2563eb;
+          color: hsl(var(--primary));
           cursor: pointer;
-          background: #eff6ff;
+          background: hsl(var(--accent));
           border-radius: 8px;
         "
         >{{ $t('page.leave.calendar') }}</span>
@@ -384,19 +386,20 @@ onUnmounted(() => {
         style="
           padding: 8px 16px;
           font-size: 14px;
-          color: #64748b;
+          color: hsl(var(--muted-foreground));
           cursor: pointer;
           border-radius: 8px;
           transition: all 0.2s;
         "
         @click="goToWorkflow"
         @mouseenter="
-          ($event.target as HTMLElement).style.background = '#f1f5f9';
-          ($event.target as HTMLElement).style.color = '#0f172a';
+          ($event.target as HTMLElement).style.background = 'hsl(var(--muted))';
+          ($event.target as HTMLElement).style.color = 'hsl(var(--foreground))';
         "
         @mouseleave="
           ($event.target as HTMLElement).style.background = 'transparent';
-          ($event.target as HTMLElement).style.color = '#64748b';
+          ($event.target as HTMLElement).style.color =
+            'hsl(var(--muted-foreground))';
         "
         >{{ $t('page.leave.calendarView.workflowMaintenance') }}</span>
     </div>

@@ -529,38 +529,38 @@ function goCurrentYear() {
   padding: 4px 12px;
   font-size: 15px;
   font-weight: 700;
-  color: #2563eb;
+  color: hsl(var(--primary));
   text-align: center;
-  background: #eff6ff;
+  background: hsl(var(--accent));
   border-radius: 6px;
 }
 
 /* ===== 月视图 ===== */
 .month-view-grid {
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
 }
 
 .week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .week-day-label {
   padding: 10px 0;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
   text-align: center;
 }
 
 .week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .week-row:last-child {
@@ -572,7 +572,7 @@ function goCurrentYear() {
   min-height: 90px;
   padding: 6px;
   cursor: pointer;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid hsl(var(--border));
   transition: background 0.15s;
 }
 
@@ -581,22 +581,22 @@ function goCurrentYear() {
 }
 
 .calendar-cell:hover:not(.is-empty) {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-empty {
   cursor: default;
-  background: #fafbfc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-weekend {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-selected {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: -2px;
-  background: #eff6ff;
+  background: hsl(var(--accent));
 }
 
 .calendar-cell.is-risk {
@@ -604,7 +604,7 @@ function goCurrentYear() {
 }
 
 .calendar-cell.has-leave {
-  background: #f0f9ff;
+  background: hsl(var(--accent));
 }
 
 .cell-top {
@@ -617,7 +617,7 @@ function goCurrentYear() {
 .day-number {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: hsl(var(--foreground));
 }
 
 .day-badge {
@@ -630,7 +630,7 @@ function goCurrentYear() {
   font-size: 11px;
   font-weight: 600;
   color: #fff;
-  background: #3b82f6;
+  background: hsl(var(--primary));
   border-radius: 10px;
 }
 
@@ -647,7 +647,7 @@ function goCurrentYear() {
   padding: 1px 2px;
   font-size: 11px;
   line-height: 1.3;
-  color: #334155;
+  color: hsl(var(--foreground));
   border-radius: 3px;
 }
 
@@ -672,7 +672,7 @@ function goCurrentYear() {
 .more-line {
   padding-left: 12px;
   font-size: 10px;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
 }
 
 .day-bars {
@@ -698,8 +698,8 @@ function goCurrentYear() {
   gap: 12px;
   padding: 14px 18px;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%);
-  border: 1px solid #dbeafe;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
   border-radius: 10px;
 }
 
@@ -710,13 +710,13 @@ function goCurrentYear() {
 .summary-value {
   font-size: 24px;
   font-weight: 700;
-  color: #1e40af;
+  color: hsl(var(--primary));
 }
 
 .summary-label {
   margin-top: 2px;
   font-size: 12px;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
 }
 
 .year-grid {
@@ -728,22 +728,22 @@ function goCurrentYear() {
 .month-card {
   padding: 8px;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   transition: all 0.15s;
 }
 
 .month-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgb(59 130 246 / 12%);
+  border-color: hsl(var(--primary));
+  box-shadow: 0 2px 8px hsl(var(--primary) / 12%);
 }
 
 .month-title {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: hsl(var(--foreground));
   text-align: center;
 }
 
@@ -761,7 +761,7 @@ function goCurrentYear() {
 .mini-week-day {
   padding: 1px 0;
   font-size: 10px;
-  color: #94a3b8;
+  color: hsl(var(--muted-foreground));
   text-align: center;
 }
 
@@ -794,17 +794,17 @@ function goCurrentYear() {
 }
 
 .mini-cell.is-weekend {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .mini-cell.is-selected {
-  outline: 1.5px solid #3b82f6;
+  outline: 1.5px solid hsl(var(--primary));
   outline-offset: -1px;
-  background: #dbeafe;
+  background: hsl(var(--accent));
 }
 
 .mini-cell.has-leave {
-  background: #eff6ff;
+  background: hsl(var(--accent));
 }
 
 .mini-cell.is-risk {
@@ -813,13 +813,13 @@ function goCurrentYear() {
 }
 
 .mini-cell:hover:not(.is-empty) {
-  background: #e0e7ff;
+  background: hsl(var(--accent));
 }
 
 .mini-day-number {
   font-size: 10px;
   line-height: 1;
-  color: #334155;
+  color: hsl(var(--foreground));
 }
 
 .mini-badge {
@@ -836,7 +836,7 @@ function goCurrentYear() {
   font-weight: 700;
   line-height: 1;
   color: #fff;
-  background: #3b82f6;
+  background: hsl(var(--primary));
   border-radius: 6px;
 }
 
