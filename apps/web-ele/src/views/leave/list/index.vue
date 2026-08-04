@@ -1,10 +1,10 @@
 <script lang="ts" setup>
+import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { LeaveRequestApi } from '#/api';
 
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
-import { Page, useVbenModal, VbenButton } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 
 import {
   ElButton,
@@ -16,11 +16,10 @@ import {
   ElMessage,
   ElOption,
   ElSelect,
-  ElTable,
-  ElTableColumn,
   ElTag,
 } from 'element-plus';
 
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createLeaveRequestApi,
   getAnnualLeaveSummaryApi,
@@ -30,7 +29,6 @@ import {
 
 import CalendarPanel from '../calendar/components/CalendarPanel.vue';
 
-const router = useRouter();
 const loading = ref(false);
 
 // 请假类型映射
@@ -70,11 +68,84 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const hideWithdrawnOrRejected = ref(false);
 
-// 表格展开
-const tableRef = ref();
+// 表格列配置
+const tableColumns: VxeGridProps['columns'] = [
+  {
+    field: 'date_range',
+    title: '日期范围',
+    minWidth: 200,
+    slots: { default: 'date_range' },
+  },
+  {
+    field: 'leave_type',
+    title: '请假类型',
+    width: 120,
+    align: 'center',
+    slots: { default: 'leave_type' },
+  },
+  {
+    field: 'session',
+    title: '时段',
+    width: 100,
+    align: 'center',
+    slots: { default: 'session' },
+  },
+  {
+    field: 'approval_status',
+    title: '状态',
+    width: 120,
+    align: 'center',
+    slots: { default: 'status' },
+  },
+  {
+    field: 'created_at',
+    title: '创建时间',
+    width: 180,
+    slots: { default: 'created_at' },
+  },
+  {
+    title: '操作',
+    width: 120,
+    fixed: 'right',
+    slots: { default: 'action' },
+  },
+];
 
-function handleRowClick(row: LeaveRequestApi.LeaveRequest) {
-  tableRef.value?.toggleRowExpansion(row);
+// 表格工具栏配置
+const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
+  custom: true,
+  tools: [
+    {
+      code: 'manual-refresh',
+      icon: 'vxe-icon-refresh',
+      circle: true,
+      name: '刷新',
+    },
+  ],
+};
+
+// 创建BasicTable实例
+const [BasicTable, tableApi] = useVbenVxeGrid({
+  gridOptions: {
+    id: 'leave-list',
+    rowConfig: { keyField: 'id' },
+    columns: tableColumns,
+    proxyConfig: { enabled: false },
+    keepSource: true,
+    toolbarConfig: sharedToolbarConfig,
+  },
+  gridEvents: {
+    toolbarToolClick(event: { code: string }) {
+      if (event.code === 'manual-refresh') fetchData();
+    },
+  },
+});
+
+// 刷新表格
+function refreshTable() {
+  tableApi.setGridOptions({
+    data: filteredLeaveRequests.value,
+  });
 }
 
 function statusTagType(
@@ -109,6 +180,11 @@ const filteredLeaveRequests = computed(() => {
       item.approval_status !== 'withdrawn' &&
       item.approval_status !== 'rejected',
   );
+});
+
+// 监听数据变化刷新表格
+watch(filteredLeaveRequests, () => {
+  refreshTable();
 });
 
 // 年历数据映射
@@ -227,6 +303,7 @@ async function fetchData() {
     ]);
     leaveRequests.value = requests || [];
     annualSummary.value = summary;
+    refreshTable();
   } catch {
     leaveRequests.value = [];
     annualSummary.value = null;
@@ -254,47 +331,6 @@ function onSelectDate(date: Date) {
   selectedDateKey.value = `${y}-${m}-${d}`;
 }
 
-// 获取审批人标签
-function getApproverLabel(item: LeaveRequestApi.LeaveRequest) {
-  const chain = item.approval_chain || [];
-  const currentNode = chain.find(
-    (node: any) => node.user_id === item.current_approver_id,
-  );
-  if (!currentNode) return '-';
-
-  const level =
-    chain.findIndex((node: any) => node.user_id === item.current_approver_id) +
-    1;
-  const prefix = level ? `第${level}级：` : '';
-  const name =
-    (currentNode as any).full_name || (currentNode as any).username || '-';
-  return `${prefix}${name}`;
-}
-
-// 获取最新操作显示
-function getLatestActionDisplay(item: LeaveRequestApi.LeaveRequest) {
-  const history = item.approval_history || [];
-  if (history.length === 0) return '尚未处理';
-
-  const latest = history[history.length - 1] as any;
-  const actor = latest.approver_name || '-';
-  const atText = latest.at ? new Date(latest.at).toLocaleString('zh-CN') : '-';
-
-  const actionText =
-    {
-      approved: '已通过',
-      rejected: '已驳回',
-      withdrawn: '已撤回',
-    }[latest.action as string] || latest.action;
-
-  return `${actor}${actionText} / ${atText}`;
-}
-
-// 查看详情
-function viewDetail(id: string) {
-  router.push(`/employee/leave/detail/${id}`);
-}
-
 onMounted(() => {
   fetchData();
 });
@@ -304,163 +340,63 @@ onMounted(() => {
   <Page
     title="我的请假"
     description="提交自己的请假申请,查看请假记录与年历"
+    :auto-content-height="true"
     v-loading="loading"
   >
-    <div
-      style="display: flex; gap: 10px; align-items: center; margin-bottom: 16px"
+    <BasicTable
+      :table-title="`我的请假记录（${filteredLeaveRequests.length} 条）`"
     >
-      <VbenButton @click="() => modalApi.open()">填写请假单</VbenButton>
-    </div>
-
-    <ElCard>
-      <template #header>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          "
-        >
-          <h3 style="margin: 0">我的请假记录</h3>
-          <div style="display: flex; gap: 10px">
-            <ElButton size="small" @click="fetchData">刷新列表</ElButton>
-            <ElButton
-              size="small"
-              @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected"
-            >
-              {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
-            </ElButton>
-          </div>
-        </div>
+      <template #toolbar-tools>
+        <ElButton type="primary" @click="() => modalApi.open()">
+          填写请假单
+        </ElButton>
+        <ElButton @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected">
+          {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
+        </ElButton>
       </template>
 
-      <div
-        v-if="filteredLeaveRequests.length === 0"
-        style="
-          padding: 20px;
-          color: hsl(var(--muted-foreground));
-          text-align: center;
-        "
-      >
-        暂无请假记录
-      </div>
+      <template #date_range="{ row }">
+        {{
+          row.start_date === row.end_date
+            ? row.start_date
+            : `${row.start_date} 至 ${row.end_date}`
+        }}
+      </template>
 
-      <ElTable
-        v-else
-        ref="tableRef"
-        :data="filteredLeaveRequests"
-        row-key="id"
-        border
-        stripe
-        highlight-current-row
-        style="width: 100%"
-        @row-click="handleRowClick"
-      >
-        <ElTableColumn type="expand" width="44">
-          <template #default="{ row }">
-            <div
-              style="
-                padding: 12px 24px;
-                font-size: 14px;
-                line-height: 1.8;
-                color: hsl(var(--foreground));
-              "
-            >
-              <div
-                style="
-                  display: grid;
-                  grid-template-columns: repeat(2, 1fr);
-                  gap: 8px 24px;
-                "
-              >
-                <div>请假说明：{{ row.reason || '-' }}</div>
-                <div>工作交接人：{{ row.handover_to || '-' }}</div>
-                <div>
-                  当前审批人：{{
-                    getApproverLabel(row as LeaveRequestApi.LeaveRequest)
-                  }}
-                </div>
-                <div>
-                  最近处理：{{
-                    getLatestActionDisplay(row as LeaveRequestApi.LeaveRequest)
-                  }}
-                </div>
-                <div>请假天数覆盖：{{ (row.date_keys || []).length }} 天</div>
-                <div>
-                  创建时间：{{
-                    row.created_at
-                      ? new Date(row.created_at).toLocaleString('zh-CN')
-                      : '-'
-                  }}
-                </div>
-              </div>
-              <div
-                v-if="row.approval_status === 'pending'"
-                style="
-                  display: flex;
-                  gap: 8px;
-                  justify-content: flex-end;
-                  padding-top: 12px;
-                  margin-top: 14px;
-                  border-top: 1px solid hsl(var(--border));
-                "
-              >
-                <ElButton size="small" @click="viewDetail(row.id)">
-                  查看详情
-                </ElButton>
-                <ElButton
-                  size="small"
-                  type="danger"
-                  @click="handleWithdraw(row.id)"
-                >
-                  撤回申请
-                </ElButton>
-              </div>
-            </div>
-          </template>
-        </ElTableColumn>
+      <template #leave_type="{ row }">
+        <ElTag type="info">{{ leaveTypeOptions[row.leave_type] }}</ElTag>
+      </template>
 
-        <ElTableColumn label="日期范围" min-width="200">
-          <template #default="{ row }">
-            {{
-              row.start_date === row.end_date
-                ? row.start_date
-                : `${row.start_date} 至 ${row.end_date}`
-            }}
-          </template>
-        </ElTableColumn>
+      <template #session="{ row }">
+        <ElTag>{{ sessionOptions[row.session] }}</ElTag>
+      </template>
 
-        <ElTableColumn label="请假类型" width="120" align="center">
-          <template #default="{ row }">
-            <ElTag type="info">{{ leaveTypeOptions[row.leave_type] }}</ElTag>
-          </template>
-        </ElTableColumn>
+      <template #status="{ row }">
+        <ElTag :type="statusTagType(row.approval_status)">
+          {{ statusOptions[row.approval_status] }}
+        </ElTag>
+      </template>
 
-        <ElTableColumn label="时段" width="100" align="center">
-          <template #default="{ row }">
-            <ElTag>{{ sessionOptions[row.session] }}</ElTag>
-          </template>
-        </ElTableColumn>
+      <template #created_at="{ row }">
+        {{
+          row.created_at
+            ? new Date(row.created_at).toLocaleString('zh-CN')
+            : '-'
+        }}
+      </template>
 
-        <ElTableColumn label="状态" width="120" align="center">
-          <template #default="{ row }">
-            <ElTag :type="statusTagType(row.approval_status)">
-              {{ statusOptions[row.approval_status] }}
-            </ElTag>
-          </template>
-        </ElTableColumn>
-
-        <ElTableColumn label="创建时间" width="180">
-          <template #default="{ row }">
-            {{
-              row.created_at
-                ? new Date(row.created_at).toLocaleString('zh-CN')
-                : '-'
-            }}
-          </template>
-        </ElTableColumn>
-      </ElTable>
-    </ElCard>
+      <template #action="{ row }">
+        <ElButton
+          v-if="row.approval_status === 'pending'"
+          size="small"
+          type="danger"
+          @click="handleWithdraw(row.id)"
+        >
+          撤回
+        </ElButton>
+        <span v-else style="color: hsl(var(--muted-foreground))">-</span>
+      </template>
+    </BasicTable>
 
     <!-- 我的请假年历 -->
     <ElCard style="margin-top: 18px">
