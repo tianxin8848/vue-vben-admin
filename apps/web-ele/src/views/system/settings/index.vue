@@ -3,8 +3,6 @@ import type { SystemSettingsApi } from '#/api';
 
 import { onMounted, ref } from 'vue';
 
-import { ColPage } from '@vben/common-ui';
-
 import { ElAlert, ElButton, ElCard, ElSegmented } from 'element-plus';
 
 import {
@@ -42,7 +40,7 @@ const holidayMessageType = ref<'' | 'error' | 'success'>('');
 const catalogMessage = ref('');
 const catalogMessageType = ref<'' | 'error' | 'success'>('');
 
-type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday';
+type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday' | 'preview';
 const activeTab = ref<SettingsTab>('basic');
 
 const segmentedOptions: { label: string; value: SettingsTab }[] = [
@@ -50,6 +48,7 @@ const segmentedOptions: { label: string; value: SettingsTab }[] = [
   { label: '员工字段', value: 'employee' },
   { label: '报销配置', value: 'claim' },
   { label: '地区假期', value: 'holiday' },
+  { label: '当前预览', value: 'preview' },
 ];
 
 function showFormMessage(type: 'error' | 'success', text: string) {
@@ -235,31 +234,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <ColPage
+  <Page
     title="系统参数维护"
     description="统一维护部门、岗位、地区、模块、员工字段、报销配置与地区假期，相关页面会直接读取这些配置。"
+    :auto-content-height="true"
     v-loading="loading"
-    :left-width="58"
-    :right-width="42"
-    resizable
   >
-    <template #left>
-      <ElCard>
-        <template #header>
-          <span class="text-base font-bold">参数配置</span>
-        </template>
-        <p class="mb-4 text-sm text-muted-foreground">
-          通过下方分段切换不同配置分组；基础参数、员工字段与报销配置共享同一个保存动作，地区假期使用独立保存。
-        </p>
+    <div class="flex h-full flex-col gap-2">
+      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
 
-        <ElSegmented
-          v-model="activeTab"
-          :options="segmentedOptions"
-          class="mb-2"
-        />
+      <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
+      <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
+        <ElCard>
+          <template #header>
+            <span class="text-base font-bold">参数配置</span>
+          </template>
+          <p class="mb-4 text-sm text-muted-foreground">
+            基础参数、员工字段与报销配置共享同一个保存动作，地区假期使用独立保存。
+          </p>
 
-        <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
-        <div v-show="activeTab === 'basic'">
           <SettingsForm
             v-model:dept-str="deptStr"
             v-model:pos-str="posStr"
@@ -276,10 +269,15 @@ onMounted(() => {
             :closable="false"
             class="mt-4 whitespace-pre-wrap"
           />
-        </div>
+        </ElCard>
+      </div>
 
-        <!-- 员工可自编辑字段 -->
-        <div v-show="activeTab === 'employee'">
+      <!-- 员工可自编辑字段 -->
+      <div v-show="activeTab === 'employee'" class="min-h-0 flex-1">
+        <ElCard>
+          <template #header>
+            <span class="text-base font-bold">员工可自编辑字段</span>
+          </template>
           <EmployeeEditableFieldsEditor
             v-model="selectedEditableFields"
             :catalog="settings?.employee_profile_field_catalog || []"
@@ -298,10 +296,15 @@ onMounted(() => {
             :closable="false"
             class="mt-4 whitespace-pre-wrap"
           />
-        </div>
+        </ElCard>
+      </div>
 
-        <!-- 报销配置：报销理由 / 币种 -->
-        <div v-show="activeTab === 'claim'">
+      <!-- 报销配置：报销理由 / 币种 -->
+      <div v-show="activeTab === 'claim'" class="min-h-0 flex-1">
+        <ElCard>
+          <template #header>
+            <span class="text-base font-bold">报销配置</span>
+          </template>
           <ClaimReasonEditor v-model="claimReasonsStr" />
           <CurrencyEditor v-model="claimCurrenciesStr" />
           <div class="mt-4 flex justify-end">
@@ -318,10 +321,15 @@ onMounted(() => {
             :closable="false"
             class="mt-4 whitespace-pre-wrap"
           />
-        </div>
+        </ElCard>
+      </div>
 
-        <!-- 地区假期：假期维护 / 假期名称清单 -->
-        <div v-show="activeTab === 'holiday'">
+      <!-- 地区假期：假期维护 / 假期名称清单 -->
+      <div v-show="activeTab === 'holiday'" class="min-h-0 flex-1">
+        <ElCard>
+          <template #header>
+            <span class="text-base font-bold">地区假期</span>
+          </template>
           <HolidayEditor
             :regions="settings?.regions || []"
             :holiday-catalogs="settings?.regional_holiday_catalogs || []"
@@ -337,13 +345,16 @@ onMounted(() => {
             v-model:message-type="catalogMessageType"
             @save="handleSaveCatalog"
           />
-        </div>
-      </ElCard>
-    </template>
+        </ElCard>
+      </div>
 
-    <SettingsPreview
-      :settings="settings"
-      @delete-holiday="handleDeleteHoliday"
-    />
-  </ColPage>
+      <!-- 当前预览 -->
+      <div v-show="activeTab === 'preview'" class="min-h-0 flex-1">
+        <SettingsPreview
+          :settings="settings"
+          @delete-holiday="handleDeleteHoliday"
+        />
+      </div>
+    </div>
+  </Page>
 </template>
