@@ -4,6 +4,7 @@ import type { ClaimApi } from '#/api';
 import { computed, reactive } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
@@ -27,6 +28,8 @@ const emit = defineEmits<{
   success: [];
 }>();
 
+const { t } = useI18n();
+
 const createForm = reactive({
   amount: 0,
   attachmentFile: null as File | null,
@@ -46,53 +49,55 @@ const estimatedHkd = computed(() => {
   return Math.round(createForm.amount * selectedCurrencyRate.value * 100) / 100;
 });
 
-const [CreateForm] = useVbenForm({
-  layout: 'vertical',
-  showDefaultActions: false,
-  wrapperClass: 'grid-cols-2 gap-x-4',
-  schema: [
-    {
-      component: 'Input',
-      fieldName: 'reason_code',
-      label: '报销理由',
-      rules: 'required',
-      formItemClass: 'col-span-2',
-    },
-    {
-      component: 'Input',
-      fieldName: 'amount',
-      label: '金额',
-      rules: 'required',
-      formItemClass: 'col-span-1',
-    },
-    {
-      component: 'Input',
-      fieldName: 'currency',
-      label: '币种',
-      rules: 'required',
-      formItemClass: 'col-span-1',
-    },
-    {
-      component: 'Input',
-      fieldName: 'description',
-      label: '说明',
-      formItemClass: 'col-span-2',
-    },
-    {
-      component: 'Input',
-      fieldName: 'attachment',
-      label: '附件',
-      rules: 'required',
-      formItemClass: 'col-span-2',
-    },
-  ],
-});
+const [CreateForm] = useVbenForm(
+  reactive({
+    layout: 'vertical',
+    showDefaultActions: false,
+    wrapperClass: 'grid-cols-2 gap-x-4',
+    schema: computed(() => [
+      {
+        component: 'Input',
+        fieldName: 'reason_code',
+        label: t('page.claim.form.reasonLabel'),
+        rules: 'required',
+        formItemClass: 'col-span-2',
+      },
+      {
+        component: 'Input',
+        fieldName: 'amount',
+        label: t('page.claim.form.amountLabel'),
+        rules: 'required',
+        formItemClass: 'col-span-1',
+      },
+      {
+        component: 'Input',
+        fieldName: 'currency',
+        label: t('page.claim.form.currencyLabel'),
+        rules: 'required',
+        formItemClass: 'col-span-1',
+      },
+      {
+        component: 'Input',
+        fieldName: 'description',
+        label: t('page.claim.form.descriptionLabel'),
+        formItemClass: 'col-span-2',
+      },
+      {
+        component: 'Input',
+        fieldName: 'attachment',
+        label: t('page.claim.form.attachmentLabel'),
+        rules: 'required',
+        formItemClass: 'col-span-2',
+      },
+    ]),
+  }),
+);
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  confirmText: '提交申请',
+  confirmText: t('page.claim.buttons.submit'),
   onClosed: resetCreateForm,
   onConfirm: submitCreate,
-  title: '新建报销申请',
+  title: t('page.claim.drawer.createTitle'),
 });
 
 function resetCreateForm() {
@@ -109,15 +114,15 @@ function handleFileChange(uploadFile: any) {
 
 async function submitCreate() {
   if (!createForm.reason_code) {
-    ElMessage.warning('请选择报销理由');
+    ElMessage.warning(t('page.claim.messages.selectReason'));
     return;
   }
   if (createForm.amount <= 0) {
-    ElMessage.warning('金额必须大于 0');
+    ElMessage.warning(t('page.claim.messages.amountPositive'));
     return;
   }
   if (!createForm.attachmentFile) {
-    ElMessage.warning('请上传附件');
+    ElMessage.warning(t('page.claim.messages.uploadAttachment'));
     return;
   }
 
@@ -132,11 +137,11 @@ async function submitCreate() {
     }
     fd.append('attachment', createForm.attachmentFile);
     await createClaimApi(fd);
-    ElMessage.success('报销申请已提交');
+    ElMessage.success(t('page.claim.messages.submitSuccess'));
     createDrawerApi.close();
     emit('success');
   } catch {
-    ElMessage.error('提交失败');
+    ElMessage.error(t('page.claim.messages.submitFailed'));
   } finally {
     createDrawerApi.lock(false);
   }
@@ -156,7 +161,7 @@ defineExpose({ open });
       <template #reason_code>
         <ElSelect
           v-model="createForm.reason_code"
-          placeholder="请选择"
+          :placeholder="$t('page.claim.form.reasonPlaceholder')"
           class="w-full"
         >
           <ElOption
@@ -197,7 +202,7 @@ defineExpose({ open });
           v-model="createForm.description"
           type="textarea"
           :rows="3"
-          placeholder="可选，补充说明报销用途"
+          :placeholder="$t('page.claim.form.optionalDescription')"
         />
       </template>
       <template #attachment>
@@ -207,10 +212,10 @@ defineExpose({ open });
           accept="image/*,.pdf"
           @change="handleFileChange"
         >
-          <ElButton>选择文件</ElButton>
+          <ElButton>{{ $t('page.claim.buttons.selectFile') }}</ElButton>
           <template #tip>
             <span class="block text-xs text-muted-foreground">
-              支持图片或 PDF，用于报销凭证
+              {{ $t('page.claim.form.attachmentTip') }}
             </span>
           </template>
         </ElUpload>

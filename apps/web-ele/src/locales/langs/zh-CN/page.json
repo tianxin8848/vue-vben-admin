@@ -185,6 +185,92 @@
       }
     }
   },
+  "claim": {
+    "title": "报销管理",
+    "description": "提交报销申请、查看审批进度与历史记录",
+    "tabs": {
+      "my": "我的报销",
+      "history": "历史记录",
+      "pending": "待我审批",
+      "records": "审批记录"
+    },
+    "columns": {
+      "reason": "报销理由",
+      "amount": "金额",
+      "description": "说明",
+      "finalStatus": "最终状态",
+      "status": "状态",
+      "reviewComment": "审批意见",
+      "submitTime": "提交时间",
+      "attachment": "附件",
+      "applicant": "申请人",
+      "deptRegion": "部门/地区",
+      "operation": "操作",
+      "recordOperation": "操作",
+      "remark": "备注",
+      "time": "时间"
+    },
+    "status": {
+      "approved": "已通过",
+      "pending": "审批中",
+      "rejected": "已驳回",
+      "withdrawn": "已撤回"
+    },
+    "action": {
+      "approved": "通过",
+      "created": "提交",
+      "rejected": "驳回",
+      "withdrawn": "撤回"
+    },
+    "buttons": {
+      "create": "新建报销申请",
+      "createShort": "新建",
+      "review": "审批",
+      "submit": "提交申请",
+      "submitApplication": "提交申请",
+      "reject": "驳回",
+      "approve": "通过",
+      "view": "查看",
+      "viewAttachment": "查看附件",
+      "selectFile": "选择文件",
+      "noData": "无",
+      "none": "无"
+    },
+    "form": {
+      "reasonLabel": "报销理由",
+      "amountLabel": "金额",
+      "currencyLabel": "币种",
+      "descriptionLabel": "说明",
+      "attachmentLabel": "附件",
+      "reviewCommentLabel": "审批备注",
+      "employeeLabel": "申请人",
+      "optionalDescription": "可选，补充说明报销用途",
+      "attachmentTip": "支持图片或 PDF，用于报销凭证",
+      "reasonPlaceholder": "请选择",
+      "reviewCommentPlaceholder": "通过可不填；驳回必须填写原因"
+    },
+    "drawer": {
+      "createTitle": "新建报销申请",
+      "reviewTitle": "审批报销申请"
+    },
+    "messages": {
+      "currentUser": "当前用户：{fullName}（{username}）",
+      "count": "{count} 条",
+      "myClaimsCount": "我的报销（{count} 条）",
+      "historyCount": "历史记录（{count} 条）",
+      "pendingCount": "待我审批（{count} 条）",
+      "recordsCount": "审批记录（{count} 条）",
+      "selectReason": "请选择报销理由",
+      "amountPositive": "金额必须大于 0",
+      "uploadAttachment": "请上传附件",
+      "submitSuccess": "报销申请已提交",
+      "submitFailed": "提交失败",
+      "rejectReasonRequired": "驳回必须填写原因",
+      "approvedSuccess": "已通过",
+      "rejectedSuccess": "已驳回",
+      "operationFailed": "操作失败"
+    }
+  },
   "system": {
     "title": "系统设置",
     "settings": "系统参数",

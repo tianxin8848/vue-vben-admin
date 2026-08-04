@@ -5,6 +5,7 @@ import type { ClaimApi } from '#/api';
 import { computed, onMounted, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
 import { ElButton, ElSegmented, ElTag } from 'element-plus';
 
@@ -20,6 +21,8 @@ import {
 
 import CreateClaimDrawer from './components/CreateClaimDrawer.vue';
 import ReviewClaimDrawer from './components/ReviewClaimDrawer.vue';
+
+const { t } = useI18n();
 
 const loading = ref(false);
 
@@ -46,19 +49,27 @@ const pendingApprovals = ref<ClaimApi.ClaimResponse[]>([]);
 const approvalRecords = ref<ClaimApi.ClaimApprovalRecord[]>([]);
 
 const segmentedOptions = computed(() => [
-  { label: '我的报销', value: 'my' },
-  { label: '历史记录', value: 'history' },
-  { label: '待我审批', value: 'pending' },
-  { label: '审批记录', value: 'records' },
+  { label: t('page.claim.tabs.my'), value: 'my' },
+  { label: t('page.claim.tabs.history'), value: 'history' },
+  { label: t('page.claim.tabs.pending'), value: 'pending' },
+  { label: t('page.claim.tabs.records'), value: 'records' },
 ]);
 
-const myClaimsTitle = computed(() => `我的报销（${myClaims.value.length} 条）`);
-const historyTitle = computed(() => `历史记录（${myHistory.value.length} 条）`);
-const pendingTitle = computed(
-  () => `待我审批（${pendingApprovals.value.length} 条）`,
+const myClaimsTitle = computed(() =>
+  t('page.claim.messages.myClaimsCount', { count: myClaims.value.length }),
 );
-const recordsTitle = computed(
-  () => `审批记录（${approvalRecords.value.length} 条）`,
+const historyTitle = computed(() =>
+  t('page.claim.messages.historyCount', { count: myHistory.value.length }),
+);
+const pendingTitle = computed(() =>
+  t('page.claim.messages.pendingCount', {
+    count: pendingApprovals.value.length,
+  }),
+);
+const recordsTitle = computed(() =>
+  t('page.claim.messages.recordsCount', {
+    count: approvalRecords.value.length,
+  }),
 );
 
 const activeTableTitle = computed(() => {
@@ -72,12 +83,12 @@ const activeTableTitle = computed(() => {
 });
 
 // ─── 状态映射 ────────────────────────────────────────────────────────────────
-const statusLabelMap: Record<string, string> = {
-  approved: '已通过',
-  pending: '审批中',
-  rejected: '已驳回',
-  withdrawn: '已撤回',
-};
+const statusLabelMap = computed<Record<string, string>>(() => ({
+  approved: t('page.claim.status.approved'),
+  pending: t('page.claim.status.pending'),
+  rejected: t('page.claim.status.rejected'),
+  withdrawn: t('page.claim.status.withdrawn'),
+}));
 
 const statusTypeMap: Record<
   string,
@@ -89,19 +100,19 @@ const statusTypeMap: Record<
   withdrawn: 'info',
 };
 
-const actionLabelMap: Record<string, string> = {
-  approved: '通过',
-  created: '提交',
-  rejected: '驳回',
-  withdrawn: '撤回',
-};
+const actionLabelMap = computed<Record<string, string>>(() => ({
+  approved: t('page.claim.action.approved'),
+  created: t('page.claim.action.created'),
+  rejected: t('page.claim.action.rejected'),
+  withdrawn: t('page.claim.action.withdrawn'),
+}));
 
 function formatStatus(status: string) {
-  return statusLabelMap[status] || status;
+  return statusLabelMap.value[status] || status;
 }
 
 function formatAction(action: string) {
-  return actionLabelMap[action] || action;
+  return actionLabelMap.value[action] || action;
 }
 
 function formatDate(dt: null | string) {
@@ -110,41 +121,41 @@ function formatDate(dt: null | string) {
 }
 
 // ─── 表格列配置 ──────────────────────────────────────────────────────────────
-const tabColumns: Record<TabKey, VxeGridProps['columns']> = {
+const tabColumns = computed<Record<TabKey, VxeGridProps['columns']>>(() => ({
   history: [
     {
       field: 'reason_label',
-      title: '报销理由',
+      title: t('page.claim.columns.reason'),
       minWidth: 140,
       slots: { default: 'reason' },
     },
     {
       field: 'amount',
-      title: '金额',
+      title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
     },
     {
       field: 'description',
-      title: '说明',
+      title: t('page.claim.columns.description'),
       minWidth: 160,
       slots: { default: 'description' },
     },
     {
       field: 'approval_status',
-      title: '最终状态',
+      title: t('page.claim.columns.finalStatus'),
       width: 100,
       slots: { default: 'status' },
     },
     {
       field: 'review_comment',
-      title: '审批意见',
+      title: t('page.claim.columns.reviewComment'),
       minWidth: 140,
       slots: { default: 'review_comment' },
     },
     {
       field: 'created_at',
-      title: '提交时间',
+      title: t('page.claim.columns.submitTime'),
       width: 160,
       slots: { default: 'created_at' },
     },
@@ -152,37 +163,37 @@ const tabColumns: Record<TabKey, VxeGridProps['columns']> = {
   my: [
     {
       field: 'reason_label',
-      title: '报销理由',
+      title: t('page.claim.columns.reason'),
       minWidth: 140,
       slots: { default: 'reason' },
     },
     {
       field: 'amount',
-      title: '金额',
+      title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
     },
     {
       field: 'description',
-      title: '说明',
+      title: t('page.claim.columns.description'),
       minWidth: 160,
       slots: { default: 'description' },
     },
     {
       field: 'approval_status',
-      title: '状态',
+      title: t('page.claim.columns.status'),
       width: 100,
       slots: { default: 'status' },
     },
     {
       field: 'created_at',
-      title: '提交时间',
+      title: t('page.claim.columns.submitTime'),
       width: 160,
       slots: { default: 'created_at' },
     },
     {
       field: 'attachment_url',
-      title: '附件',
+      title: t('page.claim.columns.attachment'),
       width: 100,
       slots: { default: 'attachment' },
     },
@@ -190,36 +201,36 @@ const tabColumns: Record<TabKey, VxeGridProps['columns']> = {
   pending: [
     {
       field: 'employee_name',
-      title: '申请人',
+      title: t('page.claim.columns.applicant'),
       minWidth: 150,
       slots: { default: 'employee' },
     },
     {
       field: 'reason_label',
-      title: '报销理由',
+      title: t('page.claim.columns.reason'),
       minWidth: 130,
       slots: { default: 'reason' },
     },
     {
       field: 'amount',
-      title: '金额',
+      title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
     },
     {
       field: 'description',
-      title: '说明',
+      title: t('page.claim.columns.description'),
       minWidth: 160,
       slots: { default: 'description' },
     },
     {
       field: 'created_at',
-      title: '提交时间',
+      title: t('page.claim.columns.submitTime'),
       width: 160,
       slots: { default: 'created_at' },
     },
     {
-      title: '操作',
+      title: t('page.claim.columns.operation'),
       width: 100,
       fixed: 'right',
       slots: { default: 'action' },
@@ -228,42 +239,42 @@ const tabColumns: Record<TabKey, VxeGridProps['columns']> = {
   records: [
     {
       field: 'employee_name',
-      title: '申请人',
+      title: t('page.claim.columns.applicant'),
       minWidth: 150,
       slots: { default: 'employee' },
     },
     {
       field: 'claim_reason_label',
-      title: '报销理由',
+      title: t('page.claim.columns.reason'),
       minWidth: 130,
       slots: { default: 'reason' },
     },
     {
       field: 'amount',
-      title: '金额',
+      title: t('page.claim.columns.amount'),
       minWidth: 120,
       slots: { default: 'amount' },
     },
     {
       field: 'action',
-      title: '操作',
+      title: t('page.claim.columns.recordOperation'),
       width: 90,
       slots: { default: 'record_action' },
     },
     {
       field: 'comment',
-      title: '备注',
+      title: t('page.claim.columns.remark'),
       minWidth: 140,
       slots: { default: 'comment' },
     },
     {
       field: 'created_at',
-      title: '时间',
+      title: t('page.claim.columns.time'),
       width: 160,
       slots: { default: 'created_at' },
     },
   ],
-};
+}));
 
 function dataFor(tab: TabKey) {
   switch (tab) {
@@ -289,7 +300,7 @@ const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
       code: 'manual-refresh',
       icon: 'vxe-icon-refresh',
       circle: true,
-      name: '刷新',
+      name: t('common.refresh'),
     },
   ],
 };
@@ -298,7 +309,7 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
   gridOptions: {
     id: 'claim-index',
     rowConfig: { keyField: 'id' },
-    columns: tabColumns.my,
+    columns: tabColumns.value.my,
     proxyConfig: { enabled: false },
     height: 'auto',
     keepSource: true,
@@ -313,7 +324,7 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
 
 function refreshTable() {
   tableApi.setGridOptions({
-    columns: tabColumns[activeTab.value],
+    columns: tabColumns.value[activeTab.value],
     data: dataFor(activeTab.value),
   });
 }
@@ -321,6 +332,21 @@ function refreshTable() {
 watch(activeTab, () => {
   reloadActiveTab();
 });
+
+// Refresh table when i18n keys change
+watch(
+  () => [
+    tabColumns.value,
+    sharedToolbarConfig,
+    segmentedOptions.value,
+    statusLabelMap.value,
+    actionLabelMap.value,
+  ],
+  () => {
+    refreshTable();
+  },
+  { deep: true },
+);
 
 // ─── 新建 / 审批 ─────────────────────────────────────────────────────────────
 function openCreateDrawer() {
@@ -448,15 +474,20 @@ onMounted(() => {
 
 <template>
   <Page
-    title="报销管理"
-    description="提交报销申请、查看审批进度与历史记录"
+    :title="$t('page.claim.title')"
+    :description="$t('page.claim.description')"
     :auto-content-height="true"
     v-loading="loading"
   >
     <div class="flex h-full flex-col gap-2">
       <ElSegmented v-model="activeTab" :options="segmentedOptions" />
       <p v-if="userInfo" class="text-sm text-muted-foreground">
-        当前用户：{{ userInfo.full_name }}（{{ userInfo.username }}）
+        {{
+          $t('page.claim.messages.currentUser', {
+            fullName: userInfo.full_name,
+            username: userInfo.username,
+          })
+        }}
       </p>
 
       <BasicTable :table-title="activeTableTitle" class="min-h-0 flex-1">
@@ -466,7 +497,7 @@ onMounted(() => {
             type="primary"
             @click="openCreateDrawer"
           >
-            新建报销申请
+            {{ $t('page.claim.buttons.create') }}
           </ElButton>
         </template>
         <template #reason="{ row }">
@@ -503,7 +534,7 @@ onMounted(() => {
             :href="row.attachment_url"
             target="_blank"
           >
-            {{ row.attachment_name || '查看' }}
+            {{ row.attachment_name || $t('page.claim.buttons.view') }}
           </a>
           <span v-else>-</span>
         </template>
@@ -522,7 +553,7 @@ onMounted(() => {
             type="primary"
             @click="openReviewDrawer(row as ClaimApi.ClaimResponse)"
           >
-            审批
+            {{ $t('page.claim.buttons.review') }}
           </ElButton>
         </template>
         <template #record_action="{ row }">

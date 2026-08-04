@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import type { ClaimApi } from '#/api';
 
-import { ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
 import { ElButton, ElMessage } from 'element-plus';
 
@@ -14,68 +15,72 @@ const emit = defineEmits<{
   success: [];
 }>();
 
+const { t } = useI18n();
+
 const currentReviewItem = ref<ClaimApi.ClaimResponse | null>(null);
 
-const [ReviewForm, reviewFormApi] = useVbenForm({
-  layout: 'vertical',
-  showDefaultActions: false,
-  schema: [
-    {
-      component: 'Input',
-      fieldName: 'employee',
-      label: '申请人',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'dept_region',
-      label: '部门/地区',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'reason',
-      label: '报销理由',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'amount_text',
-      label: '金额',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'description',
-      label: '说明',
-      componentProps: { disabled: true, rows: 2, type: 'textarea' },
-    },
-    {
-      component: 'Input',
-      fieldName: 'attachment',
-      label: '附件',
-    },
-    {
-      component: 'Input',
-      fieldName: 'review_comment',
-      label: '审批备注',
-      componentProps: {
-        placeholder: '通过可不填；驳回必须填写原因',
-        rows: 3,
-        type: 'textarea',
+const [ReviewForm, reviewFormApi] = useVbenForm(
+  reactive({
+    layout: 'vertical',
+    showDefaultActions: false,
+    schema: computed(() => [
+      {
+        component: 'Input',
+        fieldName: 'employee',
+        label: t('page.claim.form.employeeLabel'),
+        componentProps: { disabled: true },
       },
-    },
-  ],
-});
+      {
+        component: 'Input',
+        fieldName: 'dept_region',
+        label: t('page.claim.columns.deptRegion'),
+        componentProps: { disabled: true },
+      },
+      {
+        component: 'Input',
+        fieldName: 'reason',
+        label: t('page.claim.form.reasonLabel'),
+        componentProps: { disabled: true },
+      },
+      {
+        component: 'Input',
+        fieldName: 'amount_text',
+        label: t('page.claim.form.amountLabel'),
+        componentProps: { disabled: true },
+      },
+      {
+        component: 'Input',
+        fieldName: 'description',
+        label: t('page.claim.form.descriptionLabel'),
+        componentProps: { disabled: true, rows: 2, type: 'textarea' },
+      },
+      {
+        component: 'Input',
+        fieldName: 'attachment',
+        label: t('page.claim.form.attachmentLabel'),
+      },
+      {
+        component: 'Input',
+        fieldName: 'review_comment',
+        label: t('page.claim.form.reviewCommentLabel'),
+        componentProps: {
+          placeholder: t('page.claim.form.reviewCommentPlaceholder'),
+          rows: 3,
+          type: 'textarea',
+        },
+      },
+    ]),
+  }),
+);
 
 const [ReviewDrawer, reviewDrawerApi] = useVbenDrawer({
-  confirmText: '通过',
+  confirmText: t('page.claim.buttons.approve'),
   onClosed() {
     reviewFormApi.resetForm();
     currentReviewItem.value = null;
   },
   onConfirm: () => submitReview('approved'),
-  title: '审批报销申请',
+  title: t('page.claim.drawer.reviewTitle'),
 });
 
 async function open(item: ClaimApi.ClaimResponse) {
@@ -84,7 +89,7 @@ async function open(item: ClaimApi.ClaimResponse) {
   await reviewFormApi.setValues({
     amount_text: `${item.amount.toFixed(2)} ${item.currency}${item.amount_hkd ? ` ≈ HKD ${item.amount_hkd.toFixed(2)}` : ''}`,
     dept_region: `${item.employee_department || '-'} / ${item.employee_region || '-'}`,
-    description: item.description || '无',
+    description: item.description || t('page.claim.buttons.noData'),
     employee: `${item.employee_name}（${item.employee_username}）`,
     reason: item.reason_label,
     review_comment: '',
@@ -98,7 +103,7 @@ async function submitReview(action: 'approved' | 'rejected') {
   const values = await reviewFormApi.getValues();
   const comment = (values.review_comment || '').trim();
   if (action === 'rejected' && !comment) {
-    ElMessage.warning('驳回必须填写原因');
+    ElMessage.warning(t('page.claim.messages.rejectReasonRequired'));
     return;
   }
   reviewDrawerApi.lock(true);
@@ -107,11 +112,15 @@ async function submitReview(action: 'approved' | 'rejected') {
       approval_status: action,
       review_comment: comment || null,
     });
-    ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
+    ElMessage.success(
+      action === 'approved'
+        ? t('page.claim.messages.approvedSuccess')
+        : t('page.claim.messages.rejectedSuccess'),
+    );
     reviewDrawerApi.close();
     emit('success');
   } catch {
-    ElMessage.error('操作失败');
+    ElMessage.error(t('page.claim.messages.operationFailed'));
   } finally {
     reviewDrawerApi.lock(false);
   }
@@ -129,14 +138,17 @@ defineExpose({ open, submitReview });
           :href="currentReviewItem.attachment_url"
           target="_blank"
         >
-          {{ currentReviewItem.attachment_name || '查看附件' }}
+          {{
+            currentReviewItem.attachment_name ||
+            $t('page.claim.buttons.viewAttachment')
+          }}
         </a>
-        <span v-else>无</span>
+        <span v-else>{{ $t('page.claim.buttons.none') }}</span>
       </template>
     </ReviewForm>
     <template #center-footer>
       <ElButton type="danger" @click="submitReview('rejected')">
-        驳回
+        {{ $t('page.claim.buttons.reject') }}
       </ElButton>
     </template>
   </ReviewDrawer>

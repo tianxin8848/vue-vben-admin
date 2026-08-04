@@ -2,7 +2,6 @@
 import type { LeaveRequestApi } from '#/api';
 
 import { computed, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
@@ -31,7 +30,6 @@ import {
   withdrawLeaveRequestApi,
 } from '#/api';
 
-const router = useRouter();
 const loading = ref(false);
 const activeTab = ref<'pending' | 'records'>('pending');
 
@@ -313,10 +311,6 @@ async function handleWithdraw() {
   }
 }
 
-function goBack() {
-  router.push('/employee/manage/users');
-}
-
 onMounted(async () => {
   await fetchSystemSettings();
   await fetchApprovalData();
@@ -329,8 +323,6 @@ onMounted(async () => {
     description="查看待我审批的请假申请，以及我已处理过的审批记录"
     v-loading="loading"
   >
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
-
     <ElCard class="search-card">
       <div class="search-bar">
         <ElInput

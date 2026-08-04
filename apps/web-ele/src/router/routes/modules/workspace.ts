@@ -68,7 +68,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:receipt',
-          title: '报销管理',
+          title: $t('page.claim.title'),
           authority: ['user'],
         },
       },

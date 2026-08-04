@@ -15,6 +15,7 @@ import {
   ElInput,
   ElMessage,
   ElOption,
+  ElSegmented,
   ElSelect,
   ElTag,
 } from 'element-plus';
@@ -67,6 +68,14 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const hideWithdrawnOrRejected = ref(false);
+
+// Tab 状态
+type TabKey = 'calendar' | 'records';
+const activeTab = ref<TabKey>('records');
+const segmentedOptions = computed(() => [
+  { label: '请假记录', value: 'records' },
+  { label: '年历视图', value: 'calendar' },
+]);
 
 // 表格列配置
 const tableColumns: VxeGridProps['columns'] = [
@@ -343,254 +352,264 @@ onMounted(() => {
     :auto-content-height="true"
     v-loading="loading"
   >
-    <BasicTable
-      :table-title="`我的请假记录（${filteredLeaveRequests.length} 条）`"
-    >
-      <template #toolbar-tools>
-        <ElButton type="primary" @click="() => modalApi.open()">
-          填写请假单
-        </ElButton>
-        <ElButton @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected">
-          {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
-        </ElButton>
-      </template>
+    <div class="flex h-full flex-col gap-2">
+      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
 
-      <template #date_range="{ row }">
-        {{
-          row.start_date === row.end_date
-            ? row.start_date
-            : `${row.start_date} 至 ${row.end_date}`
-        }}
-      </template>
+      <BasicTable
+        v-show="activeTab === 'records'"
+        :table-title="`我的请假记录（${filteredLeaveRequests.length} 条）`"
+        class="min-h-0"
+      >
+        <template #toolbar-tools>
+          <ElButton type="primary" @click="() => modalApi.open()">
+            填写请假单
+          </ElButton>
+          <ElButton @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected">
+            {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
+          </ElButton>
+        </template>
 
-      <template #leave_type="{ row }">
-        <ElTag type="info">{{ leaveTypeOptions[row.leave_type] }}</ElTag>
-      </template>
+        <template #date_range="{ row }">
+          {{
+            row.start_date === row.end_date
+              ? row.start_date
+              : `${row.start_date} 至 ${row.end_date}`
+          }}
+        </template>
 
-      <template #session="{ row }">
-        <ElTag>{{ sessionOptions[row.session] }}</ElTag>
-      </template>
+        <template #leave_type="{ row }">
+          <ElTag type="info">{{ leaveTypeOptions[row.leave_type] }}</ElTag>
+        </template>
 
-      <template #status="{ row }">
-        <ElTag :type="statusTagType(row.approval_status)">
-          {{ statusOptions[row.approval_status] }}
-        </ElTag>
-      </template>
+        <template #session="{ row }">
+          <ElTag>{{ sessionOptions[row.session] }}</ElTag>
+        </template>
 
-      <template #created_at="{ row }">
-        {{
-          row.created_at
-            ? new Date(row.created_at).toLocaleString('zh-CN')
-            : '-'
-        }}
-      </template>
+        <template #status="{ row }">
+          <ElTag :type="statusTagType(row.approval_status)">
+            {{ statusOptions[row.approval_status] }}
+          </ElTag>
+        </template>
 
-      <template #action="{ row }">
-        <ElButton
-          v-if="row.approval_status === 'pending'"
-          size="small"
-          type="danger"
-          @click="handleWithdraw(row.id)"
-        >
-          撤回
-        </ElButton>
-        <span v-else style="color: hsl(var(--muted-foreground))">-</span>
-      </template>
-    </BasicTable>
+        <template #created_at="{ row }">
+          {{
+            row.created_at
+              ? new Date(row.created_at).toLocaleString('zh-CN')
+              : '-'
+          }}
+        </template>
 
-    <!-- 我的请假年历 -->
-    <ElCard style="margin-top: 18px">
-      <template #header>
-        <div
-          style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            justify-content: space-between;
-          "
-        >
-          <div>
-            <h3 style="margin: 0">我的请假年历</h3>
-            <p
-              style="
-                margin: 8px 0 0;
-                font-size: 14px;
-                color: hsl(var(--muted-foreground));
-              "
-            >
-              按年查看自己的请假分布，直接看到每一天的请假类型和状态。
-            </p>
-          </div>
+        <template #action="{ row }">
+          <ElButton
+            v-if="row.approval_status === 'pending'"
+            size="small"
+            type="danger"
+            @click="handleWithdraw(row.id)"
+          >
+            撤回
+          </ElButton>
+          <span v-else style="color: hsl(var(--muted-foreground))">-</span>
+        </template>
+      </BasicTable>
+
+      <!-- 我的请假年历 -->
+      <ElCard
+        v-show="activeTab === 'calendar'"
+        class="flex-1"
+        style="margin-top: 0"
+      >
+        <template #header>
           <div
             style="
               display: flex;
               flex-wrap: wrap;
-              gap: 10px;
+              gap: 12px;
               align-items: center;
+              justify-content: space-between;
             "
           >
-            <ElButton size="small" @click="changeYear(currentYear - 1)">
-              上一年
-            </ElButton>
-            <span
+            <div>
+              <h3 style="margin: 0">我的请假年历</h3>
+              <p
+                style="
+                  margin: 8px 0 0;
+                  font-size: 14px;
+                  color: hsl(var(--muted-foreground));
+                "
+              >
+                按年查看自己的请假分布，直接看到每一天的请假类型和状态。
+              </p>
+            </div>
+            <div
               style="
-                display: inline-flex;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
                 align-items: center;
-                justify-content: center;
-                min-width: 88px;
-                padding: 10px 14px;
-                font-weight: 700;
-                color: hsl(var(--foreground));
-                background: hsl(var(--accent));
-                border-radius: 10px;
               "
             >
-              {{ currentYear }}
-            </span>
-            <ElButton size="small" @click="changeYear(currentYear + 1)">
-              下一年
-            </ElButton>
-            <ElButton
-              size="small"
-              type="primary"
-              @click="changeYear(new Date().getFullYear())"
-            >
-              回到今年
-            </ElButton>
+              <ElButton size="small" @click="changeYear(currentYear - 1)">
+                上一年
+              </ElButton>
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  min-width: 88px;
+                  padding: 10px 14px;
+                  font-weight: 700;
+                  color: hsl(var(--foreground));
+                  background: hsl(var(--accent));
+                  border-radius: 10px;
+                "
+              >
+                {{ currentYear }}
+              </span>
+              <ElButton size="small" @click="changeYear(currentYear + 1)">
+                下一年
+              </ElButton>
+              <ElButton
+                size="small"
+                type="primary"
+                @click="changeYear(new Date().getFullYear())"
+              >
+                回到今年
+              </ElButton>
+            </div>
           </div>
-        </div>
-      </template>
+        </template>
 
-      <!-- 统计数据 -->
-      <div
-        style="
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 12px;
-          margin-bottom: 16px;
-        "
-      >
+        <!-- 统计数据 -->
         <div
           style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
           "
         >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年请假记录
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.recordCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年覆盖天数
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.dayCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            待审批记录
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.pendingCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年年假总计
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualEntitlement }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年年假可用
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualAvailable }}
-          </div>
-        </div>
-      </div>
-
-      <!-- 年历面板 -->
-      <CalendarPanel
-        :day-map="dayMap"
-        :selected-date-key="selectedDateKey"
-        :current-year="currentYear"
-        :search-form="{ view_mode: 'standard' }"
-        @select-date="onSelectDate"
-        @panel-change="() => {}"
-      />
-
-      <!-- 日期详情 -->
-      <div
-        v-if="selectedDateKey"
-        style="
-          padding: 16px;
-          margin-top: 16px;
-          background: hsl(var(--muted));
-          border-radius: 14px;
-        "
-      >
-        <h4 style="margin: 0 0 12px; font-size: 16px">
-          {{ selectedDateKey }} · 日期详情
-        </h4>
-        <div
-          v-if="!dayMap[selectedDateKey]?.length"
-          style="color: hsl(var(--muted-foreground))"
-        >
-          当天没有请假记录。
-        </div>
-        <div v-else style="display: flex; flex-direction: column; gap: 10px">
           <div
-            v-for="item in dayMap[selectedDateKey]"
-            :key="item.id"
             style="
-              padding: 10px 0;
-              font-size: 14px;
-              line-height: 1.7;
-              border-top: 1px solid hsl(var(--border));
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
             "
           >
-            <div>类型：{{ leaveTypeOptions[item.leave_type] }}</div>
-            <div>时段：{{ sessionOptions[item.session] }}</div>
-            <div>状态：{{ statusOptions[item.approval_status] }}</div>
-            <div>说明：{{ item.reason || '-' }}</div>
+            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+              当年请假记录
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.recordCount }}
+            </div>
+          </div>
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+              当年覆盖天数
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.dayCount }}
+            </div>
+          </div>
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+              待审批记录
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.pendingCount }}
+            </div>
+          </div>
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+              当年年假总计
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.annualEntitlement }}
+            </div>
+          </div>
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+              当年年假可用
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.annualAvailable }}
+            </div>
           </div>
         </div>
-      </div>
-    </ElCard>
+
+        <!-- 年历面板 -->
+        <CalendarPanel
+          :day-map="dayMap"
+          :selected-date-key="selectedDateKey"
+          :current-year="currentYear"
+          :search-form="{ view_mode: 'standard' }"
+          @select-date="onSelectDate"
+          @panel-change="() => {}"
+        />
+
+        <!-- 日期详情 -->
+        <div
+          v-if="selectedDateKey"
+          style="
+            padding: 16px;
+            margin-top: 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <h4 style="margin: 0 0 12px; font-size: 16px">
+            {{ selectedDateKey }} · 日期详情
+          </h4>
+          <div
+            v-if="!dayMap[selectedDateKey]?.length"
+            style="color: hsl(var(--muted-foreground))"
+          >
+            当天没有请假记录。
+          </div>
+          <div v-else style="display: flex; flex-direction: column; gap: 10px">
+            <div
+              v-for="item in dayMap[selectedDateKey]"
+              :key="item.id"
+              style="
+                padding: 10px 0;
+                font-size: 14px;
+                line-height: 1.7;
+                border-top: 1px solid hsl(var(--border));
+              "
+            >
+              <div>类型：{{ leaveTypeOptions[item.leave_type] }}</div>
+              <div>时段：{{ sessionOptions[item.session] }}</div>
+              <div>状态：{{ statusOptions[item.approval_status] }}</div>
+              <div>说明：{{ item.reason || '-' }}</div>
+            </div>
+          </div>
+        </div>
+      </ElCard>
+    </div>
 
     <Modal class="w-150" title="填写请假单">
       <ElForm :model="form" label-width="100px">
