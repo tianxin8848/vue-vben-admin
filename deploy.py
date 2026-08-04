@@ -79,16 +79,24 @@ def main():
         print('\n=== 步骤6: 重启Nginx ===')
         run_ssh_command(ssh, 'systemctl restart nginx')
         
-        print('\n=== 步骤7: 等待服务启动 ===')
-        run_ssh_command(ssh, 'sleep 3')
+        print('\n=== 步骤7: 修复SELinux权限（允许Nginx代理后端） ===')
+        run_ssh_command(ssh, 'getenforce')
+        run_ssh_command(ssh, 'setenforce 0')
+        run_ssh_command(ssh, 'setsebool -P httpd_can_network_connect 1')
+        run_ssh_command(ssh, "sed -i 's/^SELINUX=.*/SELINUX=permissive/' /etc/selinux/config")
+        run_ssh_command(ssh, 'getenforce')
+
+        print('\n=== 步骤8: 等待服务启动 ===')
+        run_ssh_command(ssh, 'sleep 2')
         
-        print('\n=== 步骤8: 验证部署 ===')
+        print('\n=== 步骤9: 验证部署 ===')
         run_ssh_command(ssh, 'curl -s http://localhost:80/ | head -5')
         run_ssh_command(ssh, 'curl -s -X POST http://localhost:80/api/v1/auth/login -H "Content-Type: application/json" -d \'{"username":"admin","password":"Cisco@123"}\'')
         
-        print('\n=== 步骤9: 检查服务状态 ===')
+        print('\n=== 步骤10: 检查服务状态 ===')
         run_ssh_command(ssh, 'systemctl status nginx | head -20')
         run_ssh_command(ssh, 'ss -tlnp | grep 80')
+        run_ssh_command(ssh, 'ss -tlnp | grep 8999')
         
         ssh.close()
         print('\n部署完成！')

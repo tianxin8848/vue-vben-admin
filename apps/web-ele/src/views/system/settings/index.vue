@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue';
 
 import { ColPage } from '@vben/common-ui';
 
-import { ElAlert, ElCard } from 'element-plus';
+import { ElAlert, ElButton, ElCard, ElSegmented } from 'element-plus';
 
 import {
   ALL_MODULE_CATALOG,
@@ -17,6 +17,7 @@ import {
 
 import ClaimReasonEditor from './components/ClaimReasonEditor.vue';
 import CurrencyEditor from './components/CurrencyEditor.vue';
+import EmployeeEditableFieldsEditor from './components/EmployeeEditableFieldsEditor.vue';
 import HolidayCatalogEditor from './components/HolidayCatalogEditor.vue';
 import HolidayEditor from './components/HolidayEditor.vue';
 import SettingsForm from './components/SettingsForm.vue';
@@ -40,6 +41,16 @@ const holidayMessage = ref('');
 const holidayMessageType = ref<'' | 'error' | 'success'>('');
 const catalogMessage = ref('');
 const catalogMessageType = ref<'' | 'error' | 'success'>('');
+
+type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday';
+const activeTab = ref<SettingsTab>('basic');
+
+const segmentedOptions: { label: string; value: SettingsTab }[] = [
+  { label: '基础参数', value: 'basic' },
+  { label: '员工字段', value: 'employee' },
+  { label: '报销配置', value: 'claim' },
+  { label: '地区假期', value: 'holiday' },
+];
 
 function showFormMessage(type: 'error' | 'success', text: string) {
   formMessageType.value = type;
@@ -226,7 +237,7 @@ onMounted(() => {
 <template>
   <ColPage
     title="系统参数维护"
-    description="统一维护部门、岗位、地区和模块清单，用户管理页面会直接读取这些配置。"
+    description="统一维护部门、岗位、地区、模块、员工字段、报销配置与地区假期，相关页面会直接读取这些配置。"
     v-loading="loading"
     :left-width="58"
     :right-width="42"
@@ -238,49 +249,95 @@ onMounted(() => {
           <span class="text-base font-bold">参数配置</span>
         </template>
         <p class="mb-4 text-sm text-muted-foreground">
-          前三项按“一行一个值”维护；模块列表、地区假期和地区假期名称清单都统一由数据库中的系统参数维护，相关页面会直接读取这里的结果。
+          通过下方分段切换不同配置分组；基础参数、员工字段与报销配置共享同一个保存动作，地区假期使用独立保存。
         </p>
 
-        <SettingsForm
-          v-model:dept-str="deptStr"
-          v-model:pos-str="posStr"
-          v-model:region-str="regionStr"
-          v-model:selected-modules="selectedModules"
-          @save="handleSaveSettings"
+        <ElSegmented
+          v-model="activeTab"
+          :options="segmentedOptions"
+          class="mb-2"
         />
 
-        <ElAlert
-          v-if="formMessage"
-          :title="formMessage"
-          :type="formMessageType === 'success' ? 'success' : 'error'"
-          show-icon
-          :closable="false"
-          class="mt-4 whitespace-pre-wrap"
-        />
+        <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
+        <div v-show="activeTab === 'basic'">
+          <SettingsForm
+            v-model:dept-str="deptStr"
+            v-model:pos-str="posStr"
+            v-model:region-str="regionStr"
+            v-model:selected-modules="selectedModules"
+            @save="handleSaveSettings"
+          />
 
-        <EmployeeEditableFieldsEditor
-          v-model="selectedEditableFields"
-          :catalog="settings?.employee_profile_field_catalog || []"
-        />
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </div>
 
-        <ClaimReasonEditor v-model="claimReasonsStr" />
-        <CurrencyEditor v-model="claimCurrenciesStr" />
+        <!-- 员工可自编辑字段 -->
+        <div v-show="activeTab === 'employee'">
+          <EmployeeEditableFieldsEditor
+            v-model="selectedEditableFields"
+            :catalog="settings?.employee_profile_field_catalog || []"
+          />
+          <div class="mt-4 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              保存系统参数
+            </ElButton>
+          </div>
 
-        <HolidayEditor
-          :regions="settings?.regions || []"
-          :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-          v-model:message="holidayMessage"
-          v-model:message-type="holidayMessageType"
-          @save="handleSaveHoliday"
-        />
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </div>
 
-        <HolidayCatalogEditor
-          :regions="settings?.regions || []"
-          :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-          v-model:message="catalogMessage"
-          v-model:message-type="catalogMessageType"
-          @save="handleSaveCatalog"
-        />
+        <!-- 报销配置：报销理由 / 币种 -->
+        <div v-show="activeTab === 'claim'">
+          <ClaimReasonEditor v-model="claimReasonsStr" />
+          <CurrencyEditor v-model="claimCurrenciesStr" />
+          <div class="mt-4 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              保存系统参数
+            </ElButton>
+          </div>
+
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </div>
+
+        <!-- 地区假期：假期维护 / 假期名称清单 -->
+        <div v-show="activeTab === 'holiday'">
+          <HolidayEditor
+            :regions="settings?.regions || []"
+            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+            v-model:message="holidayMessage"
+            v-model:message-type="holidayMessageType"
+            @save="handleSaveHoliday"
+          />
+
+          <HolidayCatalogEditor
+            :regions="settings?.regions || []"
+            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+            v-model:message="catalogMessage"
+            v-model:message-type="catalogMessageType"
+            @save="handleSaveCatalog"
+          />
+        </div>
       </ElCard>
     </template>
 
