@@ -2,33 +2,24 @@
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { ClaimApi } from '#/api';
 
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page } from '@vben/common-ui';
 
-import {
-  ElButton,
-  ElInput,
-  ElInputNumber,
-  ElMessage,
-  ElOption,
-  ElSelect,
-  ElTag,
-  ElUpload,
-} from 'element-plus';
+import { ElButton, ElSegmented, ElTag } from 'element-plus';
 
-import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createClaimApi,
   getClaimOptionsApi,
   getMyClaimApprovalRecordsApi,
   getMyClaimHistoryApi,
   getMyClaimsApi,
   getMyPendingClaimApprovalsApi,
   getUserInfoApi,
-  reviewClaimApi,
 } from '#/api';
+
+import CreateClaimDrawer from './components/CreateClaimDrawer.vue';
+import ReviewClaimDrawer from './components/ReviewClaimDrawer.vue';
 
 const loading = ref(false);
 
@@ -40,6 +31,10 @@ const userInfo = ref<null | {
 // ─── 选项数据 ────────────────────────────────────────────────────────────────
 const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
 const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
+
+// ─── 子组件引用 ──────────────────────────────────────────────────────────────
+const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
+const reviewDrawerRef = ref<InstanceType<typeof ReviewClaimDrawer>>();
 
 // ─── Tab 状态 ────────────────────────────────────────────────────────────────
 type TabKey = 'history' | 'my' | 'pending' | 'records';
@@ -324,235 +319,27 @@ function refreshTable() {
 }
 
 watch(activeTab, () => {
-  refreshTable();
+  reloadActiveTab();
 });
 
-// ─── 新建报销 ────────────────────────────────────────────────────────────────
-const createForm = reactive({
-  reason_code: '',
-  description: '',
-  amount: 0,
-  currency: 'HKD',
-  attachmentFile: null as File | null,
-});
-
-const selectedCurrencyRate = computed(() => {
-  const found = currencyOptions.value.find(
-    (c) => c.currency_code === createForm.currency,
-  );
-  return found?.to_hkd_rate ?? 1;
-});
-
-const estimatedHkd = computed(() => {
-  return Math.round(createForm.amount * selectedCurrencyRate.value * 100) / 100;
-});
-
-const [CreateForm] = useVbenForm({
-  layout: 'vertical',
-  showDefaultActions: false,
-  wrapperClass: 'grid-cols-2 gap-x-4',
-  schema: [
-    {
-      component: 'Input',
-      fieldName: 'reason_code',
-      label: '报销理由',
-      rules: 'required',
-      formItemClass: 'col-span-2',
-    },
-    {
-      component: 'Input',
-      fieldName: 'amount',
-      label: '金额',
-      rules: 'required',
-      formItemClass: 'col-span-1',
-    },
-    {
-      component: 'Input',
-      fieldName: 'currency',
-      label: '币种',
-      rules: 'required',
-      formItemClass: 'col-span-1',
-    },
-    {
-      component: 'Input',
-      fieldName: 'description',
-      label: '说明',
-      formItemClass: 'col-span-2',
-    },
-    {
-      component: 'Input',
-      fieldName: 'attachment',
-      label: '附件',
-      rules: 'required',
-      formItemClass: 'col-span-2',
-    },
-  ],
-});
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  title: '新建报销申请',
-  confirmText: '提交申请',
-  onConfirm: submitCreate,
-  onClosed: resetCreateForm,
-});
-
-function resetCreateForm() {
-  createForm.reason_code = '';
-  createForm.description = '';
-  createForm.amount = 0;
-  createForm.currency = currencyOptions.value[0]?.currency_code || 'HKD';
-  createForm.attachmentFile = null;
-}
-
+// ─── 新建 / 审批 ─────────────────────────────────────────────────────────────
 function openCreateDrawer() {
-  resetCreateForm();
-  createDrawerApi.open();
+  createDrawerRef.value?.open();
 }
 
-function handleFileChange(uploadFile: any) {
-  createForm.attachmentFile = uploadFile.raw || null;
+function openReviewDrawer(item: ClaimApi.ClaimResponse) {
+  reviewDrawerRef.value?.open(item);
 }
 
-async function submitCreate() {
-  if (!createForm.reason_code) {
-    ElMessage.warning('请选择报销理由');
-    return;
-  }
-  if (createForm.amount <= 0) {
-    ElMessage.warning('金额必须大于 0');
-    return;
-  }
-  if (!createForm.attachmentFile) {
-    ElMessage.warning('请上传附件');
-    return;
-  }
-
-  createDrawerApi.lock(true);
-  try {
-    const fd = new FormData();
-    fd.append('reason_code', createForm.reason_code);
-    fd.append('amount', String(createForm.amount));
-    fd.append('currency', createForm.currency);
-    if (createForm.description) {
-      fd.append('description', createForm.description);
-    }
-    fd.append('attachment', createForm.attachmentFile);
-    await createClaimApi(fd);
-    ElMessage.success('报销申请已提交');
-    createDrawerApi.close();
-    await loadMyClaims();
-    refreshTable();
-  } catch {
-    ElMessage.error('提交失败');
-  } finally {
-    createDrawerApi.lock(false);
-  }
+async function handleCreateSuccess() {
+  await loadMyClaims();
+  refreshTable();
 }
 
-// ─── 审批 ────────────────────────────────────────────────────────────────────
-const currentReviewItem = ref<ClaimApi.ClaimResponse | null>(null);
-
-const [ReviewForm, reviewFormApi] = useVbenForm({
-  layout: 'vertical',
-  showDefaultActions: false,
-  schema: [
-    {
-      component: 'Input',
-      fieldName: 'employee',
-      label: '申请人',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'dept_region',
-      label: '部门/地区',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'reason',
-      label: '报销理由',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'amount_text',
-      label: '金额',
-      componentProps: { disabled: true },
-    },
-    {
-      component: 'Input',
-      fieldName: 'description',
-      label: '说明',
-      componentProps: { disabled: true, type: 'textarea', rows: 2 },
-    },
-    {
-      component: 'Input',
-      fieldName: 'attachment',
-      label: '附件',
-    },
-    {
-      component: 'Input',
-      fieldName: 'review_comment',
-      label: '审批备注',
-      componentProps: {
-        type: 'textarea',
-        rows: 3,
-        placeholder: '通过可不填；驳回必须填写原因',
-      },
-    },
-  ],
-});
-
-const [ReviewDrawer, reviewDrawerApi] = useVbenDrawer({
-  title: '审批报销申请',
-  confirmText: '通过',
-  onConfirm: () => submitReview('approved'),
-  onClosed() {
-    reviewFormApi.resetForm();
-    currentReviewItem.value = null;
-  },
-});
-
-async function openReviewDrawer(item: ClaimApi.ClaimResponse) {
-  currentReviewItem.value = item;
-  await reviewFormApi.resetForm();
-  await reviewFormApi.setValues({
-    employee: `${item.employee_name}（${item.employee_username}）`,
-    dept_region: `${item.employee_department || '-'} / ${item.employee_region || '-'}`,
-    reason: item.reason_label,
-    amount_text: `${item.amount.toFixed(2)} ${item.currency}${item.amount_hkd ? ` ≈ HKD ${item.amount_hkd.toFixed(2)}` : ''}`,
-    description: item.description || '无',
-    review_comment: '',
-  });
-  reviewDrawerApi.open();
-}
-
-async function submitReview(action: 'approved' | 'rejected') {
-  const item = currentReviewItem.value;
-  if (!item) return;
-  const values = await reviewFormApi.getValues();
-  const comment = (values.review_comment || '').trim();
-  if (action === 'rejected' && !comment) {
-    ElMessage.warning('驳回必须填写原因');
-    return;
-  }
-  reviewDrawerApi.lock(true);
-  try {
-    await reviewClaimApi(item.id, {
-      approval_status: action,
-      review_comment: comment || null,
-    });
-    ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
-    reviewDrawerApi.close();
-    await loadPendingApprovals();
-    await loadApprovalRecords();
-    refreshTable();
-  } catch {
-    ElMessage.error('操作失败');
-  } finally {
-    reviewDrawerApi.lock(false);
-  }
+async function handleReviewSuccess() {
+  await loadPendingApprovals();
+  await loadApprovalRecords();
+  refreshTable();
 }
 
 // ─── 数据加载 ────────────────────────────────────────────────────────────────
@@ -758,92 +545,14 @@ onMounted(() => {
     </div>
 
     <!-- 新建报销抽屉 -->
-    <CreateDrawer class="w-[600px]">
-      <CreateForm>
-        <template #reason_code>
-          <ElSelect
-            v-model="createForm.reason_code"
-            placeholder="请选择"
-            class="w-full"
-          >
-            <ElOption
-              v-for="r in reasonOptions"
-              :key="r.name"
-              :label="r.name"
-              :value="r.name"
-            />
-          </ElSelect>
-        </template>
-        <template #amount>
-          <ElInputNumber
-            v-model="createForm.amount"
-            :min="0.01"
-            :precision="2"
-            :step="1"
-            class="w-full"
-          />
-        </template>
-        <template #currency>
-          <ElSelect v-model="createForm.currency" class="w-full">
-            <ElOption
-              v-for="c in currencyOptions"
-              :key="c.currency_code"
-              :label="c.currency_code"
-              :value="c.currency_code"
-            />
-          </ElSelect>
-          <span
-            v-if="createForm.currency !== 'HKD'"
-            class="mt-1 block text-xs text-muted-foreground"
-          >
-            ≈ HKD {{ estimatedHkd.toFixed(2) }}
-          </span>
-        </template>
-        <template #description>
-          <ElInput
-            v-model="createForm.description"
-            type="textarea"
-            :rows="3"
-            placeholder="可选，补充说明报销用途"
-          />
-        </template>
-        <template #attachment>
-          <ElUpload
-            :auto-upload="false"
-            :limit="1"
-            accept="image/*,.pdf"
-            @change="handleFileChange"
-          >
-            <ElButton>选择文件</ElButton>
-            <template #tip>
-              <span class="block text-xs text-muted-foreground">
-                支持图片或 PDF，用于报销凭证
-              </span>
-            </template>
-          </ElUpload>
-        </template>
-      </CreateForm>
-    </CreateDrawer>
+    <CreateClaimDrawer
+      ref="createDrawerRef"
+      :currency-options="currencyOptions"
+      :reason-options="reasonOptions"
+      @success="handleCreateSuccess"
+    />
 
     <!-- 审批抽屉 -->
-    <ReviewDrawer class="w-[600px]">
-      <ReviewForm>
-        <template #attachment>
-          <a
-            v-if="currentReviewItem?.attachment_url"
-            :href="currentReviewItem.attachment_url"
-            target="_blank"
-          >
-            {{ currentReviewItem.attachment_name || '查看附件' }}
-          </a>
-          <span v-else>无</span>
-        </template>
-      </ReviewForm>
-      <template #center-footer>
-        <ElButton type="danger" @click="submitReview('rejected')">
-          驳回
-        </ElButton>
-      </template>
-    </ReviewDrawer>
+    <ReviewClaimDrawer ref="reviewDrawerRef" @success="handleReviewSuccess" />
   </Page>
 </template>
