@@ -58,7 +58,7 @@ def main():
         try_files $uri $uri/ /index.html;
     }
 
-    location /api {
+    location ^~ /api {
         proxy_pass http://localhost:8999;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
