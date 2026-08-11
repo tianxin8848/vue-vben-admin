@@ -939,10 +939,13 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/options'
     {"currency_code":"CNY","to_hkd_rate":1.09},
     {"currency_code":"HKD","to_hkd_rate":1.0},
     {"currency_code":"USD","to_hkd_rate":7.8},
-    {"currency_code":"MOP","to_hkd_rate":0.97}
+    {"currency_code":"MOP","to_hkd_rate":0.97},
+    {"currency_code":"JP","to_hkd_rate":0.05}
   ]
 }
 ```
+
+> 🆕 **更新**：`claim_currencies` 新增 `JP`（日元，`to_hkd_rate=0.05`），现共 5 种货币。
 
 ---
 
@@ -955,9 +958,11 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/options'
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
 | reason_code | string | ✅ | 事由代码 |
-| description | string | ❌ | 描述 |
+| description | string \| null | ❌ | 描述 |
 | amount | number | ✅ | 金额 |
 | currency | string | ✅ | 货币代码 |
+| invoice_date | string (date) | ✅ | 🆕 开票日期（YYYY-MM-DD） |
+| invoice_no | string \| null | ❌ | 🆕 票号 |
 | attachment | string (file) | ✅ | 附件文件 |
 
 **curl 示例:**
@@ -967,10 +972,13 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/claims' \
   -F 'description=DL380' \
   -F 'amount=245209' \
   -F 'currency=HKD' \
+  -F 'invoice_date=2026-07-23' \
+  -F 'invoice_no=INV20260723-001' \
   -F 'attachment=@/path/to/file.png'
 ```
 
-**响应 (201):**
+**响应 (201):** 返回完整的 Claim 对象，字段结构见下方「Claim 对象字段说明」。
+
 ```json
 {
   "id": "6a617d783c6d6fb226b55028",
@@ -982,6 +990,8 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/claims' \
   "reason_code": "办公采购",
   "reason_label": "办公采购",
   "description": "DL380",
+  "invoice_date": "2026-07-23",
+  "invoice_no": "INV20260723-001",
   "amount": 245209.0,
   "currency": "HKD",
   "exchange_rate_to_hkd": 1.0,
@@ -992,15 +1002,49 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/claims' \
     {"user_id":"6a2deedd...","username":"321321","full_name":"12321"}
   ],
   "current_approver_id": "6a2f6acd...",
+  "approval_history": [],
   "attachment_url": "/api/v1/claims/attachments/lin/20260723023328_d73bcf83465d4c249be7f8ef4e733344.png",
   "attachment_name": "IMG_0262.png",
   "created_by_id": "6a2f6acd...",
   "created_by_name": "lin",
   "review_comment": null,
   "reviewed_at": null,
-  "created_at": "2026-07-23T02:33:28.920000Z"
+  "created_at": "2026-07-23T02:33:28.920000Z",
+  "updated_at": null
 }
 ```
+
+**Claim 对象字段说明（适用于 #37/#38/#39/#40/#42 的响应）：**
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | string | 报销申请 ID |
+| employee_id | string | 员工 ID |
+| employee_username | string | 员工用户名 |
+| employee_name | string | 员工姓名 |
+| employee_department | string \| null | 员工部门 |
+| employee_region | string \| null | 员工地区 |
+| reason_code | string | 事由代码 |
+| reason_label | string | 事由显示名 |
+| description | string \| null | 描述 |
+| invoice_date | string \| null | 🆕 开票日期（YYYY-MM-DD） |
+| invoice_no | string \| null | 🆕 票号 |
+| amount | number | 金额 |
+| currency | string | 货币代码 |
+| exchange_rate_to_hkd | number \| null | 折算港币汇率 |
+| amount_hkd | number \| null | 折算港币金额 |
+| approval_status | string | 审批状态：`pending` / `approved` / `rejected` / `withdrawn` |
+| approval_chain | array | 审批链（含 user_id / username / full_name） |
+| current_approver_id | string \| null | 当前审批人 ID |
+| approval_history | array | 🆕 审批历史记录 |
+| attachment_url | string \| null | 附件 URL |
+| attachment_name | string \| null | 附件文件名 |
+| created_by_id | string | 创建人 ID |
+| created_by_name | string | 创建人姓名 |
+| review_comment | string \| null | 审批备注 |
+| reviewed_at | string (date-time) \| null | 审批时间 |
+| created_at | string (date-time) \| null | 创建时间 |
+| updated_at | string (date-time) \| null | 🆕 更新时间 |
 
 ---
 
@@ -1013,7 +1057,7 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/claims' \
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/my'
 ```
 
-**响应 (200):** 返回报销对象数组
+**响应 (200):** 返回 Claim 对象数组，每个对象字段结构见 #37「Claim 对象字段说明」。
 
 ---
 
@@ -1026,7 +1070,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/my'
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/history/my'
 ```
 
-**响应 (200):** 返回历史报销数组
+**响应 (200):** 返回 Claim 对象数组，字段结构同 #38。
 
 ---
 
@@ -1039,7 +1083,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/history/my'
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/approvals/my'
 ```
 
-**响应 (200):** 返回待审批报销数组
+**响应 (200):** 返回 Claim 对象数组，字段结构同 #38。
 
 ---
 
@@ -1052,6 +1096,73 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/approvals/my'
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/approvals/records/my'
 ```
 
+**响应 (200):** 返回 Claim 审批记录对象数组，字段结构如下：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | string | 审批记录 ID |
+| claim_request_id | string | 关联的报销申请 ID |
+| action | string | 操作动作（如 `submitted` / `approved` / `rejected` 等） |
+| operator_id | string | 操作人 ID |
+| operator_username | string | 操作人用户名 |
+| operator_name | string \| null | 操作人姓名 |
+| operator_role | string \| null | 操作人角色（如 `applicant` / `approver`） |
+| employee_id | string | 申请人 ID |
+| employee_username | string | 申请人用户名 |
+| employee_name | string | 申请人姓名 |
+| employee_department | string \| null | 申请人部门 |
+| employee_region | string \| null | 申请人地区 |
+| claim_reason_code | string | 报销事由代码 |
+| claim_reason_label | string | 报销事由显示名 |
+| invoice_date | string \| null | 🆕 开票日期 |
+| amount | number | 金额 |
+| currency | string | 货币代码 |
+| amount_hkd | number \| null | 折算港币金额 |
+| comment | string \| null | 审批备注 |
+| approval_status_before | string \| null | 操作前审批状态 |
+| approval_status_after | string | 操作后审批状态：`pending` / `approved` / `rejected` / `withdrawn` |
+| current_approver_id_before | string \| null | 操作前当前审批人 ID |
+| current_approver_id_after | string \| null | 操作后当前审批人 ID |
+| current_approver_name_after | string \| null | 操作后当前审批人姓名 |
+| current_approver_level_after | integer \| null | 🆕 操作后当前审批人层级 |
+| is_flowing | boolean | 🆕 是否仍在审批流中（默认 false） |
+| created_at | string (date-time) \| null | 记录创建时间 |
+
+**响应示例:**
+```json
+[
+  {
+    "id": "6a715618003ce0ca145e686f",
+    "claim_request_id": "6a715618003ce0ca145e686e",
+    "action": "submitted",
+    "operator_id": "6a2f6acd8d8c88ae7d154c29",
+    "operator_username": "lin",
+    "operator_name": "lin",
+    "operator_role": "applicant",
+    "employee_id": "6a2f6acd8d8c88ae7d154c29",
+    "employee_username": "lin",
+    "employee_name": "lin",
+    "employee_department": null,
+    "employee_region": null,
+    "claim_reason_code": "餐饮报销",
+    "claim_reason_label": "餐饮报销",
+    "invoice_date": null,
+    "amount": 88.0,
+    "currency": "CNY",
+    "amount_hkd": null,
+    "comment": null,
+    "approval_status_before": null,
+    "approval_status_after": "pending",
+    "current_approver_id_before": null,
+    "current_approver_id_after": "6a2f6acd8d8c88ae7d154c29",
+    "current_approver_name_after": "lin",
+    "current_approver_level_after": 1,
+    "is_flowing": false,
+    "created_at": "2026-08-04T03:01:44.870000Z"
+  }
+]
+```
+
 ---
 
 ### 42. 审批报销
@@ -1062,8 +1173,8 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/approvals/rec
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| approval_status | string | ✅ | 审批结果: `approved` / `rejected` |
-| review_comment | string | ❌ | 审批备注 |
+| approval_status | string | ✅ | 审批结果：`approved` / `rejected`（schema 也允许 `pending` / `withdrawn`） |
+| review_comment | string \| null | ❌ | 审批备注 |
 
 **curl 示例:**
 ```bash
@@ -1073,22 +1184,71 @@ curl -b /tmp/cookies.txt -X PATCH 'http://10.254.253.187:8999/api/v1/claims/{cla
 
 > 注意：此接口使用 `application/x-www-form-urlencoded` 格式，不使用 JSON。
 
+**响应 (200):** 返回更新后的 Claim 对象，字段结构见 #37「Claim 对象字段说明」。
+
 ---
 
 ### 43. 获取报销附件
 
 **GET** `/api/v1/claims/attachments/{username}/{file_name}`
 
+**路径参数:**
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| username | string | ✅ | 用户名 |
+| file_name | string | ✅ | 附件文件名 |
+
 **curl 示例:**
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/attachments/lin/20260723023328_d73bcf83465d4c249be7f8ef4e733344.png'
 ```
 
+**响应 (200):** 返回附件二进制文件（`Content-Type` 根据文件类型自动设置）。
+
+---
+
+### 44. 导出我的报销记录 🆕
+
+**GET** `/api/v1/claims/export`
+
+> **新增接口**：导出当前登录用户的报销记录为 Excel（`.xlsx`）文件。无请求参数。
+
+**curl 示例:**
+```bash
+curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/export' \
+  -o 报销记录_$(date +%Y%m%d).xlsx
+```
+
+**响应 (200):**
+- `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- `Content-Disposition: attachment; filename*=UTF-8''报销记录_YYYYMMDD.xlsx`
+- 返回 Excel 二进制流
+
+**导出表格列（14 列）：**
+
+| 列 | 字段 | 说明 |
+|---|---|---|
+| A | 开票时间 | `invoice_date` |
+| B | 票号 | `invoice_no` |
+| C | 报销理由 | `reason_label` |
+| D | 金额 | `amount` |
+| E | 币种 | `currency` |
+| F | 折算港币 | `amount_hkd` |
+| G | 审批状态 | `approval_status`（中文：待审批 / 已通过 / 已拒绝 / 已撤回） |
+| H | 员工姓名 | `employee_name` |
+| I | 员工账号 | `employee_username` |
+| J | 部门 | `employee_department` |
+| K | 地区 | `employee_region` |
+| L | 说明 | `description` |
+| M | 附件名称 | `attachment_name` |
+| N | 提交时间 | `created_at` |
+
 ---
 
 ## 六、系统参数模块
 
-### 44. 获取系统设置
+### 45. 获取系统设置
 
 **GET** `/api/v1/system-settings`
 
@@ -1132,7 +1292,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/system-settings'
 
 ---
 
-### 45. 更新系统设置
+### 46. 更新系统设置
 
 **PUT** `/api/v1/system-settings`
 
@@ -1164,7 +1324,7 @@ curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settin
 
 ---
 
-### 46. 新增/更新法定节假日
+### 47. 新增/更新法定节假日
 
 **PUT** `/api/v1/system-settings/regional-holidays`
 
@@ -1185,7 +1345,7 @@ curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settin
 
 ---
 
-### 47. 删除法定节假日
+### 48. 删除法定节假日
 
 **DELETE** `/api/v1/system-settings/regional-holidays`
 
@@ -1205,7 +1365,7 @@ curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/system-set
 
 ---
 
-### 48. 批量新增节假日区间
+### 49. 批量新增节假日区间
 
 **PUT** `/api/v1/system-settings/regional-holidays/range`
 
@@ -1227,7 +1387,7 @@ curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settin
 
 ---
 
-### 49. 删除节假日区间
+### 50. 删除节假日区间
 
 **DELETE** `/api/v1/system-settings/regional-holidays/range`
 
@@ -1250,7 +1410,7 @@ curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/system-set
 
 ## 七、数据迁移模块
 
-### 50. 导出数据
+### 51. 导出数据
 
 **GET** `/api/v1/data-migration/export`
 
@@ -1269,7 +1429,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/expor
 
 ---
 
-### 51. 导入数据
+### 52. 导入数据
 
 **POST** `/api/v1/data-migration/import`
 
@@ -1297,7 +1457,7 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/data-migrati
 
 ---
 
-### 52. 备份数据
+### 53. 备份数据
 
 **POST** `/api/v1/data-migration/backup`
 
@@ -1316,7 +1476,7 @@ curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/data-migrati
 
 ---
 
-### 53. 获取备份列表
+### 54. 获取备份列表
 
 **GET** `/api/v1/data-migration/backups`
 
@@ -1332,7 +1492,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backu
 
 ---
 
-### 54. 下载指定备份
+### 55. 下载指定备份
 
 **GET** `/api/v1/data-migration/backups/{filename}`
 
@@ -2129,7 +2289,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/attachments/{
 
 ## 六、系统参数模块
 
-### 44. 获取系统设置
+### 45. 获取系统设置
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/system-settings'
 ```
@@ -2149,7 +2309,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/system-settings'
 }
 ```
 
-### 45. 更新系统设置
+### 46. 更新系统设置
 ```bash
 curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settings' \
   -H 'Content-Type: application/json' \
@@ -2161,28 +2321,28 @@ curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settin
   }'
 ```
 
-### 46. 新增/更新法定节假日
+### 47. 新增/更新法定节假日
 ```bash
 curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settings/regional-holidays' \
   -H 'Content-Type: application/json' \
   -d '{"region":"香港","date":"2026-10-01","holiday_name":"国庆节"}'
 ```
 
-### 47. 删除法定节假日
+### 48. 删除法定节假日
 ```bash
 curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/system-settings/regional-holidays' \
   -H 'Content-Type: application/json' \
   -d '{"region":"香港","date":"2026-10-01"}'
 ```
 
-### 48. 批量新增节假日区间
+### 49. 批量新增节假日区间
 ```bash
 curl -b /tmp/cookies.txt -X PUT 'http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/range' \
   -H 'Content-Type: application/json' \
   -d '{"region":"香港","start_date":"2026-02-01","end_date":"2026-02-07","holiday_name":"春节假期"}'
 ```
 
-### 49. 删除节假日区间
+### 50. 删除节假日区间
 ```bash
 curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/range' \
   -H 'Content-Type: application/json' \
@@ -2193,23 +2353,23 @@ curl -b /tmp/cookies.txt -X DELETE 'http://10.254.253.187:8999/api/v1/system-set
 
 ## 七、数据迁移模块
 
-### 50. 导出数据
+### 51. 导出数据
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/export?source=default'
 ```
 
-### 51. 导入数据
+### 52. 导入数据
 ```bash
 curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/data-migration/import?target=default&mode=merge' \
   -F 'file=@/path/to/backup.json'
 ```
 
-### 52. 备份数据
+### 53. 备份数据
 ```bash
 curl -b /tmp/cookies.txt -X POST 'http://10.254.253.187:8999/api/v1/data-migration/backup?source=default'
 ```
 
-### 53. 获取备份列表
+### 54. 获取备份列表
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backups'
 ```
@@ -2218,7 +2378,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backu
 {"items": []}
 ```
 
-### 54. 下载指定备份
+### 55. 下载指定备份
 ```bash
 curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backups/{filename}'
 ```

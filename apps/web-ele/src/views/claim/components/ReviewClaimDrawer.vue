@@ -44,6 +44,18 @@ const [ReviewForm, reviewFormApi] = useVbenForm(
       },
       {
         component: 'Input',
+        fieldName: 'invoice_date',
+        label: t('page.claim.form.invoiceDateLabel'),
+        componentProps: { disabled: true },
+      },
+      {
+        component: 'Input',
+        fieldName: 'invoice_no',
+        label: t('page.claim.form.invoiceNoLabel'),
+        componentProps: { disabled: true },
+      },
+      {
+        component: 'Input',
         fieldName: 'amount_text',
         label: t('page.claim.form.amountLabel'),
         componentProps: { disabled: true },
@@ -91,6 +103,8 @@ async function open(item: ClaimApi.ClaimResponse) {
     dept_region: `${item.employee_department || '-'} / ${item.employee_region || '-'}`,
     description: item.description || t('page.claim.buttons.noData'),
     employee: `${item.employee_name}（${item.employee_username}）`,
+    invoice_date: item.invoice_date || t('page.claim.buttons.noData'),
+    invoice_no: item.invoice_no || t('page.claim.buttons.noData'),
     reason: item.reason_label,
     review_comment: '',
   });

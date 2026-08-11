@@ -208,7 +208,9 @@
       "operation": "Action",
       "recordOperation": "Action",
       "remark": "Remark",
-      "time": "Time"
+      "time": "Time",
+      "invoiceDate": "Invoice Date",
+      "invoiceNo": "Invoice No."
     },
     "status": {
       "approved": "Approved",
@@ -234,7 +236,8 @@
       "viewAttachment": "View Attachment",
       "selectFile": "Select File",
       "noData": "None",
-      "none": "None"
+      "none": "None",
+      "export": "Export Excel"
     },
     "form": {
       "reasonLabel": "Claim Reason",
@@ -247,7 +250,11 @@
       "optionalDescription": "Optional, add supporting details",
       "attachmentTip": "Upload an image or PDF as proof of claim",
       "reasonPlaceholder": "Please select",
-      "reviewCommentPlaceholder": "Optional for approval; required for rejection"
+      "reviewCommentPlaceholder": "Optional for approval; required for rejection",
+      "invoiceDateLabel": "Invoice Date",
+      "invoiceDatePlaceholder": "Select invoice date",
+      "invoiceNoLabel": "Invoice No.",
+      "invoiceNoPlaceholder": "Optional, enter invoice number"
     },
     "drawer": {
       "createTitle": "New Claim",
@@ -268,7 +275,10 @@
       "rejectReasonRequired": "A reason is required for rejection",
       "approvedSuccess": "Approved",
       "rejectedSuccess": "Rejected",
-      "operationFailed": "Operation failed"
+      "operationFailed": "Operation failed",
+      "invoiceDateRequired": "Please select the invoice date",
+      "exportSuccess": "Export succeeded",
+      "exportFailed": "Export failed"
     }
   },
   "system": {

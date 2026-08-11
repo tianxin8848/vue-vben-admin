@@ -7,10 +7,11 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElSegmented, ElTag } from 'element-plus';
+import { ElButton, ElMessage, ElSegmented, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  exportMyClaimsApi,
   getClaimOptionsApi,
   getMyClaimApprovalRecordsApi,
   getMyClaimHistoryApi,
@@ -130,6 +131,18 @@ const tabColumns = computed<Record<TabKey, VxeGridProps['columns']>>(() => ({
       slots: { default: 'reason' },
     },
     {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 120,
+      slots: { default: 'invoice_date' },
+    },
+    {
+      field: 'invoice_no',
+      title: t('page.claim.columns.invoiceNo'),
+      minWidth: 140,
+      slots: { default: 'invoice_no' },
+    },
+    {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
@@ -166,6 +179,18 @@ const tabColumns = computed<Record<TabKey, VxeGridProps['columns']>>(() => ({
       title: t('page.claim.columns.reason'),
       minWidth: 140,
       slots: { default: 'reason' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 120,
+      slots: { default: 'invoice_date' },
+    },
+    {
+      field: 'invoice_no',
+      title: t('page.claim.columns.invoiceNo'),
+      minWidth: 140,
+      slots: { default: 'invoice_no' },
     },
     {
       field: 'amount',
@@ -210,6 +235,12 @@ const tabColumns = computed<Record<TabKey, VxeGridProps['columns']>>(() => ({
       title: t('page.claim.columns.reason'),
       minWidth: 130,
       slots: { default: 'reason' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 120,
+      slots: { default: 'invoice_date' },
     },
     {
       field: 'amount',
@@ -368,6 +399,29 @@ async function handleReviewSuccess() {
   refreshTable();
 }
 
+// ─── 导出 Excel ──────────────────────────────────────────────────────────────
+async function handleExport() {
+  loading.value = true;
+  try {
+    const blob = await exportMyClaimsApi();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const now = new Date();
+    const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    a.download = `claims_${ymd}.xlsx`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    ElMessage.success(t('page.claim.messages.exportSuccess'));
+  } catch {
+    ElMessage.error(t('page.claim.messages.exportFailed'));
+  } finally {
+    loading.value = false;
+  }
+}
+
 // ─── 数据加载 ────────────────────────────────────────────────────────────────
 async function fetchAll() {
   loading.value = true;
@@ -499,6 +553,9 @@ onMounted(() => {
           >
             {{ $t('page.claim.buttons.create') }}
           </ElButton>
+          <ElButton :loading="loading" @click="handleExport">
+            {{ $t('page.claim.buttons.export') }}
+          </ElButton>
         </template>
         <template #reason="{ row }">
           <strong v-if="activeTab === 'my' || activeTab === 'history'">
@@ -507,6 +564,12 @@ onMounted(() => {
           <template v-else>
             {{ row.claim_reason_label || row.reason_label }}
           </template>
+        </template>
+        <template #invoice_date="{ row }">
+          {{ row.invoice_date || '-' }}
+        </template>
+        <template #invoice_no="{ row }">
+          {{ row.invoice_no || '-' }}
         </template>
         <template #amount="{ row }">
           <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>

@@ -8,6 +8,7 @@ import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
+  ElDatePicker,
   ElInput,
   ElInputNumber,
   ElMessage,
@@ -35,6 +36,8 @@ const createForm = reactive({
   attachmentFile: null as File | null,
   currency: 'HKD',
   description: '',
+  invoice_date: '' as string,
+  invoice_no: '',
   reason_code: '',
 });
 
@@ -78,6 +81,19 @@ const [CreateForm] = useVbenForm(
       },
       {
         component: 'Input',
+        fieldName: 'invoice_date',
+        label: t('page.claim.form.invoiceDateLabel'),
+        rules: 'required',
+        formItemClass: 'col-span-1',
+      },
+      {
+        component: 'Input',
+        fieldName: 'invoice_no',
+        label: t('page.claim.form.invoiceNoLabel'),
+        formItemClass: 'col-span-2',
+      },
+      {
+        component: 'Input',
         fieldName: 'description',
         label: t('page.claim.form.descriptionLabel'),
         formItemClass: 'col-span-2',
@@ -105,6 +121,8 @@ function resetCreateForm() {
   createForm.attachmentFile = null;
   createForm.currency = props.currencyOptions[0]?.currency_code || 'HKD';
   createForm.description = '';
+  createForm.invoice_date = '';
+  createForm.invoice_no = '';
   createForm.reason_code = '';
 }
 
@@ -121,6 +139,10 @@ async function submitCreate() {
     ElMessage.warning(t('page.claim.messages.amountPositive'));
     return;
   }
+  if (!createForm.invoice_date) {
+    ElMessage.warning(t('page.claim.messages.invoiceDateRequired'));
+    return;
+  }
   if (!createForm.attachmentFile) {
     ElMessage.warning(t('page.claim.messages.uploadAttachment'));
     return;
@@ -132,6 +154,10 @@ async function submitCreate() {
     fd.append('reason_code', createForm.reason_code);
     fd.append('amount', String(createForm.amount));
     fd.append('currency', createForm.currency);
+    fd.append('invoice_date', createForm.invoice_date);
+    if (createForm.invoice_no) {
+      fd.append('invoice_no', createForm.invoice_no);
+    }
     if (createForm.description) {
       fd.append('description', createForm.description);
     }
@@ -196,6 +222,21 @@ defineExpose({ open });
         >
           ≈ HKD {{ estimatedHkd.toFixed(2) }}
         </span>
+      </template>
+      <template #invoice_date>
+        <ElDatePicker
+          v-model="createForm.invoice_date"
+          type="date"
+          value-format="YYYY-MM-DD"
+          :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
+          class="!w-full"
+        />
+      </template>
+      <template #invoice_no>
+        <ElInput
+          v-model="createForm.invoice_no"
+          :placeholder="$t('page.claim.form.invoiceNoPlaceholder')"
+        />
       </template>
       <template #description>
         <ElInput

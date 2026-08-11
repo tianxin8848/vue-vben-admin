@@ -208,7 +208,9 @@
       "operation": "操作",
       "recordOperation": "操作",
       "remark": "备注",
-      "time": "时间"
+      "time": "时间",
+      "invoiceDate": "开票时间",
+      "invoiceNo": "票号"
     },
     "status": {
       "approved": "已通过",
@@ -234,7 +236,8 @@
       "viewAttachment": "查看附件",
       "selectFile": "选择文件",
       "noData": "无",
-      "none": "无"
+      "none": "无",
+      "export": "导出 Excel"
     },
     "form": {
       "reasonLabel": "报销理由",
@@ -247,7 +250,11 @@
       "optionalDescription": "可选，补充说明报销用途",
       "attachmentTip": "支持图片或 PDF，用于报销凭证",
       "reasonPlaceholder": "请选择",
-      "reviewCommentPlaceholder": "通过可不填；驳回必须填写原因"
+      "reviewCommentPlaceholder": "通过可不填；驳回必须填写原因",
+      "invoiceDateLabel": "开票时间",
+      "invoiceDatePlaceholder": "请选择开票日期",
+      "invoiceNoLabel": "票号",
+      "invoiceNoPlaceholder": "可选，请输入票号"
     },
     "drawer": {
       "createTitle": "新建报销申请",
@@ -268,7 +275,10 @@
       "rejectReasonRequired": "驳回必须填写原因",
       "approvedSuccess": "已通过",
       "rejectedSuccess": "已驳回",
-      "operationFailed": "操作失败"
+      "operationFailed": "操作失败",
+      "invoiceDateRequired": "请选择开票日期",
+      "exportSuccess": "导出成功",
+      "exportFailed": "导出失败"
     }
   },
   "system": {
