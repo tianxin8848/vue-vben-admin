@@ -97,7 +97,7 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location /api {
+    location ^~ /api {
         proxy_pass http://localhost:8999;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -277,6 +277,61 @@ firewall-cmd --zone=public --add-port=80/tcp --permanent
 
 # 重新加载防火墙
 firewall-cmd --reload
+```
+
+### 问题 5：头像/附件等图片资源 404（API 正常）
+
+**现象**: 登录、列表等 JSON 接口正常，但 `/api/v1/employees/avatars/.../*.jpg`、`/api/v1/claims/attachments/.../*.png` 等图片资源返回 404，头像无法显示。
+
+**根因**: nginx 的 `location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$`（正则匹配）优先级**高于** `location /api`（普通前缀匹配）。任何以 `.jpg/.png/.jpeg` 等结尾的请求会被正则 location 拦截，当作本地静态文件处理，返回 nginx 自身的 404，根本不会转发到后端 :8999。
+
+**判断方法**:
+
+```bash
+# 通过 nginx 访问一个不存在的 .jpg 路径
+curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" \
+  "http://localhost/api/v1/not-exist.jpg"
+
+# 如果输出 "404 text/html 153"  -> 是 nginx 自身 404，说明被正则拦截了（有问题）
+# 如果输出 "404 application/json 22" -> 是后端返回的 JSON 404，说明 /api 转发正常（已修复）
+```
+
+**解决方案**: 给 `location /api` 加上 `^~` 修饰符，使其优先级高于正则匹配。`^~` 的作用是：一旦最长前缀匹配命中带 `^~` 的 location，就不再检查后面的正则 location。
+
+```bash
+# 1. 备份
+cp /etc/nginx/conf.d/vben.conf /etc/nginx/conf.d/vben.conf.bak.$(date +%s)
+
+# 2. 把 location /api { 改成 location ^~ /api {
+sed -i 's|location /api {|location ^~ /api {|' /etc/nginx/conf.d/vben.conf
+
+# 3. 验证 + 重启
+nginx -t && systemctl restart nginx
+```
+
+修改后的关键配置：
+
+```nginx
+location ^~ /api {                              # ← 加 ^~ 修饰符
+    proxy_pass http://localhost:8999;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+```
+
+**验证**:
+
+```bash
+# 修复后应返回后端的 JSON 404
+curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" \
+  "http://localhost/api/v1/not-exist.jpg"
+# 预期输出: 404 application/json 22
 ```
 
 ---

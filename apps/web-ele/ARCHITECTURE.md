@@ -341,3 +341,19 @@ A: 如果之前生成过路由（`isAccessChecked = true`），需要**清除浏
 | `/employee/claims` | `views/claim/index.vue` | 报销管理 |
 
 路由文件位于 `src/router/routes/modules/workspace.ts`，这个项目将路由拆分到了多个模块文件中（workspace、leave-workflows 等），所以如果你只看 `api/index.ts` 或 `api/request.ts` 是找不到的——那些是 **API 请求** 的定义，路由配置在 `src/router/routes/modules/` 目录下。
+
+
+修复完成，改了三处：
+
+1. 筛选表单重叠问题
+
+- wrapperClass 从 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 改为 grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+- 移除了 formItemClass: 'col-span-2 lg:col-span-1'
+原因：xl 下5列让5个筛选项占满整行，操作按钮区 col-[-2/-1] 与第5个筛选项（地区）定位到同一列导致重叠。改为3列后，5个筛选项分两行（3+2），按钮区占第二行第3列，不再重叠。
+
+2. 表单内容显示不全问题
+
+- gridOptions.height 从 'auto' 改为 minHeight: 400
+- Page 去掉 :auto-content-height="true"
+- 外层容器去掉 h-full ，BasicTable 去掉 min-h-0 flex-1
+原因： height: 'auto' 要求父容器有明确高度。但新增员工卡片内容很多， flex-1 min-h-0 计算出的剩余高度过小，vxe-grid 内部把高度优先分配给表格，导致筛选表单区域被压缩。改为自然高度布局后，页面可滚动，筛选表单和表格都能完整显示。

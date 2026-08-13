@@ -36,6 +36,8 @@ export namespace ClaimApi {
     reason_code: string;
     reason_label: string;
     description: null | string;
+    invoice_date: null | string;
+    invoice_no: null | string;
     amount: number;
     currency: string;
     exchange_rate_to_hkd: null | number;
@@ -70,11 +72,12 @@ export namespace ClaimApi {
     employee_region: null | string;
     claim_reason_code: string;
     claim_reason_label: string;
+    invoice_date: null | string;
     amount: number;
     currency: string;
     amount_hkd: null | number;
     comment: null | string;
-    approval_status_before: null | ClaimApprovalStatus;
+    approval_status_before: ClaimApprovalStatus | null;
     approval_status_after: ClaimApprovalStatus;
     current_approver_id_before: null | string;
     current_approver_id_after: null | string;
@@ -115,9 +118,7 @@ export async function createClaimApi(formData: FormData) {
 
 /** 获取我待审批的报销申请 */
 export async function getMyPendingClaimApprovalsApi() {
-  return requestClient.get<ClaimApi.ClaimResponse[]>(
-    '/claims/approvals/my',
-  );
+  return requestClient.get<ClaimApi.ClaimResponse[]>('/claims/approvals/my');
 }
 
 /** 获取我的报销审批记录 */
@@ -127,19 +128,37 @@ export async function getMyClaimApprovalRecordsApi() {
   );
 }
 
-/** 审批报销申请 */
+/** 审批报销申请（application/x-www-form-urlencoded） */
 export async function reviewClaimApi(
   claimId: string,
   data: { approval_status: string; review_comment?: null | string },
 ) {
-  const formData = new FormData();
-  formData.append('approval_status', data.approval_status);
+  const params = new URLSearchParams();
+  params.append('approval_status', data.approval_status);
   if (data.review_comment) {
-    formData.append('review_comment', data.review_comment);
+    params.append('review_comment', data.review_comment);
   }
   return requestClient.patch<ClaimApi.ClaimResponse>(
     `/claims/${claimId}/approval`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
+    params,
+    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+  );
+}
+
+// ─── 导出 ────────────────────────────────────────────────────────────────────
+
+/** 导出我的报销记录为 Excel（.xlsx） */
+export async function exportMyClaimsApi() {
+  return requestClient.get<Blob>('/claims/export', {
+    responseType: 'blob',
+  });
+}
+
+// ─── 撤回 ────────────────────────────────────────────────────────────────────
+
+/** 撤回我自己的待审批报销申请 */
+export async function withdrawClaimApi(claimId: string) {
+  return requestClient.patch<ClaimApi.ClaimResponse>(
+    `/claims/${claimId}/withdraw`,
   );
 }

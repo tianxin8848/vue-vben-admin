@@ -81,7 +81,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/system/settings/index.vue'),
         meta: {
           affixTab: false,
-          icon: 'lucide:gear',
+          icon: 'lucide:cog',
           title: $t('page.system.settings'),
           authority: ['admin', 'user'],
         },

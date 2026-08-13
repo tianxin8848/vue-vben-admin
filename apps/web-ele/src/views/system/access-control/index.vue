@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { EmployeeApi } from '#/api';
+import type { AccessControlEmployeeItem } from '#/api';
 
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -14,51 +14,27 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElOption,
-  ElSelect,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
 
 import {
-  getEmployeesApi,
-  getSystemSettingsApi,
-  updateEmployeeAccessControlApi,
+  getAccessControlEmployeesApi,
+  updateEmployeeAccessControlV2Api,
 } from '#/api';
 
 const router = useRouter();
 const loading = ref(false);
-const employees = ref<EmployeeApi.EmployeeResponse[]>([]);
+const employees = ref<AccessControlEmployeeItem[]>([]);
 
 const searchForm = reactive({
   keyword: '',
-  department: '',
-  region: '',
 });
 
 const showEditModal = ref(false);
 const editEmployeeId = ref('');
-const editEmployee = ref<EmployeeApi.EmployeeResponse | null>(null);
+const editEmployee = ref<AccessControlEmployeeItem | null>(null);
 const editForm = reactive({ accessControlId: '' });
-
-const departmentOptions = ref<{ label: string; value: string }[]>([]);
-const regionOptions = ref<{ label: string; value: string }[]>([]);
-
-async function fetchSystemSettings() {
-  try {
-    const settings = await getSystemSettingsApi();
-    departmentOptions.value = (settings.departments || []).map((d) => ({
-      label: d,
-      value: d,
-    }));
-    regionOptions.value = (settings.regions || []).map((r) => ({
-      label: r,
-      value: r,
-    }));
-  } catch {
-    // 获取系统设置失败时保持空选项
-  }
-}
 
 const filteredEmployees = computed(() => {
   let list = [...employees.value];
@@ -69,18 +45,8 @@ const filteredEmployees = computed(() => {
       (e) =>
         e.full_name?.toLowerCase().includes(kw) ||
         e.username.toLowerCase().includes(kw) ||
-        e.email.toLowerCase().includes(kw) ||
-        e.employee_code?.toLowerCase().includes(kw) ||
         e.access_control_id?.toLowerCase().includes(kw),
     );
-  }
-
-  if (searchForm.department) {
-    list = list.filter((e) => e.department === searchForm.department);
-  }
-
-  if (searchForm.region) {
-    list = list.filter((e) => e.region === searchForm.region);
   }
 
   return list;
@@ -89,7 +55,7 @@ const filteredEmployees = computed(() => {
 async function fetchEmployees() {
   loading.value = true;
   try {
-    employees.value = await getEmployeesApi();
+    employees.value = await getAccessControlEmployeesApi();
   } finally {
     loading.value = false;
   }
@@ -101,12 +67,10 @@ function handleSearch() {
 
 function handleReset() {
   searchForm.keyword = '';
-  searchForm.department = '';
-  searchForm.region = '';
   fetchEmployees();
 }
 
-function openEditModal(employee: EmployeeApi.EmployeeResponse) {
+function openEditModal(employee: AccessControlEmployeeItem) {
   editEmployeeId.value = employee.id;
   editEmployee.value = employee;
   editForm.accessControlId = employee.access_control_id || '';
@@ -122,7 +86,7 @@ function closeEditModal() {
 
 async function handleSaveAccessControl() {
   try {
-    await updateEmployeeAccessControlApi(editEmployeeId.value, {
+    await updateEmployeeAccessControlV2Api(editEmployeeId.value, {
       access_control_id: editForm.accessControlId,
     });
     ElMessage.success('门禁ID更新成功');
@@ -137,51 +101,22 @@ function goBack() {
   router.push('/employee/manage');
 }
 
-fetchSystemSettings();
 fetchEmployees();
 </script>
 
 <template>
-  <Page title="门禁管理" description="管理员工的门禁ID，支持搜索和批量编辑">
+  <Page title="门禁管理" description="管理员工的门禁ID，支持搜索和编辑">
     <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
 
     <ElCard class="search-card">
       <div class="search-bar">
         <ElInput
           v-model="searchForm.keyword"
-          placeholder="搜索用户名 / 邮箱 / 姓名 / 工号 / 门禁ID"
+          placeholder="搜索姓名 / 账号 / 门禁ID"
           style="width: 280px"
           clearable
           @keyup.enter="handleSearch"
         />
-        <ElSelect
-          v-model="searchForm.department"
-          placeholder="全部部门"
-          style="width: 140px"
-          clearable
-        >
-          <ElOption label="全部部门" value="" />
-          <ElOption
-            v-for="opt in departmentOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-        <ElSelect
-          v-model="searchForm.region"
-          placeholder="全部地区"
-          style="width: 120px"
-          clearable
-        >
-          <ElOption label="全部地区" value="" />
-          <ElOption
-            v-for="opt in regionOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
         <ElButton type="primary" @click="handleSearch">搜索</ElButton>
         <ElButton @click="handleReset">重置筛选</ElButton>
         <ElButton @click="fetchEmployees">刷新列表</ElButton>
@@ -196,12 +131,9 @@ fetchEmployees();
         v-loading="loading"
         size="small"
       >
-        <ElTableColumn prop="employee_code" label="工号" width="100" />
-        <ElTableColumn prop="full_name" label="姓名" width="100" />
-        <ElTableColumn prop="username" label="账号" width="120" />
-        <ElTableColumn prop="department" label="部门" width="140" />
-        <ElTableColumn prop="region" label="地区" width="100" />
-        <ElTableColumn prop="access_control_id" label="门禁ID" min-width="150">
+        <ElTableColumn prop="full_name" label="姓名" min-width="120" />
+        <ElTableColumn prop="username" label="账号" min-width="140" />
+        <ElTableColumn prop="access_control_id" label="门禁ID" min-width="180">
           <template #default="{ row }">
             <span v-if="row.access_control_id">{{
               row.access_control_id
@@ -209,19 +141,12 @@ fetchEmployees();
             <span v-else class="no-value">-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn prop="is_active" label="状态" width="100">
-          <template #default="{ row }">
-            <span :class="row.is_active ? 'status-active' : 'status-inactive'">
-              {{ row.is_active ? '启用' : '禁用' }}
-            </span>
-          </template>
-        </ElTableColumn>
         <ElTableColumn label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <ElButton
               size="small"
               type="primary"
-              @click="openEditModal(row as EmployeeApi.EmployeeResponse)"
+              @click="openEditModal(row as AccessControlEmployeeItem)"
             >
               编辑
             </ElButton>
@@ -254,3 +179,30 @@ fetchEmployees();
     </ElDialog>
   </Page>
 </template>
+
+<style scoped>
+.search-card {
+  margin-bottom: 16px;
+}
+
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.no-value {
+  color: #cbd5e1;
+}
+
+.status-active {
+  font-weight: 500;
+  color: #16a34a;
+}
+
+.status-inactive {
+  font-weight: 500;
+  color: #dc2626;
+}
+</style>

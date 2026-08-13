@@ -22,6 +22,7 @@ export async function getUserInfoApi(): Promise<
   }
 > {
   const result = await requestClient.get<{
+    avatar_url?: null | string;
     department: null | string;
     email: string;
     full_name: string;
@@ -66,7 +67,7 @@ export async function getUserInfoApi(): Promise<
     desc: '',
     homePath: isAdmin ? '/employee/manage' : '/employee',
     token: '',
-    avatar: '',
+    avatar: result.avatar_url || '',
     department: result.department,
     position: result.position,
     region: result.region,

@@ -12,13 +12,9 @@ import {
   ElInput,
   ElMessage,
 } from 'element-plus';
-import { VxeColumn, VxeTable, VxeToolbar } from 'vxe-table';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSystemSettingsApi } from '#/api';
-
-import 'vxe-table/styles/cssvar.scss';
-import 'vxe-pc-ui/styles/cssvar.scss';
+import { ALL_MODULE_CATALOG, getSystemSettingsApi } from '#/api';
 
 interface ListItem {
   id: string;
@@ -58,12 +54,6 @@ const newDeptName = ref('');
 const newPosName = ref('');
 const newRegionName = ref('');
 
-const deptToolbarButtons = ref([{ name: '新增', code: 'add' }]);
-
-const posToolbarButtons = ref([{ name: '新增', code: 'add' }]);
-
-const regionToolbarButtons = ref([{ name: '新增', code: 'add' }]);
-
 function strToList(str: string): ListItem[] {
   return str
     .split('\n')
@@ -82,6 +72,9 @@ function updateLists() {
   deptList.value = strToList(localDeptStr.value);
   posList.value = strToList(localPosStr.value);
   regionList.value = strToList(localRegionStr.value);
+  deptTableApi.setGridOptions({ data: deptList.value });
+  posTableApi.setGridOptions({ data: posList.value });
+  regionTableApi.setGridOptions({ data: regionList.value });
 }
 
 function handleDeptAdd() {
@@ -95,8 +88,10 @@ function handleDeptAdd() {
   });
   localDeptStr.value = listToStr(deptList.value);
   emit('update:deptStr', localDeptStr.value);
+  deptTableApi.setGridOptions({ data: deptList.value });
   newDeptName.value = '';
   showDeptDialog.value = false;
+  emit('save');
 }
 
 function handlePosAdd() {
@@ -110,8 +105,10 @@ function handlePosAdd() {
   });
   localPosStr.value = listToStr(posList.value);
   emit('update:posStr', localPosStr.value);
+  posTableApi.setGridOptions({ data: posList.value });
   newPosName.value = '';
   showPosDialog.value = false;
+  emit('save');
 }
 
 function handleRegionAdd() {
@@ -125,26 +122,16 @@ function handleRegionAdd() {
   });
   localRegionStr.value = listToStr(regionList.value);
   emit('update:regionStr', localRegionStr.value);
+  regionTableApi.setGridOptions({ data: regionList.value });
   newRegionName.value = '';
   showRegionDialog.value = false;
-}
-
-function handleDeptToolbarClick({ code }: { code: string }) {
-  if (code === 'add') showDeptDialog.value = true;
-}
-
-function handlePosToolbarClick({ code }: { code: string }) {
-  if (code === 'add') showPosDialog.value = true;
-}
-
-function handleRegionToolbarClick({ code }: { code: string }) {
-  if (code === 'add') showRegionDialog.value = true;
+  emit('save');
 }
 
 async function updateCheckboxState() {
   await nextTick();
   localModules.value.forEach((row) => {
-    gridApi.grid.setCheckboxRow(
+    moduleTableApi.grid.setCheckboxRow(
       row,
       localSelectedModules.value.includes(row.module_code),
     );
@@ -152,46 +139,103 @@ async function updateCheckboxState() {
 }
 
 function handleCheckboxChange() {
-  const records = gridApi.grid.getCheckboxRecords();
+  const records = moduleTableApi.grid.getCheckboxRecords();
   const newSelected = records.map((r) => r.module_code);
   localSelectedModules.value = newSelected;
   emit('update:selectedModules', [...newSelected]);
 }
 
-const gridOptions: VxeGridProps<SystemSettingsApi.SystemModuleItem> = {
-  rowConfig: {
-    keyField: 'module_code',
+const sharedGridOptions = {
+  rowConfig: { keyField: 'id' },
+  proxyConfig: { enabled: false },
+  toolbarConfig: {
+    zoom: true,
+    custom: false,
   },
-  checkboxConfig: {
-    highlight: true,
-    checkRowKeys: [],
-  },
+  customConfig: { storage: false },
+} satisfies VxeGridProps<ListItem>;
+
+const deptGridOptions: VxeGridProps<ListItem> = {
+  ...sharedGridOptions,
+  id: 'settings-dept-list',
+  columns: [
+    { type: 'seq', width: 70, title: '序号' },
+    { field: 'name', title: '部门名称', minWidth: 150 },
+  ],
+};
+
+const posGridOptions: VxeGridProps<ListItem> = {
+  ...sharedGridOptions,
+  id: 'settings-pos-list',
+  columns: [
+    { type: 'seq', width: 70, title: '序号' },
+    { field: 'name', title: '岗位名称', minWidth: 150 },
+  ],
+};
+
+const regionGridOptions: VxeGridProps<ListItem> = {
+  ...sharedGridOptions,
+  id: 'settings-region-list',
+  columns: [
+    { type: 'seq', width: 70, title: '序号' },
+    { field: 'name', title: '地区名称', minWidth: 150 },
+  ],
+};
+
+const moduleGridOptions: VxeGridProps<SystemSettingsApi.SystemModuleItem> = {
+  id: 'settings-module-list',
+  rowConfig: { keyField: 'module_code' },
+  checkboxConfig: { highlight: true, checkRowKeys: [] },
   columns: [
     { type: 'checkbox', width: 50 },
     { field: 'module_name', title: '模块名称', minWidth: 150 },
     { field: 'module_code', title: '模块代码', minWidth: 150 },
   ],
-  proxyConfig: {
-    enabled: false,
-  },
+  proxyConfig: { enabled: false },
+  toolbarConfig: { zoom: true, custom: false },
+  customConfig: { storage: false },
 };
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions,
+const [DeptTable, deptTableApi] = useVbenVxeGrid({
+  gridOptions: deptGridOptions,
+});
+const [PosTable, posTableApi] = useVbenVxeGrid({ gridOptions: posGridOptions });
+const [RegionTable, regionTableApi] = useVbenVxeGrid({
+  gridOptions: regionGridOptions,
+});
+const [ModuleTable, moduleTableApi] = useVbenVxeGrid({
+  gridOptions: moduleGridOptions,
+  gridEvents: {
+    checkboxChange: handleCheckboxChange,
+    checkboxAll: handleCheckboxChange,
+  },
 });
 
 onMounted(async () => {
   updateLists();
+  // 始终以全量目录为基础，保证所有模块行始终展示，仅通过勾选状态区分是否启用
+  localModules.value = ALL_MODULE_CATALOG.map((m) => ({ ...m }));
   try {
     const settings = await getSystemSettingsApi();
-    localModules.value = settings?.modules || [];
-    gridApi.setGridOptions({
-      data: localModules.value,
+    const backendModules = settings?.modules || [];
+    // 用后端返回的名称更新目录中同名模块，并合并目录中不存在的后端模块
+    localModules.value = localModules.value.map((m) => {
+      const backend = backendModules.find(
+        (b) => b.module_code === m.module_code,
+      );
+      return backend ? { ...m, module_name: backend.module_name } : m;
     });
-    await updateCheckboxState();
+    const existingCodes = new Set(localModules.value.map((m) => m.module_code));
+    for (const b of backendModules) {
+      if (!existingCodes.has(b.module_code)) {
+        localModules.value.push({ ...b });
+      }
+    }
   } catch {
-    localModules.value = [];
+    // 保持全量目录不变
   }
+  moduleTableApi.setGridOptions({ data: localModules.value });
+  await updateCheckboxState();
 });
 
 watch(
@@ -246,82 +290,61 @@ watch(
 );
 
 function selectAllModules() {
-  gridApi.grid.setAllCheckboxRow(true);
+  moduleTableApi.grid.setAllCheckboxRow(true);
   handleCheckboxChange();
 }
 
 function clearModules() {
-  gridApi.grid.setAllCheckboxRow(false);
+  moduleTableApi.grid.setAllCheckboxRow(false);
   handleCheckboxChange();
 }
-
-gridApi.setState({
-  gridEvents: {
-    checkboxChange: handleCheckboxChange,
-    checkboxAll: handleCheckboxChange,
-  },
-});
 </script>
 
 <template>
-  <ElForm label-width="120px">
-    <ElFormItem label="部门列表">
-      <VxeToolbar
-        :buttons="deptToolbarButtons"
-        @button-click="handleDeptToolbarClick"
-      />
-      <VxeTable :data="deptList">
-        <VxeColumn type="seq" width="70" />
-        <VxeColumn field="name" title="部门名称" />
-      </VxeTable>
-    </ElFormItem>
-    <ElFormItem label="岗位列表">
-      <VxeToolbar
-        :buttons="posToolbarButtons"
-        @button-click="handlePosToolbarClick"
-      />
-      <VxeTable :data="posList">
-        <VxeColumn type="seq" width="70" />
-        <VxeColumn field="name" title="岗位名称" />
-      </VxeTable>
-    </ElFormItem>
-    <ElFormItem label="地区列表">
-      <VxeToolbar
-        :buttons="regionToolbarButtons"
-        @button-click="handleRegionToolbarClick"
-      />
-      <VxeTable :data="regionList">
-        <VxeColumn type="seq" width="70" />
-        <VxeColumn field="name" title="地区名称" />
-      </VxeTable>
-    </ElFormItem>
-    <ElFormItem label="模块列表">
-      <div
-        style="
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
-          margin-bottom: 12px;
-        "
-      >
-        <ElButton size="small" type="default" @click="selectAllModules">
-          全选模块
-        </ElButton>
-        <ElButton size="small" type="default" @click="clearModules">
-          清空选择
-        </ElButton>
-        <span style="font-weight: 700; color: #2563eb">已选择 {{ localSelectedModules.length }} 个模块</span>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-base font-semibold">部门列表</span>
+      <ElButton size="small" type="primary" @click="showDeptDialog = true">
+        新增部门
+      </ElButton>
+    </div>
+    <DeptTable />
+
+    <div class="flex items-center justify-between">
+      <span class="text-base font-semibold">岗位列表</span>
+      <ElButton size="small" type="primary" @click="showPosDialog = true">
+        新增岗位
+      </ElButton>
+    </div>
+    <PosTable />
+
+    <div class="flex items-center justify-between">
+      <span class="text-base font-semibold">地区列表</span>
+      <ElButton size="small" type="primary" @click="showRegionDialog = true">
+        新增地区
+      </ElButton>
+    </div>
+    <RegionTable />
+
+    <div class="flex items-center justify-between">
+      <span class="text-base font-semibold">
+        模块列表（已选 {{ localSelectedModules.length }} / 共
+        {{ localModules.length }} 个）
+      </span>
+      <div class="flex gap-2">
+        <ElButton size="small" @click="selectAllModules">全选</ElButton>
+        <ElButton size="small" @click="clearModules">清空</ElButton>
       </div>
-      <Grid />
-      <p style="margin-top: 8px; font-size: 12px; color: #64748b">
-        这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。
-      </p>
-    </ElFormItem>
-    <ElFormItem>
+    </div>
+    <ModuleTable />
+    <p class="text-xs text-muted-foreground">
+      这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。
+    </p>
+
+    <div class="flex justify-end pt-2">
       <ElButton type="primary" @click="$emit('save')">保存系统参数</ElButton>
-    </ElFormItem>
-  </ElForm>
+    </div>
+  </div>
 
   <ElDialog v-model="showDeptDialog" title="新增部门" width="400px">
     <ElForm :model="{ name: newDeptName }" label-width="80px">

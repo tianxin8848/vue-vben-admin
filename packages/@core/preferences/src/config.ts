@@ -145,7 +145,7 @@ const defaultPreferences: Preferences = {
     lockScreen: true,
     lockScreenButtonPosition: 'header',
     logoutButtonPosition: 'header',
-    notification: true,
+    notification: false,
     notificationButtonPosition: 'header',
     refresh: true,
     refreshButtonPosition: 'header',

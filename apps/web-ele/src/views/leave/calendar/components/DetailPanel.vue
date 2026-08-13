@@ -1,6 +1,17 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
-import { ElButton, ElCard, ElDivider, ElMessage, ElOption, ElSelect, ElTag } from 'element-plus';
+
+import {
+  ElButton,
+  ElCard,
+  ElDivider,
+  ElMessage,
+  ElOption,
+  ElSelect,
+  ElTag,
+} from 'element-plus';
+
+import { $t } from '#/locales';
 
 interface CalendarRecord {
   id: string;
@@ -19,7 +30,9 @@ interface Holiday {
 
 interface CalendarDetail {
   title: string;
-  content: string | { grouped: Record<string, CalendarRecord[]>; holiday: Holiday | null; };
+  content:
+    | string
+    | { grouped: Record<string, CalendarRecord[]>; holiday: Holiday | null };
   isEmpty: boolean;
 }
 
@@ -33,50 +46,57 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'setHoliday' | 'removeHoliday'): void;
+  (e: 'removeHoliday' | 'setHoliday'): void;
 }>();
 
-const leaveTypeConfig: Record<string, { color: string; label: string; }> = {
-  annual: { label: '年假', color: '#60a5fa' },
-  personal: { label: '事假', color: '#fb923c' },
-  sick: { label: '病假', color: '#f87171' },
-  lieu: { label: '调休', color: '#4ade80' },
-  long: { label: '长假', color: '#a78bfa' },
+const leaveTypeConfig: Record<string, { color: string; labelKey: string }> = {
+  annual: { labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
+  personal: { labelKey: 'page.leave.leaveTypes.personal', color: '#fb923c' },
+  sick: { labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
+  lieu: { labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
+  long: { labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
 };
 
-const approvalStatusConfig: Record<string, { label: string; type: 'success' | 'warning' | 'danger' | 'info' }> = {
-  approved: { label: '已通过', type: 'success' },
-  pending: { label: '待审批', type: 'warning' },
-  rejected: { label: '已驳回', type: 'danger' },
-  withdrawn: { label: '已撤回', type: 'info' },
-};
-
-const sessionLabelMap: Record<string, string> = {
-  full_day: '全天',
-  morning: '上午',
-  afternoon: '下午',
+const approvalStatusConfig: Record<
+  string,
+  { labelKey: string; type: 'danger' | 'info' | 'success' | 'warning' }
+> = {
+  approved: { labelKey: 'page.leave.approvalStatus.approved', type: 'success' },
+  pending: { labelKey: 'page.leave.approvalStatus.pending', type: 'warning' },
+  rejected: { labelKey: 'page.leave.approvalStatus.rejected', type: 'danger' },
+  withdrawn: { labelKey: 'page.leave.approvalStatus.withdrawn', type: 'info' },
 };
 
 const holidayNameOptions = [
-  '元旦',
-  '春节',
-  '清明节',
-  '劳动节',
-  '端午节',
-  '中秋节',
-  '国庆节',
-  '圣诞节',
-  '公众假期',
-  '公司假期',
-  '补休',
-  '其他假期',
+  { key: 'newYear' },
+  { key: 'springFestival' },
+  { key: 'qingming' },
+  { key: 'laborDay' },
+  { key: 'dragonBoat' },
+  { key: 'midAutumn' },
+  { key: 'nationalDay' },
+  { key: 'christmas' },
+  { key: 'publicHoliday' },
+  { key: 'companyHoliday' },
+  { key: 'makeupDay' },
+  { key: 'other' },
 ];
 
-const selectedHolidayName = ref(holidayNameOptions[0]);
+const selectedHolidayKey = ref(holidayNameOptions[0]?.key ?? 'newYear');
+
+function getHolidayLabel(key: string) {
+  return $t(`page.leave.calendarView.holidayNames.${key}`) as string;
+}
+
+const selectedHolidayLabel = computed(() =>
+  getHolidayLabel(selectedHolidayKey.value),
+);
 
 function getHolidayForDate(dateKey: string, region: string) {
   if (!region || !dateKey) return null;
-  return props.regionalHolidays.find((h) => h.region === region && h.date === dateKey);
+  return props.regionalHolidays.find(
+    (h) => h.region === region && h.date === dateKey,
+  );
 }
 
 function getActiveRegionKey() {
@@ -89,21 +109,59 @@ function getLeaveTypeColor(type: string) {
   return leaveTypeConfig[type]?.color || '#94a3b8';
 }
 
-function getApprovalStatusType(status: string): 'success' | 'warning' | 'danger' | 'info' {
+function getLeaveTypeLabel(type: string) {
+  return leaveTypeConfig[type]
+    ? ($t(leaveTypeConfig[type].labelKey) as string)
+    : type;
+}
+
+function getApprovalStatusType(
+  status: string,
+): 'danger' | 'info' | 'success' | 'warning' {
   return approvalStatusConfig[status]?.type ?? 'info';
+}
+
+function getApprovalStatusLabel(status: string) {
+  return approvalStatusConfig[status]
+    ? ($t(approvalStatusConfig[status].labelKey) as string)
+    : status;
+}
+
+const sessionLabelKeys: Record<string, string> = {
+  full_day: 'page.leave.session.full_day',
+  morning: 'page.leave.session.morning',
+  afternoon: 'page.leave.session.afternoon',
+};
+
+function getSessionLabel(session: string) {
+  const key = sessionLabelKeys[session] || 'page.leave.session.full_day';
+  return $t(key) as string;
 }
 
 const calendarDetail = computed<CalendarDetail>(() => {
   if (!props.selectedDateKey) {
-    return { title: '日期详情', content: '点击任意日期格子后，这里会显示当天请假人员清单、假期类型、时段和审批状态。', isEmpty: true };
+    return {
+      title: $t('page.leave.calendarView.detail.dateDetail') as string,
+      content: $t('page.leave.calendarView.detail.emptyHint') as string,
+      isEmpty: true,
+    };
   }
 
   const entries = props.dayMap[props.selectedDateKey] || [];
-  const activeRegion = props.region && props.region !== 'all' ? props.region : '';
-  const holiday = activeRegion ? (props.regionalHolidays.find((h) => h.region === activeRegion && h.date === props.selectedDateKey) ?? null) : null;
+  const activeRegion =
+    props.region && props.region !== 'all' ? props.region : '';
+  const holiday = activeRegion
+    ? (props.regionalHolidays.find(
+        (h) => h.region === activeRegion && h.date === props.selectedDateKey,
+      ) ?? null)
+    : null;
 
   if (entries.length === 0 && !holiday) {
-    return { title: `${props.selectedDateKey} · 日期详情`, content: '当天暂无请假记录，可作为正常出勤日期。', isEmpty: true };
+    return {
+      title: `${props.selectedDateKey} · ${$t('page.leave.calendarView.detail.dateDetail')}`,
+      content: $t('page.leave.calendarView.detail.noRecordsForDay') as string,
+      isEmpty: true,
+    };
   }
 
   const grouped: Record<string, CalendarRecord[]> = {};
@@ -115,7 +173,7 @@ const calendarDetail = computed<CalendarDetail>(() => {
   });
 
   return {
-    title: `${props.selectedDateKey} · 请假详情`,
+    title: `${props.selectedDateKey} · ${$t('page.leave.calendarView.detail.leaveDetail')}`,
     content: {
       holiday,
       grouped,
@@ -127,9 +185,11 @@ const calendarDetail = computed<CalendarDetail>(() => {
 async function setHoliday() {
   const activeRegion = getActiveRegionKey();
   const dateKey = props.selectedDateKey;
-  const holidayName = selectedHolidayName.value;
-  if (!activeRegion || !dateKey || !holidayName) {
-    ElMessage.warning('请先选择地区和日期');
+  const holidayLabel = selectedHolidayLabel.value;
+  if (!activeRegion || !dateKey || !holidayLabel) {
+    ElMessage.warning(
+      $t('page.leave.calendarView.detail.selectRegionAndDateFirst') as string,
+    );
     return;
   }
   emit('setHoliday');
@@ -142,30 +202,95 @@ function removeHoliday() {
 
 <template>
   <ElCard>
-    <div style="margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600;">{{ calendarDetail.title }}</h3>
-      <div v-if="calendarDetail.isEmpty" style="padding: 16px; background: #f8fafc; border-radius: 8px; color: #64748b; font-size: 13px;">
+    <div style="margin-bottom: 24px">
+      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600">
+        {{ calendarDetail.title }}
+      </h3>
+      <div
+        v-if="calendarDetail.isEmpty"
+        style="
+          padding: 16px;
+          font-size: 13px;
+          color: hsl(var(--muted-foreground));
+          background: hsl(var(--muted));
+          border-radius: 8px;
+        "
+      >
         {{ calendarDetail.content }}
       </div>
       <div v-else>
-        <div v-if="(calendarDetail.content as any).holiday" style="margin-bottom: 16px;">
-          <ElTag type="danger" size="large" style="margin-bottom: 8px;">地区假期：{{ (calendarDetail.content as any).holiday.holiday_name }}</ElTag>
-          <div style="font-size: 13px; color: #64748b;">{{ (calendarDetail.content as any).holiday.region }} · {{ (calendarDetail.content as any).holiday.date }}</div>
-        </div>
-        <div v-for="(entries, type) in (calendarDetail.content as any).grouped" :key="String(type)" style="margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <ElTag :style="{ background: `${getLeaveTypeColor(String(type))}20`, color: getLeaveTypeColor(String(type)) }" size="large">
-              {{ leaveTypeConfig[String(type)]?.label || type }}
-            </ElTag>
-            <span style="font-size: 13px; color: #64748b;">{{ entries.length }} 人</span>
+        <div
+          v-if="(calendarDetail.content as any).holiday"
+          style="margin-bottom: 16px"
+        >
+          <ElTag type="danger" size="large" style="margin-bottom: 8px">
+            {{ $t('page.leave.calendarView.detail.regionalHolidayPrefix')
+            }}{{ (calendarDetail.content as any).holiday.holiday_name }}
+          </ElTag>
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            {{ (calendarDetail.content as any).holiday.region }} ·
+            {{ (calendarDetail.content as any).holiday.date }}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div v-for="entry in entries" :key="entry.id" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 8px; background: #f8fafc;">
-              <span style="font-size: 14px; color: #0f172a;">{{ entry.employee_name }} · {{ entry.employee_department || '未分组' }}</span>
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                <span style="color: #64748b;">{{ sessionLabelMap[entry.session] || '全天' }}</span>
-                <ElTag :type="getApprovalStatusType(entry.approval_status)" size="small">
-                  {{ approvalStatusConfig[entry.approval_status]?.label || entry.approval_status }}
+        </div>
+        <div
+          v-for="(entries, type) in (calendarDetail.content as any).grouped"
+          :key="String(type)"
+          style="margin-bottom: 16px"
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            "
+          >
+            <ElTag
+              :style="{
+                background: `${getLeaveTypeColor(String(type))}20`,
+                color: getLeaveTypeColor(String(type)),
+              }"
+              size="large"
+            >
+              {{ getLeaveTypeLabel(String(type)) }}
+            </ElTag>
+            <span style="font-size: 13px; color: hsl(var(--muted-foreground))">{{ entries.length }}
+              {{ $t('page.leave.calendarView.stats.personUnit') }}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div
+              v-for="entry in entries"
+              :key="entry.id"
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background: hsl(var(--muted));
+                border-radius: 8px;
+              "
+            >
+              <span style="font-size: 14px; color: hsl(var(--foreground))">{{ entry.employee_name }} ·
+                {{
+                  entry.employee_department ||
+                  $t('page.leave.calendarView.ungrouped')
+                }}</span>
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  align-items: center;
+                  font-size: 13px;
+                "
+              >
+                <span style="color: hsl(var(--muted-foreground))">{{
+                  getSessionLabel(entry.session)
+                }}</span>
+                <ElTag
+                  :type="getApprovalStatusType(entry.approval_status)"
+                  size="small"
+                >
+                  {{ getApprovalStatusLabel(entry.approval_status) }}
                 </ElTag>
               </div>
             </div>
@@ -176,28 +301,67 @@ function removeHoliday() {
 
     <ElDivider />
 
-    <div style="margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600;">地区假期维护</h3>
-      <div v-if="!selectedDateKey || !getActiveRegionKey()" style="padding: 16px; background: #f8fafc; border-radius: 8px; color: #64748b; font-size: 13px;">
-        请先在上方选择具体地区，再点击某一天设置该地区的假期。
+    <div style="margin-bottom: 24px">
+      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600">
+        {{ $t('page.leave.calendarView.detail.holidayMaintenance') }}
+      </h3>
+      <div
+        v-if="!selectedDateKey || !getActiveRegionKey()"
+        style="
+          padding: 16px;
+          font-size: 13px;
+          color: hsl(var(--muted-foreground));
+          background: hsl(var(--muted));
+          border-radius: 8px;
+        "
+      >
+        {{ $t('page.leave.calendarView.detail.selectRegionFirst') }}
       </div>
       <div v-else>
-        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">{{ getActiveRegionKey() }} · {{ selectedDateKey }}</div>
-        <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
-          <template v-if="getHolidayForDate(selectedDateKey, getActiveRegionKey())">
-            当前已设置假期：<ElTag type="success">{{ getHolidayForDate(selectedDateKey, getActiveRegionKey())?.holiday_name }}</ElTag>
+        <div style="margin-bottom: 8px; font-size: 14px; font-weight: 600">
+          {{ getActiveRegionKey() }} · {{ selectedDateKey }}
+        </div>
+        <div
+          style="
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <template
+            v-if="getHolidayForDate(selectedDateKey, getActiveRegionKey())"
+          >
+            {{ $t('page.leave.calendarView.detail.currentHolidaySet')
+            }}<ElTag type="success">
+              {{
+                getHolidayForDate(selectedDateKey, getActiveRegionKey())
+                  ?.holiday_name
+              }}
+            </ElTag>
           </template>
           <template v-else>
-            当前未设置地区假期。
+            {{ $t('page.leave.calendarView.detail.noHolidaySet') }}
           </template>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <ElSelect v-model="selectedHolidayName" style="width: 160px">
-            <ElOption v-for="name in holidayNameOptions" :key="name" :label="name" :value="name" />
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <ElSelect v-model="selectedHolidayKey" style="width: 160px">
+            <ElOption
+              v-for="opt in holidayNameOptions"
+              :key="opt.key"
+              :label="getHolidayLabel(opt.key)"
+              :value="opt.key"
+            />
           </ElSelect>
-          <ElButton type="primary" @click="setHoliday">设置假期</ElButton>
-          <ElButton @click="removeHoliday" :disabled="!getHolidayForDate(selectedDateKey, getActiveRegionKey())">
-            取消设置
+          <ElButton type="primary" @click="setHoliday">
+            {{ $t('page.leave.calendarView.detail.setHoliday') }}
+          </ElButton>
+          <ElButton
+            @click="removeHoliday"
+            :disabled="
+              !getHolidayForDate(selectedDateKey, getActiveRegionKey())
+            "
+          >
+            {{ $t('page.leave.calendarView.detail.unsetHoliday') }}
           </ElButton>
         </div>
       </div>
@@ -206,23 +370,57 @@ function removeHoliday() {
     <ElDivider />
 
     <div>
-      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600;">使用说明</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-          <strong style="color: #0f172a;">总览阅读</strong>
-          每天格子直接显示请假姓名，前置色点表示假期类型，右上角徽标显示当天总请假人数。
+      <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600">
+        {{ $t('page.leave.calendarView.detail.usageInstructions') }}
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
+            $t('page.leave.calendarView.detail.instructionOverviewTitle')
+          }}</strong>
+          {{ $t('page.leave.calendarView.detail.instructionOverviewBody') }}
         </div>
-        <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-          <strong style="color: #0f172a;">预警规则</strong>
-          单日请假人数达到阈值后，会对日期格子加红框，帮助你快速识别人力紧张日期。
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
+            $t('page.leave.calendarView.detail.instructionRiskTitle')
+          }}</strong>
+          {{ $t('page.leave.calendarView.detail.instructionRiskBody') }}
         </div>
-        <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-          <strong style="color: #0f172a;">筛选方式</strong>
-          支持按团队看全年排期，也支持搜索某个员工，直接高亮他全年所有请假日期。
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
+            $t('page.leave.calendarView.detail.instructionFilterTitle')
+          }}</strong>
+          {{ $t('page.leave.calendarView.detail.instructionFilterBody') }}
         </div>
-        <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-          <strong style="color: #0f172a;">后续接入</strong>
-          当前已经接入真实请假日历接口，后续可以继续补录入、审批和点击日期快速操作能力。
+        <div
+          style="
+            font-size: 13px;
+            line-height: 1.6;
+            color: hsl(var(--muted-foreground));
+          "
+        >
+          <strong style="color: hsl(var(--foreground))">{{
+            $t('page.leave.calendarView.detail.instructionFutureTitle')
+          }}</strong>
+          {{ $t('page.leave.calendarView.detail.instructionFutureBody') }}
         </div>
       </div>
     </div>

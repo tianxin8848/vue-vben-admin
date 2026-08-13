@@ -133,13 +133,15 @@ class PreferenceManager {
 
     // 加载缓存的偏好设置
     const cachedPreferences = (await this.loadFromCache()) || {};
-    // 合并顺序：defaults → cache → overrides
-    // 应用的显式配置（overrides）始终具有最高优先级，不会被用户缓存覆盖
+    // 合并顺序：overrides → cache → defaults
+    // 注意：merge 基于 defu，语义是“第一个 source 的值优先，后续仅补齐 undefined 字段”
+    // 因此要把优先级最高的 overrides 放在最前，defaults 放最后兜底
+    // 这样应用的显式配置（overrides）始终具有最高优先级，不会被缓存或默认值覆盖
     const mergedPreference = merge(
       {},
-      defaultPreferences, // 最低优先级：框架默认值
-      cachedPreferences, // 中优先级：用户缓存的自定义设置
       overrides, // 最高优先级：应用显式指定的配置
+      cachedPreferences, // 中优先级：用户缓存的自定义设置
+      defaultPreferences, // 最低优先级：框架默认值
     );
 
     // 更新偏好设置

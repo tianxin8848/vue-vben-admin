@@ -1,12 +1,22 @@
 <script lang="ts" setup>
-import { ElButton, ElCard, ElForm, ElFormItem, ElInput, ElOption, ElSelect } from 'element-plus';
+import {
+  ElButton,
+  ElCard,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElOption,
+  ElSelect,
+} from 'element-plus';
+
+import { $t } from '#/locales';
 
 interface SearchForm {
   team: string;
   region: string;
   employee_keyword: string;
   risk_threshold: number;
-  view_mode: 'standard' | 'detail';
+  view_mode: 'detail' | 'standard';
   approval_status: string;
 }
 
@@ -22,12 +32,12 @@ const emit = defineEmits<{
   (e: 'resetFilters'): void;
 }>();
 
-const leaveTypeConfig: Record<string, { color: string; label: string; }> = {
-  annual: { label: '年假', color: '#60a5fa' },
-  personal: { label: '事假', color: '#fb923c' },
-  sick: { label: '病假', color: '#f87171' },
-  lieu: { label: '调休', color: '#4ade80' },
-  long: { label: '长假', color: '#a78bfa' },
+const leaveTypeConfig: Record<string, { color: string; labelKey: string }> = {
+  annual: { labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
+  personal: { labelKey: 'page.leave.leaveTypes.personal', color: '#fb923c' },
+  sick: { labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
+  lieu: { labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
+  long: { labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
 };
 
 function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
@@ -38,65 +48,205 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
 <template>
   <ElCard>
     <template #header>
-      <h3 style="margin: 0;">筛选控制</h3>
+      <h3 style="margin: 0">
+        {{ $t('page.leave.calendarView.filter.title') }}
+      </h3>
     </template>
 
     <ElForm :model="props.searchForm" label-width="100px" inline>
-      <ElFormItem label="团队筛选">
-        <ElSelect :model-value="props.searchForm.team" placeholder="全部成员" clearable @change="updateField('team', $event)" style="width: 160px">
-          <ElOption label="全部成员" value="" />
+      <ElFormItem :label="$t('page.leave.calendarView.filter.team')">
+        <ElSelect
+          :model-value="props.searchForm.team"
+          :placeholder="$t('page.leave.calendarView.filter.allMembers')"
+          clearable
+          @change="updateField('team', $event)"
+          style="width: 160px"
+        >
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.allMembers')"
+            value=""
+          />
           <ElOption v-for="t in teams" :key="t" :label="t" :value="t" />
         </ElSelect>
       </ElFormItem>
 
-      <ElFormItem label="员工搜索">
-        <ElInput :model-value="props.searchForm.employee_keyword" placeholder="输入姓名高亮全年请假" @input="updateField('employee_keyword', $event)" style="width: 160px" />
+      <ElFormItem :label="$t('page.leave.calendarView.filter.employeeSearch')">
+        <ElInput
+          :model-value="props.searchForm.employee_keyword"
+          :placeholder="$t('page.leave.calendarView.filter.searchPlaceholder')"
+          @input="updateField('employee_keyword', $event)"
+          style="width: 160px"
+        />
       </ElFormItem>
 
-      <ElFormItem label="人力预警阈值">
-        <ElInput :model-value="props.searchForm.risk_threshold" type="number" :min="1" :max="20" @input="updateField('risk_threshold', Number($event))" style="width: 100px" />
+      <ElFormItem :label="$t('page.leave.calendarView.filter.riskThreshold')">
+        <ElInput
+          :model-value="props.searchForm.risk_threshold"
+          type="number"
+          :min="1"
+          :max="20"
+          @input="updateField('risk_threshold', Number($event))"
+          style="width: 100px"
+        />
       </ElFormItem>
 
-      <ElFormItem label="视图模式">
-        <ElSelect :model-value="props.searchForm.view_mode" @change="updateField('view_mode', $event)" style="width: 120px">
-          <ElOption label="标准" value="standard" />
-          <ElOption label="明细" value="detail" />
+      <ElFormItem :label="$t('page.leave.calendarView.filter.viewMode')">
+        <ElSelect
+          :model-value="props.searchForm.view_mode"
+          @change="updateField('view_mode', $event)"
+          style="width: 120px"
+        >
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.standard')"
+            value="standard"
+          />
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.detail')"
+            value="detail"
+          />
         </ElSelect>
       </ElFormItem>
 
-      <ElFormItem label="审批状态">
-        <ElSelect :model-value="props.searchForm.approval_status" @change="updateField('approval_status', $event)" style="width: 120px">
-          <ElOption label="全部状态" value="" />
-          <ElOption label="仅已通过" value="approved" />
-          <ElOption label="仅待审批" value="pending" />
+      <ElFormItem :label="$t('page.leave.calendarView.filter.approvalStatus')">
+        <ElSelect
+          :model-value="props.searchForm.approval_status"
+          @change="updateField('approval_status', $event)"
+          style="width: 120px"
+        >
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.allStatus')"
+            value=""
+          />
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.approvedOnly')"
+            value="approved"
+          />
+          <ElOption
+            :label="$t('page.leave.calendarView.filter.pendingOnly')"
+            value="pending"
+          />
         </ElSelect>
       </ElFormItem>
 
       <ElFormItem>
-        <ElButton @click="emit('resetFilters')">重置筛选</ElButton>
+        <ElButton @click="emit('resetFilters')">
+          {{ $t('page.leave.calendarView.filter.reset') }}
+        </ElButton>
       </ElFormItem>
     </ElForm>
 
-    <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;" v-for="(config, type) in leaveTypeConfig" :key="type">
-        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%;" :style="{ background: config.color }"></span>
-        {{ config.label }}
+    <div
+      style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-top: 16px;
+        margin-top: 16px;
+        border-top: 1px solid #e2e8f0;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 13px;
+          color: #64748b;
+        "
+        v-for="(config, type) in leaveTypeConfig"
+        :key="type"
+      >
+        <span
+          style="
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+          "
+          :style="{ background: config.color }"
+        ></span>
+        {{ $t(config.labelKey) }}
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;">
-        <span style="display: inline-block; width: 16px; height: 12px; border-radius: 4px; background: #f1f5f9;"></span>
-        周末/节假日底色
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 13px;
+          color: #64748b;
+        "
+      >
+        <span
+          style="
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 4px;
+          "
+        ></span>
+        {{ $t('page.leave.calendarView.filter.legendWeekend') }}
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;">
-        <span style="display: inline-block; width: 16px; height: 12px; border-radius: 4px; background: rgba(96, 165, 250, 0.5);"></span>
-        待审批为半透明
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 13px;
+          color: #64748b;
+        "
+      >
+        <span
+          style="
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            background: rgb(96 165 250 / 50%);
+            border-radius: 4px;
+          "
+        ></span>
+        {{ $t('page.leave.calendarView.filter.legendPending') }}
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;">
-        <span style="display: inline-block; width: 16px; height: 12px; border-radius: 4px; background: #ede9fe;"></span>
-        地区假期
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 13px;
+          color: #64748b;
+        "
+      >
+        <span
+          style="
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            background: #ede9fe;
+            border-radius: 4px;
+          "
+        ></span>
+        {{ $t('page.leave.calendarView.filter.legendRegionalHoliday') }}
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;">
-        <span style="display: inline-block; width: 16px; height: 12px; border-radius: 4px; background: #ffffff; border: 2px solid #ef4444;"></span>
-        达到预警阈值
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 13px;
+          color: #64748b;
+        "
+      >
+        <span
+          style="
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            background: #fff;
+            border: 2px solid #ef4444;
+            border-radius: 4px;
+          "
+        ></span>
+        {{ $t('page.leave.calendarView.filter.legendRiskReached') }}
       </div>
     </div>
   </ElCard>

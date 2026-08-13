@@ -143,7 +143,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:receipt',
-          title: '报销管理',
+          title: $t('page.claim.title'),
         },
       },
     ],
@@ -226,7 +226,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     component: 'system/settings/index',
     meta: {
       affixTab: false,
-      icon: 'lucide:gear',
+      icon: 'lucide:cog',
       title: $t('page.system.settings'),
     },
   },

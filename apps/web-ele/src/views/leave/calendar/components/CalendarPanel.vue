@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue';
 
 import { ElButton, ElDatePicker } from 'element-plus';
 
+import { $t } from '#/locales';
+
 interface CalendarCell {
   day: null | number;
   date: string;
@@ -47,21 +49,14 @@ const emit = defineEmits<{
   (e: 'panelChange' | 'selectDate', date: Date): void;
 }>();
 
-const WEEK_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
-const MONTH_NAMES = [
-  '一月',
-  '二月',
-  '三月',
-  '四月',
-  '五月',
-  '六月',
-  '七月',
-  '八月',
-  '九月',
-  '十月',
-  '十一月',
-  '十二月',
-];
+const WEEK_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const WEEK_DAYS = computed(() =>
+  WEEK_KEYS.map((k) => $t(`page.leave.calendarView.weekShort.${k}`) as string),
+);
+const MONTH_NAMES = computed(() => {
+  const names = $t('page.leave.calendarView.monthNames');
+  return Array.isArray(names) ? names : [];
+});
 
 const leaveTypeColorMap: Record<string, string> = {
   annual: '#60a5fa',
@@ -159,7 +154,7 @@ const yearCalendarData = computed<MonthData[]>(() => {
       rows.push(cells.slice(i, i + 7));
     }
     const idx = m - 1;
-    const monthName = MONTH_NAMES[idx] || '';
+    const monthName = MONTH_NAMES.value[idx] || '';
     months.push({
       month: m,
       monthName,
@@ -286,24 +281,32 @@ function goCurrentYear() {
         <ElDatePicker
           v-model="yearMonthValue"
           type="month"
-          format="YYYY 年 MM 月"
+          format="YYYY-MM"
           value-format="YYYY-MM"
-          placeholder="选择年月"
+          :placeholder="$t('page.leave.calendarView.selectYearMonth')"
           :clearable="false"
           style="width: 200px"
           @change="onYearMonthChange"
         />
         <ElButton size="small" @click="toggleViewMode">
-          {{ viewMode === 'month' ? '年视图' : '月视图' }}
+          {{
+            viewMode === 'month'
+              ? $t('page.leave.calendarView.yearView')
+              : $t('page.leave.calendarView.monthView')
+          }}
         </ElButton>
       </div>
       <div v-if="viewMode === 'year'" class="calendar-header-right">
-        <ElButton size="small" @click="goPrevYear">上一年</ElButton>
+        <ElButton size="small" @click="goPrevYear">
+          {{ $t('page.leave.calendarView.prevYear') }}
+        </ElButton>
         <span class="year-badge">{{ selectedYear }}</span>
-        <ElButton size="small" @click="goNextYear">下一年</ElButton>
+        <ElButton size="small" @click="goNextYear">
+          {{ $t('page.leave.calendarView.nextYear') }}
+        </ElButton>
         <ElButton size="small" type="primary" @click="goCurrentYear">
-回到今年
-</ElButton>
+          {{ $t('page.leave.calendarView.backToCurrentYear') }}
+        </ElButton>
       </div>
     </div>
 
@@ -316,7 +319,7 @@ function goCurrentYear() {
             :key="idx"
             class="week-day-label"
           >
-            周{{ label }}
+            {{ $t('page.leave.calendarView.weekPrefix') }}{{ label }}
           </div>
         </div>
         <div
@@ -398,19 +401,27 @@ function goCurrentYear() {
       <div class="year-summary-bar">
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.recordCount }}</div>
-          <div class="summary-label">请假记录</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.leaveRecords') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.dayCount }}</div>
-          <div class="summary-label">覆盖天数</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.coveredDays') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.pendingCount }}</div>
-          <div class="summary-label">待审批</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.pending') }}
+          </div>
         </div>
         <div class="summary-item">
           <div class="summary-value">{{ selectedYear }}</div>
-          <div class="summary-label">当前年份</div>
+          <div class="summary-label">
+            {{ $t('page.leave.calendarView.summary.currentYear') }}
+          </div>
         </div>
       </div>
 
@@ -518,38 +529,38 @@ function goCurrentYear() {
   padding: 4px 12px;
   font-size: 15px;
   font-weight: 700;
-  color: #2563eb;
+  color: hsl(var(--primary));
   text-align: center;
-  background: #eff6ff;
+  background: hsl(var(--accent));
   border-radius: 6px;
 }
 
 /* ===== 月视图 ===== */
 .month-view-grid {
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
 }
 
 .week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .week-day-label {
   padding: 10px 0;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
   text-align: center;
 }
 
 .week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .week-row:last-child {
@@ -561,7 +572,7 @@ function goCurrentYear() {
   min-height: 90px;
   padding: 6px;
   cursor: pointer;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid hsl(var(--border));
   transition: background 0.15s;
 }
 
@@ -570,22 +581,22 @@ function goCurrentYear() {
 }
 
 .calendar-cell:hover:not(.is-empty) {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-empty {
   cursor: default;
-  background: #fafbfc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-weekend {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .calendar-cell.is-selected {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: -2px;
-  background: #eff6ff;
+  background: hsl(var(--accent));
 }
 
 .calendar-cell.is-risk {
@@ -593,7 +604,7 @@ function goCurrentYear() {
 }
 
 .calendar-cell.has-leave {
-  background: #f0f9ff;
+  background: hsl(var(--accent));
 }
 
 .cell-top {
@@ -606,7 +617,7 @@ function goCurrentYear() {
 .day-number {
   font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: hsl(var(--foreground));
 }
 
 .day-badge {
@@ -619,7 +630,7 @@ function goCurrentYear() {
   font-size: 11px;
   font-weight: 600;
   color: #fff;
-  background: #3b82f6;
+  background: hsl(var(--primary));
   border-radius: 10px;
 }
 
@@ -636,7 +647,7 @@ function goCurrentYear() {
   padding: 1px 2px;
   font-size: 11px;
   line-height: 1.3;
-  color: #334155;
+  color: hsl(var(--foreground));
   border-radius: 3px;
 }
 
@@ -661,7 +672,7 @@ function goCurrentYear() {
 .more-line {
   padding-left: 12px;
   font-size: 10px;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
 }
 
 .day-bars {
@@ -687,8 +698,8 @@ function goCurrentYear() {
   gap: 12px;
   padding: 14px 18px;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%);
-  border: 1px solid #dbeafe;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
   border-radius: 10px;
 }
 
@@ -699,13 +710,13 @@ function goCurrentYear() {
 .summary-value {
   font-size: 24px;
   font-weight: 700;
-  color: #1e40af;
+  color: hsl(var(--primary));
 }
 
 .summary-label {
   margin-top: 2px;
   font-size: 12px;
-  color: #64748b;
+  color: hsl(var(--muted-foreground));
 }
 
 .year-grid {
@@ -717,22 +728,22 @@ function goCurrentYear() {
 .month-card {
   padding: 8px;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   transition: all 0.15s;
 }
 
 .month-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgb(59 130 246 / 12%);
+  border-color: hsl(var(--primary));
+  box-shadow: 0 2px 8px hsl(var(--primary) / 12%);
 }
 
 .month-title {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: hsl(var(--foreground));
   text-align: center;
 }
 
@@ -750,7 +761,7 @@ function goCurrentYear() {
 .mini-week-day {
   padding: 1px 0;
   font-size: 10px;
-  color: #94a3b8;
+  color: hsl(var(--muted-foreground));
   text-align: center;
 }
 
@@ -783,17 +794,17 @@ function goCurrentYear() {
 }
 
 .mini-cell.is-weekend {
-  background: #f8fafc;
+  background: hsl(var(--muted));
 }
 
 .mini-cell.is-selected {
-  outline: 1.5px solid #3b82f6;
+  outline: 1.5px solid hsl(var(--primary));
   outline-offset: -1px;
-  background: #dbeafe;
+  background: hsl(var(--accent));
 }
 
 .mini-cell.has-leave {
-  background: #eff6ff;
+  background: hsl(var(--accent));
 }
 
 .mini-cell.is-risk {
@@ -802,13 +813,13 @@ function goCurrentYear() {
 }
 
 .mini-cell:hover:not(.is-empty) {
-  background: #e0e7ff;
+  background: hsl(var(--accent));
 }
 
 .mini-day-number {
   font-size: 10px;
   line-height: 1;
-  color: #334155;
+  color: hsl(var(--foreground));
 }
 
 .mini-badge {
@@ -825,7 +836,7 @@ function goCurrentYear() {
   font-weight: 700;
   line-height: 1;
   color: #fff;
-  background: #3b82f6;
+  background: hsl(var(--primary));
   border-radius: 6px;
 }
 

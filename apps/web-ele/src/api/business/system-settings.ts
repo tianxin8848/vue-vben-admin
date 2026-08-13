@@ -31,12 +31,22 @@ export namespace SystemSettingsApi {
     to_hkd_rate: number;
   }
 
+  /** 员工档案字段目录项 */
+  export interface EmployeeEditableFieldItem {
+    code: string;
+    group: string;
+    label: string;
+  }
+
   /** 系统设置响应 */
   export interface SystemSettingsResponse {
     claim_currencies: ClaimCurrencyItem[];
     claim_reasons: ClaimReasonItem[];
     created_at: null | string;
     departments: string[];
+    employee_profile_field_catalog: EmployeeEditableFieldItem[];
+    employee_self_editable_fields: string[];
+    employee_self_editable_fields_initialized: boolean;
     id: string;
     modules: SystemModuleItem[];
     positions: string[];
@@ -51,6 +61,7 @@ export namespace SystemSettingsApi {
     claim_currencies?: ClaimCurrencyItem[];
     claim_reasons?: ClaimReasonItem[];
     departments?: string[];
+    employee_self_editable_fields?: string[];
     modules?: SystemModuleItem[];
     positions?: string[];
     regional_holiday_catalogs?: RegionalHolidayCatalogItem[];
@@ -86,6 +97,25 @@ export namespace SystemSettingsApi {
     start_date: string;
   }
 }
+
+/**
+ * 全量模块目录（前端固定维护）
+ *
+ * 保证系统参数页面的模块列表始终展示所有可选模块，勾选状态仅控制是否启用，
+ * 不会因为取消勾选并保存而导致行从界面中消失。
+ * module_code 与 router/module-permission-map.ts 中的定义保持一致。
+ */
+export const ALL_MODULE_CATALOG: SystemSettingsApi.SystemModuleItem[] = [
+  { module_code: 'user_management', module_name: '用户管理' },
+  { module_code: 'leave_calendar', module_name: '请假管理' },
+  { module_code: 'leave_workflows', module_name: '请假流程' },
+  { module_code: 'approval_management', module_name: '审批管理' },
+  { module_code: 'system_settings', module_name: '系统设置' },
+  { module_code: 'data_migration', module_name: '数据处理维护' },
+  { module_code: 'access_control', module_name: '门禁管理' },
+  { module_code: 'employee_leave', module_name: '请假申请' },
+  { module_code: 'claim_management', module_name: '报销管理' },
+];
 
 // ─── 系统设置 ────────────────────────────────────────────────────────────────
 
@@ -147,4 +177,3 @@ export async function deleteRegionalHolidayRangeApi(
     { data },
   );
 }
-

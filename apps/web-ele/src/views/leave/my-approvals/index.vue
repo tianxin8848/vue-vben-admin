@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+
+import { Page, VbenButton } from '@vben/common-ui';
 
 import {
-  ElButton,
   ElCard,
   ElDialog,
   ElInput,
   ElMessage,
+  ElOption,
   ElSelect,
   ElTable,
   ElTableColumn,
@@ -22,7 +23,6 @@ import {
   reviewLeaveRequestApi,
 } from '#/api';
 
-const router = useRouter();
 const loading = ref(false);
 
 const currentTime = ref('');
@@ -73,12 +73,13 @@ const actionLabelMap: Record<string, string> = {
   pending: '待审批',
 };
 
-const statusTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'danger',
-  withdrawn: 'info',
-};
+const statusTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> =
+  {
+    pending: 'warning',
+    approved: 'success',
+    rejected: 'danger',
+    withdrawn: 'info',
+  };
 
 const filteredPendingItems = computed(() => {
   const keyword = searchForm.keyword.trim().toLowerCase();
@@ -87,7 +88,8 @@ const filteredPendingItems = computed(() => {
 
   return pendingItems.value.filter((item) => {
     if (region && (item.employee_region || '') !== region) return false;
-    if (department && (item.employee_department || '') !== department) return false;
+    if (department && (item.employee_department || '') !== department)
+      return false;
     if (!keyword) return true;
 
     const target = [
@@ -96,7 +98,9 @@ const filteredPendingItems = computed(() => {
       item.employee_name || '',
       item.employee_department || '',
       item.employee_region || '',
-    ].join(' ').toLowerCase();
+    ]
+      .join(' ')
+      .toLowerCase();
     return target.includes(keyword);
   });
 });
@@ -108,7 +112,8 @@ const filteredProcessedItems = computed(() => {
 
   return processedItems.value.filter((item) => {
     if (region && (item.employee_region || '') !== region) return false;
-    if (department && (item.employee_department || '') !== department) return false;
+    if (department && (item.employee_department || '') !== department)
+      return false;
     if (!keyword) return true;
 
     const target = [
@@ -118,14 +123,24 @@ const filteredProcessedItems = computed(() => {
       item.employee_department || '',
       item.employee_region || '',
       item.comment || '',
-    ].join(' ').toLowerCase();
+    ]
+      .join(' ')
+      .toLowerCase();
     return target.includes(keyword);
   });
 });
 
 function formatNow() {
   const now = new Date();
-  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const weekLabels = [
+    '星期日',
+    '星期一',
+    '星期二',
+    '星期三',
+    '星期四',
+    '星期五',
+    '星期六',
+  ];
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
@@ -260,10 +275,6 @@ async function submitDecision(action: 'approved' | 'rejected') {
   }
 }
 
-function goBackHome() {
-  router.push('/employee');
-}
-
 onMounted(() => {
   startLiveClock();
   fetchData();
@@ -275,20 +286,19 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="my-approvals-page" v-loading="loading">
-    <div class="page-header">
-      <div class="header-info">
-        <h2>我的待办（请假）</h2>
-        <p class="page-subtitle">无需管理员身份，只要在审批链条里，就能在这里处理自己的审批任务。</p>
-        <div class="live-time">{{ currentTime }}</div>
+  <Page
+    title="我的待办（请假）"
+    description="无需管理员身份，只要在审批链条里，就能在这里处理自己的审批任务。"
+    v-loading="loading"
+  >
+    <template #extra>
+      <div class="extra-actions">
+        <span class="live-time">{{ currentTime }}</span>
+        <VbenButton @click="fetchData">刷新</VbenButton>
       </div>
-      <div class="header-actions">
-        <ElButton @click="goBackHome">返回工作台</ElButton>
-        <ElButton @click="fetchData">刷新</ElButton>
-      </div>
-    </div>
+    </template>
 
-    <ElCard class="card">
+    <ElCard class="mb-4">
       <template #header>
         <h3>待审批列表</h3>
       </template>
@@ -302,17 +312,26 @@ onUnmounted(() => {
         <ElSelect v-model="searchForm.region" placeholder="全部地区" clearable>
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
-        <ElSelect v-model="searchForm.department" placeholder="全部部门" clearable>
+        <ElSelect
+          v-model="searchForm.department"
+          placeholder="全部部门"
+          clearable
+        >
           <ElOption v-for="d in departments" :key="d" :label="d" :value="d" />
         </ElSelect>
       </div>
 
       <div class="summary">
-        待办 {{ pendingItems.length }} 条，当前筛选 {{ filteredPendingItems.length }} 条
+        待办 {{ pendingItems.length }} 条，当前筛选
+        {{ filteredPendingItems.length }} 条
       </div>
 
       <div class="table-wrapper">
-        <ElTable v-if="filteredPendingItems.length > 0" :data="filteredPendingItems" border>
+        <ElTable
+          v-if="filteredPendingItems.length > 0"
+          :data="filteredPendingItems"
+          border
+        >
           <ElTableColumn label="申请人" min-width="160">
             <template #default="{ row }">
               <div class="applicant-info">
@@ -326,7 +345,9 @@ onUnmounted(() => {
           <ElTableColumn label="请假范围" min-width="180">
             <template #default="{ row }">
               <div>{{ row.start_date }} ~ {{ row.end_date }}</div>
-              <div v-if="row.date_keys" class="date-count">覆盖 {{ row.date_keys.length }} 天</div>
+              <div v-if="row.date_keys" class="date-count">
+                覆盖 {{ row.date_keys.length }} 天
+              </div>
             </template>
           </ElTableColumn>
           <ElTableColumn label="类型/时段" min-width="140">
@@ -340,13 +361,17 @@ onUnmounted(() => {
           </ElTableColumn>
           <ElTableColumn label="部门/地区" min-width="140">
             <template #default="{ row }">
-              {{ row.employee_department || '-' }} / {{ row.employee_region || '-' }}
+              {{ row.employee_department || '-' }} /
+              {{ row.employee_region || '-' }}
             </template>
           </ElTableColumn>
           <ElTableColumn label="审批链" min-width="160">
             <template #default="{ row }">
               <ElTag
-                v-for="(node, index) in buildChainTags(row.approval_chain, row.current_approver_id)"
+                v-for="(node, index) in buildChainTags(
+                  row.approval_chain,
+                  row.current_approver_id,
+                )"
                 :key="index"
                 :type="node.isCurrent ? 'warning' : undefined"
                 class="chain-tag"
@@ -358,29 +383,40 @@ onUnmounted(() => {
           <ElTableColumn label="操作" width="140">
             <template #default="{ row }">
               <div class="action-group">
-                <ElButton size="small" type="primary" @click="openModal(row.id, true)">审批</ElButton>
-                <ElButton size="small" @click="openModal(row.id, false)">查看</ElButton>
+                <VbenButton
+                  size="sm"
+                  type="primary"
+                  @click="openModal(row.id, true)"
+                >
+                  审批
+                </VbenButton>
+                <VbenButton size="sm" @click="openModal(row.id, false)">
+                  查看
+                </VbenButton>
               </div>
             </template>
           </ElTableColumn>
         </ElTable>
-        <div v-else class="empty">
-          暂无待审批请假
-        </div>
+        <div v-else class="empty">暂无待审批请假</div>
       </div>
     </ElCard>
 
-    <ElCard class="card" style="margin-top: 16px;">
+    <ElCard>
       <template #header>
         <h3>我的已处理记录</h3>
       </template>
 
       <div class="summary">
-        已处理 {{ processedItems.length }} 条，当前筛选 {{ filteredProcessedItems.length }} 条
+        已处理 {{ processedItems.length }} 条，当前筛选
+        {{ filteredProcessedItems.length }} 条
       </div>
 
       <div class="table-wrapper">
-        <ElTable v-if="filteredProcessedItems.length > 0" :data="filteredProcessedItems" border>
+        <ElTable
+          v-if="filteredProcessedItems.length > 0"
+          :data="filteredProcessedItems"
+          border
+        >
           <ElTableColumn label="申请人" min-width="160">
             <template #default="{ row }">
               <div class="applicant-info">
@@ -410,16 +446,23 @@ onUnmounted(() => {
               </ElTag>
             </template>
           </ElTableColumn>
-          <ElTableColumn prop="comment" label="处理备注" min-width="200" show-overflow-tooltip />
+          <ElTableColumn
+            prop="comment"
+            label="处理备注"
+            min-width="200"
+            show-overflow-tooltip
+          />
           <ElTableColumn prop="created_at" label="处理时间" width="150">
             <template #default="{ row }">
-              {{ row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-' }}
+              {{
+                row.created_at
+                  ? new Date(row.created_at).toLocaleString('zh-CN')
+                  : '-'
+              }}
             </template>
           </ElTableColumn>
         </ElTable>
-        <div v-else class="empty">
-          暂无已处理记录
-        </div>
+        <div v-else class="empty">暂无已处理记录</div>
       </div>
     </ElCard>
 
@@ -442,11 +485,15 @@ onUnmounted(() => {
             </div>
             <div class="info-item">
               <span class="info-label">部门/地区：</span>
-              {{ currentRequest.employee_department || '-' }} / {{ currentRequest.employee_region || '-' }}
+              {{ currentRequest.employee_department || '-' }} /
+              {{ currentRequest.employee_region || '-' }}
             </div>
             <div class="info-item">
               <span class="info-label">范围：</span>
-              {{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}（{{ formatSession(currentRequest.session) }}）
+              {{ currentRequest.start_date }} ~
+              {{ currentRequest.end_date }}（{{
+                formatSession(currentRequest.session)
+              }}）
             </div>
             <div class="info-item">
               <span class="info-label">类型：</span>
@@ -471,73 +518,31 @@ onUnmounted(() => {
       </div>
 
       <template #footer>
-        <ElButton @click="closeModal">关闭</ElButton>
+        <VbenButton @click="closeModal">关闭</VbenButton>
         <template v-if="allowAction">
-          <ElButton type="danger" @click="submitDecision('rejected')">驳回</ElButton>
-          <ElButton type="primary" @click="submitDecision('approved')">通过</ElButton>
+          <VbenButton type="danger" @click="submitDecision('rejected')">
+            驳回
+          </VbenButton>
+          <VbenButton type="primary" @click="submitDecision('approved')">
+            通过
+          </VbenButton>
         </template>
       </template>
     </ElDialog>
-  </div>
+  </Page>
 </template>
 
 <style scoped>
-.my-approvals-page {
-  padding: 32px;
-  background: #f8fafc;
-  min-height: calc(100vh - 80px);
-}
-
-.page-header {
+.extra-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.header-info h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
+  gap: 12px;
+  align-items: center;
 }
 
 .live-time {
-  margin-top: 10px;
-  color: #2563eb;
   font-size: 14px;
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.card {
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-}
-
-.card :deep(.el-card__header) {
-  padding: 0 0 16px;
-  border-bottom: none;
-}
-
-.card :deep(.el-card__header) h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.card :deep(.el-card__body) {
-  padding: 0;
+  font-weight: 600;
+  color: hsl(221deg 83% 53%);
 }
 
 .filters {
@@ -554,9 +559,9 @@ onUnmounted(() => {
 }
 
 .summary {
-  color: #64748b;
-  font-size: 14px;
   margin-bottom: 12px;
+  font-size: 14px;
+  color: #64748b;
 }
 
 .table-wrapper {
@@ -568,15 +573,15 @@ onUnmounted(() => {
 }
 
 .applicant-meta {
-  color: #64748b;
-  font-size: 13px;
   margin-top: 4px;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .date-count {
-  color: #64748b;
-  font-size: 13px;
   margin-top: 4px;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .type-badges {
@@ -587,9 +592,9 @@ onUnmounted(() => {
 }
 
 .leave-reason {
-  color: #64748b;
   font-size: 13px;
   line-height: 1.5;
+  color: #64748b;
 }
 
 .chain-tag {
@@ -603,16 +608,16 @@ onUnmounted(() => {
 
 .empty {
   padding: 24px;
-  text-align: center;
   color: #64748b;
+  text-align: center;
   background: #f8fafc;
   border-radius: 14px;
 }
 
 .modal-subtitle {
-  color: #64748b;
-  font-size: 13px;
   margin-bottom: 16px;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .modal-section {
@@ -620,17 +625,17 @@ onUnmounted(() => {
 }
 
 .section-title {
+  margin-bottom: 10px;
   font-size: 13px;
   font-weight: 700;
   color: #334155;
-  margin-bottom: 10px;
 }
 
 .info-grid {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
   padding: 12px 14px;
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
 }
 
 .info-item {
@@ -645,14 +650,5 @@ onUnmounted(() => {
 
 .info-label {
   color: #64748b;
-}
-
-@media (max-width: 980px) {
-  .page-header {
-    flex-direction: column;
-  }
-  .header-actions {
-    justify-content: flex-start;
-  }
 }
 </style>

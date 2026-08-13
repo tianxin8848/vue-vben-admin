@@ -4,6 +4,7 @@ import type { SystemSettingsApi } from '#/api';
 import { reactive, watch } from 'vue';
 
 import {
+  ElAlert,
   ElButton,
   ElForm,
   ElFormItem,
@@ -79,11 +80,9 @@ function handleSave() {
 </script>
 
 <template>
-  <div
-    style="padding-top: 24px; margin-top: 24px; border-top: 1px solid #e2e8f0"
-  >
-    <h3 style="margin: 0 0 12px; font-size: 18px">地区假期名称清单维护</h3>
-    <p style="margin: 0 0 18px; color: #64748b">
+  <section class="mt-6 border-t border-border pt-6">
+    <h3 class="mb-3 text-lg">地区假期名称清单维护</h3>
+    <p class="mb-4 text-sm text-muted-foreground">
       在这里维护“每个地区可选哪些假期名称”。这里的地区会严格和上方“地区列表”保持一致，地区假期录入下拉会直接读取这里的配置。
     </p>
 
@@ -91,7 +90,7 @@ function handleSave() {
       <ElFormItem label="地区">
         <ElSelect
           v-model="catalogForm.region"
-          style="width: 140px"
+          class="w-[140px]"
           @change="fillCatalogEditor"
         >
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
@@ -112,24 +111,16 @@ function handleSave() {
       </ElFormItem>
     </ElForm>
 
-    <p style="margin-top: 8px; font-size: 12px; color: #64748b">
+    <p class="mt-2 text-xs text-muted-foreground">
       建议每个地区都保留“其他”，便于录入临时假期或特殊安排。
     </p>
-    <div
+    <ElAlert
       v-if="message"
-      style="
-        padding: 12px 14px;
-        margin-top: 12px;
-        white-space: pre-wrap;
-        border-radius: 10px;
-      "
-      :style="
-        messageType === 'success'
-          ? 'background: #dcfce7; color: #166534;'
-          : 'background: #fee2e2; color: #991b1b;'
-      "
-    >
-      {{ message }}
-    </div>
-  </div>
+      :title="message"
+      :type="messageType === 'success' ? 'success' : 'error'"
+      show-icon
+      :closable="false"
+      class="mt-3 whitespace-pre-wrap"
+    />
+  </section>
 </template>

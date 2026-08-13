@@ -14,6 +14,7 @@ import {
   getSystemSettingsApi,
   upsertRegionalHolidayApi,
 } from '#/api';
+import { $t } from '#/locales';
 
 import CalendarPanel from './components/CalendarPanel.vue';
 import DetailPanel from './components/DetailPanel.vue';
@@ -45,12 +46,12 @@ const regionalHolidays = ref<any[]>([]);
 
 const calendarRecords = ref<any[]>([]);
 
-const annualLeaveSummary = ref<{
+const annualLeaveSummary = ref<null | {
   available_days: number;
   entitlement_days: number;
   used_days: number;
   year: number;
-} | null>(null);
+}>(null);
 
 function toUTC8DateKey(date: Date): string {
   const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
@@ -83,14 +84,16 @@ const dayMap = computed(() => {
 
 const filteredEmployees = computed(() => {
   const keyword = searchForm.employee_keyword.trim();
+  const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
+  const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
   let source = employeesDirectory.value;
   if (source.length === 0) {
     source = calendarRecords.value.map((item) => ({
       id: item.id,
       username: item.employee_username,
       name: item.employee_name,
-      team: item.employee_department || '未分组',
-      region: item.employee_region || '未设置地区',
+      team: item.employee_department || ungroupedLabel,
+      region: item.employee_region || unsetRegionLabel,
     }));
   }
   return source.filter((employee) => {
@@ -102,7 +105,7 @@ const filteredEmployees = computed(() => {
       searchForm.region === '' ||
       searchForm.region === 'all' ||
       (searchForm.region === '__unset__'
-        ? employee.region === '未设置地区'
+        ? employee.region === unsetRegionLabel
         : employee.region === searchForm.region);
     const matchesKeyword =
       !keyword ||
@@ -119,11 +122,14 @@ const stats = computed(() => {
   const peak = riskyDates.toSorted(
     (left, right) => right[1].length - left[1].length,
   )[0];
+  const personUnit = $t('page.leave.calendarView.stats.personUnit');
   return {
     visibleEmployeeCount: filteredEmployees.value.length,
     leaveRecordCount: calendarRecords.value.length,
     riskDayCount: riskyDates.length,
-    peakDayText: peak ? `${peak[0].slice(5)} · ${peak[1].length}人` : '-',
+    peakDayText: peak
+      ? `${peak[0].slice(5)} · ${peak[1].length}${personUnit}`
+      : '-',
   };
 });
 
@@ -144,15 +150,10 @@ function onPanelChange(date: Date) {
 
 function formatNow() {
   const utc8Now = getUTC8Now();
-  const weekLabels = [
-    '星期日',
-    '星期一',
-    '星期二',
-    '星期三',
-    '星期四',
-    '星期五',
-    '星期六',
-  ];
+  const weekKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const weekLabels = weekKeys.map(
+    (k) => $t(`page.leave.calendarView.weekdays.${k}`) as string,
+  );
   const year = utc8Now.getUTCFullYear();
   const month = String(utc8Now.getUTCMonth() + 1).padStart(2, '0');
   const day = String(utc8Now.getUTCDate()).padStart(2, '0');
@@ -204,7 +205,7 @@ async function setHoliday() {
     await upsertRegionalHolidayApi({
       region: activeRegion,
       date: dateKey,
-      holiday_name: '元旦',
+      holiday_name: $t('page.leave.calendarView.holidayNames.newYear'),
     });
     await loadSystemSettings();
   } catch {
@@ -276,13 +277,15 @@ async function loadSystemSettings() {
 async function loadEmployees() {
   try {
     const data = await getEmployeesApi();
+    const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
+    const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
     employeesDirectory.value = data
       .map((item: any) => ({
         id: item.id,
         username: item.username,
         name: item.full_name || item.username,
-        team: item.department || '未分组',
-        region: item.region || '未设置地区',
+        team: item.department || ungroupedLabel,
+        region: item.region || unsetRegionLabel,
         isActive: item.is_active !== false,
       }))
       .filter((item: any) => item.isActive);
@@ -309,7 +312,12 @@ function goToWorkflow() {
 
 onMounted(() => {
   startLiveClock();
-  Promise.all([fetchCalendar(), loadSystemSettings(), loadEmployees(), loadAnnualLeaveSummary()]);
+  Promise.all([
+    fetchCalendar(),
+    loadSystemSettings(),
+    loadEmployees(),
+    loadAnnualLeaveSummary(),
+  ]);
 });
 
 onUnmounted(() => {
@@ -319,8 +327,8 @@ onUnmounted(() => {
 
 <template>
   <Page
-    title="请假管理"
-    description="请假管理包含'请假日历'和'流程维护'，当前为日历视图。"
+    :title="$t('page.leave.title')"
+    :description="$t('page.leave.calendarView.description')"
     v-loading="loading"
   >
     <div
@@ -334,19 +342,29 @@ onUnmounted(() => {
       "
     >
       <div>
-        <span style="font-size: 14px; color: #64748b">{{ currentTime }}</span>
+        <span style="font-size: 14px; color: hsl(var(--muted-foreground))">{{
+          currentTime
+        }}</span>
       </div>
       <div
         style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center"
       >
-        <ElButton @click="goBackHome">返回工作台</ElButton>
+        <ElButton @click="goBackHome">
+          {{ $t('page.leave.calendarView.backToWorkspace') }}
+        </ElButton>
         <ElSelect
           v-model="searchForm.region"
           @change="searchForm.region = $event"
           style="width: 180px"
         >
-          <ElOption label="总览（全部地区）" value="" />
-          <ElOption label="未设置地区" value="__unset__" />
+          <ElOption
+            :label="$t('page.leave.calendarView.allRegions')"
+            value=""
+          />
+          <ElOption
+            :label="$t('page.leave.calendarView.unsetRegion')"
+            value="__unset__"
+          />
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
       </div>
@@ -358,31 +376,32 @@ onUnmounted(() => {
           padding: 8px 16px;
           font-size: 14px;
           font-weight: 600;
-          color: #2563eb;
+          color: hsl(var(--primary));
           cursor: pointer;
-          background: #eff6ff;
+          background: hsl(var(--accent));
           border-radius: 8px;
         "
-        >请假日历</span>
+        >{{ $t('page.leave.calendar') }}</span>
       <span
         style="
           padding: 8px 16px;
           font-size: 14px;
-          color: #64748b;
+          color: hsl(var(--muted-foreground));
           cursor: pointer;
           border-radius: 8px;
           transition: all 0.2s;
         "
         @click="goToWorkflow"
         @mouseenter="
-          ($event.target as HTMLElement).style.background = '#f1f5f9';
-          ($event.target as HTMLElement).style.color = '#0f172a';
+          ($event.target as HTMLElement).style.background = 'hsl(var(--muted))';
+          ($event.target as HTMLElement).style.color = 'hsl(var(--foreground))';
         "
         @mouseleave="
           ($event.target as HTMLElement).style.background = 'transparent';
-          ($event.target as HTMLElement).style.color = '#64748b';
+          ($event.target as HTMLElement).style.color =
+            'hsl(var(--muted-foreground))';
         "
-        >流程维护</span>
+        >{{ $t('page.leave.calendarView.workflowMaintenance') }}</span>
     </div>
 
     <div style="margin-bottom: 16px">

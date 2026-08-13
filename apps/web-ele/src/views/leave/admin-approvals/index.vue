@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import type { LeaveRequestApi } from '#/api';
 
-import { computed, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -18,19 +17,24 @@ import {
   ElSelect,
   ElTable,
   ElTableColumn,
+  ElTabPane,
+  ElTabs,
   ElTag,
 } from 'element-plus';
 
 import {
-  getLeaveRequestsApi,
+  getMyApprovalRecordsApi,
+  getMyPendingApprovalsApi,
   getSystemSettingsApi,
   reviewLeaveRequestApi,
   withdrawLeaveRequestApi,
 } from '#/api';
 
-const router = useRouter();
 const loading = ref(false);
+const activeTab = ref<'pending' | 'records'>('pending');
+
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
+const approvalRecords = ref<LeaveRequestApi.ApprovalRecord[]>([]);
 
 const searchForm = reactive({
   keyword: '',
@@ -44,6 +48,7 @@ const showDetailModal = ref(false);
 const showReviewModal = ref(false);
 const showWithdrawModal = ref(false);
 const currentRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
+const currentRequestId = ref('');
 const reviewForm = reactive({ reviewComment: '' });
 const withdrawForm = reactive({ withdrawComment: '' });
 
@@ -71,11 +76,26 @@ const statusLabelMap: Record<string, string> = {
   withdrawn: '已撤回',
 };
 
+const actionLabelMap: Record<string, string> = {
+  approved: '已通过',
+  rejected: '已驳回',
+  submitted: '已提交',
+  withdrawn: '已撤回',
+};
+
 const statusTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> =
   {
     pending: 'warning',
     approved: 'success',
     rejected: 'danger',
+    withdrawn: 'info',
+  };
+
+const actionTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> =
+  {
+    approved: 'success',
+    rejected: 'danger',
+    submitted: 'warning',
     withdrawn: 'info',
   };
 
@@ -95,56 +115,107 @@ async function fetchSystemSettings() {
   }
 }
 
-const filteredRequests = computed(() => {
-  let list = [...leaveRequests.value];
-
-  if (searchForm.keyword) {
-    const kw = searchForm.keyword.toLowerCase();
-    list = list.filter(
-      (e) =>
-        e.employee_name.toLowerCase().includes(kw) ||
-        e.employee_username.toLowerCase().includes(kw) ||
-        e.employee_code?.toLowerCase().includes(kw),
-    );
-  }
-
-  if (searchForm.status) {
-    list = list.filter((e) => e.approval_status === searchForm.status);
-  }
-
-  if (searchForm.leave_type) {
-    list = list.filter((e) => e.leave_type === searchForm.leave_type);
-  }
-
-  if (searchForm.department) {
-    list = list.filter((e) => e.employee_department === searchForm.department);
-  }
-
-  if (searchForm.region) {
-    list = list.filter((e) => e.employee_region === searchForm.region);
-  }
-
-  return list;
-});
-
-async function fetchLeaveRequests() {
+/**
+ * 从后端加载待我审批的请假列表 + 我的审批记录
+ *
+ * 与后端 approval_management.html 页保持一致：
+ * - 待审批：GET /leave-requests/approvals/my （只需登录，无需 leave_calendar 权限）
+ * - 审批记录：GET /leave-requests/approvals/records/my （只需登录）
+ * 原错误调用 GET /leave-requests 会要求 leave_calendar module 权限，
+ * 导致仅拥有 approval_management 权限的用户拿到 403。
+ */
+async function fetchApprovalData() {
   loading.value = true;
   try {
-    leaveRequests.value = await getLeaveRequestsApi({
-      approval_status: searchForm.status
-        ? (searchForm.status as LeaveRequestApi.ApprovalStatus)
-        : null,
-      employee_keyword: searchForm.keyword || undefined,
-      region: searchForm.region || undefined,
-      team: searchForm.department || undefined,
-    });
+    const [pending, records] = await Promise.all([
+      getMyPendingApprovalsApi().catch(() => []),
+      getMyApprovalRecordsApi().catch(() => []),
+    ]);
+    leaveRequests.value = pending;
+    approvalRecords.value = records;
   } finally {
     loading.value = false;
   }
 }
 
+/**
+ * 匹配一条待审批记录是否通过关键字/筛选条件
+ */
+function matchPendingRequest(
+  row: LeaveRequestApi.LeaveRequest,
+  kw: string,
+): boolean {
+  if (searchForm.status && row.approval_status !== searchForm.status)
+    return false;
+  if (searchForm.leave_type && row.leave_type !== searchForm.leave_type)
+    return false;
+  if (
+    searchForm.department &&
+    row.employee_department !== searchForm.department
+  )
+    return false;
+  if (searchForm.region && row.employee_region !== searchForm.region)
+    return false;
+  if (!kw) return true;
+  const hay = [
+    row.employee_name,
+    row.employee_username,
+    row.employee_code,
+    row.employee_department,
+    row.employee_region,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return hay.includes(kw);
+}
+
+/**
+ * 匹配一条审批记录是否通过筛选条件
+ */
+function matchApprovalRecord(
+  row: LeaveRequestApi.ApprovalRecord,
+  kw: string,
+): boolean {
+  if (searchForm.status && row.approval_status_after !== searchForm.status)
+    return false;
+  if (searchForm.leave_type && row.leave_type !== searchForm.leave_type)
+    return false;
+  if (
+    searchForm.department &&
+    row.employee_department !== searchForm.department
+  )
+    return false;
+  if (searchForm.region && row.employee_region !== searchForm.region)
+    return false;
+  if (!kw) return true;
+  const hay = [
+    row.employee_name,
+    row.employee_username,
+    row.employee_code,
+    row.employee_department,
+    row.employee_region,
+    row.comment,
+    row.operator_name,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return hay.includes(kw);
+}
+
+const filteredPending = computed(() => {
+  const kw = searchForm.keyword.trim().toLowerCase();
+  return leaveRequests.value.filter((r) => matchPendingRequest(r, kw));
+});
+
+const filteredRecords = computed(() => {
+  const kw = searchForm.keyword.trim().toLowerCase();
+  return approvalRecords.value.filter((r) => matchApprovalRecord(r, kw));
+});
+
 function handleSearch() {
-  fetchLeaveRequests();
+  // 数据全部走客户端筛选，只触发表格重算
 }
 
 function handleReset() {
@@ -153,7 +224,6 @@ function handleReset() {
   searchForm.leave_type = '';
   searchForm.department = '';
   searchForm.region = '';
-  fetchLeaveRequests();
 }
 
 function openDetailModal(request: LeaveRequestApi.LeaveRequest) {
@@ -161,72 +231,104 @@ function openDetailModal(request: LeaveRequestApi.LeaveRequest) {
   showDetailModal.value = true;
 }
 
+function openDetailFromRecord(record: LeaveRequestApi.ApprovalRecord) {
+  currentRequest.value = {
+    id: record.leave_request_id,
+    employee_id: record.employee_id,
+    employee_user_id: null as unknown as number,
+    employee_name: record.employee_name,
+    employee_username: record.employee_username,
+    employee_code: record.employee_code,
+    employee_department: record.employee_department,
+    employee_region: record.employee_region,
+    leave_type: record.leave_type,
+    session: record.session,
+    start_date: record.start_date,
+    end_date: record.end_date,
+    approval_status: record.approval_status_after,
+    handover_to: null,
+    reason: null,
+    review_comment: record.comment,
+    reviewer_id: record.operator_id,
+    reviewer_name: record.operator_name,
+    reviewed_at: record.created_at,
+    current_approver_id: null,
+    approval_chain: [],
+    approval_history: [],
+    date_keys: [],
+    created_at: record.created_at,
+    created_by_id: record.employee_id,
+    created_by_name: record.employee_name,
+    updated_at: null,
+  } as unknown as LeaveRequestApi.LeaveRequest;
+  showDetailModal.value = true;
+}
+
 function openReviewModal(request: LeaveRequestApi.LeaveRequest) {
+  currentRequestId.value = request.id;
   currentRequest.value = request;
   reviewForm.reviewComment = '';
   showReviewModal.value = true;
 }
 
 function openWithdrawModal(request: LeaveRequestApi.LeaveRequest) {
+  currentRequestId.value = request.id;
   currentRequest.value = request;
   withdrawForm.withdrawComment = '';
   showWithdrawModal.value = true;
 }
 
 async function handleReview(action: 'approved' | 'rejected') {
-  if (!currentRequest.value) return;
+  if (!currentRequestId.value) return;
   if (action === 'rejected' && !reviewForm.reviewComment.trim()) {
     ElMessage.warning('驳回必须填写原因');
     return;
   }
   try {
-    await reviewLeaveRequestApi(currentRequest.value.id, {
+    await reviewLeaveRequestApi(currentRequestId.value, {
       approval_status: action,
       review_comment: reviewForm.reviewComment.trim() || null,
     });
     ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
     showReviewModal.value = false;
-    fetchLeaveRequests();
+    await fetchApprovalData();
   } catch {
     ElMessage.error('操作失败');
   }
 }
 
 async function handleWithdraw() {
-  if (!currentRequest.value) return;
+  if (!currentRequestId.value) return;
   try {
-    await withdrawLeaveRequestApi(currentRequest.value.id, {
+    await withdrawLeaveRequestApi(currentRequestId.value, {
       withdraw_comment: withdrawForm.withdrawComment.trim() || null,
     });
     ElMessage.success('已撤回');
     showWithdrawModal.value = false;
-    fetchLeaveRequests();
+    await fetchApprovalData();
   } catch {
-    ElMessage.error('操作失败');
+    ElMessage.error('撤回失败（需本人或拥有请假模块权限）');
   }
 }
 
-function goBack() {
-  router.push('/employee/manage/users');
-}
-
-fetchSystemSettings();
-fetchLeaveRequests();
+onMounted(async () => {
+  await fetchSystemSettings();
+  await fetchApprovalData();
+});
 </script>
 
 <template>
   <Page
-    title="请假管理"
-    description="管理所有员工的请假申请，支持审批和撤回操作"
+    title="审批管理"
+    description="查看待我审批的请假申请，以及我已处理过的审批记录"
+    v-loading="loading"
   >
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
-
     <ElCard class="search-card">
       <div class="search-bar">
         <ElInput
           v-model="searchForm.keyword"
-          placeholder="搜索员工姓名 / 账号 / 工号"
-          style="width: 250px"
+          placeholder="搜索员工姓名 / 账号 / 工号 / 备注"
+          style="width: 280px"
           clearable
           @keyup.enter="handleSearch"
         />
@@ -234,6 +336,7 @@ fetchLeaveRequests();
           v-model="searchForm.status"
           placeholder="全部状态"
           style="width: 120px"
+          clearable
         >
           <ElOption label="全部状态" value="" />
           <ElOption label="待审批" value="pending" />
@@ -245,6 +348,7 @@ fetchLeaveRequests();
           v-model="searchForm.leave_type"
           placeholder="全部类型"
           style="width: 120px"
+          clearable
         >
           <ElOption label="全部类型" value="" />
           <ElOption label="年假" value="annual" />
@@ -283,92 +387,177 @@ fetchLeaveRequests();
         </ElSelect>
         <ElButton type="primary" @click="handleSearch">搜索</ElButton>
         <ElButton @click="handleReset">重置筛选</ElButton>
-        <ElButton @click="fetchLeaveRequests">刷新列表</ElButton>
+        <ElButton @click="fetchApprovalData">刷新列表</ElButton>
       </div>
     </ElCard>
 
-    <ElCard class="table-card" header="请假列表">
-      <ElTable
-        :data="filteredRequests"
-        border
-        stripe
-        v-loading="loading"
-        size="small"
-      >
-        <ElTableColumn prop="employee_name" label="申请人" width="100" />
-        <ElTableColumn prop="employee_username" label="账号" width="120" />
-        <ElTableColumn prop="employee_code" label="工号" width="100" />
-        <ElTableColumn prop="employee_department" label="部门" width="140" />
-        <ElTableColumn prop="employee_region" label="地区" width="100" />
-        <ElTableColumn prop="leave_type" label="类型" width="80">
-          <template #default="{ row }">
-            {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn prop="session" label="时段" width="80">
-          <template #default="{ row }">
-            {{ sessionLabelMap[row.session] || row.session }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="时间范围" min-width="180">
-          <template #default="{ row }">
-            {{ row.start_date }} ~ {{ row.end_date }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn
-          prop="reason"
-          label="原因"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <ElTableColumn prop="approval_status" label="状态" width="100">
-          <template #default="{ row }">
-            <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-              {{ statusLabelMap[row.approval_status] || row.approval_status }}
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn
-          prop="review_comment"
-          label="审批意见"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <ElTableColumn label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <ElButton
-              size="small"
-              @click="openDetailModal(row as LeaveRequestApi.LeaveRequest)"
-              >
-详情
-</ElButton>
-            <ElButton
-              v-if="
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                'pending'
-              "
-              size="small"
-              type="primary"
-              @click="openReviewModal(row as LeaveRequestApi.LeaveRequest)"
-            >
-              审批
-            </ElButton>
-            <ElButton
-              v-if="
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                  'pending' ||
-                (row as LeaveRequestApi.LeaveRequest).approval_status ===
-                  'approved'
-              "
-              size="small"
-              type="danger"
-              @click="openWithdrawModal(row as LeaveRequestApi.LeaveRequest)"
-            >
-              撤回
-            </ElButton>
-          </template>
-        </ElTableColumn>
-      </ElTable>
+    <ElCard class="table-card" style="margin-top: 16px">
+      <ElTabs v-model="activeTab">
+        <ElTabPane label="待审批" name="pending">
+          <p class="tab-summary">
+            共 {{ leaveRequests.length }} 条待审批，当前筛选
+            {{ filteredPending.length }} 条
+          </p>
+          <ElTable
+            :data="filteredPending"
+            border
+            stripe
+            size="small"
+            empty-text="暂无待审批请假"
+          >
+            <ElTableColumn prop="employee_name" label="申请人" width="100" />
+            <ElTableColumn prop="employee_username" label="账号" width="120" />
+            <ElTableColumn prop="employee_code" label="工号" width="100" />
+            <ElTableColumn
+              prop="employee_department"
+              label="部门"
+              width="140"
+            />
+            <ElTableColumn prop="employee_region" label="地区" width="100" />
+            <ElTableColumn prop="leave_type" label="类型" width="80">
+              <template #default="{ row }">
+                {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn prop="session" label="时段" width="80">
+              <template #default="{ row }">
+                {{ sessionLabelMap[row.session] || row.session }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="时间范围" min-width="180">
+              <template #default="{ row }">
+                {{ row.start_date }} ~ {{ row.end_date }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="reason"
+              label="原因"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <ElTableColumn prop="approval_status" label="状态" width="100">
+              <template #default="{ row }">
+                <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
+                  {{
+                    statusLabelMap[row.approval_status] || row.approval_status
+                  }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="操作" width="200" fixed="right">
+              <template #default="{ row }">
+                <ElButton
+                  size="small"
+                  @click="openDetailModal(row as LeaveRequestApi.LeaveRequest)"
+                >
+                  详情
+                </ElButton>
+                <ElButton
+                  v-if="row.approval_status === 'pending'"
+                  size="small"
+                  type="primary"
+                  @click="openReviewModal(row as LeaveRequestApi.LeaveRequest)"
+                >
+                  审批
+                </ElButton>
+                <ElButton
+                  v-if="
+                    row.approval_status === 'pending' ||
+                    row.approval_status === 'approved'
+                  "
+                  size="small"
+                  type="danger"
+                  @click="
+                    openWithdrawModal(row as LeaveRequestApi.LeaveRequest)
+                  "
+                >
+                  撤回
+                </ElButton>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </ElTabPane>
+
+        <ElTabPane label="审批记录" name="records">
+          <p class="tab-summary">
+            共 {{ approvalRecords.length }} 条记录，当前筛选
+            {{ filteredRecords.length }} 条
+          </p>
+          <ElTable
+            :data="filteredRecords"
+            border
+            stripe
+            size="small"
+            empty-text="暂无审批记录"
+          >
+            <ElTableColumn prop="employee_name" label="申请人" width="100" />
+            <ElTableColumn prop="employee_username" label="账号" width="120" />
+            <ElTableColumn prop="employee_code" label="工号" width="100" />
+            <ElTableColumn
+              prop="employee_department"
+              label="部门"
+              width="140"
+            />
+            <ElTableColumn prop="employee_region" label="地区" width="100" />
+            <ElTableColumn prop="leave_type" label="类型" width="80">
+              <template #default="{ row }">
+                {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="时间范围" min-width="180">
+              <template #default="{ row }">
+                {{ row.start_date }} ~ {{ row.end_date }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="我的操作" width="100">
+              <template #default="{ row }">
+                <ElTag :type="actionTypeMap[row.action] || 'info'">
+                  {{ actionLabelMap[row.action] || row.action }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="当前状态" width="100">
+              <template #default="{ row }">
+                <ElTag
+                  :type="statusTypeMap[row.approval_status_after] || 'info'"
+                >
+                  {{
+                    statusLabelMap[row.approval_status_after] ||
+                    row.approval_status_after
+                  }}
+                </ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn
+              prop="comment"
+              label="审批备注"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <ElTableColumn prop="created_at" label="处理时间" width="170">
+              <template #default="{ row }">
+                {{
+                  row.created_at
+                    ? new Date(row.created_at).toLocaleString('zh-CN')
+                    : '-'
+                }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="操作" width="100" fixed="right">
+              <template #default="{ row }">
+                <ElButton
+                  size="small"
+                  @click="
+                    openDetailFromRecord(row as LeaveRequestApi.ApprovalRecord)
+                  "
+                >
+                  详情
+                </ElButton>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </ElTabPane>
+      </ElTabs>
     </ElCard>
 
     <ElDialog v-model="showDetailModal" title="请假详情" width="600px">
@@ -446,7 +635,8 @@ fetchLeaveRequests();
           {{ sessionLabelMap[currentRequest.session] }}
         </p>
         <p>
-          时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
+          时间：{{ currentRequest.start_date }} ~
+          {{ currentRequest.end_date }}
         </p>
         <ElForm :model="reviewForm" label-width="80px" style="margin-top: 16px">
           <ElFormItem label="审批备注">
@@ -482,7 +672,8 @@ fetchLeaveRequests();
           {{ sessionLabelMap[currentRequest.session] }}
         </p>
         <p>
-          时间：{{ currentRequest.start_date }} ~ {{ currentRequest.end_date }}
+          时间：{{ currentRequest.start_date }} ~
+          {{ currentRequest.end_date }}
         </p>
         <ElForm
           :model="withdrawForm"
@@ -506,3 +697,33 @@ fetchLeaveRequests();
     </ElDialog>
   </Page>
 </template>
+
+<style scoped>
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.tab-summary {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+
+.info-item {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.info-label {
+  color: #64748b;
+}
+</style>
