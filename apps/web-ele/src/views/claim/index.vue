@@ -1,340 +1,59 @@
 <script lang="ts" setup>
-import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { ClaimApi } from '#/api';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElMessage, ElSegmented, ElTag } from 'element-plus';
+import { ElButton, ElSegmented, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  exportMyClaimsApi,
-  getClaimOptionsApi,
-  getMyClaimApprovalRecordsApi,
-  getMyClaimHistoryApi,
-  getMyClaimsApi,
-  getMyPendingClaimApprovalsApi,
-  getUserInfoApi,
-} from '#/api';
 
 import CreateClaimDrawer from './components/CreateClaimDrawer.vue';
 import ReviewClaimDrawer from './components/ReviewClaimDrawer.vue';
+import { useClaimActions } from './composables/useClaimActions';
+import { useClaimData } from './composables/useClaimData';
+import {
+  buildActionLabelMap,
+  buildSegmentedOptions,
+  buildSharedToolbarConfig,
+  buildStatusLabelMap,
+  buildTabColumns,
+  buildTableTitles,
+  dataFor,
+  formatAction,
+  formatDate,
+  formatStatus,
+  statusTypeMap,
+} from './data';
 
 const { t } = useI18n();
 
-const loading = ref(false);
+// ─── 数据层（Tab 状态 + API 加载） ───────────────────────────────────────────
+const data = useClaimData();
 
-const userInfo = ref<null | {
-  full_name: string;
-  username: string;
-}>(null);
+// ─── 操作层（撤回 + 导出） ───────────────────────────────────────────────────
+const { actionLoading, handleExport, handleWithdraw } = useClaimActions();
 
-// ─── 选项数据 ────────────────────────────────────────────────────────────────
-const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
-const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
+// ─── 统一 loading：数据加载 + 操作进行中 ──────────────────────────────────────
+const isLoading = computed(() => data.loading.value || actionLoading.value);
+
+// ─── 表格列 / 工具栏等 i18n 相关配置（来自 data.ts） ──────────────────────────
+const tabColumns = computed(() => buildTabColumns(t));
+const segmentedOptions = computed(() => buildSegmentedOptions(t));
+const sharedToolbarConfig = computed(() => buildSharedToolbarConfig(t));
+const statusLabelMap = computed(() => buildStatusLabelMap(t));
+const actionLabelMap = computed(() => buildActionLabelMap(t));
+const activeTableTitle = computed(
+  () => buildTableTitles(t, data.tabLengths())[data.activeTab.value],
+);
 
 // ─── 子组件引用 ──────────────────────────────────────────────────────────────
 const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
 const reviewDrawerRef = ref<InstanceType<typeof ReviewClaimDrawer>>();
 
-// ─── Tab 状态 ────────────────────────────────────────────────────────────────
-type TabKey = 'history' | 'my' | 'pending' | 'records';
-const activeTab = ref<TabKey>('my');
-
-const myClaims = ref<ClaimApi.ClaimResponse[]>([]);
-const myHistory = ref<ClaimApi.ClaimResponse[]>([]);
-const pendingApprovals = ref<ClaimApi.ClaimResponse[]>([]);
-const approvalRecords = ref<ClaimApi.ClaimApprovalRecord[]>([]);
-
-const segmentedOptions = computed(() => [
-  { label: t('page.claim.tabs.my'), value: 'my' },
-  { label: t('page.claim.tabs.history'), value: 'history' },
-  { label: t('page.claim.tabs.pending'), value: 'pending' },
-  { label: t('page.claim.tabs.records'), value: 'records' },
-]);
-
-const myClaimsTitle = computed(() =>
-  t('page.claim.messages.myClaimsCount', { count: myClaims.value.length }),
-);
-const historyTitle = computed(() =>
-  t('page.claim.messages.historyCount', { count: myHistory.value.length }),
-);
-const pendingTitle = computed(() =>
-  t('page.claim.messages.pendingCount', {
-    count: pendingApprovals.value.length,
-  }),
-);
-const recordsTitle = computed(() =>
-  t('page.claim.messages.recordsCount', {
-    count: approvalRecords.value.length,
-  }),
-);
-
-const activeTableTitle = computed(() => {
-  const titles: Record<TabKey, string> = {
-    history: historyTitle.value,
-    my: myClaimsTitle.value,
-    pending: pendingTitle.value,
-    records: recordsTitle.value,
-  };
-  return titles[activeTab.value];
-});
-
-// ─── 状态映射 ────────────────────────────────────────────────────────────────
-const statusLabelMap = computed<Record<string, string>>(() => ({
-  approved: t('page.claim.status.approved'),
-  pending: t('page.claim.status.pending'),
-  rejected: t('page.claim.status.rejected'),
-  withdrawn: t('page.claim.status.withdrawn'),
-}));
-
-const statusTypeMap: Record<
-  string,
-  '' | 'danger' | 'info' | 'success' | 'warning'
-> = {
-  approved: 'success',
-  pending: 'warning',
-  rejected: 'danger',
-  withdrawn: 'info',
-};
-
-const actionLabelMap = computed<Record<string, string>>(() => ({
-  approved: t('page.claim.action.approved'),
-  created: t('page.claim.action.created'),
-  rejected: t('page.claim.action.rejected'),
-  withdrawn: t('page.claim.action.withdrawn'),
-}));
-
-function formatStatus(status: string) {
-  return statusLabelMap.value[status] || status;
-}
-
-function formatAction(action: string) {
-  return actionLabelMap.value[action] || action;
-}
-
-function formatDate(dt: null | string) {
-  if (!dt) return '-';
-  return dt.replace('T', ' ').slice(0, 16);
-}
-
-// ─── 表格列配置 ──────────────────────────────────────────────────────────────
-const tabColumns = computed<Record<TabKey, VxeGridProps['columns']>>(() => ({
-  history: [
-    {
-      field: 'reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 140,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'invoice_no',
-      title: t('page.claim.columns.invoiceNo'),
-      minWidth: 140,
-      slots: { default: 'invoice_no' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 130,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'description',
-      title: t('page.claim.columns.description'),
-      minWidth: 160,
-      slots: { default: 'description' },
-    },
-    {
-      field: 'approval_status',
-      title: t('page.claim.columns.finalStatus'),
-      width: 100,
-      slots: { default: 'status' },
-    },
-    {
-      field: 'review_comment',
-      title: t('page.claim.columns.reviewComment'),
-      minWidth: 140,
-      slots: { default: 'review_comment' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.submitTime'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-  ],
-  my: [
-    {
-      field: 'reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 140,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'invoice_no',
-      title: t('page.claim.columns.invoiceNo'),
-      minWidth: 140,
-      slots: { default: 'invoice_no' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 130,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'description',
-      title: t('page.claim.columns.description'),
-      minWidth: 160,
-      slots: { default: 'description' },
-    },
-    {
-      field: 'approval_status',
-      title: t('page.claim.columns.status'),
-      width: 100,
-      slots: { default: 'status' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.submitTime'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-    {
-      field: 'attachment_url',
-      title: t('page.claim.columns.attachment'),
-      width: 100,
-      slots: { default: 'attachment' },
-    },
-  ],
-  pending: [
-    {
-      field: 'employee_name',
-      title: t('page.claim.columns.applicant'),
-      minWidth: 150,
-      slots: { default: 'employee' },
-    },
-    {
-      field: 'reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 130,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 130,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'description',
-      title: t('page.claim.columns.description'),
-      minWidth: 160,
-      slots: { default: 'description' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.submitTime'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-    {
-      title: t('page.claim.columns.operation'),
-      width: 100,
-      fixed: 'right',
-      slots: { default: 'action' },
-    },
-  ],
-  records: [
-    {
-      field: 'employee_name',
-      title: t('page.claim.columns.applicant'),
-      minWidth: 150,
-      slots: { default: 'employee' },
-    },
-    {
-      field: 'claim_reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 130,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 120,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'action',
-      title: t('page.claim.columns.recordOperation'),
-      width: 90,
-      slots: { default: 'record_action' },
-    },
-    {
-      field: 'comment',
-      title: t('page.claim.columns.remark'),
-      minWidth: 140,
-      slots: { default: 'comment' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.time'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-  ],
-}));
-
-function dataFor(tab: TabKey) {
-  switch (tab) {
-    case 'history': {
-      return myHistory.value;
-    }
-    case 'my': {
-      return myClaims.value;
-    }
-    case 'pending': {
-      return pendingApprovals.value;
-    }
-    case 'records': {
-      return approvalRecords.value;
-    }
-  }
-}
-
-const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
-  custom: true,
-  tools: [
-    {
-      code: 'manual-refresh',
-      icon: 'vxe-icon-refresh',
-      circle: true,
-      name: t('common.refresh'),
-    },
-  ],
-};
+// ─── 表格实例 ────────────────────────────────────────────────────────────────
 
 const [BasicTable, tableApi] = useVbenVxeGrid({
   gridOptions: {
@@ -344,186 +63,66 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
     proxyConfig: { enabled: false },
     height: 'auto',
     keepSource: true,
-    toolbarConfig: sharedToolbarConfig,
+    toolbarConfig: sharedToolbarConfig.value,
   },
   gridEvents: {
     toolbarToolClick(event: { code: string }) {
-      if (event.code === 'manual-refresh') reloadActiveTab();
+      if (event.code === 'manual-refresh') data.reloadActiveTab();
     },
   },
 });
 
 function refreshTable() {
   tableApi.setGridOptions({
-    columns: tabColumns.value[activeTab.value],
-    data: dataFor(activeTab.value),
+    columns: tabColumns.value[data.activeTab.value],
+    data: dataFor(data.activeTab.value, data.dataRefs()),
   });
 }
 
-watch(activeTab, () => {
-  reloadActiveTab();
-});
-
-// Refresh table when i18n keys change
+// Tab 切换 / 数据变化后刷新表格
 watch(
   () => [
-    tabColumns.value,
-    sharedToolbarConfig,
-    segmentedOptions.value,
-    statusLabelMap.value,
-    actionLabelMap.value,
+    data.activeTab.value,
+    data.myClaims.value,
+    data.myHistory.value,
+    data.pendingApprovals.value,
+    data.approvalRecords.value,
   ],
-  () => {
-    refreshTable();
-  },
+  () => refreshTable(),
   { deep: true },
 );
 
-// ─── 新建 / 审批 ─────────────────────────────────────────────────────────────
+// 国际化变化时重刷列名
+watch(
+  () => [tabColumns.value, sharedToolbarConfig.value],
+  () => refreshTable(),
+);
+
+// ─── 新建 / 审批抽屉 ─────────────────────────────────────────────────────────
 function openCreateDrawer() {
   createDrawerRef.value?.open();
 }
-
 function openReviewDrawer(item: ClaimApi.ClaimResponse) {
   reviewDrawerRef.value?.open(item);
 }
-
 async function handleCreateSuccess() {
-  await loadMyClaims();
+  await data.loadMyClaims();
   refreshTable();
 }
-
 async function handleReviewSuccess() {
-  await loadPendingApprovals();
-  await loadApprovalRecords();
+  await data.loadPendingApprovals();
+  await data.loadApprovalRecords();
   refreshTable();
 }
 
-// ─── 导出 Excel ──────────────────────────────────────────────────────────────
-async function handleExport() {
-  loading.value = true;
-  try {
-    const blob = await exportMyClaimsApi();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const now = new Date();
-    const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    a.download = `claims_${ymd}.xlsx`;
-    document.body.append(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    ElMessage.success(t('page.claim.messages.exportSuccess'));
-  } catch {
-    ElMessage.error(t('page.claim.messages.exportFailed'));
-  } finally {
-    loading.value = false;
+// ─── 撤回：调用 action 后重载当前 Tab ────────────────────────────────────────
+async function onWithdraw(item: ClaimApi.ClaimResponse) {
+  const ok = await handleWithdraw(item);
+  if (ok) {
+    await data.loadMyClaims();
+    refreshTable();
   }
 }
-
-// ─── 数据加载 ────────────────────────────────────────────────────────────────
-async function fetchAll() {
-  loading.value = true;
-  try {
-    await Promise.all([
-      loadOptions(),
-      loadUserInfo(),
-      loadMyClaims(),
-      loadMyHistory(),
-      loadPendingApprovals(),
-      loadApprovalRecords(),
-    ]);
-  } catch (error) {
-    console.error('Fetch all error:', error);
-  } finally {
-    loading.value = false;
-  }
-  refreshTable();
-}
-
-async function reloadActiveTab() {
-  loading.value = true;
-  try {
-    switch (activeTab.value) {
-      case 'history': {
-        await loadMyHistory();
-        break;
-      }
-      case 'my': {
-        await loadMyClaims();
-        break;
-      }
-      case 'pending': {
-        await loadPendingApprovals();
-        break;
-      }
-      case 'records': {
-        await loadApprovalRecords();
-        break;
-      }
-    }
-  } finally {
-    loading.value = false;
-  }
-  refreshTable();
-}
-
-async function loadOptions() {
-  try {
-    const opts = await getClaimOptionsApi();
-    reasonOptions.value = (opts as any).claim_reasons || [];
-    currencyOptions.value = (opts as any).claim_currencies || [];
-  } catch {
-    reasonOptions.value = [];
-    currencyOptions.value = [];
-  }
-}
-
-async function loadUserInfo() {
-  try {
-    const user = await getUserInfoApi();
-    userInfo.value = { username: user.username, full_name: user.realName };
-  } catch {
-    userInfo.value = null;
-  }
-}
-
-async function loadMyClaims() {
-  try {
-    myClaims.value = await getMyClaimsApi();
-  } catch {
-    myClaims.value = [];
-  }
-}
-
-async function loadMyHistory() {
-  try {
-    myHistory.value = await getMyClaimHistoryApi();
-  } catch {
-    myHistory.value = [];
-  }
-}
-
-async function loadPendingApprovals() {
-  try {
-    pendingApprovals.value = await getMyPendingClaimApprovalsApi();
-  } catch {
-    pendingApprovals.value = [];
-  }
-}
-
-async function loadApprovalRecords() {
-  try {
-    approvalRecords.value = await getMyClaimApprovalRecordsApi();
-  } catch {
-    approvalRecords.value = [];
-  }
-}
-
-onMounted(() => {
-  fetchAll();
-});
 </script>
 
 <template>
@@ -531,15 +130,15 @@ onMounted(() => {
     :title="$t('page.claim.title')"
     :description="$t('page.claim.description')"
     :auto-content-height="true"
-    v-loading="loading"
+    v-loading="isLoading"
   >
     <div class="flex h-full flex-col gap-2">
-      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
-      <p v-if="userInfo" class="text-sm text-muted-foreground">
+      <ElSegmented v-model="data.activeTab.value" :options="segmentedOptions" />
+      <p v-if="data.userInfo.value" class="text-sm text-muted-foreground">
         {{
           $t('page.claim.messages.currentUser', {
-            fullName: userInfo.full_name,
-            username: userInfo.username,
+            fullName: data.userInfo.value.full_name,
+            username: data.userInfo.value.username,
           })
         }}
       </p>
@@ -547,18 +146,23 @@ onMounted(() => {
       <BasicTable :table-title="activeTableTitle" class="min-h-0 flex-1">
         <template #toolbar-tools>
           <ElButton
-            v-if="activeTab === 'my'"
+            v-if="data.activeTab.value === 'my'"
             type="primary"
             @click="openCreateDrawer"
           >
             {{ $t('page.claim.buttons.create') }}
           </ElButton>
-          <ElButton :loading="loading" @click="handleExport">
+          <ElButton :loading="isLoading" @click="handleExport">
             {{ $t('page.claim.buttons.export') }}
           </ElButton>
         </template>
         <template #reason="{ row }">
-          <strong v-if="activeTab === 'my' || activeTab === 'history'">
+          <strong
+            v-if="
+              data.activeTab.value === 'my' ||
+              data.activeTab.value === 'history'
+            "
+          >
             {{ row.reason_label }}
           </strong>
           <template v-else>
@@ -585,7 +189,7 @@ onMounted(() => {
         </template>
         <template #status="{ row }">
           <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-            {{ formatStatus(row.approval_status) }}
+            {{ formatStatus(row.approval_status, statusLabelMap) }}
           </ElTag>
         </template>
         <template #created_at="{ row }">
@@ -619,6 +223,18 @@ onMounted(() => {
             {{ $t('page.claim.buttons.review') }}
           </ElButton>
         </template>
+        <template #my_action="{ row }">
+          <ElButton
+            v-if="row.approval_status === 'pending'"
+            size="small"
+            type="danger"
+            :loading="isLoading"
+            @click="onWithdraw(row as ClaimApi.ClaimResponse)"
+          >
+            {{ $t('page.claim.buttons.withdraw') }}
+          </ElButton>
+          <span v-else>-</span>
+        </template>
         <template #record_action="{ row }">
           <ElTag
             :type="
@@ -629,7 +245,7 @@ onMounted(() => {
                   : 'info'
             "
           >
-            {{ formatAction(row.action) }}
+            {{ formatAction(row.action, actionLabelMap) }}
           </ElTag>
         </template>
         <template #comment="{ row }">
@@ -638,15 +254,12 @@ onMounted(() => {
       </BasicTable>
     </div>
 
-    <!-- 新建报销抽屉 -->
     <CreateClaimDrawer
       ref="createDrawerRef"
-      :currency-options="currencyOptions"
-      :reason-options="reasonOptions"
+      :currency-options="data.currencyOptions.value"
+      :reason-options="data.reasonOptions.value"
       @success="handleCreateSuccess"
     />
-
-    <!-- 审批抽屉 -->
     <ReviewClaimDrawer ref="reviewDrawerRef" @success="handleReviewSuccess" />
   </Page>
 </template>

@@ -153,3 +153,12 @@ export async function exportMyClaimsApi() {
     responseType: 'blob',
   });
 }
+
+// ─── 撤回 ────────────────────────────────────────────────────────────────────
+
+/** 撤回我自己的待审批报销申请 */
+export async function withdrawClaimApi(claimId: string) {
+  return requestClient.patch<ClaimApi.ClaimResponse>(
+    `/claims/${claimId}/withdraw`,
+  );
+}
