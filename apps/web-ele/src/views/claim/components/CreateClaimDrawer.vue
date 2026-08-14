@@ -80,17 +80,28 @@ const [CreateForm] = useVbenForm(
         formItemClass: 'col-span-1',
       },
       {
-        component: 'Input',
+        component: 'DatePicker',
         fieldName: 'invoice_date',
         label: t('page.claim.form.invoiceDateLabel'),
         rules: 'required',
         formItemClass: 'col-span-1',
+        componentProps: {
+          type: 'date',
+          placeholder: t('page.claim.form.invoiceDatePlaceholder'),
+          valueFormat: 'YYYY-MM-DD',
+          class: 'w-full',
+        },
       },
       {
         component: 'Input',
         fieldName: 'invoice_no',
         label: t('page.claim.form.invoiceNoLabel'),
-        formItemClass: 'col-span-2',
+        formItemClass: 'col-span-1',
+        componentProps: {
+          placeholder: t('page.claim.form.invoiceNoPlaceholder'),
+          maxlength: 100,
+          clearable: true,
+        },
       },
       {
         component: 'Input',
@@ -110,7 +121,7 @@ const [CreateForm] = useVbenForm(
 );
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  confirmText: t('page.claim.buttons.submit'),
+  confirmText: t('page.claim.buttons.saveDraft'),
   onClosed: resetCreateForm,
   onConfirm: submitCreate,
   title: t('page.claim.drawer.createTitle'),
@@ -155,15 +166,15 @@ async function submitCreate() {
     fd.append('amount', String(createForm.amount));
     fd.append('currency', createForm.currency);
     fd.append('invoice_date', createForm.invoice_date);
-    if (createForm.invoice_no) {
-      fd.append('invoice_no', createForm.invoice_no);
-    }
     if (createForm.description) {
       fd.append('description', createForm.description);
     }
+    if (createForm.invoice_no) {
+      fd.append('invoice_no', createForm.invoice_no);
+    }
     fd.append('attachment', createForm.attachmentFile);
     await createClaimApi(fd);
-    ElMessage.success(t('page.claim.messages.submitSuccess'));
+    ElMessage.success(t('page.claim.messages.draftCreated'));
     createDrawerApi.close();
     emit('success');
   } catch {
@@ -227,15 +238,17 @@ defineExpose({ open });
         <ElDatePicker
           v-model="createForm.invoice_date"
           type="date"
-          value-format="YYYY-MM-DD"
           :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
-          class="!w-full"
+          value-format="YYYY-MM-DD"
+          style="width: 100%"
         />
       </template>
       <template #invoice_no>
         <ElInput
           v-model="createForm.invoice_no"
           :placeholder="$t('page.claim.form.invoiceNoPlaceholder')"
+          :maxlength="100"
+          clearable
         />
       </template>
       <template #description>
