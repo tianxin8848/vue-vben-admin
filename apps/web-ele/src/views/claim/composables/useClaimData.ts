@@ -7,11 +7,12 @@ import { onMounted, ref, watch } from 'vue';
 import {
   getClaimOptionsApi,
   getMyClaimApprovalRecordsApi,
-  getMyClaimHistoryApi,
   getMyClaimsApi,
   getMyPendingClaimApprovalsApi,
   getUserInfoApi,
 } from '#/api';
+
+import { HISTORY_STATUSES, MY_ACTIVE_STATUSES } from '../data';
 
 export function useClaimData() {
   const loading = ref(false);
@@ -52,17 +53,19 @@ export function useClaimData() {
     }
   }
 
+  /** 我的报销（进行中：草稿 + 审批中） */
   async function loadMyClaims() {
     try {
-      myClaims.value = await getMyClaimsApi();
+      myClaims.value = await getMyClaimsApi(MY_ACTIVE_STATUSES);
     } catch {
       myClaims.value = [];
     }
   }
 
+  /** 历史记录（已结束：已通过 / 已驳回 / 已撤回） */
   async function loadMyHistory() {
     try {
-      myHistory.value = await getMyClaimHistoryApi();
+      myHistory.value = await getMyClaimsApi(HISTORY_STATUSES);
     } catch {
       myHistory.value = [];
     }
@@ -166,6 +169,7 @@ export function useClaimData() {
     reloadActiveTab,
     // child loaders (for success callbacks)
     loadMyClaims,
+    loadMyHistory,
     loadPendingApprovals,
     loadApprovalRecords,
   };

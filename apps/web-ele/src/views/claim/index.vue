@@ -33,8 +33,15 @@ const { t } = useI18n();
 // ─── 数据层（Tab 状态 + API 加载） ───────────────────────────────────────────
 const data = useClaimData();
 
-// ─── 操作层（撤回 + 导出） ───────────────────────────────────────────────────
-const { actionLoading, handleExport, handleWithdraw } = useClaimActions();
+// ─── 操作层（撤回 + 提交 + 删除 + 导出） ──────────────────────────────────────
+const {
+  actionLoading,
+  handleDeleteDraft,
+  handleExport,
+  handleSubmitBatch,
+  handleSubmitSingle,
+  handleWithdraw,
+} = useClaimActions();
 
 // ─── 统一 loading：数据加载 + 操作进行中 ──────────────────────────────────────
 const isLoading = computed(() => data.loading.value || actionLoading.value);
@@ -53,6 +60,19 @@ const activeTableTitle = computed(
 const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
 const reviewDrawerRef = ref<InstanceType<typeof ReviewClaimDrawer>>();
 
+// ─── 批量提交：选中的草稿 ─────────────────────────────────────────────────────
+const selectedDraftCount = ref(0);
+
+function updateSelection() {
+  const records = tableApi.grid?.getCheckboxRecords() ?? [];
+  selectedDraftCount.value = records.length;
+}
+
+function selectedDraftIds() {
+  const records = tableApi.grid?.getCheckboxRecords() ?? [];
+  return records.map((r: any) => r.id);
+}
+
 // ─── 表格实例 ────────────────────────────────────────────────────────────────
 
 const [BasicTable, tableApi] = useVbenVxeGrid({
@@ -64,8 +84,20 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
     height: 'auto',
     keepSource: true,
     toolbarConfig: sharedToolbarConfig.value,
+    // 仅草稿可勾选（用于批量提交）
+    checkboxConfig: {
+      highlight: true,
+      checkMethod: ({ row }: { row: ClaimApi.ClaimResponse }) =>
+        row.approval_status === 'draft',
+    },
   },
   gridEvents: {
+    checkboxAll() {
+      updateSelection();
+    },
+    checkboxChange() {
+      updateSelection();
+    },
     toolbarToolClick(event: { code: string }) {
       if (event.code === 'manual-refresh') data.reloadActiveTab();
     },
@@ -77,6 +109,7 @@ function refreshTable() {
     columns: tabColumns.value[data.activeTab.value],
     data: dataFor(data.activeTab.value, data.dataRefs()),
   });
+  selectedDraftCount.value = 0;
 }
 
 // Tab 切换 / 数据变化后刷新表格
@@ -115,9 +148,35 @@ async function handleReviewSuccess() {
   refreshTable();
 }
 
-// ─── 撤回：调用 action 后重载当前 Tab ────────────────────────────────────────
+// ─── 我的报销操作：提交 / 删除 / 撤回 / 批量提交 ──────────────────────────────
+async function onSubmitSingle(item: ClaimApi.ClaimResponse) {
+  const ok = await handleSubmitSingle(item);
+  if (ok) {
+    await data.loadMyClaims();
+    refreshTable();
+  }
+}
+
+async function onDeleteDraft(item: ClaimApi.ClaimResponse) {
+  const ok = await handleDeleteDraft(item);
+  if (ok) {
+    await data.loadMyClaims();
+    refreshTable();
+  }
+}
+
 async function onWithdraw(item: ClaimApi.ClaimResponse) {
   const ok = await handleWithdraw(item);
+  if (ok) {
+    await data.loadMyClaims();
+    await data.loadMyHistory();
+    refreshTable();
+  }
+}
+
+async function onBatchSubmit() {
+  const ids = selectedDraftIds();
+  const ok = await handleSubmitBatch(ids);
   if (ok) {
     await data.loadMyClaims();
     refreshTable();
@@ -152,6 +211,16 @@ async function onWithdraw(item: ClaimApi.ClaimResponse) {
           >
             {{ $t('page.claim.buttons.create') }}
           </ElButton>
+          <ElButton
+            v-if="data.activeTab.value === 'my'"
+            type="success"
+            :disabled="selectedDraftCount === 0"
+            :loading="isLoading"
+            @click="onBatchSubmit"
+          >
+            {{ $t('page.claim.buttons.batchSubmit') }}
+            <span v-if="selectedDraftCount > 0">（{{ selectedDraftCount }}）</span>
+          </ElButton>
           <ElButton :loading="isLoading" @click="handleExport">
             {{ $t('page.claim.buttons.export') }}
           </ElButton>
@@ -169,11 +238,13 @@ async function onWithdraw(item: ClaimApi.ClaimResponse) {
             {{ row.claim_reason_label || row.reason_label }}
           </template>
         </template>
-        <template #invoice_date="{ row }">
-          {{ row.invoice_date || '-' }}
-        </template>
-        <template #invoice_no="{ row }">
-          {{ row.invoice_no || '-' }}
+        <template #items="{ row }">
+          <span v-if="row.items && row.items.length > 0">
+            {{
+              $t('page.claim.messages.itemsCount', { count: row.items.length })
+            }}
+          </span>
+          <span v-else>-</span>
         </template>
         <template #amount="{ row }">
           <span>{{ row.amount.toFixed(2) }} {{ row.currency }}</span>
@@ -183,6 +254,12 @@ async function onWithdraw(item: ClaimApi.ClaimResponse) {
           >
             ≈ HKD {{ row.amount_hkd.toFixed(2) }}
           </span>
+        </template>
+        <template #invoice_date="{ row }">
+          {{ row.invoice_date || '-' }}
+        </template>
+        <template #invoice_no="{ row }">
+          {{ row.invoice_no || '-' }}
         </template>
         <template #description="{ row }">
           {{ row.description || '-' }}
@@ -224,10 +301,28 @@ async function onWithdraw(item: ClaimApi.ClaimResponse) {
           </ElButton>
         </template>
         <template #my_action="{ row }">
+          <template v-if="row.approval_status === 'draft'">
+            <ElButton
+              size="small"
+              type="primary"
+              :loading="isLoading"
+              @click="onSubmitSingle(row as ClaimApi.ClaimResponse)"
+            >
+              {{ $t('page.claim.buttons.submit') }}
+            </ElButton>
+            <ElButton
+              size="small"
+              type="danger"
+              :loading="isLoading"
+              @click="onDeleteDraft(row as ClaimApi.ClaimResponse)"
+            >
+              {{ $t('page.claim.buttons.delete') }}
+            </ElButton>
+          </template>
           <ElButton
-            v-if="row.approval_status === 'pending'"
+            v-else-if="row.approval_status === 'pending'"
             size="small"
-            type="danger"
+            type="warning"
             :loading="isLoading"
             @click="onWithdraw(row as ClaimApi.ClaimResponse)"
           >
@@ -246,6 +341,11 @@ async function onWithdraw(item: ClaimApi.ClaimResponse) {
             "
           >
             {{ formatAction(row.action, actionLabelMap) }}
+          </ElTag>
+        </template>
+        <template #record_status="{ row }">
+          <ElTag :type="statusTypeMap[row.approval_status_after] || 'info'">
+            {{ formatStatus(row.approval_status_after, statusLabelMap) }}
           </ElTag>
         </template>
         <template #comment="{ row }">

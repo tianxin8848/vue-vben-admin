@@ -8,10 +8,24 @@ export const statusTypeMap: Record<
   '' | 'danger' | 'info' | 'success' | 'warning'
 > = {
   approved: 'success',
+  draft: 'info',
   pending: 'warning',
   rejected: 'danger',
   withdrawn: 'info',
 };
+
+/** 「我的报销」Tab 的状态过滤：草稿 + 审批中（进行中） */
+export const MY_ACTIVE_STATUSES: ClaimApi.ClaimApprovalStatus[] = [
+  'draft',
+  'pending',
+];
+
+/** 「历史记录」Tab 的状态过滤：已通过 / 已驳回 / 已撤回（已结束） */
+export const HISTORY_STATUSES: ClaimApi.ClaimApprovalStatus[] = [
+  'approved',
+  'rejected',
+  'withdrawn',
+];
 
 export function formatDate(dt: null | string) {
   if (!dt) return '-';
@@ -30,6 +44,7 @@ export function buildSegmentedOptions(t: (key: string) => string) {
 export function buildStatusLabelMap(t: (key: string) => string) {
   return {
     approved: t('page.claim.status.approved'),
+    draft: t('page.claim.status.draft'),
     pending: t('page.claim.status.pending'),
     rejected: t('page.claim.status.rejected'),
     withdrawn: t('page.claim.status.withdrawn'),
@@ -41,6 +56,7 @@ export function buildActionLabelMap(t: (key: string) => string) {
     approved: t('page.claim.action.approved'),
     created: t('page.claim.action.created'),
     rejected: t('page.claim.action.rejected'),
+    submitted: t('page.claim.action.submitted'),
     withdrawn: t('page.claim.action.withdrawn'),
   };
 }
@@ -80,22 +96,28 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'reason' },
     },
     {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'invoice_no',
-      title: t('page.claim.columns.invoiceNo'),
-      minWidth: 140,
-      slots: { default: 'invoice_no' },
+      field: 'items',
+      title: t('page.claim.columns.items'),
+      width: 90,
+      slots: { default: 'items' },
     },
     {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 110,
+      slots: { default: 'invoice_date' },
+    },
+    {
+      field: 'invoice_no',
+      title: t('page.claim.columns.invoiceNo'),
+      width: 130,
+      slots: { default: 'invoice_no' },
     },
     {
       field: 'description',
@@ -124,6 +146,7 @@ export function buildTabColumns(t: (key: string) => string) {
   ];
 
   const my: VxeGridProps['columns'] = [
+    { type: 'checkbox', width: 50, fixed: 'left' },
     {
       field: 'reason_label',
       title: t('page.claim.columns.reason'),
@@ -131,22 +154,28 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'reason' },
     },
     {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'invoice_no',
-      title: t('page.claim.columns.invoiceNo'),
-      minWidth: 140,
-      slots: { default: 'invoice_no' },
+      field: 'items',
+      title: t('page.claim.columns.items'),
+      width: 90,
+      slots: { default: 'items' },
     },
     {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 110,
+      slots: { default: 'invoice_date' },
+    },
+    {
+      field: 'invoice_no',
+      title: t('page.claim.columns.invoiceNo'),
+      width: 130,
+      slots: { default: 'invoice_no' },
     },
     {
       field: 'description',
@@ -174,7 +203,7 @@ export function buildTabColumns(t: (key: string) => string) {
     },
     {
       title: t('page.claim.columns.operation'),
-      width: 100,
+      width: 160,
       fixed: 'right',
       slots: { default: 'my_action' },
     },
@@ -194,16 +223,28 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'reason' },
     },
     {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 120,
-      slots: { default: 'invoice_date' },
+      field: 'items',
+      title: t('page.claim.columns.items'),
+      width: 90,
+      slots: { default: 'items' },
     },
     {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 110,
+      slots: { default: 'invoice_date' },
+    },
+    {
+      field: 'invoice_no',
+      title: t('page.claim.columns.invoiceNo'),
+      width: 130,
+      slots: { default: 'invoice_no' },
     },
     {
       field: 'description',
@@ -243,6 +284,12 @@ export function buildTabColumns(t: (key: string) => string) {
       title: t('page.claim.columns.amount'),
       minWidth: 120,
       slots: { default: 'amount' },
+    },
+    {
+      field: 'approval_status_after',
+      title: t('page.claim.columns.status'),
+      width: 100,
+      slots: { default: 'record_status' },
     },
     {
       field: 'action',
