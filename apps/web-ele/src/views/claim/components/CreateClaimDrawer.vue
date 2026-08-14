@@ -8,6 +8,7 @@ import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
+  ElDatePicker,
   ElInput,
   ElInputNumber,
   ElMessage,
@@ -82,6 +83,7 @@ const [CreateForm] = useVbenForm(
         component: 'DatePicker',
         fieldName: 'invoice_date',
         label: t('page.claim.form.invoiceDateLabel'),
+        rules: 'required',
         formItemClass: 'col-span-1',
         componentProps: {
           type: 'date',
@@ -148,6 +150,10 @@ async function submitCreate() {
     ElMessage.warning(t('page.claim.messages.amountPositive'));
     return;
   }
+  if (!createForm.invoice_date) {
+    ElMessage.warning(t('page.claim.messages.invoiceDateRequired'));
+    return;
+  }
   if (!createForm.attachmentFile) {
     ElMessage.warning(t('page.claim.messages.uploadAttachment'));
     return;
@@ -159,11 +165,9 @@ async function submitCreate() {
     fd.append('reason_code', createForm.reason_code);
     fd.append('amount', String(createForm.amount));
     fd.append('currency', createForm.currency);
+    fd.append('invoice_date', createForm.invoice_date);
     if (createForm.description) {
       fd.append('description', createForm.description);
-    }
-    if (createForm.invoice_date) {
-      fd.append('invoice_date', createForm.invoice_date);
     }
     if (createForm.invoice_no) {
       fd.append('invoice_no', createForm.invoice_no);
@@ -229,6 +233,23 @@ defineExpose({ open });
         >
           ≈ HKD {{ estimatedHkd.toFixed(2) }}
         </span>
+      </template>
+      <template #invoice_date>
+        <ElDatePicker
+          v-model="createForm.invoice_date"
+          type="date"
+          :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
+          value-format="YYYY-MM-DD"
+          style="width: 100%"
+        />
+      </template>
+      <template #invoice_no>
+        <ElInput
+          v-model="createForm.invoice_no"
+          :placeholder="$t('page.claim.form.invoiceNoPlaceholder')"
+          :maxlength="100"
+          clearable
+        />
       </template>
       <template #description>
         <ElInput

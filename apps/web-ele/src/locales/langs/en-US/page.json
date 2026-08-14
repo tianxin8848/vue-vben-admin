@@ -280,6 +280,7 @@
       "itemsCount": "{count} items",
       "selectReason": "Please select a claim reason",
       "amountPositive": "Amount must be greater than 0",
+      "invoiceDateRequired": "Please select the invoice date",
       "uploadAttachment": "Please upload an attachment",
       "draftCreated": "Draft created. Submit it from My Claims.",
       "submitSuccess": "Claim submitted for approval",

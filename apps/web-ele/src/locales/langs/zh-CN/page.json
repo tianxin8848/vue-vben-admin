@@ -280,6 +280,7 @@
       "itemsCount": "{count} 项",
       "selectReason": "请选择报销理由",
       "amountPositive": "金额必须大于 0",
+      "invoiceDateRequired": "请选择开票时间",
       "uploadAttachment": "请上传附件",
       "draftCreated": "草稿已创建，可在「我的报销」中提交",
       "submitSuccess": "报销已提交审批",
