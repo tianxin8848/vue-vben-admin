@@ -133,7 +133,7 @@ export async function getLeaveRequestsApi(params?: LeaveRequestApi.ListParams) {
 /** 获取我的请假列表 */
 export async function getMyLeaveRequestsApi() {
   return requestClient.get<LeaveRequestApi.LeaveRequest[]>(
-    '/leave-requests/my',
+    '/me/leave-requests',
   );
 }
 
@@ -154,7 +154,7 @@ export async function getMyApprovalRecordsApi() {
 /** 获取年假汇总（year 必填） */
 export async function getAnnualLeaveSummaryApi(year: number) {
   return requestClient.get<LeaveRequestApi.AnnualLeaveSummary>(
-    '/leave-requests/annual-leave/summary',
+    '/me/leave-requests/annual-leave/summary',
     { params: { year } },
   );
 }
@@ -175,7 +175,7 @@ export async function createLeaveRequestApi(
   data: LeaveRequestApi.CreateLeaveRequestParams,
 ) {
   return requestClient.post<LeaveRequestApi.LeaveRequest>(
-    '/leave-requests',
+    '/me/leave-requests',
     data,
   );
 }

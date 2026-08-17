@@ -217,10 +217,10 @@ export async function updateEmployeeAccessControlV2Api(
 export async function updateMyBasicInfoApi(
   data: EmployeeApi.EmployeeBasicInfoUpdate,
 ) {
-  return requestClient.request<EmployeeApi.EmployeeResponse>(
-    '/employees/me/basic-info',
-    { method: 'PATCH', data },
-  );
+  return requestClient.request<EmployeeApi.EmployeeResponse>('/me/basic-info', {
+    method: 'PATCH',
+    data,
+  });
 }
 
 /** 更新员工基本信息 */
@@ -238,9 +238,7 @@ export async function updateEmployeeBasicInfoApi(
 
 /** 获取我的详细档案 */
 export async function getMyProfileApi() {
-  return requestClient.get<EmployeeApi.EmployeeProfileResponse>(
-    '/employees/me/profile',
-  );
+  return requestClient.get<EmployeeApi.EmployeeProfileResponse>('/me/profile');
 }
 
 /** 更新我的详细档案 */
@@ -248,7 +246,7 @@ export async function updateMyProfileApi(
   data: Partial<EmployeeApi.EmployeeProfileUpdate>,
 ) {
   return requestClient.request<EmployeeApi.EmployeeProfileResponse>(
-    '/employees/me/profile',
+    '/me/profile',
     { method: 'PATCH', data },
   );
 }
