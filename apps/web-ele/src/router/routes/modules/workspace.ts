@@ -25,17 +25,6 @@ const routes: RouteRecordRaw[] = [
           authority: ['user'],
         },
       },
-      {
-        name: 'WorkspaceProfile',
-        path: 'profile',
-        component: () => import('#/views/workspace/profile.vue'),
-        meta: {
-          affixTab: false,
-          icon: 'lucide:user',
-          title: $t('page.workspace.profile'),
-          authority: ['user'],
-        },
-      },
       // Employee: My Leave
       {
         name: 'EmployeeLeave',

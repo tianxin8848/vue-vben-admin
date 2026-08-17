@@ -4,11 +4,7 @@ import type { SystemSettingsApi } from '#/api';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import {
-  ElButton,
-  ElCard,
-  ElTag,
-} from 'element-plus';
+import { ElButton, ElCard, ElTag } from 'element-plus';
 
 import {
   getAnnualLeaveSummaryApi,
@@ -88,7 +84,15 @@ const hasPendingApprovals = computed(() => {
 
 function formatNow() {
   const now = new Date();
-  const weekLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const weekLabels = [
+    '星期日',
+    '星期一',
+    '星期二',
+    '星期三',
+    '星期四',
+    '星期五',
+    '星期六',
+  ];
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
@@ -108,13 +112,14 @@ function startLiveClock() {
 async function fetchData() {
   loading.value = true;
   try {
-    const [userRes, approvalsRes, leaveRes, annualRes, settingsRes] = await Promise.all([
-      getUserInfoApi(),
-      getMyPendingApprovalsApi(),
-      getMyLeaveRequestsApi(),
-      getAnnualLeaveSummaryApi(currentYear),
-      getSystemSettingsApi(),
-    ]);
+    const [userRes, approvalsRes, leaveRes, annualRes, settingsRes] =
+      await Promise.all([
+        getUserInfoApi(),
+        getMyPendingApprovalsApi(),
+        getMyLeaveRequestsApi(),
+        getAnnualLeaveSummaryApi(currentYear),
+        getSystemSettingsApi(),
+      ]);
 
     userInfo.value = {
       id: userRes.userId,
@@ -136,7 +141,8 @@ async function fetchData() {
 
     const detailedUser = await getUserInfoApi();
     if ('module_permissions' in detailedUser) {
-      userInfo.value.module_permissions = detailedUser.module_permissions as any;
+      userInfo.value.module_permissions =
+        detailedUser.module_permissions as any;
     }
   } catch (error) {
     console.error('Dashboard fetch error:', error);
@@ -158,10 +164,8 @@ function goToChangePassword() {
 }
 
 function goToProfile() {
-  router.push('/employee/profile');
+  router.push('/employee');
 }
-
-
 
 onMounted(() => {
   startLiveClock();
@@ -236,17 +240,16 @@ onUnmounted(() => {
             <span class="stat-label">请假记录</span>
           </span>
           <span class="stat-item">
-            <span class="stat-value">{{ annualLeaveSummary?.available_days || '-' }}</span>
+            <span class="stat-value">{{
+              annualLeaveSummary?.available_days || '-'
+            }}</span>
             <span class="stat-label">年假余额</span>
           </span>
         </div>
         <ElButton type="primary" @click="goToLeave">进入请假模块</ElButton>
       </ElCard>
 
-      <ElCard
-        v-if="hasApprovalPermission || hasPendingApprovals"
-        class="card"
-      >
+      <ElCard v-if="hasApprovalPermission || hasPendingApprovals" class="card">
         <template #header>
           <h3>审批中心</h3>
         </template>
@@ -260,7 +263,9 @@ onUnmounted(() => {
         </p>
         <div class="approval-stats">
           <span class="stat-item">
-            <span class="stat-value pending">{{ pendingApprovals.length }}</span>
+            <span class="stat-value pending">{{
+              pendingApprovals.length
+            }}</span>
             <span class="stat-label">待审批</span>
           </span>
         </div>
@@ -289,16 +294,16 @@ onUnmounted(() => {
 
 <style scoped>
 .workspace-page {
+  min-height: calc(100vh - 80px);
   padding: 32px;
   background: #f8fafc;
-  min-height: calc(100vh - 80px);
 }
 
 .page-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 24px;
 }
 
@@ -311,15 +316,15 @@ onUnmounted(() => {
 
 .page-subtitle {
   margin: 8px 0 0;
-  color: #64748b;
   font-size: 14px;
+  color: #64748b;
 }
 
 .live-time {
   margin-top: 10px;
-  color: #2563eb;
   font-size: 14px;
   font-weight: 700;
+  color: #2563eb;
   letter-spacing: 0.2px;
 }
 
@@ -329,9 +334,9 @@ onUnmounted(() => {
 }
 
 .header-actions button {
-  border-radius: 10px;
   padding: 10px 16px;
   font-weight: 700;
+  border-radius: 10px;
 }
 
 .grid {
@@ -341,9 +346,9 @@ onUnmounted(() => {
 }
 
 .card {
-  border-radius: 16px;
   padding: 22px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 8%);
 }
 
 .card :deep(.el-card__header) {
@@ -362,8 +367,8 @@ onUnmounted(() => {
 }
 
 .profile-content {
-  line-height: 1.8;
   font-size: 14px;
+  line-height: 1.8;
   color: #0f172a;
 }
 
@@ -377,9 +382,9 @@ onUnmounted(() => {
 
 .card-action {
   margin-top: 12px;
-  color: #2563eb;
   font-size: 14px;
   font-weight: 600;
+  color: #2563eb;
   cursor: pointer;
 }
 
@@ -391,15 +396,15 @@ onUnmounted(() => {
 
 .permission-tag {
   padding: 4px 8px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
   font-size: 12px;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-radius: 999px;
 }
 
 .permission-tag.admin-tag {
-  background: #fef3c7;
   color: #d97706;
+  background: #fef3c7;
 }
 
 .leave-stats,
@@ -425,9 +430,9 @@ onUnmounted(() => {
 }
 
 .stat-label {
+  margin-top: 4px;
   font-size: 13px;
   color: #64748b;
-  margin-top: 4px;
 }
 
 .card :deep(.el-button) {
@@ -446,10 +451,10 @@ onUnmounted(() => {
 
 .module-link {
   padding: 14px 16px;
-  border-radius: 14px;
-  background: #eff6ff;
   color: #1d4ed8;
   cursor: pointer;
+  background: #eff6ff;
+  border-radius: 14px;
   transition: all 0.2s ease;
 }
 
@@ -465,9 +470,9 @@ onUnmounted(() => {
 .module-link small {
   display: block;
   margin-top: 6px;
-  color: #475569;
   font-weight: 400;
   line-height: 1.5;
+  color: #475569;
 }
 
 @media (max-width: 900px) {

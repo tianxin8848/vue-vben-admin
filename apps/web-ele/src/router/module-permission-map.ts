@@ -75,16 +75,6 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
           title: $t('page.workspace.home'),
         },
       },
-      {
-        name: 'WorkspaceProfile',
-        path: 'profile',
-        component: 'workspace/profile',
-        meta: {
-          affixTab: false,
-          icon: 'lucide:user',
-          title: $t('page.workspace.profile'),
-        },
-      },
     ],
   },
   {

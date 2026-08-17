@@ -6,9 +6,15 @@ import type { VbenFormSchema } from '#/adapter/form';
 import { computed, onMounted, ref } from 'vue';
 
 import { ProfileBaseSetting } from '@vben/common-ui';
+
 import { ElMessage } from 'element-plus';
 
-import { getUserInfoApi, getSystemSettingsApi, getMyProfileApi, updateMyProfileApi } from '#/api';
+import {
+  getMyProfileApi,
+  getSystemSettingsApi,
+  getUserInfoApi,
+  updateMyProfileApi,
+} from '#/api';
 
 const profileBaseSettingRef = ref();
 
@@ -17,15 +23,24 @@ const positions = ref<string[]>([]);
 const regions = ref<string[]>([]);
 
 const departmentOptions = computed<BasicOption[]>(() => {
-  return [{ label: '请选择', value: '' }, ...departments.value.map((d) => ({ label: d, value: d }))];
+  return [
+    { label: '请选择', value: '' },
+    ...departments.value.map((d) => ({ label: d, value: d })),
+  ];
 });
 
 const positionOptions = computed<BasicOption[]>(() => {
-  return [{ label: '请选择', value: '' }, ...positions.value.map((p) => ({ label: p, value: p }))];
+  return [
+    { label: '请选择', value: '' },
+    ...positions.value.map((p) => ({ label: p, value: p })),
+  ];
 });
 
 const regionOptions = computed<BasicOption[]>(() => {
-  return [{ label: '请选择', value: '' }, ...regions.value.map((r) => ({ label: r, value: r }))];
+  return [
+    { label: '请选择', value: '' },
+    ...regions.value.map((r) => ({ label: r, value: r })),
+  ];
 });
 
 const formSchema = computed((): VbenFormSchema[] => {
@@ -101,17 +116,17 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
     },
     {
-      fieldName: 'id_number',
+      fieldName: 'hkid_number',
       component: 'Input',
-      label: '证件号码',
+      label: '香港身份证号',
       componentProps: {
         placeholder: '选填',
       },
     },
     {
-      fieldName: 'address',
+      fieldName: 'english_address',
       component: 'Textarea',
-      label: '地址',
+      label: '英文住址',
       componentProps: {
         placeholder: '选填',
         rows: 3,
@@ -167,8 +182,8 @@ async function loadUserData() {
     formData.hire_date = profile.hire_date || '';
     formData.work_start_date = profile.work_start_date || '';
     formData.birth_date = profile.birth_date || '';
-    formData.id_number = profile.id_number || '';
-    formData.address = profile.address || '';
+    formData.hkid_number = profile.hkid_number || '';
+    formData.english_address = profile.english_address || '';
     formData.emergency_contact_name = profile.emergency_contact_name || '';
     formData.emergency_contact_phone = profile.emergency_contact_phone || '';
   }
@@ -182,8 +197,8 @@ async function handleSubmit(values: Record<string, any>) {
       hire_date: values.hire_date || null,
       work_start_date: values.work_start_date || null,
       birth_date: values.birth_date || null,
-      id_number: values.id_number || null,
-      address: values.address || null,
+      hkid_number: values.hkid_number || null,
+      english_address: values.english_address || null,
       emergency_contact_name: values.emergency_contact_name || null,
       emergency_contact_phone: values.emergency_contact_phone || null,
     };

@@ -36,16 +36,56 @@ export namespace EmployeeApi {
     work_start_date: null | string;
   }
 
+  /** 当前用户基本信息响应（GET /me/basic-info） */
+  export interface MyBasicInfoResponse {
+    access_control_id: null | string;
+    avatar_name: null | string;
+    avatar_url: null | string;
+    department: null | string;
+    email: string;
+    employee_code: null | string;
+    full_name: null | string;
+    hire_date: null | string;
+    id: string;
+    is_active: boolean;
+    is_initial_password: number;
+    module_permissions: ModulePermission[];
+    phone: null | string;
+    position: null | string;
+    region: null | string;
+    temporary_password: null | string;
+    user_id: null | number;
+    username: string;
+    work_start_date: null | string;
+  }
+
+  /** 当前用户档案元数据响应（GET /me/profile-meta） */
+  export interface ProfileMetaResponse {
+    departments: string[];
+    employee_self_editable_fields: string[];
+    positions: string[];
+    regions: string[];
+  }
+
   /** 员工详细档案响应 */
   export interface EmployeeProfileResponse {
-    address: null | string;
+    bank_account_name: null | string;
+    bank_account_number: null | string;
+    bank_name: null | string;
     birth_date: null | string;
     created_at: null | string;
+    employee_id: string;
     emergency_contact_name: null | string;
     emergency_contact_phone: null | string;
-    employee_id: string;
+    emergency_contact_relationship: null | string;
+    english_address: null | string;
+    english_name: null | string;
+    gender: null | string;
     hire_date: null | string;
-    id_number: null | string;
+    hkid_number: null | string;
+    marital_status: null | string;
+    passport_number: null | string;
+    personal_email: null | string;
     updated_at: null | string;
     work_start_date: null | string;
   }
@@ -64,21 +104,34 @@ export namespace EmployeeApi {
     username: string;
   }
 
-  /** 更新基本信息请求参数 */
+  /** 更新基本信息请求参数（PATCH /me/basic-info 与 /employees/{id}/basic-info 共用） */
   export interface EmployeeBasicInfoUpdate {
     department?: null | string;
+    email?: null | string;
+    full_name?: null | string;
+    phone?: null | string;
     position?: null | string;
     region?: null | string;
+    username?: null | string;
   }
 
   /** 更新档案请求参数 */
   export interface EmployeeProfileUpdate {
-    address?: null | string;
+    bank_account_name?: null | string;
+    bank_account_number?: null | string;
+    bank_name?: null | string;
     birth_date?: null | string;
     emergency_contact_name?: null | string;
     emergency_contact_phone?: null | string;
+    emergency_contact_relationship?: null | string;
+    english_address?: null | string;
+    english_name?: null | string;
+    gender?: null | string;
     hire_date?: null | string;
-    id_number?: null | string;
+    hkid_number?: null | string;
+    marital_status?: null | string;
+    passport_number?: null | string;
+    personal_email?: null | string;
     work_start_date?: null | string;
   }
 
@@ -212,6 +265,27 @@ export async function updateEmployeeAccessControlV2Api(
 }
 
 // ─── 基本信息 ────────────────────────────────────────────────────────────────
+
+/** 获取我的基本信息（含模块权限与头像） */
+export async function getMyBasicInfoApi() {
+  return requestClient.get<EmployeeApi.MyBasicInfoResponse>('/me/basic-info');
+}
+
+/** 获取我的档案元数据（下拉选项 + 自助可编辑字段清单） */
+export async function getMyProfileMetaApi() {
+  return requestClient.get<EmployeeApi.ProfileMetaResponse>('/me/profile-meta');
+}
+
+/** 更新我的头像（multipart/form-data） */
+export async function updateMyAvatarApi(file: File) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  return requestClient.request<EmployeeApi.MyBasicInfoResponse>('/me/avatar', {
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    method: 'PATCH',
+  });
+}
 
 /** 更新我的基本信息 */
 export async function updateMyBasicInfoApi(

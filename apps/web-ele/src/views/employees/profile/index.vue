@@ -40,12 +40,11 @@ const basicInfoForm = reactive<EmployeeApi.EmployeeBasicInfoUpdate>({
 });
 
 const profileForm = reactive<Partial<EmployeeApi.EmployeeProfileUpdate>>({
-  address: '',
-  birth_date: '',
   emergency_contact_name: '',
   emergency_contact_phone: '',
+  english_address: '',
   hire_date: '',
-  id_number: '',
+  hkid_number: '',
   work_start_date: '',
 });
 
@@ -92,12 +91,11 @@ async function fetchData() {
 
     if (profile.value) {
       Object.assign(profileForm, {
-        address: profile.value.address || '',
-        birth_date: profile.value.birth_date || '',
         emergency_contact_name: profile.value.emergency_contact_name || '',
         emergency_contact_phone: profile.value.emergency_contact_phone || '',
+        english_address: profile.value.english_address || '',
         hire_date: profile.value.hire_date || '',
-        id_number: profile.value.id_number || '',
+        hkid_number: profile.value.hkid_number || '',
         work_start_date: profile.value.work_start_date || '',
       });
     }
@@ -137,10 +135,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page
-    title="员工档案"
-    v-loading="loading"
-  >
+  <Page title="员工档案" v-loading="loading">
     <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
     <ElCard v-if="employee" header="基本信息">
       <ElForm :model="basicInfoForm" label-width="120px">
@@ -210,18 +205,11 @@ onMounted(() => {
             value-format="YYYY-MM-DD"
           />
         </ElFormItem>
-        <ElFormItem label="出生日期">
-          <ElDatePicker
-            v-model="profileForm.birth_date"
-            type="date"
-            value-format="YYYY-MM-DD"
-          />
+        <ElFormItem label="香港身份证号">
+          <ElInput v-model="profileForm.hkid_number" />
         </ElFormItem>
-        <ElFormItem label="身份证号">
-          <ElInput v-model="profileForm.id_number" />
-        </ElFormItem>
-        <ElFormItem label="住址">
-          <ElInput v-model="profileForm.address" />
+        <ElFormItem label="英文住址">
+          <ElInput v-model="profileForm.english_address" />
         </ElFormItem>
         <ElFormItem label="紧急联系人">
           <ElInput v-model="profileForm.emergency_contact_name" />
