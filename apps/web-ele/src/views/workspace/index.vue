@@ -2,7 +2,7 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { EmployeeApi } from '#/api';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { Page, Profile, ProfileBaseSetting } from '@vben/common-ui';
 
@@ -35,6 +35,8 @@ const profileFormRef = ref();
 const basicInfo = ref<EmployeeApi.MyBasicInfoResponse | null>(null);
 /** GET /me/profile-meta 结果（下拉选项 + 自助可编辑字段清单） */
 const profileMeta = ref<EmployeeApi.ProfileMetaResponse | null>(null);
+/** GET /me/profile 结果（详细档案），切 tab 时可用于重新赋值 */
+const profileInfo = ref<EmployeeApi.EmployeeProfileResponse | null>(null);
 
 /** 重复字段处理：hire_date / work_start_date 两个接口都返回，
  *  统一以 /me/profile 为准（在档案页签展示与编辑），基本信息页签不再展示 */
@@ -263,6 +265,69 @@ const profileSchema = computed<VbenFormSchema[]>(() => [
   },
 ]);
 
+function buildBasicValues(basicRes: EmployeeApi.MyBasicInfoResponse) {
+  return {
+    department: basicRes.department || '',
+    email: basicRes.email,
+    full_name: basicRes.full_name || '',
+    phone: basicRes.phone || '',
+    position: basicRes.position || '',
+    region: basicRes.region || '',
+    username: basicRes.username,
+  };
+}
+
+function buildProfileValues(profileRes: EmployeeApi.EmployeeProfileResponse) {
+  return {
+    bank_account_name: profileRes.bank_account_name || '',
+    bank_account_number: profileRes.bank_account_number || '',
+    bank_name: profileRes.bank_name || '',
+    birth_date: profileRes.birth_date || '',
+    emergency_contact_name: profileRes.emergency_contact_name || '',
+    emergency_contact_phone: profileRes.emergency_contact_phone || '',
+    emergency_contact_relationship:
+      profileRes.emergency_contact_relationship || '',
+    english_address: profileRes.english_address || '',
+    english_name: profileRes.english_name || '',
+    gender: profileRes.gender || '',
+    hire_date: profileRes.hire_date || '',
+    hkid_number: profileRes.hkid_number || '',
+    marital_status: profileRes.marital_status || '',
+    passport_number: profileRes.passport_number || '',
+    personal_email: profileRes.personal_email || '',
+    work_start_date: profileRes.work_start_date || '',
+  };
+}
+
+/**
+ * 将值写入表单。
+ * - 用 resetForm({ values }) 同时更新 vee-validate 的 initialState，
+ *   避免时序/组件挂载导致的 setValues 丢失。
+ * - 内部 await nextTick() 保证子组件 ProfileBaseSetting 已 mount，
+ *   getFormApi() 能拿到可用的 form 实例。
+ */
+async function fillBasicForm(values: Record<string, any>) {
+  await nextTick();
+  const api = basicFormRef.value?.getFormApi();
+  if (!api) return;
+  try {
+    await api.resetForm({ values });
+  } catch {
+    await api.setValues(values, false);
+  }
+}
+
+async function fillProfileForm(values: Record<string, any>) {
+  await nextTick();
+  const api = profileFormRef.value?.getFormApi();
+  if (!api) return;
+  try {
+    await api.resetForm({ values });
+  } catch {
+    await api.setValues(values, false);
+  }
+}
+
 async function fetchData() {
   loading.value = true;
   try {
@@ -273,37 +338,16 @@ async function fetchData() {
       getMyProfileMetaApi(),
     ]);
     basicInfo.value = basicRes;
+    profileInfo.value = profileRes;
     profileMeta.value = metaRes;
 
-    basicFormRef.value?.getFormApi().setValues({
-      department: basicRes.department || '',
-      email: basicRes.email,
-      full_name: basicRes.full_name || '',
-      phone: basicRes.phone || '',
-      position: basicRes.position || '',
-      region: basicRes.region || '',
-      username: basicRes.username,
-    });
+    const basicValues = buildBasicValues(basicRes);
+    const profileValues = buildProfileValues(profileRes);
 
-    profileFormRef.value?.getFormApi().setValues({
-      bank_account_name: profileRes.bank_account_name || '',
-      bank_account_number: profileRes.bank_account_number || '',
-      bank_name: profileRes.bank_name || '',
-      birth_date: profileRes.birth_date || '',
-      emergency_contact_name: profileRes.emergency_contact_name || '',
-      emergency_contact_phone: profileRes.emergency_contact_phone || '',
-      emergency_contact_relationship:
-        profileRes.emergency_contact_relationship || '',
-      english_address: profileRes.english_address || '',
-      english_name: profileRes.english_name || '',
-      gender: profileRes.gender || '',
-      hire_date: profileRes.hire_date || '',
-      hkid_number: profileRes.hkid_number || '',
-      marital_status: profileRes.marital_status || '',
-      passport_number: profileRes.passport_number || '',
-      personal_email: profileRes.personal_email || '',
-      work_start_date: profileRes.work_start_date || '',
-    });
+    // 先写基本信息表单（当前默认 tab，挂载优先级更高）
+    await fillBasicForm(basicValues);
+    // 再写档案表单（v-show 隐藏但已挂载）
+    await fillProfileForm(profileValues);
   } finally {
     loading.value = false;
   }
@@ -388,7 +432,8 @@ onMounted(() => {
     >
       <template #content>
         <!-- 基本信息：PATCH /me/basic-info -->
-        <template v-if="activeTab === 'basic'">
+        <!-- 用 v-show 保证子表单始终挂载，ref 可用、表单值可写入 -->
+        <div v-show="activeTab === 'basic'">
           <ProfileBaseSetting
             ref="basicFormRef"
             :form-schema="basicSchema"
@@ -405,18 +450,19 @@ onMounted(() => {
               {{ basicInfo?.avatar_name ? '更换头像' : '上传头像' }}
             </ElTag>
           </ElUpload>
-        </template>
+        </div>
 
         <!-- 详细档案：PATCH /me/profile -->
         <ProfileBaseSetting
-          v-else-if="activeTab === 'profile'"
+          v-show="activeTab === 'profile'"
           ref="profileFormRef"
+          wrapper-class="grid-cols-2"
           :form-schema="profileSchema"
           @submit="handleUpdateProfile"
         />
 
         <!-- 模块权限：来自 GET /me/basic-info 的 module_permissions -->
-        <template v-else>
+        <div v-show="activeTab === 'permissions'">
           <ElDescriptions
             v-if="basicInfo && basicInfo.module_permissions.length > 0"
             :column="1"
@@ -451,7 +497,7 @@ onMounted(() => {
             description="暂无模块权限"
             :image-size="80"
           />
-        </template>
+        </div>
       </template>
     </Profile>
   </Page>
