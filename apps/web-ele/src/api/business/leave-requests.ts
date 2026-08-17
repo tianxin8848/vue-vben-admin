@@ -68,7 +68,7 @@ export namespace LeaveRequestApi {
     employee_keyword?: null | string;
     region?: null | string;
     team?: null | string;
-    year?: number | null;
+    year?: null | number;
   }
 
   /** 年假汇总响应 */
@@ -124,13 +124,10 @@ export namespace LeaveRequestApi {
 // ─── 请假申请 ────────────────────────────────────────────────────────────────
 
 /** 获取请假列表（管理员） */
-export async function getLeaveRequestsApi(
-  params?: LeaveRequestApi.ListParams,
-) {
-  return requestClient.get<LeaveRequestApi.LeaveRequest[]>(
-    '/leave-requests',
-    { params },
-  );
+export async function getLeaveRequestsApi(params?: LeaveRequestApi.ListParams) {
+  return requestClient.get<LeaveRequestApi.LeaveRequest[]>('/leave-requests', {
+    params,
+  });
 }
 
 /** 获取我的请假列表 */
@@ -143,14 +140,14 @@ export async function getMyLeaveRequestsApi() {
 /** 获取我的待审批列表 */
 export async function getMyPendingApprovalsApi() {
   return requestClient.get<LeaveRequestApi.LeaveRequest[]>(
-    '/leave-requests/approvals/my',
+    '/me/leave-requests/approvals',
   );
 }
 
 /** 获取我的审批记录 */
 export async function getMyApprovalRecordsApi() {
   return requestClient.get<LeaveRequestApi.ApprovalRecord[]>(
-    '/leave-requests/approvals/records/my',
+    '/me/leave-requests/approval-records',
   );
 }
 
@@ -211,4 +208,3 @@ export async function withdrawLeaveRequestApi(
     { method: 'PATCH', data },
   );
 }
-
