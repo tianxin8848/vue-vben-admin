@@ -296,13 +296,7 @@ if (enableShortcutKey.value) {
     <DropdownMenuContent class="mr-2 min-w-60 p-0 pb-1">
       <div ref="refContent">
         <DropdownMenuLabel class="flex items-center p-3">
-          <VbenAvatar
-            :alt="text"
-            :src="avatar"
-            class="size-12"
-            dot
-            dot-class="bottom-0 right-1 border-2 size-4 bg-green-500"
-          />
+          <VbenAvatar :alt="text" :src="avatar" class="size-12" />
           <div class="ml-2 w-full">
             <div
               v-if="tagText || text || $slots.tagText"

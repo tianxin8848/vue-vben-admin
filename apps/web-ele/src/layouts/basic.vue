@@ -218,7 +218,7 @@ watch(
         :avatar
         :menus
         :text="userStore.userInfo?.realName"
-        description="ann.vben@gmail.com"
+        :description="userStore.userInfo?.email"
         tag-text="Pro"
         @clear-preferences-and-logout="handleLogout"
         @logout="handleLogout"

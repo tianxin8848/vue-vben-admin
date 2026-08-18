@@ -247,7 +247,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="我的请假" :auto-content-height="true" v-loading="loading">
+  <Page>
     <div class="flex h-full flex-col gap-2">
       <ElSegmented v-model="activeTab" :options="segmentedOptions" />
 
