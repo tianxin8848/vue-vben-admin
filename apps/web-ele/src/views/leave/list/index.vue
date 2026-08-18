@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { LeaveRequestApi } from '#/api';
 
 import { computed, onMounted, reactive, ref, watch } from 'vue';
@@ -29,32 +28,16 @@ import {
 } from '#/api';
 
 import CalendarPanel from '../calendar/components/CalendarPanel.vue';
+import {
+  leaveTypeOptions,
+  sessionOptions,
+  sharedToolbarConfig,
+  statusOptions,
+  statusTagType,
+  tableColumns,
+} from './data';
 
 const loading = ref(false);
-
-// 请假类型映射
-const leaveTypeOptions: Record<string, string> = {
-  annual: '年假',
-  personal: '事假',
-  sick: '病假',
-  lieu: '调休',
-  long: '长假',
-};
-
-// 请假时段映射
-const sessionOptions: Record<string, string> = {
-  full_day: '全天',
-  morning: '上午',
-  afternoon: '下午',
-};
-
-// 审批状态映射
-const statusOptions: Record<string, string> = {
-  pending: '待审批',
-  approved: '已批准',
-  rejected: '已驳回',
-  withdrawn: '已撤回',
-};
 
 // 表单数据
 const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
@@ -76,62 +59,6 @@ const segmentedOptions = computed(() => [
   { label: '请假记录', value: 'records' },
   { label: '年历视图', value: 'calendar' },
 ]);
-
-// 表格列配置
-const tableColumns: VxeGridProps['columns'] = [
-  {
-    field: 'date_range',
-    title: '日期范围',
-    minWidth: 200,
-    slots: { default: 'date_range' },
-  },
-  {
-    field: 'leave_type',
-    title: '请假类型',
-    width: 120,
-    align: 'center',
-    slots: { default: 'leave_type' },
-  },
-  {
-    field: 'session',
-    title: '时段',
-    width: 100,
-    align: 'center',
-    slots: { default: 'session' },
-  },
-  {
-    field: 'approval_status',
-    title: '状态',
-    width: 120,
-    align: 'center',
-    slots: { default: 'status' },
-  },
-  {
-    field: 'created_at',
-    title: '创建时间',
-    width: 180,
-    slots: { default: 'created_at' },
-  },
-  {
-    title: '操作',
-    width: 120,
-    fixed: 'right',
-    slots: { default: 'action' },
-  },
-];
-
-// 表格工具栏配置
-const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
-  custom: true,
-  tools: [
-    {
-      code: 'manual-refresh',
-      icon: 'vxe-icon-refresh',
-      circle: true,
-      name: '刷新',
-    },
-  ],
-};
 
 // 创建BasicTable实例
 const [BasicTable, tableApi] = useVbenVxeGrid({
@@ -155,21 +82,6 @@ function refreshTable() {
   tableApi.setGridOptions({
     data: filteredLeaveRequests.value,
   });
-}
-
-function statusTagType(
-  status: string,
-): 'danger' | 'info' | 'primary' | 'success' | 'warning' | undefined {
-  const map: Record<
-    string,
-    'danger' | 'info' | 'primary' | 'success' | 'warning'
-  > = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'danger',
-    withdrawn: 'info',
-  };
-  return map[status] ?? 'info';
 }
 
 // 年假汇总
@@ -321,17 +233,6 @@ async function fetchData() {
   }
 }
 
-// 年份切换
-async function changeYear(year: number) {
-  currentYear.value = year;
-  selectedDateKey.value = '';
-  try {
-    annualSummary.value = await getAnnualLeaveSummaryApi(year);
-  } catch {
-    annualSummary.value = null;
-  }
-}
-
 // 日期选择
 function onSelectDate(date: Date) {
   const y = date.getFullYear();
@@ -346,14 +247,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page
-    title="我的请假"
-    description="提交自己的请假申请,查看请假记录与年历"
-    :auto-content-height="true"
-    v-loading="loading"
-  >
+  <Page title="我的请假" :auto-content-height="true" v-loading="loading">
     <div class="flex h-full flex-col gap-2">
       <ElSegmented v-model="activeTab" :options="segmentedOptions" />
+
+      <!-- 统计数据 -->
+      <div
+        v-show="activeTab === 'records'"
+        style="
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 12px;
+          margin-bottom: 16px;
+        "
+      >
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年请假记录
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.recordCount }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年覆盖天数
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.dayCount }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            待审批记录
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.pendingCount }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年年假总计
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.annualEntitlement }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            当年年假可用
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.annualAvailable }}
+          </div>
+        </div>
+      </div>
 
       <BasicTable
         v-show="activeTab === 'records'"
@@ -427,139 +405,8 @@ onMounted(() => {
               align-items: center;
               justify-content: space-between;
             "
-          >
-            <div>
-              <h3 style="margin: 0">我的请假年历</h3>
-              <p
-                style="
-                  margin: 8px 0 0;
-                  font-size: 14px;
-                  color: hsl(var(--muted-foreground));
-                "
-              >
-                按年查看自己的请假分布，直接看到每一天的请假类型和状态。
-              </p>
-            </div>
-            <div
-              style="
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                align-items: center;
-              "
-            >
-              <ElButton size="small" @click="changeYear(currentYear - 1)">
-                上一年
-              </ElButton>
-              <span
-                style="
-                  display: inline-flex;
-                  align-items: center;
-                  justify-content: center;
-                  min-width: 88px;
-                  padding: 10px 14px;
-                  font-weight: 700;
-                  color: hsl(var(--foreground));
-                  background: hsl(var(--accent));
-                  border-radius: 10px;
-                "
-              >
-                {{ currentYear }}
-              </span>
-              <ElButton size="small" @click="changeYear(currentYear + 1)">
-                下一年
-              </ElButton>
-              <ElButton
-                size="small"
-                type="primary"
-                @click="changeYear(new Date().getFullYear())"
-              >
-                回到今年
-              </ElButton>
-            </div>
-          </div>
+          ></div>
         </template>
-
-        <!-- 统计数据 -->
-        <div
-          style="
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-          "
-        >
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-              当年请假记录
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.recordCount }}
-            </div>
-          </div>
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-              当年覆盖天数
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.dayCount }}
-            </div>
-          </div>
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-              待审批记录
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.pendingCount }}
-            </div>
-          </div>
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-              当年年假总计
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.annualEntitlement }}
-            </div>
-          </div>
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-              当年年假可用
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.annualAvailable }}
-            </div>
-          </div>
-        </div>
 
         <!-- 年历面板 -->
         <CalendarPanel
