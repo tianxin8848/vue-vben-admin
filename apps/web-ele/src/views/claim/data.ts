@@ -203,7 +203,7 @@ export function buildTabColumns(t: (key: string) => string) {
     },
     {
       title: t('page.claim.columns.operation'),
-      width: 160,
+      width: 220,
       fixed: 'right',
       slots: { default: 'my_action' },
     },

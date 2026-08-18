@@ -154,6 +154,21 @@ export async function deleteClaimDraftApi(claimId: string) {
   return requestClient.delete(`/me/claims/${claimId}`);
 }
 
+/**
+ * 更新报销草稿（仅 draft 状态可更新，且只能改 amount + description）
+ * 其他字段（reason_code / invoice_date / invoice_no / currency / attachment）不可修改
+ */
+export async function updateClaimDraftApi(
+  claimId: string,
+  data: { amount: number; description?: null | string },
+) {
+  return requestClient.patch<ClaimApi.ClaimResponse>(
+    `/me/claims/${claimId}`,
+    data,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
 /** 撤回报销（withdraw_comment 为查询参数，含中文时需 URL 编码） */
 export async function withdrawClaimApi(
   claimId: string,

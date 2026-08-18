@@ -11,6 +11,7 @@ import { ElButton, ElSegmented, ElTag } from 'element-plus';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
 import CreateClaimDrawer from './components/CreateClaimDrawer.vue';
+import EditClaimDrawer from './components/EditClaimDrawer.vue';
 import ReviewClaimDrawer from './components/ReviewClaimDrawer.vue';
 import { useClaimActions } from './composables/useClaimActions';
 import { useClaimData } from './composables/useClaimData';
@@ -58,6 +59,7 @@ const activeTableTitle = computed(
 
 // ─── 子组件引用 ──────────────────────────────────────────────────────────────
 const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
+const editDrawerRef = ref<InstanceType<typeof EditClaimDrawer>>();
 const reviewDrawerRef = ref<InstanceType<typeof ReviewClaimDrawer>>();
 
 // ─── 批量提交：选中的草稿 ─────────────────────────────────────────────────────
@@ -131,14 +133,21 @@ watch(
   () => refreshTable(),
 );
 
-// ─── 新建 / 审批抽屉 ─────────────────────────────────────────────────────────
+// ─── 新建 / 编辑 / 审批抽屉 ─────────────────────────────────────────────────
 function openCreateDrawer() {
   createDrawerRef.value?.open();
+}
+function openEditDrawer(item: ClaimApi.ClaimResponse) {
+  editDrawerRef.value?.open(item);
 }
 function openReviewDrawer(item: ClaimApi.ClaimResponse) {
   reviewDrawerRef.value?.open(item);
 }
 async function handleCreateSuccess() {
+  await data.loadMyClaims();
+  refreshTable();
+}
+async function handleEditSuccess() {
   await data.loadMyClaims();
   refreshTable();
 }
@@ -306,6 +315,14 @@ async function onBatchSubmit() {
               size="small"
               type="primary"
               :loading="isLoading"
+              @click="openEditDrawer(row as ClaimApi.ClaimResponse)"
+            >
+              {{ $t('page.claim.buttons.edit') }}
+            </ElButton>
+            <ElButton
+              size="small"
+              type="success"
+              :loading="isLoading"
               @click="onSubmitSingle(row as ClaimApi.ClaimResponse)"
             >
               {{ $t('page.claim.buttons.submit') }}
@@ -360,6 +377,7 @@ async function onBatchSubmit() {
       :reason-options="data.reasonOptions.value"
       @success="handleCreateSuccess"
     />
+    <EditClaimDrawer ref="editDrawerRef" @success="handleEditSuccess" />
     <ReviewClaimDrawer ref="reviewDrawerRef" @success="handleReviewSuccess" />
   </Page>
 </template>

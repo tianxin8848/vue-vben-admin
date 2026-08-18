@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ClaimApi } from '#/api';
 
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
@@ -40,6 +40,8 @@ const createForm = reactive({
   invoice_no: '',
   reason_code: '',
 });
+
+const uploadRef = ref<any>(null);
 
 const selectedCurrencyRate = computed(() => {
   const found = props.currencyOptions.find(
@@ -135,6 +137,7 @@ function resetCreateForm() {
   createForm.invoice_date = '';
   createForm.invoice_no = '';
   createForm.reason_code = '';
+  uploadRef.value?.clearFiles();
 }
 
 function handleFileChange(uploadFile: any) {
@@ -212,7 +215,7 @@ defineExpose({ open });
       <template #amount>
         <ElInputNumber
           v-model="createForm.amount"
-          :min="0.01"
+          :min="0"
           :precision="2"
           :step="1"
           class="w-full"
@@ -261,6 +264,7 @@ defineExpose({ open });
       </template>
       <template #attachment>
         <ElUpload
+          ref="uploadRef"
           :auto-upload="false"
           :limit="1"
           accept="image/*,.pdf"

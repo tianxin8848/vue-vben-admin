@@ -244,7 +244,9 @@
       "selectFile": "Select File",
       "noData": "None",
       "none": "None",
-      "export": "Export Excel"
+      "export": "Export Excel",
+      "edit": "Edit",
+      "saveChanges": "Save Changes"
     },
     "form": {
       "reasonLabel": "Claim Reason",
@@ -268,7 +270,8 @@
     },
     "drawer": {
       "createTitle": "New Claim Draft",
-      "reviewTitle": "Review Claim"
+      "reviewTitle": "Review Claim",
+      "editTitle": "Edit Claim Draft"
     },
     "messages": {
       "currentUser": "Current user: {fullName} ({username})",
@@ -301,7 +304,10 @@
       "rejectedSuccess": "Rejected",
       "operationFailed": "Operation failed",
       "exportSuccess": "Export succeeded",
-      "exportFailed": "Export failed"
+      "exportFailed": "Export failed",
+      "editSuccess": "Draft updated",
+      "editFailed": "Update failed",
+      "editDraftHint": "Only amount and description can be modified"
     }
   },
   "system": {
