@@ -111,36 +111,36 @@ const yearCalendarData = computed(() => {
   return months;
 });
 
-const yearSummary = computed(() => {
-  const year = selectedYear.value;
-  let recordCount = 0;
-  let pendingCount = 0;
-
-  const seenDates = new Set<string>();
-  Object.entries(props.dayMap).forEach(([dateKey, entries]) => {
-    if (!dateKey.startsWith(`${year}-`)) return;
-    if (entries.length > 0) {
-      seenDates.add(dateKey);
-    }
-  });
-
-  Object.values(props.dayMap).forEach((entries) => {
-    entries.forEach((entry) => {
-      if (
-        (entry.date_keys || []).some((dk: string) => dk.startsWith(`${year}-`))
-      ) {
-        recordCount++;
-        if (entry.approval_status === 'pending') {
-          pendingCount++;
-        }
-      }
-    });
-  });
-
-  const dayCount = seenDates.size;
-
-  return { dayCount, pendingCount, recordCount };
-});
+// const yearSummary = computed(() => {
+//   const year = selectedYear.value;
+//   let recordCount = 0;
+//   let pendingCount = 0;
+//
+//   const seenDates = new Set<string>();
+//   Object.entries(props.dayMap).forEach(([dateKey, entries]) => {
+//     if (!dateKey.startsWith(`${year}-`)) return;
+//     if (entries.length > 0) {
+//       seenDates.add(dateKey);
+//     }
+//   });
+//
+//   Object.values(props.dayMap).forEach((entries) => {
+//     entries.forEach((entry) => {
+//       if (
+//         (entry.date_keys || []).some((dk: string) => dk.startsWith(`${year}-`))
+//       ) {
+//         recordCount++;
+//         if (entry.approval_status === 'pending') {
+//           pendingCount++;
+//         }
+//       }
+//     });
+//   });
+//
+//   const dayCount = seenDates.size;
+//
+//   return { dayCount, pendingCount, recordCount };
+// });
 
 function isRiskDay(dateKey: string): boolean {
   const entries = getEntriesForDate(dateKey);
@@ -302,7 +302,7 @@ function goCurrentYear() {
 
     <!-- 年视图 -->
     <div v-else>
-      <div class="year-summary-bar">
+      <!-- <div class="year-summary-bar">
         <div class="summary-item">
           <div class="summary-value">{{ yearSummary.recordCount }}</div>
           <div class="summary-label">
@@ -327,7 +327,7 @@ function goCurrentYear() {
             {{ $t('page.leave.calendarView.summary.currentYear') }}
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div class="year-grid">
         <div
