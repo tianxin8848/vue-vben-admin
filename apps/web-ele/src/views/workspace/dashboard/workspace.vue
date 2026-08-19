@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { Page } from '@vben/common-ui';
+import type { WorkbenchQuickNavItem } from '@vben/common-ui';
+
+import { useRouter } from 'vue-router';
+
+import { Page, WorkbenchQuickNav } from '@vben/common-ui';
 
 import {
   ElCard,
@@ -7,6 +11,8 @@ import {
   ElDescriptionsItem,
   ElTag,
 } from 'element-plus';
+
+const router = useRouter();
 
 interface AccessItem {
   description: string;
@@ -41,10 +47,57 @@ const accessItems: AccessItem[] = [
     description: '查看单条请假申请的详细信息，从请假列表跳转进入。',
   },
 ];
+
+// 系统参数配置快捷导航：点击跳转到 settings 页面对应分区
+const settingsQuickNavItems: WorkbenchQuickNavItem[] = [
+  {
+    color: '#1fdaca',
+    icon: 'ion:settings-outline',
+    title: '基础参数',
+    url: '/employee/manage/settings?tab=basic',
+  },
+  {
+    color: '#bf0c2c',
+    icon: 'ion:people-outline',
+    title: '员工字段',
+    url: '/employee/manage/settings?tab=employee',
+  },
+  {
+    color: '#e18525',
+    icon: 'ion:cash-outline',
+    title: '报销配置',
+    url: '/employee/manage/settings?tab=claim',
+  },
+  {
+    color: '#3fb27f',
+    icon: 'ion:calendar-outline',
+    title: '地区假期',
+    url: '/employee/manage/settings?tab=holiday',
+  },
+  {
+    color: '#00d8ff',
+    icon: 'ion:eye-outline',
+    title: '当前预览',
+    url: '/employee/manage/settings?tab=preview',
+  },
+];
+
+function handleSettingsNavClick(item: WorkbenchQuickNavItem) {
+  if (item.url) {
+    router.push(item.url);
+  }
+}
 </script>
 
 <template>
-  <Page title="界面访问说明" description="员工工作台各功能模块入口与说明">
+  <Page title="工作台" description="员工工作台各功能模块入口与说明">
+    <WorkbenchQuickNav
+      :items="settingsQuickNavItems"
+      title="系统参数配置"
+      class="mb-4"
+      @click="handleSettingsNavClick"
+    />
+
     <ElCard shadow="never">
       <template #header>
         <span>功能入口导航</span>

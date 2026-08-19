@@ -82,7 +82,7 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:layout-dashboard',
-          title: '界面访问说明',
+          title: '工作台',
         },
       },
     ],

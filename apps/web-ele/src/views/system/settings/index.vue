@@ -1,11 +1,8 @@
 <script lang="ts" setup>
-import type { WorkbenchQuickNavItem } from '@vben/common-ui';
-
 import type { SystemSettingsApi } from '#/api';
 
-import { computed, onMounted, ref } from 'vue';
-
-import { WorkbenchQuickNav } from '@vben/common-ui';
+import { onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { ElAlert, ElButton, ElCard } from 'element-plus';
 
@@ -45,53 +42,30 @@ const catalogMessage = ref('');
 const catalogMessageType = ref<'' | 'error' | 'success'>('');
 
 type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday' | 'preview';
+const VALID_TABS = new Set<SettingsTab>([
+  'basic',
+  'claim',
+  'employee',
+  'holiday',
+  'preview',
+]);
 const activeTab = ref<SettingsTab>('basic');
 
-// 快捷导航：url 字段复用为 tab 标识，点击时据此切换
-const quickNavItems: WorkbenchQuickNavItem[] = [
-  {
-    color: '#1fdaca',
-    icon: 'ion:settings-outline',
-    title: '基础参数',
-    url: 'basic',
-  },
-  {
-    color: '#bf0c2c',
-    icon: 'ion:people-outline',
-    title: '员工字段',
-    url: 'employee',
-  },
-  {
-    color: '#e18525',
-    icon: 'ion:cash-outline',
-    title: '报销配置',
-    url: 'claim',
-  },
-  {
-    color: '#3fb27f',
-    icon: 'ion:calendar-outline',
-    title: '地区假期',
-    url: 'holiday',
-  },
-  {
-    color: '#00d8ff',
-    icon: 'ion:eye-outline',
-    title: '当前预览',
-    url: 'preview',
-  },
-];
+const route = useRoute();
 
-// 当前激活的导航项标题，用于在导航下方高亮提示所处分区
-const activeNavTitle = computed(
-  () => quickNavItems.find((item) => item.url === activeTab.value)?.title || '',
-);
-
-function handleQuickNavClick(item: WorkbenchQuickNavItem) {
-  const tab = item.url as SettingsTab;
-  if (tab) {
+// 从路由 query 读取分区标识，用于工作台快捷导航跳转后定位分区
+function applyTabFromQuery() {
+  const tab = route.query.tab as SettingsTab;
+  if (tab && VALID_TABS.has(tab)) {
     activeTab.value = tab;
   }
 }
+
+// 监听路由 query 变化，支持在 settings 页内再次点击其它分区时也能切换
+watch(
+  () => route.query.tab,
+  () => applyTabFromQuery(),
+);
 
 function showFormMessage(type: 'error' | 'success', text: string) {
   formMessageType.value = type;
@@ -271,6 +245,7 @@ async function handleDeleteHoliday(
 }
 
 onMounted(() => {
+  applyTabFromQuery();
   fetchSettings();
 });
 </script>
@@ -283,22 +258,6 @@ onMounted(() => {
     v-loading="loading"
   >
     <div class="flex h-full flex-col gap-2">
-      <!-- 顶部快捷导航：点击卡片切换到对应配置分区 -->
-      <WorkbenchQuickNav
-        :items="quickNavItems"
-        title="配置导航"
-        class="settings-quick-nav"
-        @click="handleQuickNavClick"
-      />
-
-      <!-- 当前所处分区提示 -->
-      <div
-        class="flex items-center rounded bg-primary/10 px-3 py-1.5 text-sm text-primary"
-      >
-        <span class="font-semibold">当前分区：</span>
-        <span class="ml-1">{{ activeNavTitle }}</span>
-      </div>
-
       <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
         <ElCard>
@@ -414,13 +373,3 @@ onMounted(() => {
     </div>
   </Page>
 </template>
-
-<style scoped>
-.settings-quick-nav :deep(.vben-icon) {
-  transition: transform 0.3s ease;
-}
-
-.settings-quick-nav :deep(.group:hover .vben-icon) {
-  transform: scale(1.25);
-}
-</style>
