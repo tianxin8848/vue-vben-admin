@@ -75,16 +75,6 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
           title: $t('page.workspace.home'),
         },
       },
-      {
-        name: 'WorkspaceGuide',
-        path: 'dashboard/workspace',
-        component: 'workspace/dashboard/workspace',
-        meta: {
-          affixTab: false,
-          icon: 'lucide:layout-dashboard',
-          title: '工作台',
-        },
-      },
     ],
   },
   {
@@ -159,6 +149,21 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
           affixTab: false,
           icon: 'lucide:clipboard-check',
           title: '审批记录',
+        },
+      },
+    ],
+  },
+  system_settings_workspace: {
+    module_code: 'system_settings',
+    routes: [
+      {
+        name: 'WorkspaceGuide',
+        path: 'dashboard/workspace',
+        component: 'workspace/dashboard/workspace',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:layout-dashboard',
+          title: '工作台',
         },
       },
     ],
