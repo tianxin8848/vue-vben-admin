@@ -60,7 +60,7 @@ function handleSelectAllToggle(value: boolean | number | string) {
 </script>
 
 <template>
-  <section class="mt-6 border-t border-border pt-6">
+  <section>
     <div class="mb-3 flex items-center justify-between">
       <h3 class="text-lg">员工可自编辑字段维护</h3>
       <span class="text-sm text-muted-foreground">
@@ -83,13 +83,13 @@ function handleSelectAllToggle(value: boolean | number | string) {
 
     <ElCheckboxGroup
       :model-value="selectedCodes"
-      class="space-y-4"
+      class="grid grid-cols-2 gap-6"
       @change="handleGroupChange"
     >
       <div
         v-for="group in groupedCatalog"
         :key="group.name"
-        class="rounded border border-border p-3"
+        class="rounded border p-3"
       >
         <div class="mb-2 text-sm font-semibold text-foreground">
           {{ group.name }}

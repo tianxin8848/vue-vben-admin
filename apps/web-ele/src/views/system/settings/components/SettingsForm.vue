@@ -301,47 +301,65 @@ function clearModules() {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <span class="text-base font-semibold">部门列表</span>
-      <ElButton size="small" type="primary" @click="showDeptDialog = true">
-        新增部门
-      </ElButton>
-    </div>
-    <DeptTable />
+  <div>
+    <div class="grid grid-cols-2 gap-6">
+      <!-- 部门列表 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-semibold">部门列表</span>
+          <ElButton size="small" type="primary" @click="showDeptDialog = true">
+            新增部门
+          </ElButton>
+        </div>
+        <DeptTable />
+      </div>
 
-    <div class="flex items-center justify-between">
-      <span class="text-base font-semibold">岗位列表</span>
-      <ElButton size="small" type="primary" @click="showPosDialog = true">
-        新增岗位
-      </ElButton>
-    </div>
-    <PosTable />
+      <!-- 岗位列表 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-semibold">岗位列表</span>
+          <ElButton size="small" type="primary" @click="showPosDialog = true">
+            新增岗位
+          </ElButton>
+        </div>
+        <PosTable />
+      </div>
 
-    <div class="flex items-center justify-between">
-      <span class="text-base font-semibold">地区列表</span>
-      <ElButton size="small" type="primary" @click="showRegionDialog = true">
-        新增地区
-      </ElButton>
-    </div>
-    <RegionTable />
+      <!-- 地区列表 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-semibold">地区列表</span>
+          <ElButton
+            size="small"
+            type="primary"
+            @click="showRegionDialog = true"
+          >
+            新增地区
+          </ElButton>
+        </div>
+        <RegionTable />
+      </div>
 
-    <div class="flex items-center justify-between">
-      <span class="text-base font-semibold">
-        模块列表（已选 {{ localSelectedModules.length }} / 共
-        {{ localModules.length }} 个）
-      </span>
-      <div class="flex gap-2">
-        <ElButton size="small" @click="selectAllModules">全选</ElButton>
-        <ElButton size="small" @click="clearModules">清空</ElButton>
+      <!-- 模块列表 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-semibold">
+            模块列表（已选 {{ localSelectedModules.length }} / 共
+            {{ localModules.length }} 个）
+          </span>
+          <div class="flex gap-2">
+            <ElButton size="small" @click="selectAllModules">全选</ElButton>
+            <ElButton size="small" @click="clearModules">清空</ElButton>
+          </div>
+        </div>
+        <ModuleTable />
+        <p class="text-xs text-muted-foreground">
+          这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。
+        </p>
       </div>
     </div>
-    <ModuleTable />
-    <p class="text-xs text-muted-foreground">
-      这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。
-    </p>
 
-    <div class="flex justify-end pt-2">
+    <div class="flex justify-end pt-6">
       <ElButton type="primary" @click="$emit('save')">保存系统参数</ElButton>
     </div>
   </div>

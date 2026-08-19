@@ -268,78 +268,87 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
       这些参数统一保存在一个 MongoDB 集合中，保存后新增员工页面会直接使用。
     </p>
 
-    <SummaryTable>
-      <template #content="{ row }">
-        <template v-if="row.items.length">
-          <ElTag
-            v-for="(item, idx) in row.items"
-            :key="idx"
-            size="small"
-            type="info"
-            class="mr-1 mb-1"
-          >
-            <template v-if="row.type === '模块'">
-              {{ item.name }}（{{ item.code }}）
-            </template>
-            <template v-else-if="row.type === '员工可自编辑字段'">
-              {{ item.name }}（{{ item.code }}）
-            </template>
-            <template v-else-if="row.type === '币种与港币汇率'">
-              {{ item.name }} → {{ item.rate }}
-            </template>
-            <template v-else>{{ item.name }}</template>
-          </ElTag>
+    <div class="grid grid-cols-2 gap-6">
+      <!-- 左列：汇总表 -->
+      <SummaryTable>
+        <template #content="{ row }">
+          <template v-if="row.items.length">
+            <ElTag
+              v-for="(item, idx) in row.items"
+              :key="idx"
+              size="small"
+              type="info"
+              class="mr-1 mb-1"
+            >
+              <template v-if="row.type === '模块'">
+                {{ item.name }}（{{ item.code }}）
+              </template>
+              <template v-else-if="row.type === '员工可自编辑字段'">
+                {{ item.name }}（{{ item.code }}）
+              </template>
+              <template v-else-if="row.type === '币种与港币汇率'">
+                {{ item.name }} → {{ item.rate }}
+              </template>
+              <template v-else>{{ item.name }}</template>
+            </ElTag>
+          </template>
+          <span v-else class="text-xs text-muted-foreground">暂无</span>
         </template>
-        <span v-else class="text-xs text-muted-foreground">暂无</span>
-      </template>
-    </SummaryTable>
+      </SummaryTable>
 
-    <div class="mt-6 flex items-center justify-between">
-      <span class="text-base font-semibold">地区假期</span>
-      <ElSelect v-model="holidayYearFilter" size="small" class="w-28">
-        <ElOption
-          v-for="y in yearOptions"
-          :key="y"
-          :label="`${y}年`"
-          :value="y"
-        />
-      </ElSelect>
+      <!-- 右列：地区假期表 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-semibold">地区假期</span>
+          <ElSelect v-model="holidayYearFilter" size="small" class="w-28">
+            <ElOption
+              v-for="y in yearOptions"
+              :key="y"
+              :label="`${y}年`"
+              :value="y"
+            />
+          </ElSelect>
+        </div>
+        <HolidayTable>
+          <template #empty>
+            <ElEmpty description="暂无地区假期配置" />
+          </template>
+          <template #action="{ row }">
+            <ElButton
+              size="small"
+              type="danger"
+              link
+              @click="handleDeleteHoliday(row)"
+            >
+              删除
+            </ElButton>
+          </template>
+        </HolidayTable>
+      </div>
+
+      <!-- 第二行：地区假期名称清单（跨两列，表格内容较宽） -->
+      <div class="col-span-2 flex flex-col gap-2">
+        <div class="text-base font-semibold">地区假期名称清单</div>
+        <CatalogTable>
+          <template #empty>
+            <ElEmpty description="暂无地区假期名称清单配置" />
+          </template>
+          <template #names="{ row }">
+            <ElTag
+              v-for="(name, idx) in row.holiday_names"
+              :key="idx"
+              size="small"
+              class="mr-1 mb-1"
+            >
+              {{ name }}
+            </ElTag>
+            <span
+              v-if="!row.holiday_names.length"
+              class="text-xs text-muted-foreground"
+              >-</span>
+          </template>
+        </CatalogTable>
+      </div>
     </div>
-    <HolidayTable class="mt-2">
-      <template #empty>
-        <ElEmpty description="暂无地区假期配置" />
-      </template>
-      <template #action="{ row }">
-        <ElButton
-          size="small"
-          type="danger"
-          link
-          @click="handleDeleteHoliday(row)"
-        >
-          删除
-        </ElButton>
-      </template>
-    </HolidayTable>
-
-    <div class="mt-6 mb-2 text-base font-semibold">地区假期名称清单</div>
-    <CatalogTable>
-      <template #empty>
-        <ElEmpty description="暂无地区假期名称清单配置" />
-      </template>
-      <template #names="{ row }">
-        <ElTag
-          v-for="(name, idx) in row.holiday_names"
-          :key="idx"
-          size="small"
-          class="mr-1 mb-1"
-        >
-          {{ name }}
-        </ElTag>
-        <span
-          v-if="!row.holiday_names.length"
-          class="text-xs text-muted-foreground"
-          >-</span>
-      </template>
-    </CatalogTable>
   </ElCard>
 </template>

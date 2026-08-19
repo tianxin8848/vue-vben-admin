@@ -320,9 +320,11 @@ onMounted(() => {
           <template #header>
             <span class="text-base font-bold">报销配置</span>
           </template>
-          <ClaimReasonEditor v-model="claimReasonsStr" />
-          <CurrencyEditor v-model="claimCurrenciesStr" />
-          <div class="mt-4 flex justify-end">
+          <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
+            <ClaimReasonEditor v-model="claimReasonsStr" />
+            <CurrencyEditor v-model="claimCurrenciesStr" />
+          </div>
+          <div class="mt-6 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">
               保存系统参数
             </ElButton>
@@ -345,21 +347,23 @@ onMounted(() => {
           <template #header>
             <span class="text-base font-bold">地区假期</span>
           </template>
-          <HolidayEditor
-            :regions="settings?.regions || []"
-            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-            v-model:message="holidayMessage"
-            v-model:message-type="holidayMessageType"
-            @save="handleSaveHoliday"
-          />
+          <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
+            <HolidayEditor
+              :regions="settings?.regions || []"
+              :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+              v-model:message="holidayMessage"
+              v-model:message-type="holidayMessageType"
+              @save="handleSaveHoliday"
+            />
 
-          <HolidayCatalogEditor
-            :regions="settings?.regions || []"
-            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-            v-model:message="catalogMessage"
-            v-model:message-type="catalogMessageType"
-            @save="handleSaveCatalog"
-          />
+            <HolidayCatalogEditor
+              :regions="settings?.regions || []"
+              :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+              v-model:message="catalogMessage"
+              v-model:message-type="catalogMessageType"
+              @save="handleSaveCatalog"
+            />
+          </div>
         </ElCard>
       </div>
 
