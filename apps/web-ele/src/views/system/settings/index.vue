@@ -1,9 +1,13 @@
 <script lang="ts" setup>
+import type { WorkbenchQuickNavItem } from '@vben/common-ui';
+
 import type { SystemSettingsApi } from '#/api';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import { ElAlert, ElButton, ElCard, ElSegmented } from 'element-plus';
+import { WorkbenchQuickNav } from '@vben/common-ui';
+
+import { ElAlert, ElButton, ElCard } from 'element-plus';
 
 import {
   ALL_MODULE_CATALOG,
@@ -43,13 +47,51 @@ const catalogMessageType = ref<'' | 'error' | 'success'>('');
 type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday' | 'preview';
 const activeTab = ref<SettingsTab>('basic');
 
-const segmentedOptions: { label: string; value: SettingsTab }[] = [
-  { label: '基础参数', value: 'basic' },
-  { label: '员工字段', value: 'employee' },
-  { label: '报销配置', value: 'claim' },
-  { label: '地区假期', value: 'holiday' },
-  { label: '当前预览', value: 'preview' },
+// 快捷导航：url 字段复用为 tab 标识，点击时据此切换
+const quickNavItems: WorkbenchQuickNavItem[] = [
+  {
+    color: '#1fdaca',
+    icon: 'ion:settings-outline',
+    title: '基础参数',
+    url: 'basic',
+  },
+  {
+    color: '#bf0c2c',
+    icon: 'ion:people-outline',
+    title: '员工字段',
+    url: 'employee',
+  },
+  {
+    color: '#e18525',
+    icon: 'ion:cash-outline',
+    title: '报销配置',
+    url: 'claim',
+  },
+  {
+    color: '#3fb27f',
+    icon: 'ion:calendar-outline',
+    title: '地区假期',
+    url: 'holiday',
+  },
+  {
+    color: '#00d8ff',
+    icon: 'ion:eye-outline',
+    title: '当前预览',
+    url: 'preview',
+  },
 ];
+
+// 当前激活的导航项标题，用于在导航下方高亮提示所处分区
+const activeNavTitle = computed(
+  () => quickNavItems.find((item) => item.url === activeTab.value)?.title || '',
+);
+
+function handleQuickNavClick(item: WorkbenchQuickNavItem) {
+  const tab = item.url as SettingsTab;
+  if (tab) {
+    activeTab.value = tab;
+  }
+}
 
 function showFormMessage(type: 'error' | 'success', text: string) {
   formMessageType.value = type;
@@ -241,7 +283,21 @@ onMounted(() => {
     v-loading="loading"
   >
     <div class="flex h-full flex-col gap-2">
-      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
+      <!-- 顶部快捷导航：点击卡片切换到对应配置分区 -->
+      <WorkbenchQuickNav
+        :items="quickNavItems"
+        title="配置导航"
+        class="settings-quick-nav"
+        @click="handleQuickNavClick"
+      />
+
+      <!-- 当前所处分区提示 -->
+      <div
+        class="flex items-center rounded bg-primary/10 px-3 py-1.5 text-sm text-primary"
+      >
+        <span class="font-semibold">当前分区：</span>
+        <span class="ml-1">{{ activeNavTitle }}</span>
+      </div>
 
       <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
@@ -358,3 +414,13 @@ onMounted(() => {
     </div>
   </Page>
 </template>
+
+<style scoped>
+.settings-quick-nav :deep(.vben-icon) {
+  transition: transform 0.3s ease;
+}
+
+.settings-quick-nav :deep(.group:hover .vben-icon) {
+  transform: scale(1.25);
+}
+</style>

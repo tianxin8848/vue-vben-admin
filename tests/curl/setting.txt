@@ -1,0 +1,28 @@
+# 1. 登录拿 cookie（后续请求都要带）
+curl -s -c /tmp/sysparam_cookie.txt -X POST http://10.254.253.187:8999/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Cisco@123"}'
+
+# 2. GET 系统参数（基线）
+curl -s -b /tmp/sysparam_cookie.txt http://10.254.253.187:8999/api/v1/system-settings
+
+# 3. PUT 全量更新（⚠️ 全量替换，未传字段会被清空）
+curl -s -b /tmp/sysparam_cookie.txt -X PUT http://10.254.253.187:8999/api/v1/system-settings \
+  -H "Content-Type: application/json" \
+  -d '{"departments":["深圳研发中心"],"positions":[],"regions":[],"modules":[],"employee_self_editable_fields":[],"claim_reasons":[],"claim_currencies":[],"regional_holidays":[]}'
+
+# 4. 地区假期 单条 upsert / delete（body 传 JSON）
+curl -s -b /tmp/sysparam_cookie.txt -X PUT http://10.254.253.187:8999/api/v1/system-settings/regional-holidays \
+  -H "Content-Type: application/json" -d '{"region":"香港","date":"2027-01-01","holiday_name":"元旦"}'
+curl -s -b /tmp/sysparam_cookie.txt -X DELETE http://10.254.253.187:8999/api/v1/system-settings/regional-holidays \
+  -H "Content-Type: application/json" -d '{"region":"香港","date":"2027-01-01"}'
+
+# 5. 地区假期 范围 upsert / delete
+curl -s -b /tmp/sysparam_cookie.txt -X PUT http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/range \
+  -H "Content-Type: application/json" -d '{"region":"香港","start_date":"2027-01-01","end_date":"2027-01-03","holiday_name":"元旦假期"}'
+curl -s -b /tmp/sysparam_cookie.txt -X DELETE http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/range \
+  -H "Content-Type: application/json" -d '{"region":"香港","start_date":"2027-01-01","end_date":"2027-01-03"}'
+
+# 6. 批量导入（multipart: region 表单字段 + file 文件，⚠️ 该接口实测对任何 JSON 格式都返回 400，疑似后端 bug）
+curl -s -b /tmp/sysparam_cookie.txt -X POST http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/import \
+  -F "region=香港" -F "file=@/tmp/test_holidays_import.json"

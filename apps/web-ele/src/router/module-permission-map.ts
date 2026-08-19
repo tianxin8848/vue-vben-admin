@@ -75,6 +75,16 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
           title: $t('page.workspace.home'),
         },
       },
+      {
+        name: 'WorkspaceGuide',
+        path: 'dashboard/workspace',
+        component: 'workspace/dashboard/workspace',
+        meta: {
+          affixTab: false,
+          icon: 'lucide:layout-dashboard',
+          title: '界面访问说明',
+        },
+      },
     ],
   },
   {

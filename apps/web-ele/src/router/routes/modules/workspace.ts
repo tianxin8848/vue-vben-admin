@@ -25,6 +25,18 @@ const routes: RouteRecordRaw[] = [
           authority: ['user'],
         },
       },
+      // Workspace: Access Guide
+      {
+        name: 'WorkspaceGuide',
+        path: 'dashboard/workspace',
+        component: () => import('#/views/workspace/dashboard/workspace.vue'),
+        meta: {
+          affixTab: false,
+          icon: 'lucide:layout-dashboard',
+          title: '界面访问说明',
+          authority: ['user'],
+        },
+      },
       // Employee: My Leave
       {
         name: 'EmployeeLeave',
