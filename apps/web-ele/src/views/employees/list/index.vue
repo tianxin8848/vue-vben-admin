@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { VbenFormProps } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
-import type { EmployeeApi, SystemSettingsApi } from '#/api';
+import type { EmployeeApi } from '#/api';
 
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -26,8 +26,8 @@ import {
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createEmployeeApi,
+  getEmployeeManageMetaApi,
   getEmployeesApi,
-  getSystemSettingsApi,
   resetEmployeePasswordApi,
   updateEmployeeAdminApi,
   updateEmployeeStatusApi,
@@ -53,28 +53,27 @@ const columnVisibility = reactive({
 const departmentOptions = ref<{ label: string; value: string }[]>([]);
 const positionOptions = ref<{ label: string; value: string }[]>([]);
 const regionOptions = ref<{ label: string; value: string }[]>([]);
-const moduleOptions = ref<SystemSettingsApi.SystemModuleItem[]>([]);
+const moduleOptions = ref<EmployeeApi.EmployeeManageMeta['modules']>([]);
 const selectedModuleCodes = ref<string[]>([]);
 
 const allEmployees = ref<EmployeeApi.EmployeeResponse[]>([]);
 
 async function fetchSystemSettings() {
   try {
-    const settings: SystemSettingsApi.SystemSettingsResponse =
-      await getSystemSettingsApi();
-    departmentOptions.value = (settings.departments || []).map((d) => ({
+    const meta = await getEmployeeManageMetaApi();
+    departmentOptions.value = (meta.departments || []).map((d) => ({
       label: d,
       value: d,
     }));
-    positionOptions.value = (settings.positions || []).map((p) => ({
+    positionOptions.value = (meta.positions || []).map((p) => ({
       label: p,
       value: p,
     }));
-    regionOptions.value = (settings.regions || []).map((r) => ({
+    regionOptions.value = (meta.regions || []).map((r) => ({
       label: r,
       value: r,
     }));
-    moduleOptions.value = settings.modules || [];
+    moduleOptions.value = meta.modules || [];
   } catch {
     // 获取系统设置失败时保持空选项
   }

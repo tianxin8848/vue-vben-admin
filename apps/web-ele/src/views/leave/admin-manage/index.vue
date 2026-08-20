@@ -11,7 +11,7 @@ import {
   getAnnualLeaveSummaryApi,
   getEmployeesApi,
   getLeaveCalendarApi,
-  getSystemSettingsApi,
+  getLeaveCalendarMetaApi,
   upsertRegionalHolidayApi,
 } from '#/api';
 import { $t } from '#/locales';
@@ -265,9 +265,9 @@ async function loadAnnualLeaveSummary() {
 
 async function loadSystemSettings() {
   try {
-    const settings = await getSystemSettingsApi();
-    regions.value = settings.regions || [];
-    regionalHolidays.value = settings.regional_holidays || [];
+    const meta = await getLeaveCalendarMetaApi();
+    regions.value = meta.regions || [];
+    regionalHolidays.value = meta.regional_holidays || [];
   } catch {
     regions.value = [];
     regionalHolidays.value = [];

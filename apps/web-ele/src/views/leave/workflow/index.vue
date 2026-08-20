@@ -26,7 +26,7 @@ import {
   deleteLeaveWorkflowApi,
   getEmployeesApi,
   getLeaveWorkflowsApi,
-  getSystemSettingsApi,
+  getLeaveWorkflowsMetaApi,
   updateLeaveWorkflowApi,
 } from '#/api';
 
@@ -375,10 +375,10 @@ async function fetchEmployees() {
 
 async function loadSystemSettings() {
   try {
-    const settings = await getSystemSettingsApi();
-    regions.value = settings.regions || [];
-    departments.value = settings.departments || [];
-    positions.value = settings.positions || [];
+    const meta = await getLeaveWorkflowsMetaApi();
+    regions.value = meta.regions || [];
+    departments.value = meta.departments || [];
+    positions.value = meta.positions || [];
   } catch {
     regions.value = [];
     departments.value = [];

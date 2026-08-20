@@ -40,10 +40,27 @@ export namespace LeaveWorkflowApi {
   /** 更新请假流程请求参数（所有字段可选） */
   export interface UpdateWorkflowParams {
     approvers?: null | WorkflowApprover[];
-    is_active?: null | boolean;
+    is_active?: boolean | null;
     match?: null | WorkflowMatch;
     name?: null | string;
     priority?: null | number;
+  }
+
+  /** 流程维护页面筛选下拉数据 */
+  export interface LeaveWorkflowMeta {
+    departments: string[];
+    employees: {
+      department: null | string;
+      employee_code: null | string;
+      full_name: null | string;
+      id: string;
+      is_active: boolean;
+      position: null | string;
+      region: null | string;
+      username: string;
+    }[];
+    positions: string[];
+    regions: string[];
   }
 }
 
@@ -52,6 +69,15 @@ export async function getLeaveWorkflowsApi() {
   return requestClient.get<LeaveWorkflowApi.LeaveWorkflow[]>(
     '/leave-workflows',
   );
+}
+
+/** 获取流程维护页面筛选下拉数据（地区/部门/岗位/员工） */
+export async function getLeaveWorkflowsMetaApi() {
+  const data = await requestClient.get<LeaveWorkflowApi.LeaveWorkflowMeta>(
+    '/leave-workflows/meta',
+  );
+  console.warn('[DEBUG][getLeaveWorkflowsMetaApi] response:', data);
+  return data;
 }
 
 /** 创建请假流程 */
@@ -79,4 +105,3 @@ export async function updateLeaveWorkflowApi(
 export async function deleteLeaveWorkflowApi(id: string) {
   return requestClient.delete(`/leave-workflows/${id}`);
 }
-

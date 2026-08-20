@@ -23,9 +23,9 @@ import {
 } from 'element-plus';
 
 import {
+  getLeaveApprovalsMetaApi,
   getMyApprovalRecordsApi,
   getMyPendingApprovalsApi,
-  getSystemSettingsApi,
   reviewLeaveRequestApi,
   withdrawLeaveRequestApi,
 } from '#/api';
@@ -101,12 +101,12 @@ const actionTypeMap: Record<string, 'danger' | 'info' | 'success' | 'warning'> =
 
 async function fetchSystemSettings() {
   try {
-    const settings = await getSystemSettingsApi();
-    departmentOptions.value = (settings.departments || []).map((d) => ({
+    const meta = await getLeaveApprovalsMetaApi();
+    departmentOptions.value = (meta.departments || []).map((d) => ({
       label: d,
       value: d,
     }));
-    regionOptions.value = (settings.regions || []).map((r) => ({
+    regionOptions.value = (meta.regions || []).map((r) => ({
       label: r,
       value: r,
     }));

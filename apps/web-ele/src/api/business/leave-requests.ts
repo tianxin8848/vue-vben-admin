@@ -119,6 +119,28 @@ export namespace LeaveRequestApi {
     session: LeaveSession;
     start_date: string;
   }
+
+  /** 请假日历/审批页筛选下拉数据 */
+  export interface LeaveRequestMeta {
+    departments: string[];
+    employees?: {
+      department: null | string;
+      employee_code: null | string;
+      full_name: null | string;
+      id: string;
+      is_active: boolean;
+      position: null | string;
+      region: null | string;
+      username: string;
+    }[];
+    positions?: string[];
+    regional_holidays?: {
+      date: string;
+      holiday_name: string;
+      region: string;
+    }[];
+    regions: string[];
+  }
 }
 
 // ─── 请假申请 ────────────────────────────────────────────────────────────────
@@ -184,6 +206,20 @@ export async function createLeaveRequestApi(
 export async function getLeaveRequestApi(id: string) {
   return requestClient.get<LeaveRequestApi.LeaveRequest>(
     `/leave-requests/${id}`,
+  );
+}
+
+/** 获取请假日历页筛选下拉数据（地区/部门/岗位/员工） */
+export async function getLeaveCalendarMetaApi() {
+  return requestClient.get<LeaveRequestApi.LeaveRequestMeta>(
+    '/leave-requests/calendar/meta',
+  );
+}
+
+/** 获取请假审批页筛选下拉数据（地区/部门） */
+export async function getLeaveApprovalsMetaApi() {
+  return requestClient.get<LeaveRequestApi.LeaveRequestMeta>(
+    '/leave-requests/approvals/meta',
   );
 }
 

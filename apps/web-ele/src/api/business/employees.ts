@@ -164,6 +164,14 @@ export namespace EmployeeApi {
     user_id: null | number;
     username: string;
   }
+
+  /** 员工管理页筛选下拉数据（地区/部门/岗位/模块清单） */
+  export interface EmployeeManageMeta {
+    departments: string[];
+    modules: { module_code: string; module_name: string }[];
+    positions: string[];
+    regions: string[];
+  }
 }
 
 // ─── 员工列表 ────────────────────────────────────────────────────────────────
@@ -171,6 +179,13 @@ export namespace EmployeeApi {
 /** 获取员工列表 */
 export async function getEmployeesApi() {
   return requestClient.get<EmployeeApi.EmployeeResponse[]>('/employees');
+}
+
+/** 获取员工管理页筛选下拉数据（地区/部门/岗位/模块清单） */
+export async function getEmployeeManageMetaApi() {
+  return requestClient.get<EmployeeApi.EmployeeManageMeta>(
+    '/employees/manage/meta',
+  );
 }
 
 /** 创建员工 */
