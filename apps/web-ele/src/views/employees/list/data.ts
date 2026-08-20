@@ -144,9 +144,7 @@ export function buildColumns(
   }
   if (visibility.role) {
     cols.push({
-      field: 'is_admin',
       slots: { default: 'role' },
-      sortable: true,
       title: '身份',
       width: 80,
     });
@@ -195,7 +193,7 @@ export function buildColumns(
     resizable: false,
     slots: { default: 'action' },
     title: '操作',
-    width: 180,
+    width: 460,
   });
   return cols;
 }

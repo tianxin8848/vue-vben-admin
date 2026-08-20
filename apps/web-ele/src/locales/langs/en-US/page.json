@@ -27,7 +27,13 @@
     "status": "Status",
     "admin": "Admin",
     "permissions": "Permissions",
-    "resetPassword": "Reset Password"
+    "resetPassword": "Reset Password",
+    "buttons": {
+      "createShort": "Create"
+    },
+    "drawer": {
+      "createTitle": "Add Employee"
+    }
   },
   "leave": {
     "title": "Leave Management",

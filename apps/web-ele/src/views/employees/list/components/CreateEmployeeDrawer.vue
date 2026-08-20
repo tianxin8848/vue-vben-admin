@@ -3,9 +3,11 @@ import type { EmployeeApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
+import { useVbenDrawer } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
+
 import {
   ElButton,
-  ElCard,
   ElCheckbox,
   ElForm,
   ElFormItem,
@@ -14,6 +16,8 @@ import {
   ElOption,
   ElSelect,
 } from 'element-plus';
+
+import { createEmployeeApi } from '#/api';
 
 interface SelectOption {
   label: string;
@@ -33,14 +37,15 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  submit: [payload: EmployeeApi.EmployeeCreate];
+  success: [];
 }>();
+
+const { t } = useI18n();
 
 const createForm = reactive({
   department: '',
   email: '',
   full_name: '',
-  is_admin: false,
   phone: '',
   position: '',
   region: '',
@@ -90,11 +95,17 @@ function resetForm() {
   createForm.phone = '';
   createForm.position = '';
   createForm.region = '';
-  createForm.is_admin = false;
   selectedModuleCodes.value = [];
 }
 
-function handleSubmit() {
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  confirmText: t('page.employees.create'),
+  onClosed: resetForm,
+  onConfirm: submitCreate,
+  title: t('page.employees.drawer.createTitle'),
+});
+
+async function submitCreate() {
   if (
     !createForm.username ||
     !createForm.email ||
@@ -108,48 +119,63 @@ function handleSubmit() {
     department: createForm.department,
     email: createForm.email,
     full_name: createForm.full_name,
-    is_admin: createForm.is_admin,
     module_permissions: buildModulePermissions(),
     phone: createForm.phone || undefined,
     position: createForm.position || undefined,
     region: createForm.region || undefined,
     username: createForm.username,
   };
-  emit('submit', payload);
+  createDrawerApi.lock(true);
+  try {
+    await createEmployeeApi(payload);
+    ElMessage.success('创建成功');
+    createDrawerApi.close();
+    emit('success');
+  } catch (error: any) {
+    console.error('创建员工失败:', error);
+    ElMessage.error('创建员工失败');
+  } finally {
+    createDrawerApi.lock(false);
+  }
 }
 
-defineExpose({ resetForm });
+function open() {
+  resetForm();
+  createDrawerApi.open();
+}
+
+defineExpose({ open });
 </script>
 
 <template>
-  <ElCard header="新增员工">
-    <ElForm :model="createForm" label-width="100px" inline>
+  <CreateDrawer class="w-[600px]">
+    <ElForm :model="createForm" label-width="100px">
       <ElFormItem label="用户名 *">
         <ElInput
           v-model="createForm.username"
           placeholder="请输入用户名"
-          style="width: 180px"
+          class="w-full"
         />
       </ElFormItem>
       <ElFormItem label="邮箱 *">
         <ElInput
           v-model="createForm.email"
           placeholder="请输入邮箱"
-          style="width: 220px"
+          class="w-full"
         />
       </ElFormItem>
       <ElFormItem label="姓名 *">
         <ElInput
           v-model="createForm.full_name"
           placeholder="请输入姓名"
-          style="width: 120px"
+          class="w-full"
         />
       </ElFormItem>
       <ElFormItem label="部门 *">
         <ElSelect
           v-model="createForm.department"
           placeholder="请选择部门"
-          style="width: 140px"
+          class="w-full"
         >
           <ElOption
             v-for="opt in departmentOptions"
@@ -163,14 +189,14 @@ defineExpose({ resetForm });
         <ElInput
           v-model="createForm.phone"
           placeholder="请输入手机号"
-          style="width: 140px"
+          class="w-full"
         />
       </ElFormItem>
       <ElFormItem label="地区">
         <ElSelect
           v-model="createForm.region"
           placeholder="请选择地区"
-          style="width: 120px"
+          class="w-full"
           clearable
         >
           <ElOption
@@ -185,7 +211,7 @@ defineExpose({ resetForm });
         <ElSelect
           v-model="createForm.position"
           placeholder="请选择岗位"
-          style="width: 120px"
+          class="w-full"
           clearable
         >
           <ElOption
@@ -195,9 +221,6 @@ defineExpose({ resetForm });
             :value="opt.value"
           />
         </ElSelect>
-      </ElFormItem>
-      <ElFormItem>
-        <ElCheckbox v-model="createForm.is_admin" label="创建为管理员" />
       </ElFormItem>
       <ElFormItem label="模块权限">
         <div v-if="moduleOptions.length" class="w-full">
@@ -233,9 +256,6 @@ defineExpose({ resetForm });
           暂无可选模块，请先到"系统参数维护"中配置
         </div>
       </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" @click="handleSubmit">创建员工</ElButton>
-      </ElFormItem>
     </ElForm>
-  </ElCard>
+  </CreateDrawer>
 </template>

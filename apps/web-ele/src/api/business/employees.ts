@@ -23,7 +23,6 @@ export namespace EmployeeApi {
     hire_date: null | string;
     id: string;
     is_active: boolean;
-    is_admin: boolean;
     is_initial_password: number;
     module_permissions: ModulePermission[];
     phone: null | string;
@@ -96,7 +95,6 @@ export namespace EmployeeApi {
     email: string;
     full_name: string;
     is_active?: boolean;
-    is_admin?: boolean;
     module_permissions?: ModulePermission[];
     phone?: null | string;
     position?: null | string;
@@ -138,11 +136,6 @@ export namespace EmployeeApi {
   /** 更新状态请求参数 */
   export interface EmployeeStatusUpdate {
     is_active: boolean;
-  }
-
-  /** 更新管理员请求参数 */
-  export interface EmployeeAdminUpdate {
-    is_admin: boolean;
   }
 
   /** 更新权限请求参数 */
@@ -193,6 +186,11 @@ export async function createEmployeeApi(data: EmployeeApi.EmployeeCreate) {
   return requestClient.post<EmployeeApi.EmployeeResponse>('/employees', data);
 }
 
+/** 删除员工 */
+export async function deleteEmployeeApi(employeeId: string) {
+  return requestClient.delete(`/employees/${employeeId}`);
+}
+
 // ─── 员工权限 / 状态 / 管理员 ────────────────────────────────────────────────
 
 /** 更新员工权限 */
@@ -220,17 +218,6 @@ export async function updateEmployeeStatusApi(
 ) {
   return requestClient.request<EmployeeApi.EmployeeResponse>(
     `/employees/${employeeId}/status`,
-    { method: 'PATCH', data },
-  );
-}
-
-/** 更新员工管理员状态 */
-export async function updateEmployeeAdminApi(
-  employeeId: string,
-  data: EmployeeApi.EmployeeAdminUpdate,
-) {
-  return requestClient.request<EmployeeApi.EmployeeResponse>(
-    `/employees/${employeeId}/admin`,
     { method: 'PATCH', data },
   );
 }

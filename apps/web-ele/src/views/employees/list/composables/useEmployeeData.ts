@@ -79,6 +79,16 @@ export function useEmployeeData() {
       .join(', ');
   }
 
+  /**
+   * 判定员工是否具有用户管理权限（用于"身份"列展示）。
+   * 后端没有 is_admin 字段，统一通过 user_management 模块的 can_view 来体现。
+   */
+  function isManager(permissions: EmployeeApi.ModulePermission[]) {
+    return permissions.some(
+      (p) => p.module_code === 'user_management' && p.can_view,
+    );
+  }
+
   return {
     allEmployees,
     columnVisibility,
@@ -87,6 +97,7 @@ export function useEmployeeData() {
     getInitialPasswordStatus,
     getPermissionLabels,
     invalidateEmployees,
+    isManager,
     moduleOptions,
     openResetModal,
     positionOptions,

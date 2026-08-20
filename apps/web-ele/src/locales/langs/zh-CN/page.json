@@ -27,7 +27,13 @@
     "status": "在职状态",
     "admin": "管理员权限",
     "permissions": "模块权限",
-    "resetPassword": "重置密码"
+    "resetPassword": "重置密码",
+    "buttons": {
+      "createShort": "新建"
+    },
+    "drawer": {
+      "createTitle": "新增员工"
+    }
   },
   "leave": {
     "title": "请假管理",

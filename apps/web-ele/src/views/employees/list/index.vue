@@ -3,28 +3,41 @@ import type { VbenFormProps } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { EmployeeApi } from '#/api';
 
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
-import { ElButton, ElCheckbox, ElMessage, ElSwitch, ElTag } from 'element-plus';
+import {
+  ElButton,
+  ElMessage,
+  ElMessageBox,
+  ElSwitch,
+  ElTag,
+} from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createEmployeeApi,
+  deleteEmployeeApi,
   getEmployeesApi,
   resetEmployeePasswordApi,
-  updateEmployeeAdminApi,
+  updateEmployeeAccessControlApi,
+  updateEmployeeBasicInfoApi,
+  updateEmployeePermissionsApi,
   updateEmployeeStatusApi,
 } from '#/api';
 
-import CreateEmployeeForm from './components/CreateEmployeeForm.vue';
+import AccessControlDialog from './components/AccessControlDialog.vue';
+import BasicInfoEditDialog from './components/BasicInfoEditDialog.vue';
+import CreateEmployeeDrawer from './components/CreateEmployeeDrawer.vue';
+import PermissionDialog from './components/PermissionDialog.vue';
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue';
 import { useEmployeeData } from './composables/useEmployeeData';
 import { buildColumns, buildFormSchema, sharedToolbarConfig } from './data';
 
 const router = useRouter();
+const { t } = useI18n();
 
 const {
   allEmployees,
@@ -34,6 +47,7 @@ const {
   getInitialPasswordStatus,
   getPermissionLabels,
   invalidateEmployees,
+  isManager,
   moduleOptions,
   openResetModal,
   positionOptions,
@@ -54,7 +68,10 @@ const formOptions: VbenFormProps = {
   },
   wrapperClass: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
   handleSubmit: async () => {
-    await tableApi.reload();
+    const { formApi, reload } = tableApi;
+    const formValues = await formApi.getValues();
+    formApi.setLatestSubmissionValues(formValues);
+    await reload(formValues);
   },
   handleReset: async () => {
     const { formApi, reload } = tableApi;
@@ -97,7 +114,9 @@ const gridOptions: VxeGridProps<EmployeeApi.EmployeeResponse> = {
         }
         if (formValues.role) {
           list = list.filter((e) =>
-            formValues.role === 'admin' ? e.is_admin : !e.is_admin,
+            formValues.role === 'admin'
+              ? isManager(e.module_permissions)
+              : !isManager(e.module_permissions),
           );
         }
         if (formValues.status) {
@@ -135,33 +154,21 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
   },
 });
 
-// 列显隐变化时刷新表格列配置
-watch(
-  () => ({ ...columnVisibility }),
-  () => {
-    tableApi.setGridOptions({ columns: buildColumns(columnVisibility) });
-  },
-  { deep: true },
-);
-
 async function refreshEmployees() {
   invalidateEmployees();
   await tableApi.reload();
 }
 
 // ─── 新增员工 ────────────────────────────────────────────────────────────────
-const createFormRef = ref<InstanceType<typeof CreateEmployeeForm>>();
+const createDrawerRef = ref<InstanceType<typeof CreateEmployeeDrawer>>();
 
-async function handleCreate(payload: EmployeeApi.EmployeeCreate) {
-  try {
-    await createEmployeeApi(payload);
-    ElMessage.success('创建成功');
-    createFormRef.value?.resetForm();
-    invalidateEmployees();
-    await tableApi.reload();
-  } catch (error: any) {
-    console.error('创建员工失败:', error);
-  }
+function openCreateDrawer() {
+  createDrawerRef.value?.open();
+}
+
+async function handleCreateSuccess() {
+  invalidateEmployees();
+  await tableApi.reload();
 }
 
 // ─── 行操作 ──────────────────────────────────────────────────────────────────
@@ -180,14 +187,124 @@ async function handleStatusChange(id: string, isActive: boolean) {
   }
 }
 
-async function handleAdminChange(id: string, isAdmin: boolean) {
+// ─── 权限管理 ────────────────────────────────────────────────────────────────
+const showPermissionModal = ref(false);
+const permissionLoading = ref(false);
+const permissionTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
+
+function openPermissionModal(row: EmployeeApi.EmployeeResponse) {
+  permissionTarget.value = row;
+  showPermissionModal.value = true;
+}
+
+async function handlePermissionUpdate(
+  payload: EmployeeApi.EmployeePermissionUpdate,
+) {
+  const target = permissionTarget.value;
+  if (!target) return;
+  permissionLoading.value = true;
   try {
-    await updateEmployeeAdminApi(id, { is_admin: isAdmin });
-    ElMessage.success('管理员状态更新成功');
+    await updateEmployeePermissionsApi(target.id, payload);
+    ElMessage.success('权限更新成功');
+    showPermissionModal.value = false;
+    permissionTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
+  } catch (error: any) {
+    console.error('权限更新失败:', error);
+    ElMessage.error('权限更新失败');
+  } finally {
+    permissionLoading.value = false;
+  }
+}
+
+// ─── 基础信息编辑 ────────────────────────────────────────────────────────────
+const showBasicInfoModal = ref(false);
+const basicInfoLoading = ref(false);
+const basicInfoTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
+
+function openBasicInfoModal(row: EmployeeApi.EmployeeResponse) {
+  basicInfoTarget.value = row;
+  showBasicInfoModal.value = true;
+}
+
+async function handleBasicInfoUpdate(
+  payload: EmployeeApi.EmployeeBasicInfoUpdate,
+) {
+  const target = basicInfoTarget.value;
+  if (!target) return;
+  basicInfoLoading.value = true;
+  try {
+    await updateEmployeeBasicInfoApi(target.id, payload);
+    ElMessage.success('基础信息更新成功');
+    showBasicInfoModal.value = false;
+    basicInfoTarget.value = null;
+    invalidateEmployees();
+    await tableApi.reload();
+  } catch (error: any) {
+    console.error('基础信息更新失败:', error);
+    ElMessage.error('基础信息更新失败');
+  } finally {
+    basicInfoLoading.value = false;
+  }
+}
+
+// ─── 门禁 ID 编辑 ────────────────────────────────────────────────────────────
+const showAccessControlModal = ref(false);
+const accessControlLoading = ref(false);
+const accessControlTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
+
+function openAccessControlModal(row: EmployeeApi.EmployeeResponse) {
+  accessControlTarget.value = row;
+  showAccessControlModal.value = true;
+}
+
+async function handleAccessControlUpdate(
+  payload: EmployeeApi.EmployeeAccessControlUpdate,
+) {
+  const target = accessControlTarget.value;
+  if (!target) return;
+  accessControlLoading.value = true;
+  try {
+    await updateEmployeeAccessControlApi(target.id, payload);
+    ElMessage.success('门禁 ID 更新成功');
+    showAccessControlModal.value = false;
+    accessControlTarget.value = null;
+    invalidateEmployees();
+    await tableApi.reload();
+  } catch (error: any) {
+    console.error('门禁 ID 更新失败:', error);
+    ElMessage.error('门禁 ID 更新失败');
+  } finally {
+    accessControlLoading.value = false;
+  }
+}
+
+// ─── 删除员工 ────────────────────────────────────────────────────────────────
+async function handleDelete(row: EmployeeApi.EmployeeResponse) {
+  const label = row.full_name || row.username;
+  try {
+    await ElMessageBox.confirm(
+      `确认删除员工「${label}」？该操作不可恢复，将一并清除其账号与权限。`,
+      '删除员工',
+      {
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+      },
+    );
   } catch {
-    ElMessage.error('更新失败');
+    return; // 用户取消
+  }
+  try {
+    await deleteEmployeeApi(row.id);
+    ElMessage.success('员工已删除');
+    invalidateEmployees();
+    await tableApi.reload();
+  } catch (error: any) {
+    console.error('删除员工失败:', error);
+    ElMessage.error('删除员工失败');
   }
 }
 
@@ -214,44 +331,19 @@ onMounted(async () => {
     description="新增员工、查看初始密码、重置密码、维护员工模块权限"
   >
     <div class="flex flex-col gap-4">
-      <!-- 列显示切换 -->
-      <div class="flex flex-wrap items-center gap-3">
-        <ElCheckbox v-model="columnVisibility.user_id" label="用户ID" />
-        <ElCheckbox v-model="columnVisibility.employee_code" label="工号" />
-        <ElCheckbox v-model="columnVisibility.full_name" label="姓名" />
-        <ElCheckbox v-model="columnVisibility.username" label="账号" />
-        <ElCheckbox v-model="columnVisibility.role" label="身份" />
-        <ElCheckbox
-          v-model="columnVisibility.department_position"
-          label="部门/岗位/地区"
-        />
-        <ElCheckbox v-model="columnVisibility.status" label="状态" />
-        <ElCheckbox
-          v-model="columnVisibility.initial_status"
-          label="初始密码状态"
-        />
-        <ElCheckbox
-          v-model="columnVisibility.temporary_password"
-          label="初始密码"
-        />
-        <ElCheckbox v-model="columnVisibility.permissions" label="权限" />
-      </div>
-
-      <!-- 新增员工卡片 -->
-      <CreateEmployeeForm
-        ref="createFormRef"
-        :department-options="departmentOptions"
-        :module-options="moduleOptions"
-        :position-options="positionOptions"
-        :region-options="regionOptions"
-        @submit="handleCreate"
-      />
-
       <!-- 筛选 + 表格（Reset / Search / Collapse 按钮 + 分页 + 工具栏由 BasicTable 内置） -->
       <BasicTable table-title="员工列表">
+        <template #toolbar-tools>
+          <ElButton type="primary" @click="openCreateDrawer">
+            {{ t('page.employees.buttons.createShort') }}
+          </ElButton>
+        </template>
         <template #role="{ row }">
-          <ElTag :type="row.is_admin ? 'danger' : 'info'" size="small">
-            {{ row.is_admin ? '管理员' : '员工' }}
+          <ElTag
+            :type="isManager(row.module_permissions) ? 'danger' : 'info'"
+            size="small"
+          >
+            {{ isManager(row.module_permissions) ? '管理员' : '员工' }}
           </ElTag>
         </template>
 
@@ -298,15 +390,28 @@ onMounted(async () => {
 
         <template #action="{ row }">
           <ElButton size="small" @click="viewProfile(row.id)">档案</ElButton>
+          <ElButton
+            size="small"
+            type="primary"
+            @click="openBasicInfoModal(row)"
+          >
+            编辑
+          </ElButton>
+          <ElButton size="small" @click="openAccessControlModal(row)">
+            门禁
+          </ElButton>
           <ElButton size="small" type="warning" @click="openResetModal(row.id)">
             重置密码
           </ElButton>
           <ElButton
             size="small"
-            :type="row.is_admin ? 'danger' : 'primary'"
-            @click="handleAdminChange(row.id, !row.is_admin)"
+            :type="isManager(row.module_permissions) ? 'danger' : 'primary'"
+            @click="openPermissionModal(row)"
           >
-            {{ row.is_admin ? '取消管理员' : '设为管理员' }}
+            权限
+          </ElButton>
+          <ElButton size="small" type="danger" @click="handleDelete(row)">
+            删除
           </ElButton>
         </template>
       </BasicTable>
@@ -317,6 +422,44 @@ onMounted(async () => {
       v-model:visible="showResetModal"
       :result="resetResult"
       @confirm="handleResetPassword"
+    />
+
+    <!-- 新增员工抽屉 -->
+    <CreateEmployeeDrawer
+      ref="createDrawerRef"
+      :department-options="departmentOptions"
+      :module-options="moduleOptions"
+      :position-options="positionOptions"
+      :region-options="regionOptions"
+      @success="handleCreateSuccess"
+    />
+
+    <!-- 权限管理弹窗 -->
+    <PermissionDialog
+      v-model:visible="showPermissionModal"
+      :employee="permissionTarget"
+      :loading="permissionLoading"
+      :module-options="moduleOptions"
+      @submit="handlePermissionUpdate"
+    />
+
+    <!-- 基础信息编辑弹窗 -->
+    <BasicInfoEditDialog
+      v-model:visible="showBasicInfoModal"
+      :employee="basicInfoTarget"
+      :department-options="departmentOptions"
+      :position-options="positionOptions"
+      :region-options="regionOptions"
+      :loading="basicInfoLoading"
+      @submit="handleBasicInfoUpdate"
+    />
+
+    <!-- 门禁 ID 编辑弹窗 -->
+    <AccessControlDialog
+      v-model:visible="showAccessControlModal"
+      :employee="accessControlTarget"
+      :loading="accessControlLoading"
+      @submit="handleAccessControlUpdate"
     />
   </Page>
 </template>
