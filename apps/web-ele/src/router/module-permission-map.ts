@@ -104,7 +104,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
       {
         name: 'EmployeeLeave',
         path: 'leave',
-        component: 'leave/list/index',
+        component: 'leave/employee-leave/index',
         meta: {
           affixTab: false,
           icon: 'lucide:calendar',
@@ -114,7 +114,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
       {
         name: 'LeaveDetail',
         path: 'leave/detail/:id',
-        component: 'leave/detail/index',
+        component: 'leave/employee-leave/detail',
         meta: {
           hideInMenu: true,
           icon: 'lucide:file-text',
@@ -144,7 +144,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
       {
         name: 'EmployeeApprovals',
         path: 'approvals',
-        component: 'leave/my-approvals/index',
+        component: 'leave/employee-leave/approvals',
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
@@ -178,7 +178,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
   approval_management: {
     name: 'LeaveManageApprovals',
     path: 'approvals',
-    component: 'leave/admin-approvals/index',
+    component: 'leave/employee-leave/approvals',
     meta: {
       affixTab: false,
       icon: 'lucide:clipboard-list',
@@ -208,7 +208,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
   leave_calendar: {
     name: 'LeaveManageAdmin',
     path: 'leave',
-    component: 'leave/admin-manage/index',
+    component: 'leave/leave-calendar/index',
     meta: {
       affixTab: false,
       icon: 'lucide:calendar-check',
@@ -218,7 +218,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
   leave_workflows: {
     name: 'LeaveManageWorkflows',
     path: 'leave-workflows',
-    component: 'leave/workflow/index',
+    component: 'leave/leave-workflows/index',
     meta: {
       affixTab: false,
       icon: 'lucide:git-branch',

@@ -42,7 +42,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'LeaveManageAdmin',
         path: 'leave',
-        component: () => import('#/views/leave/admin-manage/index.vue'),
+        component: () => import('#/views/leave/leave-calendar/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:calendar-check',
@@ -54,7 +54,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'LeaveManageWorkflows',
         path: 'leave-workflows',
-        component: () => import('#/views/leave/workflow/index.vue'),
+        component: () => import('#/views/leave/leave-workflows/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:git-branch',
@@ -66,7 +66,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'LeaveManageApprovals',
         path: 'approvals',
-        component: () => import('#/views/leave/admin-approvals/index.vue'),
+        component: () => import('#/views/leave/employee-leave/approvals.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-list',

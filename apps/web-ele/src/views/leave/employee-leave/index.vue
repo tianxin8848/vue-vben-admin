@@ -27,7 +27,7 @@ import {
   withdrawLeaveRequestApi,
 } from '#/api';
 
-import CalendarPanel from '../calendar/components/CalendarPanel.vue';
+import CalendarPanel from '../components/CalendarPanel.vue';
 import {
   leaveTypeOptions,
   sessionOptions,

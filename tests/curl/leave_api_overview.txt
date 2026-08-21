@@ -1,0 +1,316 @@
+################################################################################
+# 请假相关 API 接口梳理总览
+# 后端: http://10.254.253.187:8999
+# Swagger 文档分组:
+#   - 请假管理  http://10.254.253.187:8999/docs#/请假管理
+#   - 请假流程  http://10.254.253.187:8999/docs#/请假流程
+# 共计 20 个接口 (3 个权限模块)
+################################################################################
+
+========================================================================
+一、权限与路由分组总览
+========================================================================
+
+请假相关接口分布在 3 个权限模块下，对应 3 组路由前缀：
+
+  权限模块 code       模块名称         路由前缀                       测试账号
+  ----------------------------------------------------------------------------
+  employee_leave     请假申请(个人)   /api/v1/me/leave-requests      lin / Cisco@123
+  leave_calendar     请假管理         /api/v1/leave-requests         admin / Cisco@123
+  leave_workflows     请假流程         /api/v1/leave-workflows        admin / Cisco@123
+
+权限模型示例 (auth/me 返回的 modules 数组里的一项):
+  { "module_code": "employee_leave", "module_name": "请假申请",
+    "can_view": true, "can_create": false, "can_edit": false,
+    "can_delete": false, "can_approve": false }
+  -> can_view=true 即可访问对应路由组。
+
+特殊说明:
+  - /api/v1/me/*  : 个人接口，只能看到/操作"自己的"数据。需要 employee_leave。
+  - /api/v1/leave-requests* (不带 /me) : 管理端，可看全部员工请假。需要 leave_calendar。
+  - /api/v1/leave-workflows* : 审批流配置。需要 leave_workflows。
+  - 个别接口只要"登录"即可 (无需特定模块权限)，见下文【仅需登录】标注。
+  - 审批 / 撤回接口的真正鉴权不依赖 module can_approve，而是判断当前用户
+    是否为该请假的"当前审批人"。can_approve 字段目前不参与后端逻辑。
+
+========================================================================
+二、枚举值 (所有接口共用)
+========================================================================
+
+LeaveType (请假类型):
+  annual   年假
+  personal 事假
+  sick     病假
+  lieu     调休
+  long     长假
+
+LeaveSession (请假时段):
+  full_day  全天
+  morning   上午
+  afternoon 下午
+
+LeaveApprovalStatus (审批状态):
+  pending   待审批
+  approved  已通过
+  rejected  已驳回
+  withdrawn 已撤回
+
+RegionalHolidayMode (地区假期处理方式，可选):
+  exclude  排除地区假期 (默认行为，请假天数照算)
+  include  计入地区假期 (请假天数中包含地区假期)
+
+========================================================================
+三、请假管理 — 个人接口 (employee_leave 权限)
+   路由: /api/v1/me/leave-requests*
+========================================================================
+
+[1] GET /api/v1/me/leave-requests
+    名称: 列出当前用户的请假
+    权限: employee_leave
+    参数: 无
+    返回: array[LeaveRequestResponse]
+
+[2] POST /api/v1/me/leave-requests
+    名称: 提交当前用户的请假
+    权限: employee_leave
+    Body: LeaveRequestCreate
+      {
+        "employee_id": "string|null",        # 一般留 null (本人)；管理员代提时可填
+        "leave_type":   "annual|personal|sick|lieu|long",   # 必填
+        "start_date":   "YYYY-MM-DD",        # 必填
+        "end_date":     "YYYY-MM-DD",        # 必填
+        "session":      "full_day|morning|afternoon",        # 默认 full_day
+        "reason":       "string|null (max 500)",
+        "handover_to":  "string|null (max 100)",
+        "regional_holiday_mode": "exclude|include|null"
+      }
+    返回: 201 LeaveRequestResponse
+
+[3] GET /api/v1/me/leave-requests/annual-leave/summary?year=YYYY
+    名称: 当前用户年假汇总
+    权限: employee_leave
+    参数: year (query, required, int)
+    返回: AnnualLeaveSummaryResponse
+      { "year": 2026, "region": "香港|null",
+        "entitlement_days": 12.0, "used_days": 3.5, "available_days": 8.5 }
+
+[4] GET /api/v1/me/leave-requests/approval-records
+    名称: 列出当前用户相关的请假审批记录
+    权限: 仅需登录 (作为操作人或申请人)
+    返回: array
+
+[5] GET /api/v1/me/leave-requests/approvals
+    名称: 列出当前用户待审的请假
+    权限: 仅需登录 (作为审批人)
+    返回: array
+
+[6] GET /api/v1/me/leave-requests/department
+    名称: 列出当前用户部门的请假 (按 department 匹配同部门同事)
+    权限: employee_leave
+    返回: array[LeaveRequestResponse]
+
+[7] PATCH /api/v1/me/leave-requests/{leave_request_id}/withdraw
+    名称: 撤回当前用户的请假 (仅 pending 可撤回)
+    权限: employee_leave
+    参数: leave_request_id (path, required, string)
+    Body: { "withdraw_comment": "string|null (max 500)" }
+    返回: LeaveRequestResponse
+
+========================================================================
+四、请假管理 — 管理端接口 (leave_calendar 权限)
+   路由: /api/v1/leave-requests* (不带 /me)
+========================================================================
+
+[8] GET /api/v1/leave-requests
+    名称: 列出全部请假 (可按年/团队/地区/关键字/审批状态过滤)
+    权限: leave_calendar
+    参数 (query, 全部 optional):
+      year              int 2000-2100
+      team              string|null
+      region            string|null
+      employee_keyword  string|null  (按员工姓名/工号模糊)
+      approval_status   LeaveApprovalStatus|null
+    返回: array[LeaveRequestResponse]
+
+[9] GET /api/v1/leave-requests/approvals/meta
+    名称: 请假审批筛选项 (审批页地区/部门等元数据)
+    权限: 仅需登录
+    返回: object
+
+[10] GET /api/v1/leave-requests/calendar?year=YYYY
+     名称: 请假日历 (全部请假的年历数据)
+     权限: leave_calendar
+     参数:
+       year (query, required, int)
+       team, region, employee_keyword, approval_status (全部 optional)
+     返回: LeaveCalendarResponse
+       { "year": 2026, "total": 42, "items": [LeaveRequestResponse, ...] }
+
+[11] GET /api/v1/leave-requests/calendar/meta
+     名称: 请假日历筛选项 (日历页团队/地区等元数据)
+     权限: leave_calendar
+     返回: object
+
+[12] PUT /api/v1/leave-requests/calendar/regional-holidays
+     名称: 写入请假日历地区假期 (新增或更新一条)
+     权限: leave_calendar
+     Body: RegionalHolidayUpsert
+       { "region": "香港", "date": "2027-01-01", "holiday_name": "元旦" }
+     返回: object
+
+[13] DELETE /api/v1/leave-requests/calendar/regional-holidays
+     名称: 删除请假日历地区假期
+     权限: leave_calendar
+     Body: RegionalHolidayDelete
+       { "region": "香港", "date": "2027-01-01" }
+     返回: object
+
+[14] GET /api/v1/leave-requests/{leave_request_id}
+     名称: 读取一条请假 (申请人或同部门同事只读)
+     权限: employee_leave
+     参数: leave_request_id (path, required, string)
+     返回: LeaveRequestResponse
+
+[15] PATCH /api/v1/leave-requests/{leave_request_id}/approval
+     名称: 审批一条请假 (通过/驳回)
+     权限: 仅需登录，且当前用户必须是该请假的当前审批人
+     参数: leave_request_id (path, required, string)
+     Body: LeaveRequestApprovalUpdate
+       { "approval_status": "approved|rejected",   # pending/withdrawn 不可作审批结果
+         "review_comment": "string|null (max 500)" }
+     返回: LeaveRequestResponse
+
+========================================================================
+五、请假流程 — 审批流配置接口 (leave_workflows 权限)
+   路由: /api/v1/leave-workflows*
+========================================================================
+
+[16] GET /api/v1/leave-workflows
+     名称: 列出全部审批流
+     权限: leave_workflows
+     返回: array[LeaveWorkflowResponse]
+
+[17] POST /api/v1/leave-workflows
+     名称: 创建审批流
+     权限: leave_workflows
+     Body: LeaveWorkflowCreate
+       {
+         "name": "string (2-50)",         # 必填
+         "priority": 100,                # int 1-9999, 默认 100, 数值越小越优先
+         "is_active": true,              # 默认 true
+         "match": {                      # 匹配条件 (全部 optional, 留空=通配)
+           "employee_id": "string|null",
+           "department":  "string|null",
+           "region":      "string|null",
+           "position":    "string|null"
+         },
+         "approvers": [                  # 审批人链 (顺序即审批顺序)
+           { "user_id": "string", "username": "string",
+             "full_name": "string|null" }
+         ]
+       }
+     返回: 200 LeaveWorkflowResponse
+
+[18] GET /api/v1/leave-workflows/meta
+     名称: 审批流元数据 (下拉选项等)
+     权限: leave_workflows
+     返回: object
+
+[19] PATCH /api/v1/leave-workflows/{workflow_id}
+     名称: 更新审批流 (部分更新)
+     权限: leave_workflows
+     参数: workflow_id (path, required, string)
+     Body: LeaveWorkflowUpdate (所有字段 optional)
+       { "name"?: "...", "priority"?: int, "is_active"?: bool,
+         "match"?: {...}, "approvers"?: [...] }
+     返回: LeaveWorkflowResponse
+
+[20] DELETE /api/v1/leave-workflows/{workflow_id}
+     名称: 删除审批流
+     权限: leave_workflows
+     参数: workflow_id (path, required, string)
+     返回: object
+
+========================================================================
+六、LeaveRequestResponse 完整字段 (GET 单条/列表/日历 items 共用)
+========================================================================
+
+{
+  "id": "string",
+  "employee_id": "string",
+  "employee_user_id": int|null,
+  "employee_code": "string|null",
+  "employee_username": "string",
+  "employee_name": "string",
+  "employee_department": "string|null",
+  "employee_region": "string|null",
+  "leave_type": "annual|personal|sick|lieu|long",
+  "approval_status": "pending|approved|rejected|withdrawn",
+  "approval_chain": [ {…}, … ],          # 审批链配置
+  "current_approver_id": "string|null",
+  "approval_history": [ {…}, … ],        # 历次审批动作
+  "session": "full_day|morning|afternoon",
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD",
+  "date_keys": [ "YYYY-MM-DD", … ],       # 实际占用的工作日键
+  "include_regional_holidays": false,
+  "reason": "string|null",
+  "handover_to": "string|null",
+  "created_by_id": "string",
+  "created_by_name": "string",
+  "reviewer_id": "string|null",
+  "reviewer_name": "string|null",
+  "review_comment": "string|null",
+  "reviewed_at": "ISO8601|null",
+  "created_at": "ISO8601|null",
+  "updated_at": "ISO8601|null"
+}
+
+========================================================================
+七、典型业务流程
+========================================================================
+
+A. 员工请假提交与撤回 (employee_leave):
+   1) GET  /me/leave-requests/annual-leave/summary?year=2026   # 查年假余额
+   2) POST /me/leave-requests                                   # 提交请假
+   3) GET  /me/leave-requests                                    # 看自己的列表
+   4) PATCH /me/leave-requests/{id}/withdraw                    # 反悔了，撤回
+   5) (重新) POST /me/leave-requests                            # 再次提交
+
+B. 审批人审批 (仅需登录 + 当前审批人身份):
+   1) GET /me/leave-requests/approvals                          # 我的待审
+   2) GET /me/leave-requests/approval-records                   # 我相关的记录
+   3) PATCH /leave-requests/{id}/approval                       # 通过/驳回
+        body: { "approval_status": "approved", "review_comment": "ok" }
+
+C. 管理员查看/配置 (leave_calendar):
+   1) GET  /leave-requests?year=2026&region=香港                 # 全员请假列表
+   2) GET  /leave-requests/calendar?year=2026                   # 日历视图
+   3) GET  /leave-requests/calendar/meta                       # 日历筛选项
+   4) PUT  /leave-requests/calendar/regional-holidays          # 维护地区假期
+   5) DELETE /leave-requests/calendar/regional-holidays        # 删除地区假期
+
+D. 审批流配置 (leave_workflows):
+   1) GET  /leave-workflows/meta                                # 拿下拉选项
+   2) GET  /leave-workflows                                     # 现有审批流
+   3) POST /leave-workflows                                     # 新建审批流
+   4) PATCH /leave-workflows/{id}                               # 调整优先级/启停
+   5) DELETE /leave-workflows/{id}                              # 删除
+
+========================================================================
+八、测试脚本说明 (本目录下)
+========================================================================
+
+  leave_curl.sh        curl 命令参考 (参照 setting.txt 风格)，分个人/管理/流程三段
+  test_leave_api.py    Python 全流程测试 (参照 test_claim_api.py 风格，用 requests)
+
+  运行:
+    cd /Users/xi/Documents/github/7-13/vue-vben-admin/tests/curl
+    bash leave_curl.sh
+    python3 test_leave_api.py            # 个人接口用 lin；管理接口用 admin
+    python3 test_leave_api.py --admin    # 切到 admin 测管理端 + 审批流
+
+  注意:
+    - 测试会创建/撤回/删除请假与审批流，但都带清理逻辑，不会污染线上数据。
+    - 审批接口需当前用户恰好是某条 pending 请假的审批人，否则返回 403，
+      脚本会自动跳过该步并提示。

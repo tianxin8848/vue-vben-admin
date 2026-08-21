@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import type { VxeGridProps } from '#/adapter/vxe-table';
-import type { LeaveWorkflowApi } from '#/api';
+import type { WorkflowForm } from './data';
 
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -30,6 +29,12 @@ import {
   updateLeaveWorkflowApi,
 } from '#/api';
 
+import {
+  createDefaultApproverLevels,
+  createDefaultWorkflowForm,
+  gridOptions,
+} from './data';
+
 const router = useRouter();
 const loading = ref(false);
 
@@ -45,79 +50,9 @@ const positions = ref<string[]>([]);
 const editingId = ref('');
 const formTitle = ref('新增流程');
 
-const workflowForm = reactive({
-  name: '',
-  priority: 100,
-  match: {
-    employee_id: '',
-    region: '',
-    department: '',
-    position: '',
-  },
-  approvers: [] as {
-    full_name: null | string;
-    user_id: string;
-    username: string;
-  }[],
-});
+const workflowForm = reactive<WorkflowForm>(createDefaultWorkflowForm());
 
-const approverLevels = ref<string[][]>([['']]);
-
-const gridOptions: VxeGridProps<LeaveWorkflowApi.LeaveWorkflow> = {
-  id: 'leave-workflow-index',
-  rowConfig: {
-    keyField: 'id',
-  },
-  columns: [
-    {
-      field: 'name',
-      title: '名称',
-      minWidth: 180,
-      slots: { default: 'name' },
-    },
-    { field: 'priority', title: '优先级', width: 90 },
-    {
-      title: '匹配条件',
-      minWidth: 220,
-      slots: { default: 'match' },
-    },
-    {
-      title: '审批链',
-      minWidth: 260,
-      slots: { default: 'approvers' },
-    },
-    {
-      field: 'is_active',
-      title: '状态',
-      width: 90,
-      slots: { default: 'status' },
-    },
-    {
-      title: '操作',
-      width: 180,
-      fixed: 'right',
-      slots: { default: 'action' },
-    },
-  ],
-  proxyConfig: {
-    enabled: false,
-  },
-  toolbarConfig: {
-    zoom: true,
-    custom: true,
-    tools: [
-      {
-        code: 'manual-refresh',
-        icon: 'vxe-icon-refresh',
-        circle: true,
-        name: '刷新',
-      },
-    ],
-  },
-  customConfig: {
-    storage: false,
-  },
-};
+const approverLevels = ref<string[][]>(createDefaultApproverLevels());
 
 const [BasicTable, tableApi] = useVbenVxeGrid({
   gridOptions,
@@ -194,7 +129,7 @@ function removeApproverLevel(index: number) {
 }
 
 function clearApproverLevels() {
-  approverLevels.value = [['']];
+  approverLevels.value = createDefaultApproverLevels();
 }
 
 function syncApproversFromLevels() {
@@ -281,15 +216,8 @@ async function saveWorkflow() {
 function resetForm() {
   editingId.value = '';
   formTitle.value = '新增流程';
-  workflowForm.name = '';
-  workflowForm.priority = 100;
-  workflowForm.match = {
-    employee_id: '',
-    region: '',
-    department: '',
-    position: '',
-  };
-  approverLevels.value = [['']];
+  Object.assign(workflowForm, createDefaultWorkflowForm());
+  approverLevels.value = createDefaultApproverLevels();
 }
 
 function startEdit(workflow: any) {

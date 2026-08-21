@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'EmployeeLeave',
         path: 'leave',
-        component: () => import('#/views/leave/list/index.vue'),
+        component: () => import('#/views/leave/employee-leave/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:calendar',
@@ -53,7 +53,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'EmployeeApprovals',
         path: 'approvals',
-        component: () => import('#/views/leave/my-approvals/index.vue'),
+        component: () => import('#/views/leave/employee-leave/approvals.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
@@ -77,7 +77,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'LeaveDetail',
         path: 'leave/detail/:id',
-        component: () => import('#/views/leave/detail/index.vue'),
+        component: () => import('#/views/leave/employee-leave/detail.vue'),
         meta: {
           hideInMenu: true,
           icon: 'lucide:file-text',

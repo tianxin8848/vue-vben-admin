@@ -4,22 +4,22 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { ElButton, ElOption, ElSelect } from 'element-plus';
+import { ElButton, ElCard, ElOption, ElSelect } from 'element-plus';
 
 import {
   deleteRegionalHolidayApi,
   getAnnualLeaveSummaryApi,
   getEmployeesApi,
   getLeaveCalendarApi,
-  getSystemSettingsApi,
+  getLeaveCalendarMetaApi,
   upsertRegionalHolidayApi,
 } from '#/api';
 import { $t } from '#/locales';
 
-import CalendarPanel from './components/CalendarPanel.vue';
-import DetailPanel from './components/DetailPanel.vue';
-import FilterPanel from './components/FilterPanel.vue';
-import StatsPanel from './components/StatsPanel.vue';
+import CalendarPanel from '../components/CalendarPanel.vue';
+import DetailPanel from '../components/DetailPanel.vue';
+import FilterPanel from '../components/FilterPanel.vue';
+import StatsPanel from '../components/StatsPanel.vue';
 
 const router = useRouter();
 const loading = ref(false);
@@ -265,9 +265,9 @@ async function loadAnnualLeaveSummary() {
 
 async function loadSystemSettings() {
   try {
-    const settings = await getSystemSettingsApi();
-    regions.value = settings.regions || [];
-    regionalHolidays.value = settings.regional_holidays || [];
+    const meta = await getLeaveCalendarMetaApi();
+    regions.value = meta.regions || [];
+    regionalHolidays.value = meta.regional_holidays || [];
   } catch {
     regions.value = [];
     regionalHolidays.value = [];
@@ -303,7 +303,7 @@ async function loadEmployees() {
 }
 
 function goBackHome() {
-  router.push('/employee');
+  router.push('/employee/manage/users');
 }
 
 function goToWorkflow() {
@@ -331,31 +331,15 @@ onUnmounted(() => {
     :description="$t('page.leave.calendarView.description')"
     v-loading="loading"
   >
-    <div
-      style="
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-      "
-    >
-      <div>
-        <span style="font-size: 14px; color: hsl(var(--muted-foreground))">{{
-          currentTime
-        }}</span>
-      </div>
-      <div
-        style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center"
-      >
+    <ElCard>
+      <template #header>
+        <span>{{ currentTime }}</span>
         <ElButton @click="goBackHome">
           {{ $t('page.leave.calendarView.backToWorkspace') }}
         </ElButton>
         <ElSelect
           v-model="searchForm.region"
           @change="searchForm.region = $event"
-          style="width: 180px"
         >
           <ElOption
             :label="$t('page.leave.calendarView.allRegions')"
@@ -367,57 +351,26 @@ onUnmounted(() => {
           />
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
+      </template>
+
+      <div>
+        <ElButton type="primary" plain>
+          {{ $t('page.leave.calendar') }}
+        </ElButton>
+        <ElButton @click="goToWorkflow">
+          {{ $t('page.leave.calendarView.workflowMaintenance') }}
+        </ElButton>
       </div>
-    </div>
 
-    <div style="display: flex; gap: 8px; margin: 16px 0">
-      <span
-        style="
-          padding: 8px 16px;
-          font-size: 14px;
-          font-weight: 600;
-          color: hsl(var(--primary));
-          cursor: pointer;
-          background: hsl(var(--accent));
-          border-radius: 8px;
-        "
-        >{{ $t('page.leave.calendar') }}</span>
-      <span
-        style="
-          padding: 8px 16px;
-          font-size: 14px;
-          color: hsl(var(--muted-foreground));
-          cursor: pointer;
-          border-radius: 8px;
-          transition: all 0.2s;
-        "
-        @click="goToWorkflow"
-        @mouseenter="
-          ($event.target as HTMLElement).style.background = 'hsl(var(--muted))';
-          ($event.target as HTMLElement).style.color = 'hsl(var(--foreground))';
-        "
-        @mouseleave="
-          ($event.target as HTMLElement).style.background = 'transparent';
-          ($event.target as HTMLElement).style.color =
-            'hsl(var(--muted-foreground))';
-        "
-        >{{ $t('page.leave.calendarView.workflowMaintenance') }}</span>
-    </div>
-
-    <div style="margin-bottom: 16px">
       <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
-    </div>
 
-    <div style="margin-bottom: 16px">
       <FilterPanel
         :search-form="searchForm"
         :teams="teams"
         @update:search-form="updateSearchForm"
         @reset-filters="resetFilters"
       />
-    </div>
 
-    <div style="margin-bottom: 16px">
       <CalendarPanel
         :day-map="dayMap"
         :selected-date-key="selectedDateKey"
@@ -426,21 +379,15 @@ onUnmounted(() => {
         @select-date="onSelectDate"
         @panel-change="onPanelChange"
       />
-    </div>
 
-    <DetailPanel
-      :day-map="dayMap"
-      :selected-date-key="selectedDateKey"
-      :region="searchForm.region"
-      :regional-holidays="regionalHolidays"
-      @set-holiday="setHoliday"
-      @remove-holiday="removeHoliday"
-    />
+      <DetailPanel
+        :day-map="dayMap"
+        :selected-date-key="selectedDateKey"
+        :region="searchForm.region"
+        :regional-holidays="regionalHolidays"
+        @set-holiday="setHoliday"
+        @remove-holiday="removeHoliday"
+      />
+    </ElCard>
   </Page>
 </template>
-
-<style scoped>
-.leave-calendar-page {
-  padding: 24px;
-}
-</style>
