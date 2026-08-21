@@ -53,7 +53,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'EmployeeApprovals',
         path: 'approvals',
-        component: () => import('#/views/leave/employee-leave/approvals.vue'),
+        component: () => import('#/views/approve/index.vue'),
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',

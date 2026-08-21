@@ -4,13 +4,7 @@ import type { ClaimApi } from '#/api';
 
 import { onMounted, ref, watch } from 'vue';
 
-import {
-  getClaimOptionsApi,
-  getMyClaimApprovalRecordsApi,
-  getMyClaimsApi,
-  getMyPendingClaimApprovalsApi,
-  getUserInfoApi,
-} from '#/api';
+import { getClaimOptionsApi, getMyClaimsApi, getUserInfoApi } from '#/api';
 
 import { HISTORY_STATUSES, MY_ACTIVE_STATUSES } from '../data';
 
@@ -29,8 +23,6 @@ export function useClaimData() {
 
   const myClaims = ref<ClaimApi.ClaimResponse[]>([]);
   const myHistory = ref<ClaimApi.ClaimResponse[]>([]);
-  const pendingApprovals = ref<ClaimApi.ClaimResponse[]>([]);
-  const approvalRecords = ref<ClaimApi.ClaimApprovalRecord[]>([]);
 
   // ─── 单个数据加载函数 ──────────────────────────────────────────────────────
   async function loadOptions() {
@@ -71,22 +63,6 @@ export function useClaimData() {
     }
   }
 
-  async function loadPendingApprovals() {
-    try {
-      pendingApprovals.value = await getMyPendingClaimApprovalsApi();
-    } catch {
-      pendingApprovals.value = [];
-    }
-  }
-
-  async function loadApprovalRecords() {
-    try {
-      approvalRecords.value = await getMyClaimApprovalRecordsApi();
-    } catch {
-      approvalRecords.value = [];
-    }
-  }
-
   // ─── 批量加载 ──────────────────────────────────────────────────────────────
   async function fetchAll() {
     loading.value = true;
@@ -96,8 +72,6 @@ export function useClaimData() {
         loadUserInfo(),
         loadMyClaims(),
         loadMyHistory(),
-        loadPendingApprovals(),
-        loadApprovalRecords(),
       ]);
     } catch (error) {
       console.error('Fetch all error:', error);
@@ -119,14 +93,6 @@ export function useClaimData() {
           await loadMyClaims();
           break;
         }
-        case 'pending': {
-          await loadPendingApprovals();
-          break;
-        }
-        case 'records': {
-          await loadApprovalRecords();
-          break;
-        }
       }
     } finally {
       loading.value = false;
@@ -136,15 +102,11 @@ export function useClaimData() {
   const tabLengths = () => ({
     my: myClaims.value.length,
     history: myHistory.value.length,
-    pending: pendingApprovals.value.length,
-    records: approvalRecords.value.length,
   });
 
   const dataRefs = () => ({
     my: myClaims.value,
     history: myHistory.value,
-    pending: pendingApprovals.value,
-    records: approvalRecords.value,
   });
 
   onMounted(fetchAll);
@@ -159,8 +121,6 @@ export function useClaimData() {
     activeTab,
     myClaims,
     myHistory,
-    pendingApprovals,
-    approvalRecords,
     // helpers
     tabLengths,
     dataRefs,
@@ -170,7 +130,5 @@ export function useClaimData() {
     // child loaders (for success callbacks)
     loadMyClaims,
     loadMyHistory,
-    loadPendingApprovals,
-    loadApprovalRecords,
   };
 }

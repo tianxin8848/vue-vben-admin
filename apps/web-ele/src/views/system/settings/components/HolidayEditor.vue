@@ -1,21 +1,30 @@
 <script lang="ts" setup>
 import type { SystemSettingsApi } from '#/api';
 
-import { reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 
 import {
   ElAlert,
   ElButton,
   ElDatePicker,
-  ElForm,
-  ElFormItem,
+  ElEmpty,
   ElMessage,
   ElOption,
   ElSelect,
+  ElTable,
+  ElTableColumn,
+  ElTag,
 } from 'element-plus';
+
+interface HolidayPreviewRow {
+  _key: string;
+  date: string;
+  holiday_name: string;
+}
 
 const props = defineProps<{
   holidayCatalogs: SystemSettingsApi.RegionalHolidayCatalogItem[];
+  holidays: SystemSettingsApi.RegionalHolidayItem[];
   message: string;
   messageType: '' | 'error' | 'success';
   regions: string[];
@@ -33,6 +42,30 @@ const holidayForm = reactive({
   startDate: '',
   endDate: '',
   holidayName: '',
+});
+
+const previewRows = computed<HolidayPreviewRow[]>(() => {
+  const year = String(holidayForm.year);
+  const region = String(holidayForm.region || '')
+    .trim()
+    .toLowerCase();
+  return (props.holidays || [])
+    .filter((item) => {
+      return (
+        String(item.date || '').startsWith(`${year}-`) &&
+        String(item.region || '')
+          .trim()
+          .toLowerCase() === region
+      );
+    })
+    .toSorted((a, b) =>
+      String(a.date || '').localeCompare(String(b.date || '')),
+    )
+    .map((item) => ({
+      _key: `${item.region}|${item.date}|${item.holiday_name}`,
+      date: item.date,
+      holiday_name: item.holiday_name,
+    }));
 });
 
 watch(
@@ -131,26 +164,37 @@ initStartDate();
 </script>
 
 <template>
-  <section class="mt-6 border-t border-border pt-6">
-    <h3 class="mb-3 text-lg">地区假期维护</h3>
+  <section>
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="text-lg">地区假期维护</h3>
+      <span class="text-sm text-muted-foreground">
+        {{
+          holidayForm.region
+            ? `${holidayForm.region} · ${holidayForm.year}年`
+            : ''
+        }}
+      </span>
+    </div>
     <p class="mb-4 text-sm text-muted-foreground">
       在这里维护各个地区的节假日。可选择年份、日期区间（可只填一天）、假期名称和地区，保存后请假管理日历会直接读取。
     </p>
 
-    <ElForm label-width="100px" inline>
-      <ElFormItem label="地区">
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <div class="text-sm text-muted-foreground mb-1">地区</div>
         <ElSelect
           v-model="holidayForm.region"
-          style="width: 200px"
+          style="width: 100%"
           @change="buildHolidayNameOptions"
         >
           <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
         </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="年份">
+      </div>
+      <div>
+        <div class="text-sm text-muted-foreground mb-1">年份</div>
         <ElSelect
           v-model="holidayForm.year"
-          style="width: 160px"
+          style="width: 100%"
           @change="syncHolidayDatesToYear"
         >
           <ElOption
@@ -160,48 +204,85 @@ initStartDate();
             :value="y"
           />
         </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="开始日期">
+      </div>
+      <div>
+        <div class="text-sm text-muted-foreground mb-1">开始日期</div>
         <ElDatePicker
           v-model="holidayForm.startDate"
           type="date"
-          style="width: 200px"
+          style="width: 100%"
           @change="syncHolidayYearToDates"
         />
-      </ElFormItem>
-      <ElFormItem label="结束日期">
+      </div>
+      <div>
+        <div class="text-sm text-muted-foreground mb-1">结束日期</div>
         <ElDatePicker
           v-model="holidayForm.endDate"
           type="date"
-          style="width: 200px"
+          style="width: 100%"
           @change="syncHolidayYearToDates"
         />
-      </ElFormItem>
-      <ElFormItem label="假期名称">
-        <ElSelect v-model="holidayForm.holidayName" style="width: 180px">
-          <ElOption
-            v-for="name in resolveHolidayCatalogByRegion(holidayForm.region)"
-            :key="name"
-            :label="name"
-            :value="name"
-          />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem>
-        <ElButton type="primary" @click="handleSave">保存地区假期</ElButton>
-      </ElFormItem>
-    </ElForm>
+      </div>
+      <div class="col-span-2">
+        <div class="text-sm text-muted-foreground mb-1">假期名称</div>
+        <div class="flex gap-2">
+          <ElSelect v-model="holidayForm.holidayName" class="flex-1">
+            <ElOption
+              v-for="name in resolveHolidayCatalogByRegion(holidayForm.region)"
+              :key="name"
+              :label="name"
+              :value="name"
+            />
+          </ElSelect>
+          <ElButton type="primary" @click="handleSave">保存地区假期</ElButton>
+        </div>
+      </div>
+    </div>
 
-    <p class="mt-2 text-xs text-muted-foreground">
+    <p class="mb-3 text-xs text-muted-foreground">
       说明：同一地区同一天只保留一条假期记录；如果选择日期区间，会一次性写入多天并覆盖该区间内原有假期名称。
     </p>
+
     <ElAlert
       v-if="message"
       :title="message"
       :type="messageType === 'success' ? 'success' : 'error'"
       show-icon
       :closable="false"
-      class="mt-3 whitespace-pre-wrap"
+      class="mb-3 whitespace-pre-wrap"
     />
+
+    <div class="rounded border border-border overflow-hidden">
+      <div
+        class="px-4 py-2 bg-muted/40 border-b border-border flex items-center justify-between"
+      >
+        <span class="text-sm font-semibold">
+          当前地区 · {{ holidayForm.year }}年 已配置假期
+        </span>
+        <ElTag type="info" effect="plain" size="small">
+          {{ previewRows.length }} 天
+        </ElTag>
+      </div>
+      <ElTable
+        :data="previewRows"
+        size="small"
+        stripe
+        style="width: 100%"
+        empty-text=""
+      >
+        <ElTableColumn type="index" label="序号" width="60" align="center" />
+        <ElTableColumn prop="date" label="日期" min-width="130" />
+        <ElTableColumn label="假期名称" min-width="140">
+          <template #default="{ row }">
+            <ElTag type="danger" effect="light">
+              {{ row.holiday_name }}
+            </ElTag>
+          </template>
+        </ElTableColumn>
+        <template #empty>
+          <ElEmpty description="该地区本年暂无假期配置" :image-size="60" />
+        </template>
+      </ElTable>
+    </div>
   </section>
 </template>

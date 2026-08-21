@@ -12,18 +12,15 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
 import CreateClaimDrawer from './components/CreateClaimDrawer.vue';
 import EditClaimDrawer from './components/EditClaimDrawer.vue';
-import ReviewClaimDrawer from './components/ReviewClaimDrawer.vue';
 import { useClaimActions } from './composables/useClaimActions';
 import { useClaimData } from './composables/useClaimData';
 import {
-  buildActionLabelMap,
   buildSegmentedOptions,
   buildSharedToolbarConfig,
   buildStatusLabelMap,
   buildTabColumns,
   buildTableTitles,
   dataFor,
-  formatAction,
   formatDate,
   formatStatus,
   statusTypeMap,
@@ -52,7 +49,6 @@ const tabColumns = computed(() => buildTabColumns(t));
 const segmentedOptions = computed(() => buildSegmentedOptions(t));
 const sharedToolbarConfig = computed(() => buildSharedToolbarConfig(t));
 const statusLabelMap = computed(() => buildStatusLabelMap(t));
-const actionLabelMap = computed(() => buildActionLabelMap(t));
 const activeTableTitle = computed(
   () => buildTableTitles(t, data.tabLengths())[data.activeTab.value],
 );
@@ -60,7 +56,6 @@ const activeTableTitle = computed(
 // ─── 子组件引用 ──────────────────────────────────────────────────────────────
 const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
 const editDrawerRef = ref<InstanceType<typeof EditClaimDrawer>>();
-const reviewDrawerRef = ref<InstanceType<typeof ReviewClaimDrawer>>();
 
 // ─── 批量提交：选中的草稿 ─────────────────────────────────────────────────────
 const selectedDraftCount = ref(0);
@@ -116,13 +111,7 @@ function refreshTable() {
 
 // Tab 切换 / 数据变化后刷新表格
 watch(
-  () => [
-    data.activeTab.value,
-    data.myClaims.value,
-    data.myHistory.value,
-    data.pendingApprovals.value,
-    data.approvalRecords.value,
-  ],
+  () => [data.activeTab.value, data.myClaims.value, data.myHistory.value],
   () => refreshTable(),
   { deep: true },
 );
@@ -133,15 +122,12 @@ watch(
   () => refreshTable(),
 );
 
-// ─── 新建 / 编辑 / 审批抽屉 ─────────────────────────────────────────────────
+// ─── 新建 / 编辑 ─────────────────────────────────────────────────────────────
 function openCreateDrawer() {
   createDrawerRef.value?.open();
 }
 function openEditDrawer(item: ClaimApi.ClaimResponse) {
   editDrawerRef.value?.open(item);
-}
-function openReviewDrawer(item: ClaimApi.ClaimResponse) {
-  reviewDrawerRef.value?.open(item);
 }
 async function handleCreateSuccess() {
   await data.loadMyClaims();
@@ -149,11 +135,6 @@ async function handleCreateSuccess() {
 }
 async function handleEditSuccess() {
   await data.loadMyClaims();
-  refreshTable();
-}
-async function handleReviewSuccess() {
-  await data.loadPendingApprovals();
-  await data.loadApprovalRecords();
   refreshTable();
 }
 
@@ -235,17 +216,7 @@ async function onBatchSubmit() {
           </ElButton>
         </template>
         <template #reason="{ row }">
-          <strong
-            v-if="
-              data.activeTab.value === 'my' ||
-              data.activeTab.value === 'history'
-            "
-          >
-            {{ row.reason_label }}
-          </strong>
-          <template v-else>
-            {{ row.claim_reason_label || row.reason_label }}
-          </template>
+          <strong>{{ row.reason_label }}</strong>
         </template>
         <template #items="{ row }">
           <span v-if="row.items && row.items.length > 0">
@@ -294,21 +265,6 @@ async function onBatchSubmit() {
         <template #review_comment="{ row }">
           {{ row.review_comment || '-' }}
         </template>
-        <template #employee="{ row }">
-          <strong>{{ row.employee_name }}</strong>
-          <span class="block text-xs text-muted-foreground">
-            {{ row.employee_username }}
-          </span>
-        </template>
-        <template #action="{ row }">
-          <ElButton
-            size="small"
-            type="primary"
-            @click="openReviewDrawer(row as ClaimApi.ClaimResponse)"
-          >
-            {{ $t('page.claim.buttons.review') }}
-          </ElButton>
-        </template>
         <template #my_action="{ row }">
           <template v-if="row.approval_status === 'draft'">
             <ElButton
@@ -347,27 +303,6 @@ async function onBatchSubmit() {
           </ElButton>
           <span v-else>-</span>
         </template>
-        <template #record_action="{ row }">
-          <ElTag
-            :type="
-              row.action === 'approved'
-                ? 'success'
-                : row.action === 'rejected'
-                  ? 'danger'
-                  : 'info'
-            "
-          >
-            {{ formatAction(row.action, actionLabelMap) }}
-          </ElTag>
-        </template>
-        <template #record_status="{ row }">
-          <ElTag :type="statusTypeMap[row.approval_status_after] || 'info'">
-            {{ formatStatus(row.approval_status_after, statusLabelMap) }}
-          </ElTag>
-        </template>
-        <template #comment="{ row }">
-          {{ row.comment || '-' }}
-        </template>
       </BasicTable>
     </div>
 
@@ -378,6 +313,5 @@ async function onBatchSubmit() {
       @success="handleCreateSuccess"
     />
     <EditClaimDrawer ref="editDrawerRef" @success="handleEditSuccess" />
-    <ReviewClaimDrawer ref="reviewDrawerRef" @success="handleReviewSuccess" />
   </Page>
 </template>

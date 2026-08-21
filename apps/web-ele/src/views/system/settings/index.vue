@@ -351,6 +351,7 @@ onMounted(() => {
             <HolidayEditor
               :regions="settings?.regions || []"
               :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+              :holidays="settings?.regional_holidays || []"
               v-model:message="holidayMessage"
               v-model:message-type="holidayMessageType"
               @save="handleSaveHoliday"

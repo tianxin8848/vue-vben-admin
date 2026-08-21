@@ -1,7 +1,7 @@
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { ClaimApi } from '#/api';
 
-export type TabKey = 'history' | 'my' | 'pending' | 'records';
+export type TabKey = 'history' | 'my';
 
 export const statusTypeMap: Record<
   string,
@@ -36,8 +36,6 @@ export function buildSegmentedOptions(t: (key: string) => string) {
   return [
     { label: t('page.claim.tabs.my'), value: 'my' },
     { label: t('page.claim.tabs.history'), value: 'history' },
-    { label: t('page.claim.tabs.pending'), value: 'pending' },
-    { label: t('page.claim.tabs.records'), value: 'records' },
   ];
 }
 
@@ -84,7 +82,7 @@ export function buildSharedToolbarConfig(t: (key: string) => string) {
 }
 
 /**
- * 4 套表格列配置
+ * 表格列配置（my / history）
  * 通过函数接收 t，避免在 data.ts 中引入 useI18n
  */
 export function buildTabColumns(t: (key: string) => string) {
@@ -209,112 +207,7 @@ export function buildTabColumns(t: (key: string) => string) {
     },
   ];
 
-  const pending: VxeGridProps['columns'] = [
-    {
-      field: 'employee_name',
-      title: t('page.claim.columns.applicant'),
-      minWidth: 150,
-      slots: { default: 'employee' },
-    },
-    {
-      field: 'reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 130,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'items',
-      title: t('page.claim.columns.items'),
-      width: 90,
-      slots: { default: 'items' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 130,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 110,
-      slots: { default: 'invoice_date' },
-    },
-    {
-      field: 'invoice_no',
-      title: t('page.claim.columns.invoiceNo'),
-      width: 130,
-      slots: { default: 'invoice_no' },
-    },
-    {
-      field: 'description',
-      title: t('page.claim.columns.description'),
-      minWidth: 160,
-      slots: { default: 'description' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.submitTime'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-    {
-      title: t('page.claim.columns.operation'),
-      width: 100,
-      fixed: 'right',
-      slots: { default: 'action' },
-    },
-  ];
-
-  const records: VxeGridProps['columns'] = [
-    {
-      field: 'employee_name',
-      title: t('page.claim.columns.applicant'),
-      minWidth: 150,
-      slots: { default: 'employee' },
-    },
-    {
-      field: 'claim_reason_label',
-      title: t('page.claim.columns.reason'),
-      minWidth: 130,
-      slots: { default: 'reason' },
-    },
-    {
-      field: 'amount',
-      title: t('page.claim.columns.amount'),
-      minWidth: 120,
-      slots: { default: 'amount' },
-    },
-    {
-      field: 'approval_status_after',
-      title: t('page.claim.columns.status'),
-      width: 100,
-      slots: { default: 'record_status' },
-    },
-    {
-      field: 'action',
-      title: t('page.claim.columns.recordOperation'),
-      width: 90,
-      slots: { default: 'record_action' },
-    },
-    {
-      field: 'comment',
-      title: t('page.claim.columns.remark'),
-      minWidth: 140,
-      slots: { default: 'comment' },
-    },
-    {
-      field: 'created_at',
-      title: t('page.claim.columns.time'),
-      width: 160,
-      slots: { default: 'created_at' },
-    },
-  ];
-
-  return { history, my, pending, records } as Record<
-    TabKey,
-    VxeGridProps['columns']
-  >;
+  return { history, my } as Record<TabKey, VxeGridProps['columns']>;
 }
 
 export function buildTableTitles(
@@ -324,8 +217,6 @@ export function buildTableTitles(
   return {
     my: t('page.claim.messages.myClaimsCount', { count: lengths.my }),
     history: t('page.claim.messages.historyCount', { count: lengths.history }),
-    pending: t('page.claim.messages.pendingCount', { count: lengths.pending }),
-    records: t('page.claim.messages.recordsCount', { count: lengths.records }),
   } as Record<TabKey, string>;
 }
 
@@ -334,8 +225,6 @@ export function dataFor(
   refs: {
     history: ClaimApi.ClaimResponse[];
     my: ClaimApi.ClaimResponse[];
-    pending: ClaimApi.ClaimResponse[];
-    records: ClaimApi.ClaimApprovalRecord[];
   },
 ) {
   switch (tab) {
@@ -344,12 +233,6 @@ export function dataFor(
     }
     case 'my': {
       return refs.my;
-    }
-    case 'pending': {
-      return refs.pending;
-    }
-    case 'records': {
-      return refs.records;
     }
   }
 }

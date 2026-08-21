@@ -1,0 +1,5 @@
+curl -X 'PATCH' \
+  'http://10.254.253.187:8999/api/v1/claims/6a87f51e8f87a6e5e411b35c/approval' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'approval_status=approved&review_comment=string&rejected_item_ids='

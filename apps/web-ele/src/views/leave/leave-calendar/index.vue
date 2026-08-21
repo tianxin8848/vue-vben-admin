@@ -4,7 +4,13 @@ import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { ElButton, ElCard, ElOption, ElSelect } from 'element-plus';
+import {
+  ElButton,
+  ElCard,
+  ElOption,
+  ElSegmented,
+  ElSelect,
+} from 'element-plus';
 
 import {
   deleteRegionalHolidayApi,
@@ -23,6 +29,14 @@ import StatsPanel from '../components/StatsPanel.vue';
 
 const router = useRouter();
 const loading = ref(false);
+
+// Tab 状态
+type TabKey = 'calendar' | 'overview';
+const activeTab = ref<TabKey>('calendar');
+const segmentedOptions = computed(() => [
+  { label: '概览与筛选', value: 'overview' },
+  { label: '年历视图', value: 'calendar' },
+]);
 
 const currentTime = ref('');
 let timer: null | number = null;
@@ -333,61 +347,72 @@ onUnmounted(() => {
   >
     <ElCard>
       <template #header>
-        <span>{{ currentTime }}</span>
-        <ElButton @click="goBackHome">
-          {{ $t('page.leave.calendarView.backToWorkspace') }}
-        </ElButton>
-        <ElSelect
-          v-model="searchForm.region"
-          @change="searchForm.region = $event"
-        >
-          <ElOption
-            :label="$t('page.leave.calendarView.allRegions')"
-            value=""
-          />
-          <ElOption
-            :label="$t('page.leave.calendarView.unsetRegion')"
-            value="__unset__"
-          />
-          <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
-        </ElSelect>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span>{{ currentTime }}</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <ElButton @click="goBackHome">
+              {{ $t('page.leave.calendarView.backToWorkspace') }}
+            </ElButton>
+            <ElButton type="primary" plain>
+              {{ $t('page.leave.calendar') }}
+            </ElButton>
+            <ElButton @click="goToWorkflow">
+              {{ $t('page.leave.calendarView.workflowMaintenance') }}
+            </ElButton>
+            <ElSelect
+              v-model="searchForm.region"
+              @change="searchForm.region = $event"
+            >
+              <ElOption
+                :label="$t('page.leave.calendarView.allRegions')"
+                value=""
+              />
+              <ElOption
+                :label="$t('page.leave.calendarView.unsetRegion')"
+                value="__unset__"
+              />
+              <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
+            </ElSelect>
+          </div>
+        </div>
       </template>
 
-      <div>
-        <ElButton type="primary" plain>
-          {{ $t('page.leave.calendar') }}
-        </ElButton>
-        <ElButton @click="goToWorkflow">
-          {{ $t('page.leave.calendarView.workflowMaintenance') }}
-        </ElButton>
+      <ElSegmented
+        v-model="activeTab"
+        :options="segmentedOptions"
+        style="margin-bottom: 12px"
+      />
+
+      <div v-show="activeTab === 'overview'">
+        <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
+
+        <FilterPanel
+          :search-form="searchForm"
+          :teams="teams"
+          @update:search-form="updateSearchForm"
+          @reset-filters="resetFilters"
+        />
       </div>
 
-      <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
+      <div v-show="activeTab === 'calendar'">
+        <CalendarPanel
+          :day-map="dayMap"
+          :selected-date-key="selectedDateKey"
+          :current-year="currentYear"
+          :search-form="searchForm"
+          @select-date="onSelectDate"
+          @panel-change="onPanelChange"
+        />
 
-      <FilterPanel
-        :search-form="searchForm"
-        :teams="teams"
-        @update:search-form="updateSearchForm"
-        @reset-filters="resetFilters"
-      />
-
-      <CalendarPanel
-        :day-map="dayMap"
-        :selected-date-key="selectedDateKey"
-        :current-year="currentYear"
-        :search-form="searchForm"
-        @select-date="onSelectDate"
-        @panel-change="onPanelChange"
-      />
-
-      <DetailPanel
-        :day-map="dayMap"
-        :selected-date-key="selectedDateKey"
-        :region="searchForm.region"
-        :regional-holidays="regionalHolidays"
-        @set-holiday="setHoliday"
-        @remove-holiday="removeHoliday"
-      />
+        <DetailPanel
+          :day-map="dayMap"
+          :selected-date-key="selectedDateKey"
+          :region="searchForm.region"
+          :regional-holidays="regionalHolidays"
+          @set-holiday="setHoliday"
+          @remove-holiday="removeHoliday"
+        />
+      </div>
     </ElCard>
   </Page>
 </template>

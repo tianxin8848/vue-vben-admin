@@ -144,7 +144,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
       {
         name: 'EmployeeApprovals',
         path: 'approvals',
-        component: 'leave/employee-leave/approvals',
+        component: 'approve/index',
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
@@ -178,7 +178,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
   approval_management: {
     name: 'LeaveManageApprovals',
     path: 'approvals',
-    component: 'leave/employee-leave/approvals',
+    component: 'approve/index',
     meta: {
       affixTab: false,
       icon: 'lucide:clipboard-list',

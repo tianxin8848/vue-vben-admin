@@ -18,6 +18,7 @@ coverage
 .temp
 dev-dist
 .stylelintcache
+.trae
 yarn.lock
 package-lock.json
 .VSCodeCounter
