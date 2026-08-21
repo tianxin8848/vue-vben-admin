@@ -60,10 +60,10 @@ function applyFilters() {
   });
 }
 
-const [BasicTable, tableApi] = useVbenVxeGrid({
+const [BasicTable, tableApi] = useVbenVxeGrid<ClaimApi.ClaimApprovalRecord>({
   gridOptions: {
     id: 'approve-records-claim',
-    rowConfig: { keyField: 'claim_request_id' },
+    rowConfig: { keyField: 'id' },
     columns: [
       { field: 'employee_name', title: '申请人', width: 100 },
       { field: 'employee_username', title: '账号', width: 120 },
@@ -121,8 +121,7 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
       },
     },
     pagerConfig: { pageSize: 10, pageSizes: [10, 20, 50] },
-    toolbarConfig: { custom: true, zoom: true },
-    height: 'auto',
+    toolbarConfig: { custom: true },
   },
 });
 

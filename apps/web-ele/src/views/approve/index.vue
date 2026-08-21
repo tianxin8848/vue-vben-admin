@@ -172,113 +172,131 @@ onMounted(async () => {
     title="审批管理"
     description="查看待我审批的请假 / 报销申请，以及我已处理过的审批记录"
     v-loading="loading"
+    :auto-content-height="true"
   >
-    <ElCard class="search-card">
-      <div class="search-bar">
-        <ElInput
-          v-model="searchForm.keyword"
-          placeholder="搜索员工姓名 / 账号 / 工号 / 备注 / 理由"
-          style="width: 280px"
-          clearable
-        />
-        <ElSelect
-          v-model="searchForm.status"
-          placeholder="全部状态"
-          style="width: 120px"
-          clearable
-        >
-          <ElOption label="全部状态" value="" />
-          <ElOption label="待审批" value="pending" />
-          <ElOption label="已通过" value="approved" />
-          <ElOption label="已驳回" value="rejected" />
-          <ElOption label="已撤回" value="withdrawn" />
-        </ElSelect>
-        <ElSelect
-          v-if="activeTab === 'pending-leave' || activeTab === 'records-leave'"
-          v-model="searchForm.leave_type"
-          placeholder="全部类型"
-          style="width: 120px"
-          clearable
-        >
-          <ElOption label="全部类型" value="" />
-          <ElOption label="年假" value="annual" />
-          <ElOption label="事假" value="personal" />
-          <ElOption label="病假" value="sick" />
-          <ElOption label="调休" value="lieu" />
-          <ElOption label="长假" value="long" />
-        </ElSelect>
-        <ElSelect
-          v-model="searchForm.department"
-          placeholder="全部部门"
-          style="width: 140px"
-          clearable
-        >
-          <ElOption label="全部部门" value="" />
-          <ElOption
-            v-for="opt in departmentOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
+    <div class="approve-layout h-full">
+      <ElCard class="search-card">
+        <div class="search-bar">
+          <ElInput
+            v-model="searchForm.keyword"
+            placeholder="搜索员工姓名 / 账号 / 工号 / 备注 / 理由"
+            style="width: 280px"
+            clearable
           />
-        </ElSelect>
-        <ElSelect
-          v-model="searchForm.region"
-          placeholder="全部地区"
-          style="width: 120px"
-          clearable
-        >
-          <ElOption label="全部地区" value="" />
-          <ElOption
-            v-for="opt in regionOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
-        </ElSelect>
-        <ElButton @click="handleReset">重置筛选</ElButton>
-        <ElButton @click="fetchApprovalData">刷新列表</ElButton>
-      </div>
-    </ElCard>
+          <ElSelect
+            v-model="searchForm.status"
+            placeholder="全部状态"
+            style="width: 120px"
+            clearable
+          >
+            <ElOption label="全部状态" value="" />
+            <ElOption label="待审批" value="pending" />
+            <ElOption label="已通过" value="approved" />
+            <ElOption label="已驳回" value="rejected" />
+            <ElOption label="已撤回" value="withdrawn" />
+          </ElSelect>
+          <ElSelect
+            v-if="
+              activeTab === 'pending-leave' || activeTab === 'records-leave'
+            "
+            v-model="searchForm.leave_type"
+            placeholder="全部类型"
+            style="width: 120px"
+            clearable
+          >
+            <ElOption label="全部类型" value="" />
+            <ElOption label="年假" value="annual" />
+            <ElOption label="事假" value="personal" />
+            <ElOption label="病假" value="sick" />
+            <ElOption label="调休" value="lieu" />
+            <ElOption label="长假" value="long" />
+          </ElSelect>
+          <ElSelect
+            v-model="searchForm.department"
+            placeholder="全部部门"
+            style="width: 140px"
+            clearable
+          >
+            <ElOption label="全部部门" value="" />
+            <ElOption
+              v-for="opt in departmentOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+          <ElSelect
+            v-model="searchForm.region"
+            placeholder="全部地区"
+            style="width: 120px"
+            clearable
+          >
+            <ElOption label="全部地区" value="" />
+            <ElOption
+              v-for="opt in regionOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+          <ElButton @click="handleReset">重置筛选</ElButton>
+          <ElButton @click="fetchApprovalData">刷新列表</ElButton>
+        </div>
+      </ElCard>
 
-    <ElCard class="table-card" style="margin-top: 16px">
-      <ElTabs v-model="activeTab">
-        <ElTabPane label="待审批 · 请假" name="pending-leave">
-          <PendingLeaveTab
-            :data="leaveRequests"
-            :search-form="searchForm"
-            @view-detail="onViewLeaveDetail"
-            @review="onReviewLeave"
-            @withdraw="onWithdrawLeave"
-          />
-        </ElTabPane>
+      <ElCard class="table-card">
+        <ElTabs
+          v-model="activeTab"
+          class="approve-tabs"
+          :tab-transition="false"
+          :tab-pane-transition="false"
+        >
+          <ElTabPane label="待审批 · 请假" name="pending-leave">
+            <div class="tab-pane-wrapper">
+              <PendingLeaveTab
+                :data="leaveRequests"
+                :search-form="searchForm"
+                @view-detail="onViewLeaveDetail"
+                @review="onReviewLeave"
+                @withdraw="onWithdrawLeave"
+              />
+            </div>
+          </ElTabPane>
 
-        <ElTabPane label="待审批 · 报销" name="pending-claim">
-          <PendingClaimTab
-            :data="claimApprovals"
-            :search-form="searchForm"
-            @view-detail="onViewClaimDetail"
-            @review="onReviewClaim"
-            @withdraw="onWithdrawClaim"
-          />
-        </ElTabPane>
+          <ElTabPane label="待审批 · 报销" name="pending-claim">
+            <div class="tab-pane-wrapper">
+              <PendingClaimTab
+                :data="claimApprovals"
+                :search-form="searchForm"
+                @view-detail="onViewClaimDetail"
+                @review="onReviewClaim"
+                @withdraw="onWithdrawClaim"
+              />
+            </div>
+          </ElTabPane>
 
-        <ElTabPane label="审批记录 · 请假" name="records-leave">
-          <RecordsLeaveTab
-            :data="leaveApprovalRecords"
-            :search-form="searchForm"
-            @view-detail="onViewLeaveRecord"
-          />
-        </ElTabPane>
+          <ElTabPane label="审批记录 · 请假" name="records-leave">
+            <div class="tab-pane-wrapper">
+              <RecordsLeaveTab
+                :data="leaveApprovalRecords"
+                :search-form="searchForm"
+                @view-detail="onViewLeaveRecord"
+              />
+            </div>
+          </ElTabPane>
 
-        <ElTabPane label="审批记录 · 报销" name="records-claim">
-          <RecordsClaimTab
-            :data="claimApprovalRecords"
-            :search-form="searchForm"
-            @view-detail="onViewClaimRecord"
-          />
-        </ElTabPane>
-      </ElTabs>
-    </ElCard>
+          <ElTabPane label="审批记录 · 报销" name="records-claim">
+            <div class="tab-pane-wrapper">
+              <RecordsClaimTab
+                :data="claimApprovalRecords"
+                :search-form="searchForm"
+                @view-detail="onViewClaimRecord"
+              />
+            </div>
+          </ElTabPane>
+        </ElTabs>
+      </ElCard>
+    </div>
 
     <LeaveDetailDialog
       v-model="showLeaveDetailDialog"
@@ -312,10 +330,107 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Page 提供固定高度预算 → approve-layout 通过 h-full 继承 → 高度不随内容变化 */
+.approve-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.search-card {
+  flex-shrink: 0;
+}
+
 .search-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+
+/* table-card 占据 approve-layout 剩余高度（search-card 之后的全部空间） */
+.table-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.table-card :deep(.el-card__body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px 16px 8px;
+  overflow: hidden;
+}
+
+/* ElTabs 完全填充 table-card__body，高度由父链决定 → 不会因内容重排 */
+.approve-tabs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.approve-tabs :deep(.el-tabs__header) {
+  flex-shrink: 0;
+  margin: 0 0 12px;
+}
+
+.approve-tabs :deep(.el-tabs__content) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.approve-tabs :deep(.el-tab-pane) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-pane-wrapper {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-pane-wrapper > :first-child {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+/*
+ * 最关键：覆盖全局 style.css#L54 的
+ *   :root .vxe-grid { height: auto !important; }
+ * 特异性 (1,2,1) > 全局的 (0,1,1)，让 vxe-grid 填满父容器高度
+ * 而不是按内容行数撑开 → approve-layout 高度彻底固定，切换 Tab 不再抖
+ */
+.approve-tabs :deep(.vxe-grid) {
+  flex: 1;
+  height: 100% !important;
+  min-height: 0;
+}
+
+.approve-tabs :deep(.h-full.rounded-md.bg-card) {
+  display: flex;
+  flex-direction: column;
+  height: 100% !important;
+  min-height: 0;
 }
 </style>

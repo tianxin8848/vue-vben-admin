@@ -66,7 +66,7 @@ function applyFilters() {
   });
 }
 
-const [BasicTable, tableApi] = useVbenVxeGrid({
+const [BasicTable, tableApi] = useVbenVxeGrid<LeaveRequestApi.LeaveRequest>({
   gridOptions: {
     id: 'approve-pending-leave',
     rowConfig: { keyField: 'id' },
@@ -126,8 +126,7 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
       },
     },
     pagerConfig: { pageSize: 10, pageSizes: [10, 20, 50] },
-    toolbarConfig: { custom: true, zoom: true },
-    height: 'auto',
+    toolbarConfig: { custom: true },
   },
 });
 
