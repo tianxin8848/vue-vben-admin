@@ -1,244 +1,507 @@
 @import '@vben/tailwind-config/theme';
 
 /* ==========================================================================
-   全局字体大小联动补丁
+   全局字体大小联动补丁（强制覆盖版）
    --------------------------------------------------------------------------
-   调整偏好设置中的「字体大小」后，--font-size-base 会变化，
-   html { font-size: var(--font-size-base) } 也会跟着变。
-   但很多 UI 组件库的 Input/Table/Select 等内部节点
-   在 SCSS 编译阶段就把 font-size 固化成具体 px 值了，
-   无法通过 CSS 变量动态切换。
-   这里用全局选择器把这些节点覆盖为 inherit（继承 html 字号），
-   保证它们能随偏好设置实时变化。
+   思路：
+   1. 偏好设置修改时，Vben 会在 <html> 写入 --font-size-base: 15px 等。
+   2. 但 Element Plus / AntD / TDesign 大部分内部节点在 SCSS 编译阶段就
+      把 font-size 写死成具体 px 了，并且往往使用“双重/三重组合选择器”。
+   3. 单纯 font-size: inherit 或单类选择器根本打不赢组件库的原生样式。
+   4. 所以这里：
+        - 直接用  var(--font-size-base) + !important
+        - 对 Segmented/Table/Input 等高频组件加深组合选择器深度
+      保证 100% 命中并生效，绕开继承链和优先级陷阱。
    ========================================================================== */
 
 /* ========== Element Plus ========== */
 
 /* Input / Autocomplete / 数字输入框 / 搜索框 */
-.el-input__wrapper .el-input__inner,
-.el-input__wrapper .el-input__inner::placeholder,
-.el-textarea__inner,
-.el-textarea__inner::placeholder,
-.el-input-number__decrease,
-.el-input-number__increase,
-.el-input-number .el-input__inner,
-.el-autocomplete-suggestion__list li,
-.el-select-v2__wrapper .el-select-v2__placeholder,
-.el-select-v2__wrapper .el-select-v2__selection,
-.el-select__selected-item,
-.el-select__placeholder,
-.el-select__tags .el-tag__text {
-  font-size: inherit;
+:root .el-input .el-input__wrapper .el-input__inner,
+:root .el-input .el-input__wrapper .el-input__inner::placeholder,
+:root .el-textarea__inner,
+:root .el-textarea__inner::placeholder,
+:root .el-input-number__decrease,
+:root .el-input-number__increase,
+:root .el-input-number .el-input__inner,
+:root .el-autocomplete-suggestion__list li,
+:root .el-select-v2__wrapper .el-select-v2__placeholder,
+:root .el-select-v2__wrapper .el-select-v2__selection,
+:root .el-select__selected-item,
+:root .el-select__placeholder,
+:root .el-select__tags .el-tag__text {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Select 下拉面板 / Cascader / Time / Date / DateTime picker 弹层 */
-.el-select-dropdown__item,
-.el-cascader-node__label,
-.el-cascader-menu__item,
-.el-time-panel__content::before,
-.el-time-panel__content::after,
-.el-time-spinner__item,
-.el-time-panel__btn,
-.el-picker-panel,
-.el-date-picker__header-label,
-.el-date-table th,
-.el-date-table td .cell,
-.el-month-table td .cell,
-.el-year-table td .cell,
-.el-picker-panel__shortcut,
-.el-date-picker__time-header .el-input__inner {
-  font-size: inherit;
+:root .el-select-dropdown__item,
+:root .el-cascader-node__label,
+:root .el-cascader-menu__item,
+:root .el-time-panel__content::before,
+:root .el-time-panel__content::after,
+:root .el-time-spinner__item,
+:root .el-time-panel__btn,
+:root .el-picker-panel,
+:root .el-date-picker__header-label,
+:root .el-date-table th,
+:root .el-date-table td .cell,
+:root .el-month-table td .cell,
+:root .el-year-table td .cell,
+:root .el-picker-panel__shortcut,
+:root .el-date-picker__time-header .el-input__inner {
+  font-size: var(--font-size-base) !important;
 }
 
-/* Table（表头 + 单元格 + 空数据 + 底部分页） */
-.el-table th .cell,
-.el-table td .cell,
-.el-table__empty-block,
-.el-table__empty-text,
-.el-table__expand-icon,
-.el-table-filter__list li,
-.el-table-filter__bottom button,
-.el-pagination,
-.el-pagination .el-pager li,
-.el-pagination button,
-.el-pagination__total,
-.el-pagination__jump,
-.el-pagination__sizes .el-select .el-input__wrapper .el-input__inner {
-  font-size: inherit;
+/* =========================================================
+   ⭐⭐⭐ Table（用户强烈反馈） —— 加深组合选择器 ⭐⭐⭐
+   ========================================================= */
+:root .el-table th.el-table__cell > .cell,
+:root .el-table td.el-table__cell > .cell,
+:root .el-table .el-table__header th .cell,
+:root .el-table .el-table__body td .cell,
+:root .el-table__empty-block,
+:root .el-table__empty-text,
+:root .el-table__expand-icon,
+:root .el-table-filter__list li,
+:root .el-table-filter__bottom button,
+:root .el-table__inner-wrapper .el-table__body td,
+:root .el-table__inner-wrapper .el-table__body td .cell,
+:root .el-table__inner-wrapper .el-table__header th,
+:root .el-table__inner-wrapper .el-table__header th .cell {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Table 底部分页 */
+:root .el-pagination,
+:root .el-pagination .el-pager li,
+:root .el-pagination button,
+:root .el-pagination__total,
+:root .el-pagination__jump,
+:root .el-pagination__sizes .el-select .el-input__wrapper .el-input__inner {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Form / Radio / Checkbox / Switch / Transfer */
-.el-form-item__label,
-.el-form-item__error,
-.el-radio__label,
-.el-checkbox__label,
-.el-transfer-panel__header,
-.el-transfer-panel__filter .el-input__inner,
-.el-transfer-panel__list .el-transfer-panel__item {
-  font-size: inherit;
+:root .el-form-item__label,
+:root .el-form-item__error,
+:root .el-radio__label,
+:root .el-checkbox__label,
+:root .el-transfer-panel__header,
+:root .el-transfer-panel__filter .el-input__inner,
+:root .el-transfer-panel__list .el-transfer-panel__item {
+  font-size: var(--font-size-base) !important;
 }
 
-/* Dialog / Drawer / Message / Notification / Popconfirm / Card */
-.el-dialog__title,
-.el-dialog__body,
-.el-dialog__footer .el-button,
-.el-drawer__header,
-.el-drawer__body,
-.el-message,
-.el-notification__title,
-.el-notification__content,
-.el-popconfirm__action .el-button,
-.el-card__header,
-.el-card__body,
-.el-descriptions__label,
-.el-descriptions__content,
-.el-step__title,
-.el-step__description {
-  font-size: inherit;
+/* Dialog / Drawer / Message / Notification / Popconfirm / Card / Descriptions / Steps */
+:root .el-dialog__title,
+:root .el-dialog__body,
+:root .el-dialog__footer .el-button,
+:root .el-drawer__header,
+:root .el-drawer__body,
+:root .el-message,
+:root .el-notification__title,
+:root .el-notification__content,
+:root .el-popconfirm__action .el-button,
+:root .el-card__header,
+:root .el-card__body,
+:root .el-descriptions__label,
+:root .el-descriptions__content,
+:root .el-step__title,
+:root .el-step__description {
+  font-size: var(--font-size-base) !important;
+}
+
+/* =========================================================
+   ⭐⭐⭐ Segmented（用户点名：el-segmented__item-label）⭐⭐⭐
+   用最深的组合选择器 + !important 确保覆盖组件库的组合规则
+   ========================================================= */
+:root .el-segmented,
+:root .el-segmented .el-segmented__item,
+:root .el-segmented .el-segmented__item .el-segmented__item-label,
+:root .el-segmented .el-segmented__item .el-segmented__item-icon {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Tabs 标签页 */
+:root .el-tabs__item,
+:root .el-tabs .el-tabs__item,
+:root .el-tab-pane,
+:root .el-tabs .el-tab-pane {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Breadcrumb 面包屑 */
+:root .el-breadcrumb,
+:root .el-breadcrumb .el-breadcrumb__item,
+:root .el-breadcrumb .el-breadcrumb__item .el-breadcrumb__inner,
+:root .el-breadcrumb__separator {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Dropdown 下拉菜单 / ContextMenu */
+:root .el-dropdown-menu__item,
+:root .el-dropdown-menu .el-dropdown-menu__item {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Alert / Progress / Tag / Empty / Statistic / Result / PageHeader */
+:root .el-alert__title,
+:root .el-alert__description,
+:root .el-alert__content {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-progress,
+:root .el-progress__text,
+:root .el-progress-bar__innerText {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-tag,
+:root .el-tag .el-icon {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-empty,
+:root .el-empty__description p {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-statistic,
+:root .el-statistic__head,
+:root .el-statistic__content,
+:root .el-statistic__decimal,
+:root .el-statistic__suffix,
+:root .el-statistic__prefix {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-result,
+:root .el-result__title,
+:root .el-result__subtitle,
+:root .el-result__extra,
+:root .el-result__info li {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-page-header,
+:root .el-page-header__left,
+:root .el-page-header__title,
+:root .el-page-header__content,
+:root .el-page-header__extra {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Timeline / Upload / Calendar / Rate / Slider / Switch / Collapse / Divider */
+:root .el-timeline-item__timestamp,
+:root .el-timeline-item__content {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-upload,
+:root .el-upload-dragger,
+:root .el-upload-dragger .el-icon,
+:root .el-upload__text,
+:root .el-upload-list,
+:root .el-upload-list__item,
+:root .el-upload-list__item-name,
+:root .el-upload-list__item-status-label,
+:root .el-upload-list__item-actions {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-calendar,
+:root .el-calendar__header,
+:root .el-calendar-table,
+:root .el-calendar-day {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-rate,
+:root .el-rate__text,
+:root .el-rate__icon {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-slider__marks-text,
+:root .el-switch__label,
+:root .el-switch__label.is-active {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-collapse,
+:root .el-collapse-item__header,
+:root .el-collapse-item__content,
+:root .el-collapse-item__arrow {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .el-divider__text,
+:root .el-divider__text.is-left,
+:root .el-divider__text.is-right,
+:root .el-divider__text.is-center {
+  font-size: var(--font-size-base) !important;
 }
 
 /* ========== Ant Design Vue ========== */
 
 /* Input / TextArea / 数字输入框 */
-.ant-input,
-.ant-input::placeholder,
-.ant-input-affix-wrapper .ant-input,
-.ant-input-search .ant-input,
-.ant-input-password input.ant-input,
-.ant-input-number-input,
-.ant-input-number-input::placeholder {
-  font-size: inherit;
+:root .ant-input,
+:root .ant-input::placeholder,
+:root .ant-input-affix-wrapper .ant-input,
+:root .ant-input-search .ant-input,
+:root .ant-input-password input.ant-input,
+:root .ant-input-number-input,
+:root .ant-input-number-input::placeholder {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Select / TreeSelect / Cascader / AutoComplete / DatePicker */
-.ant-select-selector,
-.ant-select-selection-placeholder,
-.ant-select-selection-item,
-.ant-select-selection-search input,
-.ant-select-dropdown .ant-select-item,
-.ant-select-dropdown .ant-select-item-option-content,
-.ant-cascader-menu-item,
-.ant-picker,
-.ant-picker-input input,
-.ant-picker-input input::placeholder,
-.ant-picker-panel,
-.ant-picker-header-view,
-.ant-picker-content th,
-.ant-picker-cell-inner,
-.ant-picker-time-panel-cell-inner,
-.ant-picker-ranges,
-.ant-picker-footer {
-  font-size: inherit;
+:root .ant-select-selector,
+:root .ant-select-selection-placeholder,
+:root .ant-select-selection-item,
+:root .ant-select-selection-search input,
+:root .ant-select-dropdown .ant-select-item,
+:root .ant-select-dropdown .ant-select-item-option-content,
+:root .ant-cascader-menu-item,
+:root .ant-picker,
+:root .ant-picker-input input,
+:root .ant-picker-input input::placeholder,
+:root .ant-picker-panel,
+:root .ant-picker-header-view,
+:root .ant-picker-content th,
+:root .ant-picker-cell-inner,
+:root .ant-picker-time-panel-cell-inner,
+:root .ant-picker-ranges,
+:root .ant-picker-footer {
+  font-size: var(--font-size-base) !important;
 }
 
-/* Table（表头 + 单元格 + 空数据） */
-.ant-table-thead > tr > th,
-.ant-table-tbody > tr > td,
-.ant-table-placeholder,
-.ant-table-expanded-row,
-.ant-pagination,
-.ant-pagination-item,
-.ant-pagination-item a,
-.ant-pagination-prev button,
-.ant-pagination-next button,
-.ant-pagination-options-size-changer .ant-select-selector,
-.ant-pagination-options-quick-jumper input,
-.ant-pagination-total-text {
-  font-size: inherit;
+/* Table（表头 + 单元格 + 空数据 + 分页） */
+:root .ant-table-thead > tr > th,
+:root .ant-table-tbody > tr > td,
+:root .ant-table-placeholder,
+:root .ant-table-expanded-row,
+:root .ant-pagination,
+:root .ant-pagination-item,
+:root .ant-pagination-item a,
+:root .ant-pagination-prev button,
+:root .ant-pagination-next button,
+:root .ant-pagination-options-size-changer .ant-select-selector,
+:root .ant-pagination-options-quick-jumper input,
+:root .ant-pagination-total-text {
+  font-size: var(--font-size-base) !important;
 }
 
-/* Form / Radio / Checkbox / Switch */
-.ant-form-item-label > label,
-.ant-form-item-explain-error,
-.ant-radio-wrapper span.ant-radio + *:not(.ant-radio),
-.ant-checkbox-wrapper span.ant-checkbox + *:not(.ant-checkbox),
-.ant-transfer-list-header,
-.ant-transfer-list-content-item {
-  font-size: inherit;
+/* Form / Radio / Checkbox / Switch / Transfer */
+:root .ant-form-item-label > label,
+:root .ant-form-item-explain-error,
+:root .ant-radio-wrapper span.ant-radio + *:not(.ant-radio),
+:root .ant-checkbox-wrapper span.ant-checkbox + *:not(.ant-checkbox),
+:root .ant-transfer-list-header,
+:root .ant-transfer-list-content-item {
+  font-size: var(--font-size-base) !important;
 }
 
-/* Modal / Drawer / Message / Notification / Popconfirm / Card / Descriptions */
-.ant-modal-title,
-.ant-modal-body,
-.ant-modal-footer .ant-btn,
-.ant-drawer-title,
-.ant-drawer-body,
-.ant-drawer-footer .ant-btn,
-.ant-message,
-.ant-notification-notice-message,
-.ant-notification-notice-description,
-.ant-popover-inner,
-.ant-popconfirm-title,
-.ant-popconfirm-description,
-.ant-card-head-title,
-.ant-card-body,
-.ant-descriptions-item-label,
-.ant-descriptions-item-content,
-.ant-steps-item-title,
-.ant-steps-item-description,
-.ant-tabs-tab,
-.ant-tag {
-  font-size: inherit;
+/* Modal / Drawer / Message / Notification / Popconfirm / Card / Descriptions / Steps / Tabs / Tag */
+:root .ant-modal-title,
+:root .ant-modal-body,
+:root .ant-modal-footer .ant-btn,
+:root .ant-drawer-title,
+:root .ant-drawer-body,
+:root .ant-drawer-footer .ant-btn,
+:root .ant-message,
+:root .ant-notification-notice-message,
+:root .ant-notification-notice-description,
+:root .ant-popover-inner,
+:root .ant-popconfirm-title,
+:root .ant-popconfirm-description,
+:root .ant-card-head-title,
+:root .ant-card-body,
+:root .ant-descriptions-item-label,
+:root .ant-descriptions-item-content,
+:root .ant-steps-item-title,
+:root .ant-steps-item-description,
+:root .ant-tabs-tab,
+:root .ant-tag {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Segmented / Tabs Content / Breadcrumb / Dropdown */
+:root .ant-segmented,
+:root .ant-segmented-item,
+:root .ant-segmented-item-label,
+:root .ant-segmented-thumb,
+:root .ant-segmented-group {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .ant-tabs-tab-btn,
+:root .ant-tabs-content-holder,
+:root .ant-tabs-tabpane,
+:root .ant-breadcrumb,
+:root .ant-breadcrumb a,
+:root .ant-breadcrumb-link,
+:root .ant-breadcrumb-separator,
+:root .ant-dropdown-menu,
+:root .ant-dropdown-menu-item,
+:root .ant-dropdown-menu-submenu-title,
+:root .ant-dropdown-menu-title-content {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Alert / Progress / Empty / Statistic / Result / PageHeader / Timeline / Upload / Collapse / Divider / Rate */
+:root .ant-alert,
+:root .ant-alert-message,
+:root .ant-alert-description,
+:root .ant-progress,
+:root .ant-progress-text,
+:root .ant-empty,
+:root .ant-empty-description,
+:root .ant-statistic,
+:root .ant-statistic-title,
+:root .ant-statistic-content,
+:root .ant-statistic-content-prefix,
+:root .ant-statistic-content-suffix,
+:root .ant-result-title,
+:root .ant-result-subtitle,
+:root .ant-result-extra,
+:root .ant-page-header-heading-title,
+:root .ant-page-header-heading-sub-title,
+:root .ant-page-header-content,
+:root .ant-timeline-item-content,
+:root .ant-timeline-item-label,
+:root .ant-upload,
+:root .ant-upload-list-item-name,
+:root .ant-upload-drag,
+:root .ant-upload-text-icon,
+:root .ant-upload-drag-icon,
+:root .ant-collapse-header,
+:root .ant-collapse-content-box,
+:root .ant-divider-inner-text,
+:root .ant-rate,
+:root .ant-rate-text {
+  font-size: var(--font-size-base) !important;
 }
 
 /* ========== TDesign ========== */
 
 /* Input / TextArea / 数字输入框 */
-.t-input,
-.t-input__inner,
-.t-input__inner::placeholder,
-.t-textarea__inner,
-.t-textarea__inner::placeholder,
-.t-input-number,
-.t-input-number__input,
-.t-input-adornment__prepend,
-.t-input-adornment__append {
-  font-size: inherit;
+:root .t-input,
+:root .t-input__inner,
+:root .t-input__inner::placeholder,
+:root .t-textarea__inner,
+:root .t-textarea__inner::placeholder,
+:root .t-input-number,
+:root .t-input-number__input,
+:root .t-input-adornment__prepend,
+:root .t-input-adornment__append {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Select / TreeSelect / Cascader / DatePicker */
-.t-select,
-.t-select__placeholder,
-.t-select__single,
-.t-select__input-wrap,
-.t-select-option,
-.t-cascader-item,
-.t-date-picker,
-.t-date-picker__panel,
-.t-date-picker__cells,
-.t-date-picker__cell,
-.t-date-picker__control,
-.t-date-picker__control .t-input__inner {
-  font-size: inherit;
+:root .t-select,
+:root .t-select__placeholder,
+:root .t-select__single,
+:root .t-select__input-wrap,
+:root .t-select-option,
+:root .t-cascader-item,
+:root .t-date-picker,
+:root .t-date-picker__panel,
+:root .t-date-picker__cells,
+:root .t-date-picker__cell,
+:root .t-date-picker__control,
+:root .t-date-picker__control .t-input__inner {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Table（表头 + 单元格 + 空数据 + 分页） */
-.t-table th,
-.t-table td,
-.t-table__cell,
-.t-table--empty,
-.t-pagination,
-.t-pagination .t-is-current,
-.t-pagination button,
-.t-pagination__total {
-  font-size: inherit;
+:root .t-table th,
+:root .t-table td,
+:root .t-table__cell,
+:root .t-table--empty,
+:root .t-pagination,
+:root .t-pagination .t-is-current,
+:root .t-pagination button,
+:root .t-pagination__total {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Form / Radio / Checkbox */
-.t-form__label,
-.t-radio,
-.t-checkbox {
-  font-size: inherit;
+:root .t-form__label,
+:root .t-radio,
+:root .t-checkbox {
+  font-size: var(--font-size-base) !important;
 }
 
 /* Dialog / Drawer / Popup / Card */
-.t-dialog__header,
-.t-dialog__body,
-.t-dialog__footer .t-button,
-.t-drawer__header,
-.t-drawer__body,
-.t-popup__content,
-.t-card__title,
-.t-card__body {
-  font-size: inherit;
+:root .t-dialog__header,
+:root .t-dialog__body,
+:root .t-dialog__footer .t-button,
+:root .t-drawer__header,
+:root .t-drawer__body,
+:root .t-popup__content,
+:root .t-card__title,
+:root .t-card__body {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Segmented / Tabs / Breadcrumb / Dropdown / Menu */
+:root .t-segmented,
+:root .t-segmented__item,
+:root .t-segmented__label {
+  font-size: var(--font-size-base) !important;
+}
+
+:root .t-tabs,
+:root .t-tabs__nav-item,
+:root .t-tabs__content,
+:root .t-tabs-panel,
+:root .t-breadcrumb,
+:root .t-breadcrumb__item,
+:root .t-breadcrumb__separator,
+:root .t-dropdown__item,
+:root .t-menu,
+:root .t-menu-item,
+:root .t-submenu,
+:root .t-menu__item {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Alert / Progress / Tag / Empty / Statistic / Result / Timeline / Upload / Collapse / Divider / Rate */
+:root .t-alert,
+:root .t-alert__title,
+:root .t-alert__message,
+:root .t-progress,
+:root .t-progress__info,
+:root .t-progress__text,
+:root .t-tag,
+:root .t-tag__text,
+:root .t-empty,
+:root .t-empty__description,
+:root .t-statistic,
+:root .t-statistic__title,
+:root .t-statistic__content,
+:root .t-result,
+:root .t-result__title,
+:root .t-result__subtitle,
+:root .t-result__description,
+:root .t-timeline-item__content,
+:root .t-timeline-item__label,
+:root .t-upload,
+:root .t-upload-dragger,
+:root .t-upload__display-text,
+:root .t-upload__flow-file,
+:root .t-collapse-panel,
+:root .t-collapse-panel__header,
+:root .t-collapse-panel__body,
+:root .t-divider__text,
+:root .t-rate,
+:root .t-rate-text,
+:root .t-slider__mark-text,
+:root .t-switch__label,
+:root .t-calendar,
+:root .t-calendar__cell,
+:root .t-date-picker__cell-text {
+  font-size: var(--font-size-base) !important;
 }
