@@ -326,10 +326,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page
-    title="用户管理11"
-    description="新增员工、查看初始密码、重置密码、维护员工模块权限"
-  >
+  <Page>
     <div class="flex flex-col gap-4">
       <!-- 筛选 + 表格（Reset / Search / Collapse 按钮 + 分页 + 工具栏由 BasicTable 内置） -->
       <BasicTable table-title="员工列表">

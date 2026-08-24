@@ -226,7 +226,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page title="客户地图管理" description="客户信息维护与地理位置可视化">
+  <Page>
     <div class="flex flex-col gap-4">
       <div class="grid grid-cols-1 gap-4 xl:grid-cols-5">
         <!-- 左：客户列表（筛选 + 表格） -->

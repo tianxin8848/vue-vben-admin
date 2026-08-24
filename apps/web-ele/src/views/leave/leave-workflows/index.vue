@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
@@ -18,7 +17,6 @@ import {
 import WorkflowDrawer from './components/WorkflowDrawer.vue';
 import { gridOptions } from './data';
 
-const router = useRouter();
 const loading = ref(false);
 
 const currentTime = ref('');
@@ -165,10 +163,6 @@ async function loadSystemSettings() {
   }
 }
 
-function goToCalendar() {
-  router.push('/employee/manage/leave');
-}
-
 function openCreateDrawer() {
   drawerRef.value?.open();
 }
@@ -203,9 +197,6 @@ onUnmounted(() => {
         <ElButton @click="fetchWorkflows">刷新</ElButton>
       </div>
     </template>
-
-    <span class="subnav-link" @click="goToCalendar">请假日历</span>
-    <span class="subnav-link active">流程维护</span>
 
     <BasicTable :table-title="`流程列表（共 ${workflows.length} 条）`">
       <template #toolbar-tools>

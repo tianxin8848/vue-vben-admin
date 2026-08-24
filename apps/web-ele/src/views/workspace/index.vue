@@ -419,11 +419,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page
-    title="员工工作台"
-    description="个人信息维护与模块权限"
-    v-loading="loading"
-  >
+  <Page v-loading="loading">
     <Profile
       v-model:model-value="activeTab"
       title="个人信息维护"

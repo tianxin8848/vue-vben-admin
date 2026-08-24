@@ -15,6 +15,7 @@ import {
 } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
+import { createCustomerApi, updateCustomerApi } from '#/api';
 
 import { buildCustomerFormSchema } from '../data';
 
@@ -122,8 +123,6 @@ watch(
 );
 
 // ─── 提交 ──────────────────────────────────────────────────────────────────
-const { createCustomerApi, updateCustomerApi } = await import('#/api');
-
 async function handleSubmit() {
   loading.value = true;
   try {

@@ -84,7 +84,7 @@ fetchHolidays();
 </script>
 
 <template>
-  <Page title="区域假日管理" v-loading="loading">
+  <Page v-loading="loading">
     <div style="margin-bottom: 20px">
       <ElButton type="primary" @click="showCreateModal = true">
         新增假日
@@ -138,5 +138,3 @@ fetchHolidays();
     </ElDialog>
   </Page>
 </template>
-
-

@@ -340,11 +340,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Page
-    :title="$t('page.leave.title')"
-    :description="$t('page.leave.calendarView.description')"
-    v-loading="loading"
-  >
+  <Page>
     <ElCard>
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">

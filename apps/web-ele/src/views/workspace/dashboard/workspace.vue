@@ -90,7 +90,7 @@ function handleSettingsNavClick(item: WorkbenchQuickNavItem) {
 </script>
 
 <template>
-  <Page title="工作台" description="员工工作台各功能模块入口与说明">
+  <Page>
     <WorkbenchQuickNav
       :items="settingsQuickNavItems"
       title="系统参数配置"

@@ -175,11 +175,7 @@ async function onBatchSubmit() {
 </script>
 
 <template>
-  <Page
-    :title="$t('page.claim.title')"
-    :auto-content-height="true"
-    v-loading="isLoading"
-  >
+  <Page>
     <div class="flex h-full flex-col gap-2">
       <ElSegmented v-model="data.activeTab.value" :options="segmentedOptions" />
       <p v-if="data.userInfo.value" class="text-sm text-muted-foreground">

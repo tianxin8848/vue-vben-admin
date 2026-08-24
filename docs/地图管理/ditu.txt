@@ -1,4 +1,4 @@
-url -X 'GET' \
+curl -X 'GET' \
   'http://10.254.253.187:8999/api/v1/customers' \
   -H 'accept: application/json'
 

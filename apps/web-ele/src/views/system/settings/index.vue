@@ -251,12 +251,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page
-    title="系统参数维护"
-    description="统一维护部门、岗位、地区、模块、员工字段、报销配置与地区假期，相关页面会直接读取这些配置。"
-    :auto-content-height="true"
-    v-loading="loading"
-  >
+  <Page v-loading="loading">
     <div class="flex h-full flex-col gap-2">
       <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">

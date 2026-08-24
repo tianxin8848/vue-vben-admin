@@ -33,7 +33,6 @@ import { useApprovalData } from './composables/useApprovalData';
 import { leaveRequestFromRecord } from './constants';
 
 const {
-  loading,
   leaveRequests,
   leaveApprovalRecords,
   claimApprovals,
@@ -168,7 +167,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page title="审批管理" v-loading="loading" :auto-content-height="true">
+  <Page>
     <div class="approve-layout h-full">
       <ElCard class="search-card">
         <div class="search-bar">

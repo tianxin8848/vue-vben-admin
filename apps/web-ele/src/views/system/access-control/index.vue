@@ -105,7 +105,7 @@ fetchEmployees();
 </script>
 
 <template>
-  <Page title="门禁管理" description="管理员工的门禁ID，支持搜索和编辑">
+  <Page>
     <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
 
     <ElCard class="search-card">

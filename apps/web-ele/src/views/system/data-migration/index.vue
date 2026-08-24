@@ -176,10 +176,7 @@ fetchBackups();
 </script>
 
 <template>
-  <Page
-    title="数据处理维护"
-    description="用于在本地数据库与远程数据库之间进行备份/恢复、数据导出与数据导入。"
-  >
+  <Page>
     <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
       <ElCard header="数据导出">
         <p class="card-desc">

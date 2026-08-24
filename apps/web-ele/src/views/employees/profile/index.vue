@@ -135,7 +135,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="员工档案" v-loading="loading">
+  <Page>
     <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
     <ElCard v-if="employee" header="基本信息">
       <ElForm :model="basicInfoForm" label-width="120px">
