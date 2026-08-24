@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { CalendarCell, MonthData, Props } from './data';
+import type { CalendarCell, MonthData, Props, RegionalHoliday } from './data';
 
 import { computed, ref, watch } from 'vue';
 
@@ -24,7 +24,35 @@ const emit = defineEmits<{
 }>();
 
 function getEntriesForDate(dateKey: string) {
+  if (!props.dayMap) return [];
   return props.dayMap[dateKey] || [];
+}
+
+// 区域假日：按当前筛选地区过滤，未指定地区时展示全部
+// 入口处强制归一化，避免 bootstrap 阶段 prop 短暂为 undefined 导致 forEach 崩溃
+const holidayMap = computed(() => {
+  const map: Record<string, RegionalHoliday[]> = {};
+  const region = props.searchForm.region;
+  const filterRegion =
+    region && region !== 'all' && region !== '__unset__' ? region : '';
+  const holidays = Array.isArray(props.regionalHolidays)
+    ? props.regionalHolidays
+    : [];
+  holidays.forEach((h) => {
+    if (filterRegion && h.region !== filterRegion) return;
+    const list = map[h.date] ?? (map[h.date] = []);
+    list.push(h);
+  });
+  return map;
+});
+
+function getHolidaysForDate(dateKey: string): RegionalHoliday[] {
+  return holidayMap.value[dateKey] || [];
+}
+
+function getHolidayLabel(holidays: RegionalHoliday[]): string {
+  const names = [...new Set(holidays.map((h) => h.holiday_name))];
+  return names.join(' / ');
 }
 
 const WEEK_DAYS = computed(() =>
@@ -35,10 +63,14 @@ const MONTH_NAMES = computed(() => {
   return Array.isArray(names) ? names : [];
 });
 
-const selectedYear = ref(2026);
-const selectedMonth = ref(7);
+// 默认以系统当前年月初始化；用户在日期选择器更改后由 onYearMonthChange 覆盖
+const now = new Date();
+const selectedYear = ref(now.getFullYear());
+const selectedMonth = ref(now.getMonth() + 1);
 const viewMode = ref<'month' | 'year'>('month');
-const yearMonthValue = ref('2026-07');
+const yearMonthValue = ref(
+  `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
+);
 
 watch(
   () => props.currentYear,
@@ -90,9 +122,11 @@ const calendarRows = computed(() => {
 
 const yearCalendarData = computed(() => {
   const year = selectedYear.value;
+  // 年视图从当前所选月份开始渲染到12月；默认（未选择）跟随系统当月
+  const startMonth = selectedMonth.value;
   const months: MonthData[] = [];
 
-  for (let m = 1; m <= 12; m++) {
+  for (let m = startMonth; m <= 12; m++) {
     const cells = generateMonthCells(year, m);
     const rows: CalendarCell[][] = [];
     for (let i = 0; i < cells.length; i += 7) {
@@ -110,37 +144,6 @@ const yearCalendarData = computed(() => {
 
   return months;
 });
-
-// const yearSummary = computed(() => {
-//   const year = selectedYear.value;
-//   let recordCount = 0;
-//   let pendingCount = 0;
-//
-//   const seenDates = new Set<string>();
-//   Object.entries(props.dayMap).forEach(([dateKey, entries]) => {
-//     if (!dateKey.startsWith(`${year}-`)) return;
-//     if (entries.length > 0) {
-//       seenDates.add(dateKey);
-//     }
-//   });
-//
-//   Object.values(props.dayMap).forEach((entries) => {
-//     entries.forEach((entry) => {
-//       if (
-//         (entry.date_keys || []).some((dk: string) => dk.startsWith(`${year}-`))
-//       ) {
-//         recordCount++;
-//         if (entry.approval_status === 'pending') {
-//           pendingCount++;
-//         }
-//       }
-//     });
-//   });
-//
-//   const dayCount = seenDates.size;
-//
-//   return { dayCount, pendingCount, recordCount };
-// });
 
 function isRiskDay(dateKey: string): boolean {
   const entries = getEntriesForDate(dateKey);
@@ -241,6 +244,8 @@ function goCurrentYear() {
               'is-selected': cell.day && isSelected(cell.date),
               'has-leave': cell.day && getEntriesForDate(cell.date).length > 0,
               'is-risk': cell.day && isRiskDay(cell.date),
+              'is-holiday':
+                cell.day && getHolidaysForDate(cell.date).length > 0,
             }"
             @click="onCellClick(cell)"
           >
@@ -253,6 +258,13 @@ function goCurrentYear() {
                 >
                   {{ getEntriesForDate(cell.date).length }}
                 </span>
+              </div>
+              <div
+                v-if="getHolidaysForDate(cell.date).length > 0"
+                class="holiday-tag"
+                :title="getHolidayLabel(getHolidaysForDate(cell.date))"
+              >
+                {{ getHolidayLabel(getHolidaysForDate(cell.date)) }}
               </div>
               <div class="leave-list">
                 <div
@@ -302,33 +314,6 @@ function goCurrentYear() {
 
     <!-- 年视图 -->
     <div v-else>
-      <!-- <div class="year-summary-bar">
-        <div class="summary-item">
-          <div class="summary-value">{{ yearSummary.recordCount }}</div>
-          <div class="summary-label">
-            {{ $t('page.leave.calendarView.summary.leaveRecords') }}
-          </div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value">{{ yearSummary.dayCount }}</div>
-          <div class="summary-label">
-            {{ $t('page.leave.calendarView.summary.coveredDays') }}
-          </div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value">{{ yearSummary.pendingCount }}</div>
-          <div class="summary-label">
-            {{ $t('page.leave.calendarView.summary.pending') }}
-          </div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value">{{ selectedYear }}</div>
-          <div class="summary-label">
-            {{ $t('page.leave.calendarView.summary.currentYear') }}
-          </div>
-        </div>
-      </div> -->
-
       <div class="year-grid">
         <div
           v-for="monthData in yearCalendarData"
@@ -364,7 +349,14 @@ function goCurrentYear() {
                     'has-leave':
                       cell.day && getEntriesForDate(cell.date).length > 0,
                     'is-risk': cell.day && isRiskDay(cell.date),
+                    'is-holiday':
+                      cell.day && getHolidaysForDate(cell.date).length > 0,
                   }"
+                  :title="
+                    cell.day && getHolidaysForDate(cell.date).length > 0
+                      ? getHolidayLabel(getHolidaysForDate(cell.date))
+                      : ''
+                  "
                   @click.stop="onCellClick(cell)"
                 >
                   <template v-if="cell.day">

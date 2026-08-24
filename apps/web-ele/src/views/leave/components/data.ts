@@ -29,11 +29,20 @@ export interface SearchForm {
   view_mode: 'detail' | 'standard';
 }
 
+/** 区域假日项（与 system-settings 中 RegionalHolidayItem 对应） */
+export interface RegionalHoliday {
+  date: string;
+  holiday_name: string;
+  region: string;
+}
+
 export interface Props {
   dayMap: Record<string, CalendarRecord[]>;
   selectedDateKey: string;
   currentYear: number;
   searchForm: SearchForm;
+  /** 区域假日列表；个人视角可不传 */
+  regionalHolidays?: RegionalHoliday[];
 }
 
 export const WEEK_KEYS = [

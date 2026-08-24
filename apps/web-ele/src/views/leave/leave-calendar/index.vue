@@ -396,6 +396,7 @@ onUnmounted(() => {
           :selected-date-key="selectedDateKey"
           :current-year="currentYear"
           :search-form="searchForm"
+          :regional-holidays="regionalHolidays"
           @select-date="onSelectDate"
           @panel-change="onPanelChange"
         />

@@ -191,6 +191,25 @@
   border-radius: 2px;
 }
 
+/* ===== 区域假日（月视图） ===== */
+.calendar-cell.is-holiday {
+  box-shadow: inset 3px 0 0 #ef4444;
+}
+
+.holiday-tag {
+  padding: 1px 5px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #dc2626;
+  white-space: nowrap;
+  background: rgb(239 68 68 / 12%);
+  border-radius: 3px;
+}
+
 /* ===== 年视图 ===== */
 .year-summary-bar {
   display: grid;
@@ -350,4 +369,14 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
+}
+
+/* ===== 区域假日（年视图） ===== */
+.mini-cell.is-holiday {
+  background: rgb(239 68 68 / 12%);
+}
+
+.mini-cell.is-holiday .mini-day-number {
+  font-weight: 700;
+  color: #dc2626;
 }
