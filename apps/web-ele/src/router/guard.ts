@@ -159,6 +159,7 @@ function setupAccessGuard(router: Router) {
           'system_settings',
           'data_migration',
           'access_control',
+          'customer_map',
         ];
         modulePermissions = coreModules.map((code) => ({
           module_code: code,

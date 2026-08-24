@@ -1,4 +1,5 @@
 export * from './business/claims';
+export * from './business/customers';
 export * from './business/dashboard';
 export * from './business/data-migration';
 export * from './business/employees';

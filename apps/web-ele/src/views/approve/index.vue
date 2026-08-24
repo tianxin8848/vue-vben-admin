@@ -168,12 +168,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page
-    title="审批管理"
-    description="查看待我审批的请假 / 报销申请，以及我已处理过的审批记录"
-    v-loading="loading"
-    :auto-content-height="true"
-  >
+  <Page title="审批管理" v-loading="loading" :auto-content-height="true">
     <div class="approve-layout h-full">
       <ElCard class="search-card">
         <div class="search-bar">

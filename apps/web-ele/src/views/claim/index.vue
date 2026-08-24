@@ -177,7 +177,6 @@ async function onBatchSubmit() {
 <template>
   <Page
     :title="$t('page.claim.title')"
-    :description="$t('page.claim.description')"
     :auto-content-height="true"
     v-loading="isLoading"
   >

@@ -41,6 +41,7 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
   EmployeeManageSettings: 'system_settings',
   EmployeeManageUserProfile: 'user_management',
   EmployeeManageUsers: 'user_management',
+  FuxiMapCustomers: 'customer_map',
   LeaveManageAdmin: 'leave_calendar',
   LeaveManageApprovals: 'approval_management',
   LeaveManageWorkflows: 'leave_workflows',
@@ -255,6 +256,16 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
       title: $t('page.employees.profile'),
     },
   },
+  customer_map: {
+    name: 'FuxiMapCustomers',
+    path: 'customers',
+    component: 'fuximap/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:map-pinned',
+      title: '客户分布',
+    },
+  },
 };
 
 /**
@@ -339,9 +350,8 @@ export function buildRoutesFromPermissions(
   addRoute('data_migration');
   addRoute('access_control');
 
-  // Only add the management parent route if it has visible children
+  // 只在 management 有可见子路由时才添加 EmployeeManage 父路由
   if (managementChildren.length > 0) {
-    // Find first visible child's path for redirect
     const firstChild = managementChildren[0];
     const redirectPath = firstChild
       ? `/employee/manage/${firstChild.path}`
@@ -359,6 +369,26 @@ export function buildRoutesFromPermissions(
       },
       children: managementChildren,
     });
+  }
+
+  // ─── 客户地图 (customer_map) ────────────────────────────────────────────
+  if (canViewModule('customer_map')) {
+    const customerTpl = MANAGEMENT_ROUTE_TEMPLATES.customer_map;
+    if (customerTpl) {
+      const child = cloneRoute(customerTpl);
+      routes.push({
+        name: 'FuxiMap',
+        path: '/fuximap',
+        component: 'BasicLayout',
+        redirect: '/fuximap/customers',
+        meta: {
+          icon: 'lucide:map',
+          order: 2,
+          title: '客户地图',
+        },
+        children: [child],
+      });
+    }
   }
 
   return routes;
