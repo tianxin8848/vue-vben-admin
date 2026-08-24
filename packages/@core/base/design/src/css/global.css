@@ -505,3 +505,129 @@
 :root .t-date-picker__cell-text {
   font-size: var(--font-size-base) !important;
 }
+
+/* ========== VXE Table（vxe-table / vxe-grid） —— 用户报的 vxe-cell ========== */
+
+/* 表格整体容器 */
+:root .vxe-table,
+:root .vxe-grid {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 表头（用户贴的 DOM：.vxe-header-cell--wrapper / .vxe-cell--title） ---------- */
+:root .vxe-table .vxe-header,
+:root .vxe-table .vxe-header--column,
+:root .vxe-table .vxe-header--row,
+:root .vxe-table .vxe-header--wrapper,
+:root .vxe-table .vxe-header-cell--wrapper,
+:root .vxe-table .vxe-cell--wrapper,
+:root .vxe-table .vxe-cell,
+:root .vxe-table .vxe-cell--title,
+:root .vxe-table .vxe-cell--title > span,
+:root .vxe-table .vxe-header--column .vxe-cell,
+:root .vxe-table .vxe-header--column .vxe-cell .vxe-cell--title,
+:root .vxe-table .vxe-header--column > .vxe-cell,
+:root .vxe-table colgroup + tbody .vxe-header--column .vxe-cell {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 单元格内容 ---------- */
+:root .vxe-table .vxe-body--row,
+:root .vxe-table .vxe-body--column,
+:root .vxe-table .vxe-body--column .vxe-cell,
+:root .vxe-table .vxe-body--column .vxe-cell .vxe-cell--content,
+:root .vxe-table .vxe-body--wrapper,
+:root .vxe-table .vxe-body--column > .vxe-cell,
+:root .vxe-table .vxe-table--body-wrapper .vxe-body--column,
+:root .vxe-table .vxe-table--body-wrapper .vxe-body--column .vxe-cell,
+:root .vxe-table .vxe-table--body-wrapper .vxe-body--column .vxe-cell .vxe-cell--content {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 表尾（合计/汇总行） ---------- */
+:root .vxe-table .vxe-footer--row,
+:root .vxe-table .vxe-footer--column,
+:root .vxe-table .vxe-footer--column .vxe-cell,
+:root .vxe-table .vxe-footer--wrapper {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 空数据 / 加载中 ---------- */
+:root .vxe-table .vxe-table--empty-block,
+:root .vxe-table .vxe-table--empty-text,
+:root .vxe-table .vxe-table--loading-text {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 工具栏 Toolbar ---------- */
+:root .vxe-table .vxe-toolbar,
+:root .vxe-table .vxe-toolbar--panel,
+:root .vxe-table .vxe-toolbar--btn-wrapper,
+:root .vxe-table .vxe-toolbar--btn,
+:root .vxe-table .vxe-toolbar--tip,
+:root .vxe-table .vxe-toolbar--setting,
+:root .vxe-table .vxe-toolbar--search {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 分页 Pager ---------- */
+:root .vxe-table .vxe-pager,
+:root .vxe-pager,
+:root .vxe-pager--prev-btn,
+:root .vxe-pager--next-btn,
+:root .vxe-pager--btn,
+:root .vxe-pager--num-btn,
+:root .vxe-pager--jump,
+:root .vxe-pager--jump .vxe-pager--jump-number,
+:root .vxe-pager--sizes,
+:root .vxe-pager--sizes .vxe-select--wrapper,
+:root .vxe-pager--total,
+:root .vxe-pager--total-count {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 自定义列 / 筛选 / 导出弹框 ---------- */
+:root .vxe-table .vxe-custom--wrapper,
+:root .vxe-table .vxe-custom--option,
+:root .vxe-table .vxe-filter--panel,
+:root .vxe-table .vxe-filter--item,
+:root .vxe-table .vxe-filter--btn-wrapper,
+:root .vxe-table .vxe-export--panel,
+:root .vxe-table .vxe-export--panel label,
+:root .vxe-table .vxe-export--panel .vxe-export--filename,
+:root .vxe-table .vxe-export--panel .vxe-export--sheet-name {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 展开行 / 树形展开图标旁的文字 ---------- */
+:root .vxe-table .vxe-table--expand-wrapper,
+:root .vxe-table .vxe-table--expand-content,
+:root .vxe-table .vxe-table--body-wrapper .vxe-body--expand,
+:root .vxe-table .vxe-cell--expand,
+:root .vxe-table .vxe-tree--btn-wrapper {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- vxe-select / vxe-input / vxe-date-picker 等内置表单控件文字 ---------- */
+:root .vxe-select--wrapper,
+:root .vxe-select--content,
+:root .vxe-select--option,
+:root .vxe-input--wrapper,
+:root .vxe-input--inner,
+:root .vxe-textarea--inner,
+:root .vxe-date-picker--input,
+:root .vxe-form--item-title,
+:root .vxe-form--item-content,
+:root .vxe-radio--wrapper,
+:root .vxe-checkbox--wrapper {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ---------- 模态弹窗（列设置/筛选） ---------- */
+:root .vxe-modal--wrapper,
+:root .vxe-modal--header,
+:root .vxe-modal--title,
+:root .vxe-modal--body,
+:root .vxe-modal--footer .vxe-modal--btn {
+  font-size: var(--font-size-base) !important;
+}
