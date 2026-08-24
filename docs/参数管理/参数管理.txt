@@ -35,3 +35,13 @@ curl -X 'PUT' \
   "end_date": "2026-08-21",
   "holiday_name": "string"
 }'
+
+curl -X 'DELETE' \
+  'http://10.254.253.187:8999/api/v1/system-settings/regional-holidays/range' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "region": "string",
+  "start_date": "2026-08-21",
+  "end_date": "2026-08-21"
+}'

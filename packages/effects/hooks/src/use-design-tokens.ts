@@ -10,6 +10,9 @@ import { convertToRgb, updateCSSVariables } from '@vben/utils';
 export function useAntdDesignTokens() {
   const rootStyles = getComputedStyle(document.documentElement);
 
+  // Ant Design Vue 默认基础字体大小
+  const ANTD_DEFAULT_FONT_SIZE = 14;
+
   const tokens = reactive({
     borderRadius: '' as any,
     colorBgBase: '',
@@ -25,12 +28,23 @@ export function useAntdDesignTokens() {
     colorSuccess: '',
     colorTextBase: '',
     colorWarning: '',
+    fontSize: ANTD_DEFAULT_FONT_SIZE,
     zIndexPopupBase: 2000, // 调整基础弹层层级，避免下拉等组件被弹窗或者最大化状态下的表格遮挡
   });
 
   const getCssVariableValue = (variable: string, isColor: boolean = true) => {
     const value = rootStyles.getPropertyValue(variable);
     return isColor ? `hsl(${value})` : value;
+  };
+
+  /**
+   * 计算字体缩放比例：以 Vben 默认 16px 为基准，
+   * 当前 --font-size-base 相对它的比例，用来等比缩放各 UI 库的默认字号
+   */
+  const getFontScale = () => {
+    const baseStr = getCssVariableValue('--font-size-base', false);
+    const baseNum = Number.parseFloat(baseStr) || 16;
+    return baseNum / 16;
   };
 
   watch(
@@ -65,6 +79,10 @@ export function useAntdDesignTokens() {
 
       tokens.colorBgLayout = getCssVariableValue('--background-deep');
       tokens.colorBgMask = getCssVariableValue('--overlay');
+
+      // 同步基础字体大小：按 Vben 基准缩放 AntD 默认 14px
+      const scale = getFontScale();
+      tokens.fontSize = ANTD_DEFAULT_FONT_SIZE * scale;
     },
     { immediate: true },
   );
@@ -164,6 +182,16 @@ export function useElementPlusDesignTokens() {
   const { isDark } = usePreferences();
   const rootStyles = getComputedStyle(document.documentElement);
 
+  // Element Plus 默认字体大小（基准 16px 下的值）
+  const EL_DEFAULT_FONT = {
+    extraLarge: 20,
+    large: 18,
+    medium: 16,
+    base: 14,
+    small: 13,
+    extraSmall: 12,
+  };
+
   const getCssVariableValueRaw = (variable: string) => {
     return rootStyles.getPropertyValue(variable);
   };
@@ -173,12 +201,25 @@ export function useElementPlusDesignTokens() {
     return isColor ? convertToRgb(`hsl(${value})`) : value;
   };
 
+  /**
+   * 计算字体缩放比例：以 Vben 默认 16px 为基准，
+   * 当前 --font-size-base 相对它的比例，用来等比缩放各 UI 库的默认字号
+   */
+  const getFontScale = () => {
+    const baseStr = getCssVariableValue('--font-size-base', false);
+    const baseNum = Number.parseFloat(baseStr) || 16;
+    return baseNum / 16;
+  };
+
   watch(
     () => preferences.theme,
     () => {
       const background = getCssVariableValue('--background');
       const border = getCssVariableValue('--border');
       const accent = getCssVariableValue('--accent');
+
+      // 计算字体缩放
+      const scale = getFontScale();
 
       const variables: Record<string, string> = {
         '--el-bg-color': background,
@@ -192,6 +233,15 @@ export function useElementPlusDesignTokens() {
         '--el-border-color-lighter': border,
 
         '--el-border-radius-base': getCssVariableValue('--radius', false),
+
+        // ===== 同步字体大小（按 Vben 基准等比缩放）=====
+        '--el-font-size-extra-large': `${EL_DEFAULT_FONT.extraLarge * scale}px`,
+        '--el-font-size-large': `${EL_DEFAULT_FONT.large * scale}px`,
+        '--el-font-size-medium': `${EL_DEFAULT_FONT.medium * scale}px`,
+        '--el-font-size-base': `${EL_DEFAULT_FONT.base * scale}px`,
+        '--el-font-size-small': `${EL_DEFAULT_FONT.small * scale}px`,
+        '--el-font-size-extra-small': `${EL_DEFAULT_FONT.extraSmall * scale}px`,
+
         '--el-color-danger': getCssVariableValue('--destructive-500'),
         '--el-color-danger-dark-2': isDark.value
           ? getCssVariableValue('--destructive-400')
@@ -324,9 +374,33 @@ export function useTDesignDesignTokens() {
   const { isDark } = usePreferences();
   const rootStyles = getComputedStyle(document.documentElement);
 
+  // TDesign 默认字体大小（基准 16px 下的值）
+  const TD_DEFAULT_FONT = {
+    systemBase: 14,
+    bodyExtraSmall: 12,
+    bodySmall: 13,
+    bodyMedium: 14,
+    bodyLarge: 16,
+    titleExtraSmall: 14,
+    titleSmall: 16,
+    titleMedium: 18,
+    titleLarge: 20,
+    titleExtraLarge: 24,
+  };
+
   const getCssVariableValue = (variable: string, isColor: boolean = true) => {
     const value = rootStyles.getPropertyValue(variable);
     return isColor ? convertToRgb(`hsl(${value})`) : value;
+  };
+
+  /**
+   * 计算字体缩放比例：以 Vben 默认 16px 为基准，
+   * 当前 --font-size-base 相对它的比例，用来等比缩放各 UI 库的默认字号
+   */
+  const getFontScale = () => {
+    const baseStr = getCssVariableValue('--font-size-base', false);
+    const baseNum = Number.parseFloat(baseStr) || 16;
+    return baseNum / 16;
   };
 
   /**
@@ -366,12 +440,27 @@ export function useTDesignDesignTokens() {
   watch(
     () => preferences.theme,
     () => {
+      // 计算字体缩放
+      const scale = getFontScale();
+
       const variables: Record<string, string> = {
         // 品牌色（主题色）、功能色
         ...getColorTokens('brand', 'primary'),
         ...getColorTokens('error', 'destructive'),
         ...getColorTokens('warning', 'warning'),
         ...getColorTokens('success', 'success'),
+
+        // ===== 同步字体大小（按 Vben 基准等比缩放）=====
+        '--td-font-size-system-base': `${TD_DEFAULT_FONT.systemBase * scale}px`,
+        '--td-font-size-body-extra-small': `${TD_DEFAULT_FONT.bodyExtraSmall * scale}px`,
+        '--td-font-size-body-small': `${TD_DEFAULT_FONT.bodySmall * scale}px`,
+        '--td-font-size-body-medium': `${TD_DEFAULT_FONT.bodyMedium * scale}px`,
+        '--td-font-size-body-large': `${TD_DEFAULT_FONT.bodyLarge * scale}px`,
+        '--td-font-size-title-extra-small': `${TD_DEFAULT_FONT.titleExtraSmall * scale}px`,
+        '--td-font-size-title-small': `${TD_DEFAULT_FONT.titleSmall * scale}px`,
+        '--td-font-size-title-medium': `${TD_DEFAULT_FONT.titleMedium * scale}px`,
+        '--td-font-size-title-large': `${TD_DEFAULT_FONT.titleLarge * scale}px`,
+        '--td-font-size-title-extra-large': `${TD_DEFAULT_FONT.titleExtraLarge * scale}px`,
 
         // 文字颜色
         '--td-text-color-anti': getCssVariableValue('--primary-foreground'),

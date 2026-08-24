@@ -1,1 +1,244 @@
 @import '@vben/tailwind-config/theme';
+
+/* ==========================================================================
+   全局字体大小联动补丁
+   --------------------------------------------------------------------------
+   调整偏好设置中的「字体大小」后，--font-size-base 会变化，
+   html { font-size: var(--font-size-base) } 也会跟着变。
+   但很多 UI 组件库的 Input/Table/Select 等内部节点
+   在 SCSS 编译阶段就把 font-size 固化成具体 px 值了，
+   无法通过 CSS 变量动态切换。
+   这里用全局选择器把这些节点覆盖为 inherit（继承 html 字号），
+   保证它们能随偏好设置实时变化。
+   ========================================================================== */
+
+/* ========== Element Plus ========== */
+
+/* Input / Autocomplete / 数字输入框 / 搜索框 */
+.el-input__wrapper .el-input__inner,
+.el-input__wrapper .el-input__inner::placeholder,
+.el-textarea__inner,
+.el-textarea__inner::placeholder,
+.el-input-number__decrease,
+.el-input-number__increase,
+.el-input-number .el-input__inner,
+.el-autocomplete-suggestion__list li,
+.el-select-v2__wrapper .el-select-v2__placeholder,
+.el-select-v2__wrapper .el-select-v2__selection,
+.el-select__selected-item,
+.el-select__placeholder,
+.el-select__tags .el-tag__text {
+  font-size: inherit;
+}
+
+/* Select 下拉面板 / Cascader / Time / Date / DateTime picker 弹层 */
+.el-select-dropdown__item,
+.el-cascader-node__label,
+.el-cascader-menu__item,
+.el-time-panel__content::before,
+.el-time-panel__content::after,
+.el-time-spinner__item,
+.el-time-panel__btn,
+.el-picker-panel,
+.el-date-picker__header-label,
+.el-date-table th,
+.el-date-table td .cell,
+.el-month-table td .cell,
+.el-year-table td .cell,
+.el-picker-panel__shortcut,
+.el-date-picker__time-header .el-input__inner {
+  font-size: inherit;
+}
+
+/* Table（表头 + 单元格 + 空数据 + 底部分页） */
+.el-table th .cell,
+.el-table td .cell,
+.el-table__empty-block,
+.el-table__empty-text,
+.el-table__expand-icon,
+.el-table-filter__list li,
+.el-table-filter__bottom button,
+.el-pagination,
+.el-pagination .el-pager li,
+.el-pagination button,
+.el-pagination__total,
+.el-pagination__jump,
+.el-pagination__sizes .el-select .el-input__wrapper .el-input__inner {
+  font-size: inherit;
+}
+
+/* Form / Radio / Checkbox / Switch / Transfer */
+.el-form-item__label,
+.el-form-item__error,
+.el-radio__label,
+.el-checkbox__label,
+.el-transfer-panel__header,
+.el-transfer-panel__filter .el-input__inner,
+.el-transfer-panel__list .el-transfer-panel__item {
+  font-size: inherit;
+}
+
+/* Dialog / Drawer / Message / Notification / Popconfirm / Card */
+.el-dialog__title,
+.el-dialog__body,
+.el-dialog__footer .el-button,
+.el-drawer__header,
+.el-drawer__body,
+.el-message,
+.el-notification__title,
+.el-notification__content,
+.el-popconfirm__action .el-button,
+.el-card__header,
+.el-card__body,
+.el-descriptions__label,
+.el-descriptions__content,
+.el-step__title,
+.el-step__description {
+  font-size: inherit;
+}
+
+/* ========== Ant Design Vue ========== */
+
+/* Input / TextArea / 数字输入框 */
+.ant-input,
+.ant-input::placeholder,
+.ant-input-affix-wrapper .ant-input,
+.ant-input-search .ant-input,
+.ant-input-password input.ant-input,
+.ant-input-number-input,
+.ant-input-number-input::placeholder {
+  font-size: inherit;
+}
+
+/* Select / TreeSelect / Cascader / AutoComplete / DatePicker */
+.ant-select-selector,
+.ant-select-selection-placeholder,
+.ant-select-selection-item,
+.ant-select-selection-search input,
+.ant-select-dropdown .ant-select-item,
+.ant-select-dropdown .ant-select-item-option-content,
+.ant-cascader-menu-item,
+.ant-picker,
+.ant-picker-input input,
+.ant-picker-input input::placeholder,
+.ant-picker-panel,
+.ant-picker-header-view,
+.ant-picker-content th,
+.ant-picker-cell-inner,
+.ant-picker-time-panel-cell-inner,
+.ant-picker-ranges,
+.ant-picker-footer {
+  font-size: inherit;
+}
+
+/* Table（表头 + 单元格 + 空数据） */
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td,
+.ant-table-placeholder,
+.ant-table-expanded-row,
+.ant-pagination,
+.ant-pagination-item,
+.ant-pagination-item a,
+.ant-pagination-prev button,
+.ant-pagination-next button,
+.ant-pagination-options-size-changer .ant-select-selector,
+.ant-pagination-options-quick-jumper input,
+.ant-pagination-total-text {
+  font-size: inherit;
+}
+
+/* Form / Radio / Checkbox / Switch */
+.ant-form-item-label > label,
+.ant-form-item-explain-error,
+.ant-radio-wrapper span.ant-radio + *:not(.ant-radio),
+.ant-checkbox-wrapper span.ant-checkbox + *:not(.ant-checkbox),
+.ant-transfer-list-header,
+.ant-transfer-list-content-item {
+  font-size: inherit;
+}
+
+/* Modal / Drawer / Message / Notification / Popconfirm / Card / Descriptions */
+.ant-modal-title,
+.ant-modal-body,
+.ant-modal-footer .ant-btn,
+.ant-drawer-title,
+.ant-drawer-body,
+.ant-drawer-footer .ant-btn,
+.ant-message,
+.ant-notification-notice-message,
+.ant-notification-notice-description,
+.ant-popover-inner,
+.ant-popconfirm-title,
+.ant-popconfirm-description,
+.ant-card-head-title,
+.ant-card-body,
+.ant-descriptions-item-label,
+.ant-descriptions-item-content,
+.ant-steps-item-title,
+.ant-steps-item-description,
+.ant-tabs-tab,
+.ant-tag {
+  font-size: inherit;
+}
+
+/* ========== TDesign ========== */
+
+/* Input / TextArea / 数字输入框 */
+.t-input,
+.t-input__inner,
+.t-input__inner::placeholder,
+.t-textarea__inner,
+.t-textarea__inner::placeholder,
+.t-input-number,
+.t-input-number__input,
+.t-input-adornment__prepend,
+.t-input-adornment__append {
+  font-size: inherit;
+}
+
+/* Select / TreeSelect / Cascader / DatePicker */
+.t-select,
+.t-select__placeholder,
+.t-select__single,
+.t-select__input-wrap,
+.t-select-option,
+.t-cascader-item,
+.t-date-picker,
+.t-date-picker__panel,
+.t-date-picker__cells,
+.t-date-picker__cell,
+.t-date-picker__control,
+.t-date-picker__control .t-input__inner {
+  font-size: inherit;
+}
+
+/* Table（表头 + 单元格 + 空数据 + 分页） */
+.t-table th,
+.t-table td,
+.t-table__cell,
+.t-table--empty,
+.t-pagination,
+.t-pagination .t-is-current,
+.t-pagination button,
+.t-pagination__total {
+  font-size: inherit;
+}
+
+/* Form / Radio / Checkbox */
+.t-form__label,
+.t-radio,
+.t-checkbox {
+  font-size: inherit;
+}
+
+/* Dialog / Drawer / Popup / Card */
+.t-dialog__header,
+.t-dialog__body,
+.t-dialog__footer .t-button,
+.t-drawer__header,
+.t-drawer__body,
+.t-popup__content,
+.t-card__title,
+.t-card__body {
+  font-size: inherit;
+}
