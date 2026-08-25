@@ -213,7 +213,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:calendar-check',
-      title: '请假管理',
+      title: '请假人员管理',
     },
   },
   leave_workflows: {
@@ -223,7 +223,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:git-branch',
-      title: '请假流程',
+      title: '流程中心',
     },
   },
   system_settings: {

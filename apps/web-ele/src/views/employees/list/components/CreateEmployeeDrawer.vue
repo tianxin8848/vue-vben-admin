@@ -253,7 +253,7 @@ defineExpose({ open });
           </p>
         </div>
         <div v-else class="text-sm text-muted-foreground">
-          暂无可选模块，请先到"系统参数维护"中配置
+          暂无可选模块，请先到"系统参数管理维护"中配置
         </div>
       </ElFormItem>
     </ElForm>

@@ -146,7 +146,7 @@ function setupAccessGuard(router: Router) {
       let modulePermissions = (userInfo as any)?.module_permissions || [];
 
       // 超级管理员（admin 角色）如果没有 module_permissions，
-      // 只授予核心管理模块权限（用户管理、系统参数、数据处理、门禁维护）
+      // 只授予核心管理模块权限（用户管理、系统参数管理、数据处理、门禁维护）
       if (
         modulePermissions.length === 0 &&
         userInfo?.roles?.includes('admin')

@@ -101,7 +101,7 @@ export namespace SystemSettingsApi {
 /**
  * 全量模块目录（前端固定维护）
  *
- * 保证系统参数页面的模块列表始终展示所有可选模块，勾选状态仅控制是否启用，
+ * 保证系统参数管理页面的模块列表始终展示所有可选模块，勾选状态仅控制是否启用，
  * 不会因为取消勾选并保存而导致行从界面中消失。
  * module_code 与 router/module-permission-map.ts 中的定义保持一致。
  */

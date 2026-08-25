@@ -88,7 +88,7 @@ function handleRemove(idx: number) {
     </div>
 
     <p class="mt-2 text-xs text-muted-foreground">
-      保存系统参数后，员工报销页面的“报销理由”下拉会直接读取这里的配置。
+      保存系统参数管理后，员工报销页面的“报销理由”下拉会直接读取这里的配置。
     </p>
   </section>
 </template>

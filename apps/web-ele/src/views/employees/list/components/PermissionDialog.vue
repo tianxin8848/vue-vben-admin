@@ -102,7 +102,7 @@ function handleClose() {
   >
     <div v-if="!moduleOptions.length" class="py-6">
       <ElEmpty
-        description="暂无可分配的模块，请先在系统参数维护中配置模块清单"
+        description="暂无可分配的模块，请先在系统参数管理维护中配置模块清单"
       />
     </div>
 

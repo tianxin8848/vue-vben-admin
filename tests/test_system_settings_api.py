@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-系统参数 (System Settings) API 全流程测试脚本
+系统参数管理 (System Settings) API 全流程测试脚本
 
 后端: http://10.254.253.187:8999
 测试账号: admin / Cisco@123 (管理员权限)
@@ -11,9 +11,9 @@
   - 每次 PUT 前需 GET 当前配置, 合并修改后再提交
   - employee_self_editable_fields 只接受 employee_profile_field_catalog 中的 code
 
-测试范围 (系统参数 tag 下全部 7 个接口):
-  1. GET    /api/v1/system-settings                              — 获取系统参数
-  2. PUT    /api/v1/system-settings                              — 更新系统参数(全量替换)
+测试范围 (系统参数管理 tag 下全部 7 个接口):
+  1. GET    /api/v1/system-settings                              — 获取系统参数管理
+  2. PUT    /api/v1/system-settings                              — 更新系统参数管理(全量替换)
   3. PUT    /api/v1/system-settings/regional-holidays             — 新增/更新单条地区假期
   4. DELETE /api/v1/system-settings/regional-holidays             — 删除单条地区假期
   5. PUT    /api/v1/system-settings/regional-holidays/range       — 新增/更新日期范围地区假期
@@ -22,7 +22,7 @@
 
 完整测试流程 (20 步):
   Step 1:  登录 (cookie session)
-  Step 2:  GET 当前系统参数 (基线快照)
+  Step 2:  GET 当前系统参数管理 (基线快照)
   Step 3:  PUT 更新 departments (合并提交)
   Step 4:  GET 验证 departments 更新
   Step 5:  PUT 更新 positions (合并提交)
@@ -40,7 +40,7 @@
   Step 17: DELETE 删除日期范围地区假期
   Step 18: POST 批量导入地区假期 (JSON 文件) — ⚠️ 接口返回 400, 疑似 bug
   Step 19: GET 验证导入结果 — ⏭️ 跳过 (Step 18 未成功)
-  Step 20: 恢复原始系统参数 (清理)
+  Step 20: 恢复原始系统参数管理 (清理)
 
 重要发现:
   - PUT /system-settings 是全量替换, 未传字段会被清空 → 需先 GET 再合并 PUT
@@ -113,17 +113,17 @@ UPDATE_FIELDS = [
 
 
 def get_settings() -> dict:
-    """GET 当前系统参数"""
+    """GET 当前系统参数管理"""
     resp = session.get(API, timeout=10)
-    assert_eq(resp.status_code, 200, "GET 系统参数返回 200")
+    assert_eq(resp.status_code, 200, "GET 系统参数管理返回 200")
     return resp.json()
 
 
 def put_settings(payload: dict) -> dict:
-    """PUT 更新系统参数 (全量替换)"""
+    """PUT 更新系统参数管理 (全量替换)"""
     resp = session.put(API, json=payload, timeout=10)
     show("PUT /system-settings", resp)
-    assert_eq(resp.status_code, 200, "PUT 系统参数返回 200")
+    assert_eq(resp.status_code, 200, "PUT 系统参数管理返回 200")
     return resp.json()
 
 
@@ -150,9 +150,9 @@ assert_eq(resp.status_code, 200, "登录返回 200")
 print("  ✓ 登录成功, session cookie 已保存")
 
 
-# ─── Step 2: GET 当前系统参数 (基线) ───────────────────────────────────────────
+# ─── Step 2: GET 当前系统参数管理 (基线) ───────────────────────────────────────────
 
-section("Step 2: GET 系统参数 (基线快照)")
+section("Step 2: GET 系统参数管理 (基线快照)")
 
 original_settings = get_settings()
 show("GET /system-settings (baseline)", session.get(API, timeout=10))
@@ -489,9 +489,9 @@ else:
     print("  ⏭️  跳过 (Step 18 导入未成功)")
 
 
-# ─── Step 20: 恢复原始系统参数 (清理) ─────────────────────────────────────────
+# ─── Step 20: 恢复原始系统参数管理 (清理) ─────────────────────────────────────────
 
-section("Step 20: 恢复原始系统参数")
+section("Step 20: 恢复原始系统参数管理")
 
 restore_payload = {
     "departments": original_settings.get("departments", []),
@@ -535,7 +535,7 @@ print("""
   测试结果汇总:
   ─────────────────────────────────────────────────────────────
   Step 1:  登录                          ✓
-  Step 2:  GET 系统参数(基线)             ✓
+  Step 2:  GET 系统参数管理(基线)             ✓
   Step 3:  PUT departments (合并提交)     ✓
   Step 4:  GET 验证 departments          ✓
   Step 5:  PUT positions (合并提交)       ✓

@@ -251,7 +251,7 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
 };
 ```
 
-`module_code` 值必须与后端「系统参数维护」页面配置的模块代码一致。
+`module_code` 值必须与后端「系统参数管理维护」页面配置的模块代码一致。
 
 ### 第 4 步：刷新验证
 

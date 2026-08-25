@@ -36,7 +36,7 @@
 | `leave_calendar` | 请假管理 | ✅ |
 | `leave_workflows` | 请假流程维护 | ✅ |
 | `approval_management` | 审批管理 | ✅ |
-| `system_settings` | 系统参数维护 | ✅ |
+| `system_settings` | 系统参数管理维护 | ✅ |
 | `data_migration` | 数据处理维护 | ✅ |
 | `access_control` | 门禁ID维护 | ✅ |
 | `claim_management` | 报销 Claim | ✅ |
@@ -66,13 +66,13 @@
 | `employee_password` | 修改密码 | ✅ |
 | `employee_leave` | 员工请假 | ✅ |
 | `user_management` | 用户管理 | ✅ |
-| `system_settings` | 系统参数维护 | ✅ |
+| `system_settings` | 系统参数管理维护 | ✅ |
 | `data_migration` | 数据处理维护 | ✅ |
 | `claim_management` | 报销 Claim | ✅ |
 
 **缺少的模块**: `leave_calendar`（请假管理）、`leave_workflows`（请假流程）、`approval_management`（审批管理）、`access_control`（门禁ID维护）、`admin_dashboard`
 
-**对应的前端路由**: 个人中心（无"审批记录"）+ 员工管理（仅员工列表、系统参数、数据处理维护）
+**对应的前端路由**: 个人中心（无"审批记录"）+ 员工管理（仅员工列表、系统参数管理、数据处理维护）
 
 ---
 
@@ -93,11 +93,11 @@
 
 > ⚠️ **注意**: 超级管理员的 `module_permissions` 为空数组。前端检测到 `roles` 包含 `admin` 且权限列表为空时，会自动授予 **4 个核心管理模块** 权限作为兜底：
 > - `user_management` → 用户列表 `/employee/manage/users`
-> - `system_settings` → 系统参数 `/employee/manage/settings`
+> - `system_settings` → 系统参数管理 `/employee/manage/settings`
 > - `data_migration` → 数据处理维护 `/employee/manage/data-migration`
 > - `access_control` → 门禁维护 `/employee/manage/access-control`
 
-**对应的前端路由**: 个人中心 + 员工管理（仅 4 个核心子模块：用户列表、系统参数、数据处理维护、门禁管理）。不包含请假管理、审批管理、审批记录等。
+**对应的前端路由**: 个人中心 + 员工管理（仅 4 个核心子模块：用户列表、系统参数管理、数据处理维护、门禁管理）。不包含请假管理、审批管理、审批记录等。
 
 ---
 

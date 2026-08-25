@@ -36,7 +36,7 @@
     }
   },
   "leave": {
-    "title": "请假管理",
+    "title": "请假流程管理",
     "list": "请假申请(管理员)",
     "detail": "申请详情",
     "workflow": "审批流程",
@@ -318,7 +318,7 @@
   },
   "system": {
     "title": "系统设置",
-    "settings": "系统参数",
+    "settings": "系统参数管理",
     "holidays": "区域节日",
     "regionalHolidays": "区域节日",
     "holidayRange": "假期范围"

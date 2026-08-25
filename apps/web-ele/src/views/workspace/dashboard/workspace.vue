@@ -48,7 +48,7 @@ const accessItems: AccessItem[] = [
   },
 ];
 
-// 系统参数配置快捷导航：点击跳转到 settings 页面对应分区
+// 系统参数管理配置快捷导航：点击跳转到 settings 页面对应分区
 const settingsQuickNavItems: WorkbenchQuickNavItem[] = [
   {
     color: '#1fdaca',
@@ -93,7 +93,7 @@ function handleSettingsNavClick(item: WorkbenchQuickNavItem) {
   <Page>
     <WorkbenchQuickNav
       :items="settingsQuickNavItems"
-      title="系统参数配置"
+      title="系统参数管理配置"
       class="mb-4"
       @click="handleSettingsNavClick"
     />

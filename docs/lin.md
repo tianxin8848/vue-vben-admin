@@ -13,7 +13,7 @@
 - [三、请假管理模块](#三请假管理模块)
 - [四、请假流程模块](#四请假流程模块)
 - [五、报销管理模块](#五报销管理模块)
-- [六、系统参数模块](#六系统参数模块)
+- [六、系统参数管理模块](#六系统参数管理模块)
 - [七、数据迁移模块](#七数据迁移模块)
 - [附录：系统页面路由](#附录系统页面路由)
 - [lin 账号权限汇总](#lin-账号权限汇总)
@@ -86,7 +86,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/auth/me'
     {"module_code":"leave_calendar","module_name":"请假管理","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
     {"module_code":"leave_workflows","module_name":"请假流程维护","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
     {"module_code":"approval_management","module_name":"审批管理","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
-    {"module_code":"system_settings","module_name":"系统参数维护","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
+    {"module_code":"system_settings","module_name":"系统参数管理维护","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
     {"module_code":"data_migration","module_name":"数据处理维护","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
     {"module_code":"access_control","module_name":"门禁ID维护","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false},
     {"module_code":"claim_management","module_name":"报销 Claim","can_view":true,"can_create":false,"can_edit":false,"can_delete":false,"can_approve":false}
@@ -1246,7 +1246,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/export' \
 
 ---
 
-## 六、系统参数模块
+## 六、系统参数管理模块
 
 ### 45. 获取系统设置
 
@@ -1273,7 +1273,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/system-settings'
     {"module_code":"leave_calendar","module_name":"请假管理"},
     {"module_code":"leave_workflows","module_name":"请假流程维护"},
     {"module_code":"approval_management","module_name":"审批管理"},
-    {"module_code":"system_settings","module_name":"系统参数维护"},
+    {"module_code":"system_settings","module_name":"系统参数管理维护"},
     {"module_code":"data_migration","module_name":"数据处理维护"},
     {"module_code":"access_control","module_name":"门禁ID维护"},
     {"module_code":"claim_management","module_name":"报销 Claim"}
@@ -1548,7 +1548,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backu
 | leave_calendar | 请假管理 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | leave_workflows | 请假流程维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | approval_management | 审批管理 | ✅ | ❌ | ❌ | ❌ | ❌ |
-| system_settings | 系统参数维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
+| system_settings | 系统参数管理维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | data_migration | 数据处理维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | access_control | 门禁ID维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | claim_management | 报销 Claim | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -1826,7 +1826,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/auth/me'
     {"module_code":"leave_calendar","module_name":"请假管理","can_view":true,...},
     {"module_code":"leave_workflows","module_name":"请假流程维护","can_view":true,...},
     {"module_code":"approval_management","module_name":"审批管理","can_view":true,...},
-    {"module_code":"system_settings","module_name":"系统参数维护","can_view":true,...},
+    {"module_code":"system_settings","module_name":"系统参数管理维护","can_view":true,...},
     {"module_code":"data_migration","module_name":"数据处理维护","can_view":true,...},
     {"module_code":"access_control","module_name":"门禁ID维护","can_view":true,...},
     {"module_code":"claim_management","module_name":"报销 Claim","can_view":true,...}
@@ -2287,7 +2287,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/claims/attachments/{
 
 ---
 
-## 六、系统参数模块
+## 六、系统参数管理模块
 
 ### 45. 获取系统设置
 ```bash
@@ -2424,7 +2424,7 @@ curl -b /tmp/cookies.txt 'http://10.254.253.187:8999/api/v1/data-migration/backu
 | leave_calendar | 请假管理 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | leave_workflows | 请假流程维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | approval_management | 审批管理 | ✅ | ❌ | ❌ | ❌ | ❌ |
-| system_settings | 系统参数维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
+| system_settings | 系统参数管理维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | data_migration | 数据处理维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | access_control | 门禁ID维护 | ✅ | ❌ | ❌ | ❌ | ❌ |
 | claim_management | 报销 Claim | ✅ | ❌ | ❌ | ❌ | ❌ |

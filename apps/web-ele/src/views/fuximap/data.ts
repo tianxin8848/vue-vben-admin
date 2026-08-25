@@ -49,6 +49,7 @@ export function buildColumns(): VxeGridProps['columns'] {
       slots: { default: 'coords' },
       title: '经纬度',
       width: 220,
+      visible: false,
     },
     {
       field: 'phone',

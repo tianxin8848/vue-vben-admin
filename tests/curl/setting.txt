@@ -3,7 +3,7 @@ curl -s -c /tmp/sysparam_cookie.txt -X POST http://10.254.253.187:8999/api/v1/au
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"Cisco@123"}'
 
-# 2. GET 系统参数（基线）
+# 2. GET 系统参数管理（基线）
 curl -s -b /tmp/sysparam_cookie.txt http://10.254.253.187:8999/api/v1/system-settings
 
 # 3. PUT 全量更新（⚠️ 全量替换，未传字段会被清空）

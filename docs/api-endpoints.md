@@ -10,7 +10,7 @@
 |------|--------|------|
 | 认证（共用） | 5 | 登录/登出/注册/改密/获取当前用户 |
 | 员工端（/me/*） | 22 | 员工自助：个人信息、请假、报销 |
-| 管理端 | 47 | 管理员功能：员工管理、门禁、请假审批、流程、系统参数、数据迁移 |
+| 管理端 | 47 | 管理员功能：员工管理、门禁、请假审批、流程、系统参数管理、数据迁移 |
 | **合计** | **74** | |
 
 ---
@@ -137,7 +137,7 @@
 | PATCH | `/api/v1/claims/{claim_id}/approval` | 审批一条报销 | 需登录（审批人） |
 | GET | `/api/v1/claims/attachments/{username}/{file_name}` | 读取报销附件 | 需登录（申请人/审批人/管理员） |
 
-### 3.6 系统参数（6 个）— 需要 `system_settings`
+### 3.6 系统参数管理（6 个）— 需要 `system_settings`
 
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
@@ -170,7 +170,7 @@
 | `leave_workflows` | 请假流程配置 | 5 | 0 |
 | `approval_management` | 审批管理 | 2（审批接口） | 0 |
 | `claim_management` | 报销管理 | 5 | 9 |
-| `system_settings` | 系统参数 | 6 | 0 |
+| `system_settings` | 系统参数管理 | 6 | 0 |
 | `data_migration` | 数据迁移 | 5 | 0 |
 | `employee_leave` | 员工请假申请 | 0 | 7 |
 | —（仅需登录） | 个人信息/审批记录 | 0 | 6 |
@@ -186,7 +186,7 @@
 | 路由路径 | 页面名称 | 对应模块权限 | 主要接口 |
 |---------|---------|-------------|---------|
 | `/employee/manage/users` | 用户列表 | `user_management` | `/api/v1/employees` |
-| `/employee/manage/settings` | 系统参数 | `system_settings` | `/api/v1/system-settings` |
+| `/employee/manage/settings` | 系统参数管理 | `system_settings` | `/api/v1/system-settings` |
 | `/employee/manage/data-migration` | 数据处理维护 | `data_migration` | `/api/v1/data-migration/*` |
 | `/employee/manage/access-control` | 门禁维护 | `access_control` | `/api/v1/access-control/*` |
 | `/employee/manage/leave` | 请假管理 | `leave_calendar` | `/api/v1/leave-requests` |

@@ -294,7 +294,7 @@ onMounted(() => {
           />
           <div class="mt-4 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">
-              保存系统参数
+              保存系统参数管理
             </ElButton>
           </div>
 
@@ -321,7 +321,7 @@ onMounted(() => {
           </div>
           <div class="mt-6 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">
-              保存系统参数
+              保存系统参数管理
             </ElButton>
           </div>
 

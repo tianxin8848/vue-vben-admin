@@ -360,7 +360,9 @@ function clearModules() {
     </div>
 
     <div class="flex justify-end pt-6">
-      <ElButton type="primary" @click="$emit('save')">保存系统参数</ElButton>
+      <ElButton type="primary" @click="$emit('save')">
+保存系统参数管理
+</ElButton>
     </div>
   </div>
 
