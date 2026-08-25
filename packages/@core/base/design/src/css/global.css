@@ -112,6 +112,70 @@
 }
 
 /* =========================================================
+   ⭐⭐⭐ Button（用户贴的：.el-button.el-button--small 表格内按钮）⭐⭐⭐
+   覆盖所有尺寸（large/default/small）+ 所有形态（文本/链接/朴素/圆角/圆形）
+   + 内部文字 span + 表格/弹窗/vxe 组件内部嵌套场景
+   ========================================================= */
+:root .el-button,
+:root .el-button span,
+:root .el-button > span,
+:root .el-button .el-button__text,
+:root .el-button--default,
+:root .el-button--default > span,
+:root .el-button--small,
+:root .el-button--small > span,
+:root .el-button--large,
+:root .el-button--large > span,
+:root .el-button--primary,
+:root .el-button--primary > span,
+:root .el-button--success,
+:root .el-button--success > span,
+:root .el-button--warning,
+:root .el-button--warning > span,
+:root .el-button--danger,
+:root .el-button--danger > span,
+:root .el-button--info,
+:root .el-button--info > span,
+:root .el-button--text,
+:root .el-button--text > span,
+:root .el-button--link,
+:root .el-button--link > span,
+:root .el-button--plain,
+:root .el-button--plain > span,
+:root .el-button.is-disabled,
+:root .el-button.is-disabled > span,
+/* 表格/弹窗/vxe 内部嵌套的按钮 */
+:root .el-table .el-button,
+:root .el-table .el-button > span,
+:root .el-table .el-button--small,
+:root .el-table .el-button--small > span,
+:root .el-table td .cell .el-button,
+:root .el-table td .cell .el-button > span,
+:root .vxe-table .el-button,
+:root .vxe-table .el-button > span,
+:root .vxe-table .el-button--small,
+:root .vxe-table .el-button--small > span,
+:root .vxe-table .vxe-cell .el-button,
+:root .vxe-table .vxe-cell .el-button > span,
+:root .el-form .el-button,
+:root .el-form .el-button > span,
+:root .el-dialog .el-button,
+:root .el-dialog .el-button > span,
+:root .el-drawer .el-button,
+:root .el-drawer .el-button > span {
+  font-size: var(--font-size-base) !important;
+}
+
+/* 按钮组 / 链接文字 */
+:root .el-button-group .el-button,
+:root .el-button-group .el-button > span,
+:root .el-link,
+:root .el-link .el-link--inner,
+:root .el-link__inner {
+  font-size: var(--font-size-base) !important;
+}
+
+/* =========================================================
    ⭐⭐⭐ Segmented（用户点名：el-segmented__item-label）⭐⭐⭐
    用最深的组合选择器 + !important 确保覆盖组件库的组合规则
    ========================================================= */
@@ -327,6 +391,54 @@
   font-size: var(--font-size-base) !important;
 }
 
+/* ===== Ant Design Vue：ant-btn / Link 所有尺寸 + 表格/弹窗内部嵌套 ===== */
+:root .ant-btn,
+:root .ant-btn > span,
+:root .ant-btn-default,
+:root .ant-btn-default > span,
+:root .ant-btn-primary,
+:root .ant-btn-primary > span,
+:root .ant-btn-dangerous,
+:root .ant-btn-dangerous > span,
+:root .ant-btn-dashed,
+:root .ant-btn-dashed > span,
+:root .ant-btn-text,
+:root .ant-btn-text > span,
+:root .ant-btn-link,
+:root .ant-btn-link > span,
+:root .ant-btn-sm,
+:root .ant-btn-sm > span,
+:root .ant-btn-lg,
+:root .ant-btn-lg > span,
+:root .ant-btn-background-ghost,
+:root .ant-btn-background-ghost > span,
+/* 表格/弹窗内部嵌套的按钮 */
+:root .ant-table .ant-btn,
+:root .ant-table .ant-btn > span,
+:root .ant-table .ant-btn-sm,
+:root .ant-table .ant-btn-sm > span,
+:root .ant-table-tbody > tr > td .ant-btn,
+:root .ant-table-tbody > tr > td .ant-btn > span,
+:root .vxe-table .ant-btn,
+:root .vxe-table .ant-btn > span,
+:root .vxe-table .vxe-cell .ant-btn,
+:root .vxe-table .vxe-cell .ant-btn > span,
+:root .ant-modal-footer .ant-btn,
+:root .ant-modal-footer .ant-btn > span,
+:root .ant-drawer-footer .ant-btn,
+:root .ant-drawer-footer .ant-btn > span {
+  font-size: var(--font-size-base) !important;
+}
+
+/* Ant Design Vue Link 组件 */
+:root .ant-typography a,
+:root a.ant-typography,
+:root .ant-typography-expand,
+:root .ant-typography-edit,
+:root .ant-typography-copy {
+  font-size: var(--font-size-base) !important;
+}
+
 /* Segmented / Tabs Content / Breadcrumb / Dropdown */
 :root .ant-segmented,
 :root .ant-segmented-item,
@@ -443,6 +555,47 @@
 :root .t-popup__content,
 :root .t-card__title,
 :root .t-card__body {
+  font-size: var(--font-size-base) !important;
+}
+
+/* ===== TDesign：t-button 所有尺寸/主题 + 表格/弹窗内部嵌套 ===== */
+:root .t-button,
+:root .t-button__text,
+:root .t-button > span,
+:root .t-button--theme-default,
+:root .t-button--theme-primary,
+:root .t-button--theme-danger,
+:root .t-button--theme-warning,
+:root .t-button--theme-success,
+:root .t-button--variant-base,
+:root .t-button--variant-outline,
+:root .t-button--variant-dashed,
+:root .t-button--variant-text,
+:root .t-button--size-small,
+:root .t-button--size-small .t-button__text,
+:root .t-button--size-medium,
+:root .t-button--size-medium .t-button__text,
+:root .t-button--size-large,
+:root .t-button--size-large .t-button__text,
+/* 表格/弹窗内部嵌套 */
+:root .t-table .t-button,
+:root .t-table .t-button .t-button__text,
+:root .t-table td .t-button,
+:root .t-table td .t-button .t-button__text,
+:root .vxe-table .t-button,
+:root .vxe-table .t-button .t-button__text,
+:root .vxe-table .vxe-cell .t-button,
+:root .vxe-table .vxe-cell .t-button .t-button__text,
+:root .t-dialog__footer .t-button,
+:root .t-dialog__footer .t-button .t-button__text,
+:root .t-drawer__footer .t-button,
+:root .t-drawer__footer .t-button .t-button__text,
+/* 按钮组 / 链接 */
+:root .t-button-group .t-button,
+:root .t-link,
+:root .t-link .t-link__content,
+:root .t-link__content,
+:root .t-space .t-button {
   font-size: var(--font-size-base) !important;
 }
 

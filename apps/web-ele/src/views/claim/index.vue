@@ -78,7 +78,6 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
     rowConfig: { keyField: 'id' },
     columns: tabColumns.value.my,
     proxyConfig: { enabled: false },
-    height: 'auto',
     keepSource: true,
     toolbarConfig: sharedToolbarConfig.value,
     // 仅草稿可勾选（用于批量提交）

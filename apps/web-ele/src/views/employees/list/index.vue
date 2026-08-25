@@ -356,9 +356,7 @@ onMounted(async () => {
           <ElSwitch
             :model-value="row.is_active"
             active-color="#10b981"
-            active-text="启用"
             inactive-color="#ef4444"
-            inactive-text="禁用"
             @change="(val) => handleStatusChange(row.id, Boolean(val))"
           />
         </template>
