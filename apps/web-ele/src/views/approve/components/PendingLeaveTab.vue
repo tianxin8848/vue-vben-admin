@@ -8,6 +8,7 @@ import { watch } from 'vue';
 import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
 
 import {
   leaveTypeLabelMap,
@@ -157,17 +158,17 @@ function withdraw(row: any) {
 <template>
   <BasicTable :table-title="`共 ${data.length} 条待审批`">
     <template #leave_type="{ row }">
-      {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
+      {{ $t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
     </template>
     <template #session="{ row }">
-      {{ sessionLabelMap[row.session] || row.session }}
+      {{ $t(sessionLabelMap[row.session] || row.session) }}
     </template>
     <template #time_range="{ row }">
       {{ row.start_date }} ~ {{ row.end_date }}
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-        {{ statusLabelMap[row.approval_status] || row.approval_status }}
+        {{ $t(statusLabelMap[row.approval_status] || row.approval_status) }}
       </ElTag>
     </template>
     <template #action="{ row }">

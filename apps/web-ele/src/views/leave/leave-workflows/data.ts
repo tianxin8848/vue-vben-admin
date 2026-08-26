@@ -39,58 +39,68 @@ export function createDefaultApproverLevels(): string[][] {
   return [['']];
 }
 
-export const gridOptions: VxeGridProps<LeaveWorkflowApi.LeaveWorkflow> = {
-  id: 'leave-workflow-index',
-  rowConfig: {
-    keyField: 'id',
-  },
-  columns: [
-    {
-      field: 'name',
-      title: '名称',
-      minWidth: 180,
-      slots: { default: 'name' },
+type TFunc = (key: string, named?: Record<string, any>) => string;
+
+export function createGridOptions(
+  t: TFunc,
+): VxeGridProps<LeaveWorkflowApi.LeaveWorkflow> {
+  return {
+    id: 'leave-workflow-index',
+    rowConfig: {
+      keyField: 'id',
     },
-    { field: 'priority', title: '优先级', width: 90 },
-    {
-      title: '匹配条件',
-      minWidth: 220,
-      slots: { default: 'match' },
-    },
-    {
-      title: '审批链',
-      minWidth: 260,
-      slots: { default: 'approvers' },
-    },
-    {
-      field: 'is_active',
-      title: '状态',
-      width: 90,
-      slots: { default: 'status' },
-    },
-    {
-      title: '操作',
-      width: 180,
-      fixed: 'right',
-      slots: { default: 'action' },
-    },
-  ],
-  proxyConfig: {
-    enabled: false,
-  },
-  toolbarConfig: {
-    zoom: true,
-    custom: true,
-    tools: [
+    columns: [
       {
-        code: 'manual-refresh',
-        icon: 'vxe-icon-refresh',
-        circle: true,
-        name: '刷新',
+        field: 'name',
+        title: t('page.leave.workflowMaintenance.column.name'),
+        minWidth: 180,
+        slots: { default: 'name' },
+      },
+      {
+        field: 'priority',
+        title: t('page.leave.workflowMaintenance.column.priority'),
+        width: 90,
+      },
+      {
+        title: t('page.leave.workflowMaintenance.column.matchCondition'),
+        minWidth: 220,
+        slots: { default: 'match' },
+      },
+      {
+        title: t('page.leave.workflowMaintenance.column.approverChain'),
+        minWidth: 260,
+        slots: { default: 'approvers' },
+      },
+      {
+        field: 'is_active',
+        title: t('page.leave.workflowMaintenance.column.status'),
+        width: 90,
+        slots: { default: 'status' },
+      },
+      {
+        title: t('page.leave.workflowMaintenance.column.action'),
+        width: 180,
+        fixed: 'right',
+        slots: { default: 'action' },
       },
     ],
-  },
-  customConfig: {
-    storage: false,
-  },
-};
+    proxyConfig: {
+      enabled: false,
+    },
+    toolbarConfig: {
+      zoom: true,
+      custom: true,
+      tools: [
+        {
+          code: 'manual-refresh',
+          icon: 'vxe-icon-refresh',
+          circle: true,
+          name: t('page.leave.workflowMaintenance.refresh'),
+        },
+      ],
+    },
+    customConfig: {
+      storage: false,
+    },
+  };
+}

@@ -39,6 +39,60 @@
       "claimRequestDesc": "员工提交报销申请，查看报销记录与状态。",
       "leaveDetail": "请假详情",
       "leaveDetailDesc": "查看单条请假申请的详细信息，从请假列表跳转进入。"
+    },
+    "profilePage": {
+      "title": "个人信息维护",
+      "tabBasic": "基本信息",
+      "tabProfile": "详细档案",
+      "tabPermissions": "模块权限",
+      "account": "账号",
+      "fullName": "姓名",
+      "email": "邮箱",
+      "phone": "手机号",
+      "department": "部门",
+      "departmentPlaceholder": "请选择部门",
+      "position": "职位",
+      "positionPlaceholder": "请选择职位",
+      "region": "区域",
+      "regionPlaceholder": "请选择区域",
+      "englishName": "英文名",
+      "gender": "性别",
+      "genderPlaceholder": "请选择性别",
+      "male": "男",
+      "female": "女",
+      "birthDate": "出生日期",
+      "datePlaceholder": "请选择日期",
+      "maritalStatus": "婚姻状况",
+      "maritalPlaceholder": "请选择婚姻状况",
+      "single": "未婚",
+      "married": "已婚",
+      "divorced": "离异",
+      "widowed": "丧偶",
+      "hkidNumber": "香港身份证号",
+      "passportNumber": "护照号",
+      "personalEmail": "个人邮箱",
+      "englishAddress": "英文住址",
+      "hireDate": "入职日期",
+      "workStartDate": "工作开始日期",
+      "emergencyContact": "紧急联系人",
+      "emergencyContactPhone": "紧急联系电话",
+      "emergencyContactRelationship": "紧急联系人关系",
+      "bankName": "银行名称",
+      "bankAccountName": "银行户名",
+      "bankAccountNumber": "银行账号",
+      "changeAvatar": "更换头像",
+      "uploadAvatar": "上传头像",
+      "permView": "查看",
+      "permCreate": "创建",
+      "permEdit": "编辑",
+      "permDelete": "删除",
+      "permApprove": "审批",
+      "noPermissions": "暂无模块权限",
+      "basicUpdateSuccess": "基本信息更新成功",
+      "profileUpdateSuccess": "档案信息更新成功",
+      "avatarUpdateSuccess": "头像更新成功",
+      "avatarUpdateFailed": "头像更新失败",
+      "updateFailed": "更新失败"
     }
   },
   "approve": {
@@ -48,6 +102,7 @@
     "allTypes": "全部类型",
     "allDepartments": "全部部门",
     "allRegions": "全部地区",
+    "leaveTypeLabel": "请假类型：",
     "pendingLeave": "待审批 · 请假",
     "pendingClaim": "待审批 · 报销",
     "recordsLeave": "审批记录 · 请假",
@@ -141,6 +196,56 @@
       "title": "删除员工",
       "confirmButtonText": "确认删除",
       "cancelButtonText": "取消"
+    },
+    "column": {
+      "userId": "用户ID",
+      "employeeCode": "工号",
+      "fullName": "姓名",
+      "username": "账号",
+      "role": "身份",
+      "deptPosRegion": "部门/岗位/地区",
+      "status": "状态",
+      "initialPasswordStatus": "初始密码状态",
+      "initialPassword": "初始密码",
+      "permissions": "权限",
+      "action": "操作"
+    },
+    "search": {
+      "keywordLabel": "关键词",
+      "keywordPlaceholder": "搜索用户名 / 邮箱 / 姓名 / 工号",
+      "roleLabel": "身份",
+      "statusLabel": "状态",
+      "departmentLabel": "部门",
+      "regionLabel": "地区"
+    },
+    "statusOption": {
+      "active": "启用",
+      "disabled": "禁用"
+    },
+    "toolbar": {
+      "refresh": "刷新"
+    },
+    "profileDetail": {
+      "back": "返回",
+      "basicInfo": "基本信息",
+      "profileInfo": "档案信息",
+      "account": "账号",
+      "fullName": "姓名",
+      "email": "邮箱",
+      "phone": "手机号",
+      "department": "部门",
+      "position": "职位",
+      "region": "区域",
+      "save": "保存",
+      "hireDate": "入职日期",
+      "workStartDate": "工作开始日期",
+      "hkidNumber": "香港身份证号",
+      "englishAddress": "英文住址",
+      "emergencyContact": "紧急联系人",
+      "emergencyContactPhone": "紧急联系电话",
+      "basicInfoUpdateSuccess": "基本信息更新成功",
+      "profileInfoUpdateSuccess": "档案信息更新成功",
+      "updateFailed": "更新失败"
     }
   },
   "leave": {
@@ -260,6 +365,14 @@
       "cancel": "取消",
       "deleteSuccess": "流程已删除",
       "deleteFailed": "删除失败",
+      "column": {
+        "name": "名称",
+        "priority": "优先级",
+        "matchCondition": "匹配条件",
+        "approverChain": "审批链",
+        "status": "状态",
+        "action": "操作"
+      },
       "drawer": {
         "save": "保存流程",
         "cancel": "取消",
@@ -333,7 +446,12 @@
       "approved": "已通过",
       "pending": "待审批",
       "rejected": "已驳回",
-      "withdrawn": "已撤回"
+      "withdrawn": "已撤回",
+      "draft": "草稿"
+    },
+    "actionStatus": {
+      "submitted": "已提交",
+      "created": "已创建"
     },
     "session": {
       "full_day": "全天",
@@ -657,6 +775,41 @@
       "claimConfig": "报销配置",
       "regionalHoliday": "地区假期",
       "saveSystemSettings": "保存系统参数管理",
+      "form": {
+        "deptList": "部门列表",
+        "posList": "岗位列表",
+        "regionList": "地区列表",
+        "addDept": "新增部门",
+        "addPos": "新增岗位",
+        "addRegion": "新增地区",
+        "selectAll": "全选",
+        "clear": "清空",
+        "moduleCount": "模块列表（已选 {selected} / 共 {total} 个）",
+        "moduleHint": "这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。",
+        "column": {
+          "seq": "序号",
+          "deptName": "部门名称",
+          "posName": "岗位名称",
+          "regionName": "地区名称",
+          "moduleName": "模块名称",
+          "moduleCode": "模块代码"
+        },
+        "dialog": {
+          "deptTitle": "新增部门",
+          "posTitle": "新增岗位",
+          "regionTitle": "新增地区",
+          "deptPlaceholder": "请输入部门名称",
+          "posPlaceholder": "请输入岗位名称",
+          "regionPlaceholder": "请输入地区名称",
+          "cancel": "取消",
+          "confirm": "确认"
+        },
+        "validation": {
+          "deptNameRequired": "请输入部门名称",
+          "posNameRequired": "请输入岗位名称",
+          "regionNameRequired": "请输入地区名称"
+        }
+      },
       "message": {
         "saveSuccess": "保存成功",
         "saveFailed": "保存失败",

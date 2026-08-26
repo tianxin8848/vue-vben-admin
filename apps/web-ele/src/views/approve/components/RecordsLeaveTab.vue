@@ -8,6 +8,7 @@ import { watch } from 'vue';
 import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
 
 import {
   actionLabelMap,
@@ -157,20 +158,23 @@ function viewDetail(row: any) {
 <template>
   <BasicTable :table-title="`共 ${data.length} 条记录`">
     <template #leave_type="{ row }">
-      {{ leaveTypeLabelMap[row.leave_type] || row.leave_type }}
+      {{ $t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
     </template>
     <template #time_range="{ row }">
       {{ row.start_date }} ~ {{ row.end_date }}
     </template>
     <template #action="{ row }">
       <ElTag :type="actionTypeMap[row.action] || 'info'">
-        {{ actionLabelMap[row.action] || row.action }}
+        {{ $t(actionLabelMap[row.action] || row.action) }}
       </ElTag>
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status_after] || 'info'">
         {{
-          statusLabelMap[row.approval_status_after] || row.approval_status_after
+          $t(
+            statusLabelMap[row.approval_status_after] ||
+              row.approval_status_after,
+          )
         }}
       </ElTag>
     </template>

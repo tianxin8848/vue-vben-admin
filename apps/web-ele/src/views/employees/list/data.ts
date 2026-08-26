@@ -5,6 +5,8 @@ import type { VxeGridProps } from '#/adapter/vxe-table';
 
 import { computed } from 'vue';
 
+type TFunc = (key: string, named?: Record<string, any>) => string;
+
 /** 列显隐配置类型 */
 export type ColumnVisibility = {
   department_position: boolean;
@@ -33,36 +35,29 @@ export const defaultColumnVisibility: ColumnVisibility = {
   username: true,
 };
 
-/** 身份筛选选项 */
-export const roleOptions = [
-  { label: '管理员', value: 'admin' },
-  { label: '员工', value: 'employee' },
-];
-
-/** 状态筛选选项 */
-export const statusOptions = [
-  { label: '启用', value: 'active' },
-  { label: '禁用', value: 'disabled' },
-];
+type SelectOption = { label: string; value: string };
 
 /** 工具栏配置（含刷新按钮） */
-export const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
-  custom: true,
-  zoom: true,
-  tools: [
-    {
-      code: 'manual-refresh',
-      circle: true,
-      icon: 'vxe-icon-refresh',
-      name: '刷新',
-    },
-  ],
-};
-
-type SelectOption = { label: string; value: string };
+export function createSharedToolbarConfig(
+  t: TFunc,
+): VxeGridProps['toolbarConfig'] {
+  return {
+    custom: true,
+    zoom: true,
+    tools: [
+      {
+        code: 'manual-refresh',
+        circle: true,
+        icon: 'vxe-icon-refresh',
+        name: t('page.employees.toolbar.refresh'),
+      },
+    ],
+  };
+}
 
 /** 构建筛选表单 schema（部门/地区选项随元数据动态变化） */
 export function buildFormSchema(
+  t: TFunc,
   departmentOptions: ComputedRef<SelectOption[]> | Ref<SelectOption[]>,
   regionOptions: ComputedRef<SelectOption[]> | Ref<SelectOption[]>,
 ): VbenFormProps['schema'] {
@@ -70,34 +65,43 @@ export function buildFormSchema(
     {
       component: 'Input',
       fieldName: 'keyword',
-      label: '关键词',
+      label: t('page.employees.search.keywordLabel'),
       componentProps: {
         clearable: true,
-        placeholder: '搜索用户名 / 邮箱 / 姓名 / 工号',
+        placeholder: t('page.employees.search.keywordPlaceholder'),
       },
     },
     {
       component: 'Select',
       fieldName: 'role',
-      label: '身份',
+      label: t('page.employees.search.roleLabel'),
       componentProps: {
         clearable: true,
-        options: roleOptions,
+        options: [
+          { label: t('page.employees.role.admin'), value: 'admin' },
+          { label: t('page.employees.role.employee'), value: 'employee' },
+        ],
       },
     },
     {
       component: 'Select',
       fieldName: 'status',
-      label: '状态',
+      label: t('page.employees.search.statusLabel'),
       componentProps: {
         clearable: true,
-        options: statusOptions,
+        options: [
+          { label: t('page.employees.statusOption.active'), value: 'active' },
+          {
+            label: t('page.employees.statusOption.disabled'),
+            value: 'disabled',
+          },
+        ],
       },
     },
     {
       component: 'Select',
       fieldName: 'department',
-      label: '部门',
+      label: t('page.employees.search.departmentLabel'),
       componentProps: {
         clearable: true,
         options: computed(() => departmentOptions.value),
@@ -106,7 +110,7 @@ export function buildFormSchema(
     {
       component: 'Select',
       fieldName: 'region',
-      label: '地区',
+      label: t('page.employees.search.regionLabel'),
       componentProps: {
         clearable: true,
         options: computed(() => regionOptions.value),
@@ -117,17 +121,23 @@ export function buildFormSchema(
 
 /** 根据列显隐状态构建表格列配置 */
 export function buildColumns(
+  t: TFunc,
   visibility: ColumnVisibility,
 ): VxeGridProps['columns'] {
   const cols: VxeGridProps['columns'] = [];
   if (visibility.user_id) {
-    cols.push({ field: 'id', sortable: true, title: '用户ID', width: 100 });
+    cols.push({
+      field: 'id',
+      sortable: true,
+      title: t('page.employees.column.userId'),
+      width: 100,
+    });
   }
   if (visibility.employee_code) {
     cols.push({
       field: 'employee_code',
       sortable: true,
-      title: '工号',
+      title: t('page.employees.column.employeeCode'),
       width: 100,
     });
   }
@@ -135,24 +145,29 @@ export function buildColumns(
     cols.push({
       field: 'full_name',
       sortable: true,
-      title: '姓名',
+      title: t('page.employees.column.fullName'),
       width: 100,
     });
   }
   if (visibility.username) {
-    cols.push({ field: 'username', sortable: true, title: '账号', width: 120 });
+    cols.push({
+      field: 'username',
+      sortable: true,
+      title: t('page.employees.column.username'),
+      width: 120,
+    });
   }
   if (visibility.role) {
     cols.push({
       slots: { default: 'role' },
-      title: '身份',
+      title: t('page.employees.column.role'),
       width: 80,
     });
   }
   if (visibility.department_position) {
     cols.push({
       slots: { default: 'dept_pos_region' },
-      title: '部门/岗位/地区',
+      title: t('page.employees.column.deptPosRegion'),
       width: 200,
     });
   }
@@ -161,7 +176,7 @@ export function buildColumns(
       field: 'is_active',
       slots: { default: 'status' },
       sortable: true,
-      title: '状态',
+      title: t('page.employees.column.status'),
       width: 120,
     });
   }
@@ -169,7 +184,7 @@ export function buildColumns(
     cols.push({
       field: 'is_initial_password',
       slots: { default: 'initial_status' },
-      title: '初始密码状态',
+      title: t('page.employees.column.initialPasswordStatus'),
       width: 120,
     });
   }
@@ -177,7 +192,7 @@ export function buildColumns(
     cols.push({
       field: 'temporary_password',
       slots: { default: 'temporary_password' },
-      title: '初始密码',
+      title: t('page.employees.column.initialPassword'),
       width: 180,
     });
   }
@@ -185,14 +200,14 @@ export function buildColumns(
     cols.push({
       minWidth: 200,
       slots: { default: 'permissions' },
-      title: '权限',
+      title: t('page.employees.column.permissions'),
     });
   }
   cols.push({
     fixed: 'right',
     resizable: false,
     slots: { default: 'action' },
-    title: '操作',
+    title: t('page.employees.column.action'),
     width: 460,
   });
   return cols;

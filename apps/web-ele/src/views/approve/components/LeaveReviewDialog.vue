@@ -13,6 +13,7 @@ import {
 } from 'element-plus';
 
 import { reviewLeaveRequestApi } from '#/api';
+import { $t } from '#/locales';
 
 import { leaveTypeLabelMap, sessionLabelMap } from '../constants';
 
@@ -70,8 +71,12 @@ async function submit(action: 'approved' | 'rejected') {
         申请人：{{ current.employee_name }}（{{ current.employee_username }}）
       </p>
       <p>
-        请假类型：{{ leaveTypeLabelMap[current.leave_type] }} |
-        {{ sessionLabelMap[current.session] }}
+        {{ $t('page.approve.leaveTypeLabel')
+        }}{{
+          $t(leaveTypeLabelMap[current.leave_type] || current.leave_type)
+        }}
+        |
+        {{ $t(sessionLabelMap[current.session] || current.session) }}
       </p>
       <p>时间：{{ current.start_date }} ~ {{ current.end_date }}</p>
       <ElForm :model="form" label-width="80px" style="margin-top: 16px">

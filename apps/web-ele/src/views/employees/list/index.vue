@@ -3,7 +3,7 @@ import type { VbenFormProps } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { EmployeeApi } from '#/api';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
@@ -34,7 +34,11 @@ import CreateEmployeeDrawer from './components/CreateEmployeeDrawer.vue';
 import PermissionDialog from './components/PermissionDialog.vue';
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue';
 import { useEmployeeData } from './composables/useEmployeeData';
-import { buildColumns, buildFormSchema, sharedToolbarConfig } from './data';
+import {
+  buildColumns,
+  buildFormSchema,
+  createSharedToolbarConfig,
+} from './data';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -59,7 +63,7 @@ const {
 
 // ─── 筛选表单配置（Search / Reset / Collapse 由 BasicTable 内置） ────────────
 const formOptions: VbenFormProps = {
-  schema: buildFormSchema(departmentOptions, regionOptions),
+  schema: buildFormSchema(t, departmentOptions, regionOptions),
   commonConfig: {
     componentProps: {
       allowClear: true,
@@ -83,75 +87,81 @@ const formOptions: VbenFormProps = {
 };
 
 // ─── 表格配置 ────────────────────────────────────────────────────────────────
-const gridOptions: VxeGridProps<EmployeeApi.EmployeeResponse> = {
-  columns: buildColumns(columnVisibility),
-  customConfig: {
-    storage: false,
-  },
-  id: 'employees-list',
-  keepSource: true,
-  minHeight: 400,
-  pagerConfig: {
-    pageSize: 10,
-    pageSizes: [10, 20, 50, 100],
-  },
-  proxyConfig: {
-    ajax: {
-      query: async ({ page }, formValues: any = {}) => {
-        if (allEmployees.value.length === 0) {
-          allEmployees.value = await getEmployeesApi();
-        }
-        let list = [...allEmployees.value];
-        if (formValues.keyword) {
-          const kw = String(formValues.keyword).toLowerCase();
-          list = list.filter(
-            (e) =>
-              e.full_name?.toLowerCase().includes(kw) ||
-              e.username.toLowerCase().includes(kw) ||
-              e.email.toLowerCase().includes(kw) ||
-              e.employee_code?.toLowerCase().includes(kw),
-          );
-        }
-        if (formValues.role) {
-          list = list.filter((e) =>
-            formValues.role === 'admin'
-              ? isManager(e.module_permissions)
-              : !isManager(e.module_permissions),
-          );
-        }
-        if (formValues.status) {
-          list = list.filter((e) =>
-            formValues.status === 'active' ? e.is_active : !e.is_active,
-          );
-        }
-        if (formValues.department) {
-          list = list.filter((e) => e.department === formValues.department);
-        }
-        if (formValues.region) {
-          list = list.filter((e) => e.region === formValues.region);
-        }
-        const total = list.length;
-        const start = (page.currentPage - 1) * page.pageSize;
-        const items = list.slice(start, start + page.pageSize);
-        return { items, total };
+const gridOptions = computed<VxeGridProps<EmployeeApi.EmployeeResponse>>(
+  () => ({
+    columns: buildColumns(t, columnVisibility),
+    customConfig: {
+      storage: false,
+    },
+    id: 'employees-list',
+    keepSource: true,
+    minHeight: 400,
+    pagerConfig: {
+      pageSize: 10,
+      pageSizes: [10, 20, 50, 100],
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues: any = {}) => {
+          if (allEmployees.value.length === 0) {
+            allEmployees.value = await getEmployeesApi();
+          }
+          let list = [...allEmployees.value];
+          if (formValues.keyword) {
+            const kw = String(formValues.keyword).toLowerCase();
+            list = list.filter(
+              (e) =>
+                e.full_name?.toLowerCase().includes(kw) ||
+                e.username.toLowerCase().includes(kw) ||
+                e.email.toLowerCase().includes(kw) ||
+                e.employee_code?.toLowerCase().includes(kw),
+            );
+          }
+          if (formValues.role) {
+            list = list.filter((e) =>
+              formValues.role === 'admin'
+                ? isManager(e.module_permissions)
+                : !isManager(e.module_permissions),
+            );
+          }
+          if (formValues.status) {
+            list = list.filter((e) =>
+              formValues.status === 'active' ? e.is_active : !e.is_active,
+            );
+          }
+          if (formValues.department) {
+            list = list.filter((e) => e.department === formValues.department);
+          }
+          if (formValues.region) {
+            list = list.filter((e) => e.region === formValues.region);
+          }
+          const total = list.length;
+          const start = (page.currentPage - 1) * page.pageSize;
+          const items = list.slice(start, start + page.pageSize);
+          return { items, total };
+        },
       },
     },
-  },
-  rowConfig: {
-    isHover: true,
-    keyField: 'id',
-  },
-  toolbarConfig: sharedToolbarConfig,
-};
+    rowConfig: {
+      isHover: true,
+      keyField: 'id',
+    },
+    toolbarConfig: createSharedToolbarConfig(t),
+  }),
+);
 
 const [BasicTable, tableApi] = useVbenVxeGrid({
   formOptions,
-  gridOptions,
+  gridOptions: gridOptions.value,
   gridEvents: {
     toolbarToolClick(event: { code: string }) {
       if (event.code === 'manual-refresh') refreshEmployees();
     },
   },
+});
+
+watch(gridOptions, () => {
+  tableApi.setGridOptions(gridOptions.value);
 });
 
 async function refreshEmployees() {

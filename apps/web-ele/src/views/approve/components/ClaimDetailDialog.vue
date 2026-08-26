@@ -76,7 +76,10 @@ function close() {
           }}</span>
           <ElTag :type="statusTypeMap[current.approval_status] || 'info'">
             {{
-              statusLabelMap[current.approval_status] || current.approval_status
+              $t(
+                statusLabelMap[current.approval_status] ||
+                  current.approval_status,
+              )
             }}
           </ElTag>
         </div>

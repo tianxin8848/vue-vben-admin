@@ -3,6 +3,8 @@ import type { LeaveRequestApi } from '#/api';
 
 import { ElButton, ElDialog, ElTag } from 'element-plus';
 
+import { $t } from '#/locales';
+
 import {
   leaveTypeLabelMap,
   sessionLabelMap,
@@ -48,11 +50,11 @@ function close() {
         </div>
         <div class="info-item">
           <span class="info-label">请假类型：</span>
-          {{ leaveTypeLabelMap[current.leave_type] || current.leave_type }}
+          {{ $t(leaveTypeLabelMap[current.leave_type] || current.leave_type) }}
         </div>
         <div class="info-item">
           <span class="info-label">时段：</span>
-          {{ sessionLabelMap[current.session] || current.session }}
+          {{ $t(sessionLabelMap[current.session] || current.session) }}
         </div>
         <div class="info-item">
           <span class="info-label">时间范围：</span>
@@ -70,7 +72,10 @@ function close() {
           <span class="info-label">状态：</span>
           <ElTag :type="statusTypeMap[current.approval_status] || 'info'">
             {{
-              statusLabelMap[current.approval_status] || current.approval_status
+              $t(
+                statusLabelMap[current.approval_status] ||
+                  current.approval_status,
+              )
             }}
           </ElTag>
         </div>

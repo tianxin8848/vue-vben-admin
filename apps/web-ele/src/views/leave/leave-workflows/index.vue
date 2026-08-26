@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -16,7 +16,7 @@ import {
 import { $t } from '#/locales';
 
 import WorkflowDrawer from './components/WorkflowDrawer.vue';
-import { gridOptions } from './data';
+import { createGridOptions } from './data';
 
 const loading = ref(false);
 
@@ -29,8 +29,10 @@ const regions = ref<string[]>([]);
 const departments = ref<string[]>([]);
 const positions = ref<string[]>([]);
 
+const gridOptions = computed(() => createGridOptions($t));
+
 const [BasicTable, tableApi] = useVbenVxeGrid({
-  gridOptions,
+  gridOptions: gridOptions.value,
   gridEvents: {
     toolbarToolClick(event: { code: string }) {
       if (event.code === 'manual-refresh') {
@@ -38,6 +40,10 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
       }
     },
   },
+});
+
+watch(gridOptions, () => {
+  tableApi.setGridOptions(gridOptions.value);
 });
 
 const employeeOptions = computed(() => {

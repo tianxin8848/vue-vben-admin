@@ -10,33 +10,33 @@ export interface SearchForm {
 }
 
 export const leaveTypeLabelMap: Record<string, string> = {
-  annual: '年假',
-  personal: '事假',
-  sick: '病假',
-  lieu: '调休',
-  long: '长假',
+  annual: 'page.leave.leaveTypes.annual',
+  personal: 'page.leave.leaveTypes.personal',
+  sick: 'page.leave.leaveTypes.sick',
+  lieu: 'page.leave.leaveTypes.lieu',
+  long: 'page.leave.leaveTypes.long',
 };
 
 export const sessionLabelMap: Record<string, string> = {
-  full_day: '全天',
-  morning: '上午',
-  afternoon: '下午',
+  full_day: 'page.leave.session.full_day',
+  morning: 'page.leave.session.morning',
+  afternoon: 'page.leave.session.afternoon',
 };
 
 export const statusLabelMap: Record<string, string> = {
-  pending: '待审批',
-  approved: '已通过',
-  rejected: '已驳回',
-  withdrawn: '已撤回',
-  draft: '草稿',
+  pending: 'page.leave.approvalStatus.pending',
+  approved: 'page.leave.approvalStatus.approved',
+  rejected: 'page.leave.approvalStatus.rejected',
+  withdrawn: 'page.leave.approvalStatus.withdrawn',
+  draft: 'page.leave.approvalStatus.draft',
 };
 
 export const actionLabelMap: Record<string, string> = {
-  approved: '已通过',
-  rejected: '已驳回',
-  submitted: '已提交',
-  withdrawn: '已撤回',
-  created: '已创建',
+  approved: 'page.leave.approvalStatus.approved',
+  rejected: 'page.leave.approvalStatus.rejected',
+  submitted: 'page.leave.actionStatus.submitted',
+  withdrawn: 'page.leave.approvalStatus.withdrawn',
+  created: 'page.leave.actionStatus.created',
 };
 
 export const statusTypeMap: Record<
@@ -61,21 +61,21 @@ export const actionTypeMap: Record<
   created: 'info',
 };
 
-/** 请假状态选项（用于搜索栏下拉） */
+/** 请假状态选项（用于搜索栏下拉，label 为 i18n 键路径，使用时需 $t() 包裹） */
 export const statusOptions: Array<{ label: string; value: string }> = [
-  { label: '待审批', value: 'pending' },
-  { label: '已通过', value: 'approved' },
-  { label: '已驳回', value: 'rejected' },
-  { label: '已撤回', value: 'withdrawn' },
+  { label: 'page.leave.approvalStatus.pending', value: 'pending' },
+  { label: 'page.leave.approvalStatus.approved', value: 'approved' },
+  { label: 'page.leave.approvalStatus.rejected', value: 'rejected' },
+  { label: 'page.leave.approvalStatus.withdrawn', value: 'withdrawn' },
 ];
 
-/** 请假类型选项（用于搜索栏下拉，仅在请假 Tab 显示） */
+/** 请假类型选项（用于搜索栏下拉，仅在请假 Tab 显示，label 为 i18n 键路径） */
 export const leaveTypeOptions: Array<{ label: string; value: string }> = [
-  { label: '年假', value: 'annual' },
-  { label: '事假', value: 'personal' },
-  { label: '病假', value: 'sick' },
-  { label: '调休', value: 'lieu' },
-  { label: '长假', value: 'long' },
+  { label: 'page.leave.leaveTypes.annual', value: 'annual' },
+  { label: 'page.leave.leaveTypes.personal', value: 'personal' },
+  { label: 'page.leave.leaveTypes.sick', value: 'sick' },
+  { label: 'page.leave.leaveTypes.lieu', value: 'lieu' },
+  { label: 'page.leave.leaveTypes.long', value: 'long' },
 ];
 
 /** 把 ApprovalRecord 还原成 LeaveRequest，用于详情弹窗展示 */

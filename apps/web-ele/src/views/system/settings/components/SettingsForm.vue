@@ -2,7 +2,9 @@
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { SystemSettingsApi } from '#/api';
 
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+
+import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
@@ -36,6 +38,8 @@ const emit = defineEmits<{
   (e: 'update:selectedModules', value: string[]): void;
   (e: 'save'): void;
 }>();
+
+const { t } = useI18n();
 
 const localDeptStr = ref(props.deptStr);
 const localPosStr = ref(props.posStr);
@@ -79,7 +83,9 @@ function updateLists() {
 
 function handleDeptAdd() {
   if (!newDeptName.value.trim()) {
-    ElMessage.warning('请输入部门名称');
+    ElMessage.warning(
+      t('page.system.settingsDetail.form.validation.deptNameRequired'),
+    );
     return;
   }
   deptList.value.push({
@@ -96,7 +102,9 @@ function handleDeptAdd() {
 
 function handlePosAdd() {
   if (!newPosName.value.trim()) {
-    ElMessage.warning('请输入岗位名称');
+    ElMessage.warning(
+      t('page.system.settingsDetail.form.validation.posNameRequired'),
+    );
     return;
   }
   posList.value.push({
@@ -113,7 +121,9 @@ function handlePosAdd() {
 
 function handleRegionAdd() {
   if (!newRegionName.value.trim()) {
-    ElMessage.warning('请输入地区名称');
+    ElMessage.warning(
+      t('page.system.settingsDetail.form.validation.regionNameRequired'),
+    );
     return;
   }
   regionList.value.push({
@@ -155,60 +165,112 @@ const sharedGridOptions = {
   customConfig: { storage: false },
 } satisfies VxeGridProps<ListItem>;
 
-const deptGridOptions: VxeGridProps<ListItem> = {
+const deptGridOptions = computed<VxeGridProps<ListItem>>(() => ({
   ...sharedGridOptions,
   id: 'settings-dept-list',
   columns: [
-    { type: 'seq', width: 70, title: '序号' },
-    { field: 'name', title: '部门名称', minWidth: 150 },
+    {
+      type: 'seq',
+      width: 70,
+      title: t('page.system.settingsDetail.form.column.seq'),
+    },
+    {
+      field: 'name',
+      title: t('page.system.settingsDetail.form.column.deptName'),
+      minWidth: 150,
+    },
   ],
-};
+}));
 
-const posGridOptions: VxeGridProps<ListItem> = {
+const posGridOptions = computed<VxeGridProps<ListItem>>(() => ({
   ...sharedGridOptions,
   id: 'settings-pos-list',
   columns: [
-    { type: 'seq', width: 70, title: '序号' },
-    { field: 'name', title: '岗位名称', minWidth: 150 },
+    {
+      type: 'seq',
+      width: 70,
+      title: t('page.system.settingsDetail.form.column.seq'),
+    },
+    {
+      field: 'name',
+      title: t('page.system.settingsDetail.form.column.posName'),
+      minWidth: 150,
+    },
   ],
-};
+}));
 
-const regionGridOptions: VxeGridProps<ListItem> = {
+const regionGridOptions = computed<VxeGridProps<ListItem>>(() => ({
   ...sharedGridOptions,
   id: 'settings-region-list',
   columns: [
-    { type: 'seq', width: 70, title: '序号' },
-    { field: 'name', title: '地区名称', minWidth: 150 },
+    {
+      type: 'seq',
+      width: 70,
+      title: t('page.system.settingsDetail.form.column.seq'),
+    },
+    {
+      field: 'name',
+      title: t('page.system.settingsDetail.form.column.regionName'),
+      minWidth: 150,
+    },
   ],
-};
+}));
 
-const moduleGridOptions: VxeGridProps<SystemSettingsApi.SystemModuleItem> = {
+const moduleGridOptions = computed<
+  VxeGridProps<SystemSettingsApi.SystemModuleItem>
+>(() => ({
   id: 'settings-module-list',
   rowConfig: { keyField: 'module_code' },
   checkboxConfig: { highlight: true, checkRowKeys: [] },
   columns: [
     { type: 'checkbox', width: 50 },
-    { field: 'module_name', title: '模块名称', minWidth: 150 },
-    { field: 'module_code', title: '模块代码', minWidth: 150 },
+    {
+      field: 'module_name',
+      title: t('page.system.settingsDetail.form.column.moduleName'),
+      minWidth: 150,
+    },
+    {
+      field: 'module_code',
+      title: t('page.system.settingsDetail.form.column.moduleCode'),
+      minWidth: 150,
+    },
   ],
   proxyConfig: { enabled: false },
   toolbarConfig: { zoom: true, custom: false },
   customConfig: { storage: false },
-};
+}));
 
 const [DeptTable, deptTableApi] = useVbenVxeGrid({
-  gridOptions: deptGridOptions,
+  gridOptions: deptGridOptions.value,
 });
-const [PosTable, posTableApi] = useVbenVxeGrid({ gridOptions: posGridOptions });
+const [PosTable, posTableApi] = useVbenVxeGrid({
+  gridOptions: posGridOptions.value,
+});
 const [RegionTable, regionTableApi] = useVbenVxeGrid({
-  gridOptions: regionGridOptions,
+  gridOptions: regionGridOptions.value,
 });
 const [ModuleTable, moduleTableApi] = useVbenVxeGrid({
-  gridOptions: moduleGridOptions,
+  gridOptions: moduleGridOptions.value,
   gridEvents: {
     checkboxChange: handleCheckboxChange,
     checkboxAll: handleCheckboxChange,
   },
+});
+
+watch(deptGridOptions, () => {
+  deptTableApi.setGridOptions(deptGridOptions.value);
+});
+
+watch(posGridOptions, () => {
+  posTableApi.setGridOptions(posGridOptions.value);
+});
+
+watch(regionGridOptions, () => {
+  regionTableApi.setGridOptions(regionGridOptions.value);
+});
+
+watch(moduleGridOptions, () => {
+  moduleTableApi.setGridOptions(moduleGridOptions.value);
 });
 
 onMounted(async () => {
@@ -306,9 +368,11 @@ function clearModules() {
       <!-- 部门列表 -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <span class="text-base font-semibold">部门列表</span>
+          <span class="text-base font-semibold">{{
+            t('page.system.settingsDetail.form.deptList')
+          }}</span>
           <ElButton size="small" type="primary" @click="showDeptDialog = true">
-            新增部门
+            {{ t('page.system.settingsDetail.form.addDept') }}
           </ElButton>
         </div>
         <DeptTable />
@@ -317,9 +381,11 @@ function clearModules() {
       <!-- 岗位列表 -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <span class="text-base font-semibold">岗位列表</span>
+          <span class="text-base font-semibold">{{
+            t('page.system.settingsDetail.form.posList')
+          }}</span>
           <ElButton size="small" type="primary" @click="showPosDialog = true">
-            新增岗位
+            {{ t('page.system.settingsDetail.form.addPos') }}
           </ElButton>
         </div>
         <PosTable />
@@ -328,13 +394,15 @@ function clearModules() {
       <!-- 地区列表 -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <span class="text-base font-semibold">地区列表</span>
+          <span class="text-base font-semibold">{{
+            t('page.system.settingsDetail.form.regionList')
+          }}</span>
           <ElButton
             size="small"
             type="primary"
             @click="showRegionDialog = true"
           >
-            新增地区
+            {{ t('page.system.settingsDetail.form.addRegion') }}
           </ElButton>
         </div>
         <RegionTable />
@@ -344,61 +412,126 @@ function clearModules() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <span class="text-base font-semibold">
-            模块列表（已选 {{ localSelectedModules.length }} / 共
-            {{ localModules.length }} 个）
+            {{
+              t('page.system.settingsDetail.form.moduleCount', {
+                selected: localSelectedModules.length,
+                total: localModules.length,
+              })
+            }}
           </span>
           <div class="flex gap-2">
-            <ElButton size="small" @click="selectAllModules">全选</ElButton>
-            <ElButton size="small" @click="clearModules">清空</ElButton>
+            <ElButton size="small" @click="selectAllModules">
+{{
+              t('page.system.settingsDetail.form.selectAll')
+            }}
+</ElButton>
+            <ElButton size="small" @click="clearModules">
+{{
+              t('page.system.settingsDetail.form.clear')
+            }}
+</ElButton>
           </div>
         </div>
         <ModuleTable />
         <p class="text-xs text-muted-foreground">
-          这里展示的是数据库中当前维护的系统模块，勾选后才会出现在用户权限分配中。
+          {{ t('page.system.settingsDetail.form.moduleHint') }}
         </p>
       </div>
     </div>
 
     <div class="flex justify-end pt-6">
       <ElButton type="primary" @click="$emit('save')">
-保存系统参数管理
-</ElButton>
+        {{ t('page.system.settingsDetail.saveSystemSettings') }}
+      </ElButton>
     </div>
   </div>
 
-  <ElDialog v-model="showDeptDialog" title="新增部门" width="400px">
+  <ElDialog
+    v-model="showDeptDialog"
+    :title="t('page.system.settingsDetail.form.dialog.deptTitle')"
+    width="400px"
+  >
     <ElForm :model="{ name: newDeptName }" label-width="80px">
-      <ElFormItem label="部门名称">
-        <ElInput v-model="newDeptName" placeholder="请输入部门名称" />
+      <ElFormItem :label="t('page.system.settingsDetail.form.column.deptName')">
+        <ElInput
+          v-model="newDeptName"
+          :placeholder="
+            t('page.system.settingsDetail.form.dialog.deptPlaceholder')
+          "
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showDeptDialog = false">取消</ElButton>
-      <ElButton type="primary" @click="handleDeptAdd">确认</ElButton>
+      <ElButton @click="showDeptDialog = false">
+{{
+        t('page.system.settingsDetail.form.dialog.cancel')
+      }}
+</ElButton>
+      <ElButton type="primary" @click="handleDeptAdd">
+{{
+        t('page.system.settingsDetail.form.dialog.confirm')
+      }}
+</ElButton>
     </template>
   </ElDialog>
 
-  <ElDialog v-model="showPosDialog" title="新增岗位" width="400px">
+  <ElDialog
+    v-model="showPosDialog"
+    :title="t('page.system.settingsDetail.form.dialog.posTitle')"
+    width="400px"
+  >
     <ElForm :model="{ name: newPosName }" label-width="80px">
-      <ElFormItem label="岗位名称">
-        <ElInput v-model="newPosName" placeholder="请输入岗位名称" />
+      <ElFormItem :label="t('page.system.settingsDetail.form.column.posName')">
+        <ElInput
+          v-model="newPosName"
+          :placeholder="
+            t('page.system.settingsDetail.form.dialog.posPlaceholder')
+          "
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showPosDialog = false">取消</ElButton>
-      <ElButton type="primary" @click="handlePosAdd">确认</ElButton>
+      <ElButton @click="showPosDialog = false">
+{{
+        t('page.system.settingsDetail.form.dialog.cancel')
+      }}
+</ElButton>
+      <ElButton type="primary" @click="handlePosAdd">
+{{
+        t('page.system.settingsDetail.form.dialog.confirm')
+      }}
+</ElButton>
     </template>
   </ElDialog>
 
-  <ElDialog v-model="showRegionDialog" title="新增地区" width="400px">
+  <ElDialog
+    v-model="showRegionDialog"
+    :title="t('page.system.settingsDetail.form.dialog.regionTitle')"
+    width="400px"
+  >
     <ElForm :model="{ name: newRegionName }" label-width="80px">
-      <ElFormItem label="地区名称">
-        <ElInput v-model="newRegionName" placeholder="请输入地区名称" />
+      <ElFormItem
+        :label="t('page.system.settingsDetail.form.column.regionName')"
+      >
+        <ElInput
+          v-model="newRegionName"
+          :placeholder="
+            t('page.system.settingsDetail.form.dialog.regionPlaceholder')
+          "
+        />
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showRegionDialog = false">取消</ElButton>
-      <ElButton type="primary" @click="handleRegionAdd">确认</ElButton>
+      <ElButton @click="showRegionDialog = false">
+{{
+        t('page.system.settingsDetail.form.dialog.cancel')
+      }}
+</ElButton>
+      <ElButton type="primary" @click="handleRegionAdd">
+{{
+        t('page.system.settingsDetail.form.dialog.confirm')
+      }}
+</ElButton>
     </template>
   </ElDialog>
 </template>

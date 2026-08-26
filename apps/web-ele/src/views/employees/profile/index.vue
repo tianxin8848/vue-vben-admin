@@ -5,6 +5,7 @@ import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
@@ -27,6 +28,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const loading = ref(false);
 
 const employeeId = route.params.id as string;
@@ -107,20 +109,22 @@ async function fetchData() {
 async function handleUpdateBasicInfo() {
   try {
     await updateEmployeeBasicInfoApi(employeeId, basicInfoForm);
-    ElMessage.success('基本信息更新成功');
+    ElMessage.success(t('page.employees.profileDetail.basicInfoUpdateSuccess'));
     fetchData();
   } catch {
-    ElMessage.error('更新失败');
+    ElMessage.error(t('page.employees.profileDetail.updateFailed'));
   }
 }
 
 async function handleUpdateProfile() {
   try {
     await updateEmployeeProfileApi(employeeId, profileForm);
-    ElMessage.success('档案信息更新成功');
+    ElMessage.success(
+      t('page.employees.profileDetail.profileInfoUpdateSuccess'),
+    );
     fetchData();
   } catch {
-    ElMessage.error('更新失败');
+    ElMessage.error(t('page.employees.profileDetail.updateFailed'));
   }
 }
 
@@ -136,22 +140,29 @@ onMounted(() => {
 
 <template>
   <Page>
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
-    <ElCard v-if="employee" header="基本信息">
+    <ElButton @click="goBack" style="margin-bottom: 16px">
+{{
+      t('page.employees.profileDetail.back')
+    }}
+</ElButton>
+    <ElCard
+      v-if="employee"
+      :header="t('page.employees.profileDetail.basicInfo')"
+    >
       <ElForm :model="basicInfoForm" label-width="120px">
-        <ElFormItem label="账号">
+        <ElFormItem :label="t('page.employees.profileDetail.account')">
           <ElInput :model-value="employee.username" disabled />
         </ElFormItem>
-        <ElFormItem label="姓名">
+        <ElFormItem :label="t('page.employees.profileDetail.fullName')">
           <ElInput :model-value="employee.full_name || ''" disabled />
         </ElFormItem>
-        <ElFormItem label="邮箱">
+        <ElFormItem :label="t('page.employees.profileDetail.email')">
           <ElInput :model-value="employee.email" disabled />
         </ElFormItem>
-        <ElFormItem label="手机号">
+        <ElFormItem :label="t('page.employees.profileDetail.phone')">
           <ElInput :model-value="employee.phone || ''" disabled />
         </ElFormItem>
-        <ElFormItem label="部门">
+        <ElFormItem :label="t('page.employees.profileDetail.department')">
           <ElSelect v-model="basicInfoForm.department" clearable>
             <ElOption
               v-for="opt in departmentOptions"
@@ -161,7 +172,7 @@ onMounted(() => {
             />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="职位">
+        <ElFormItem :label="t('page.employees.profileDetail.position')">
           <ElSelect v-model="basicInfoForm.position" clearable>
             <ElOption
               v-for="opt in positionOptions"
@@ -171,7 +182,7 @@ onMounted(() => {
             />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="区域">
+        <ElFormItem :label="t('page.employees.profileDetail.region')">
           <ElSelect v-model="basicInfoForm.region" clearable>
             <ElOption
               v-for="opt in regionOptions"
@@ -183,43 +194,49 @@ onMounted(() => {
         </ElFormItem>
         <ElFormItem>
           <ElButton type="primary" @click="handleUpdateBasicInfo">
-            保存
+            {{ t('page.employees.profileDetail.save') }}
           </ElButton>
         </ElFormItem>
       </ElForm>
     </ElCard>
 
-    <ElCard v-if="profile" header="档案信息" style="margin-top: 20px">
+    <ElCard
+      v-if="profile"
+      :header="t('page.employees.profileDetail.profileInfo')"
+      style="margin-top: 20px"
+    >
       <ElForm :model="profileForm" label-width="120px">
-        <ElFormItem label="入职日期">
+        <ElFormItem :label="t('page.employees.profileDetail.hireDate')">
           <ElDatePicker
             v-model="profileForm.hire_date"
             type="date"
             value-format="YYYY-MM-DD"
           />
         </ElFormItem>
-        <ElFormItem label="工作开始日期">
+        <ElFormItem :label="t('page.employees.profileDetail.workStartDate')">
           <ElDatePicker
             v-model="profileForm.work_start_date"
             type="date"
             value-format="YYYY-MM-DD"
           />
         </ElFormItem>
-        <ElFormItem label="香港身份证号">
+        <ElFormItem :label="t('page.employees.profileDetail.hkidNumber')">
           <ElInput v-model="profileForm.hkid_number" />
         </ElFormItem>
-        <ElFormItem label="英文住址">
+        <ElFormItem :label="t('page.employees.profileDetail.englishAddress')">
           <ElInput v-model="profileForm.english_address" />
         </ElFormItem>
-        <ElFormItem label="紧急联系人">
+        <ElFormItem :label="t('page.employees.profileDetail.emergencyContact')">
           <ElInput v-model="profileForm.emergency_contact_name" />
         </ElFormItem>
-        <ElFormItem label="紧急联系电话">
+        <ElFormItem
+          :label="t('page.employees.profileDetail.emergencyContactPhone')"
+        >
           <ElInput v-model="profileForm.emergency_contact_phone" />
         </ElFormItem>
         <ElFormItem>
           <ElButton type="primary" @click="handleUpdateProfile">
-            保存
+            {{ t('page.employees.profileDetail.save') }}
           </ElButton>
         </ElFormItem>
       </ElForm>

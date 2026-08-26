@@ -203,7 +203,7 @@ function withdraw(row: any) {
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-        {{ statusLabelMap[row.approval_status] || row.approval_status }}
+        {{ t(statusLabelMap[row.approval_status] || row.approval_status) }}
       </ElTag>
     </template>
     <template #attachment="{ row }">

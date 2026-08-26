@@ -8,6 +8,7 @@ import { watch } from 'vue';
 import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { $t } from '#/locales';
 
 import {
   actionLabelMap,
@@ -153,13 +154,16 @@ function viewDetail(row: any) {
     </template>
     <template #action="{ row }">
       <ElTag :type="actionTypeMap[row.action] || 'info'">
-        {{ actionLabelMap[row.action] || row.action }}
+        {{ $t(actionLabelMap[row.action] || row.action) }}
       </ElTag>
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status_after] || 'info'">
         {{
-          statusLabelMap[row.approval_status_after] || row.approval_status_after
+          $t(
+            statusLabelMap[row.approval_status_after] ||
+              row.approval_status_after,
+          )
         }}
       </ElTag>
     </template>
