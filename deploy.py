@@ -51,6 +51,9 @@ def main():
     listen [::]:80 default_server;
     server_name _;
 
+    # 允许上传大附件（报销附件、头像等），默认 1MB 不够用
+    client_max_body_size 50M;
+
     root /usr/share/nginx/html;
     index index.html;
 

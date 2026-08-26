@@ -90,6 +90,9 @@ server {
     listen [::]:80 default_server;
     server_name _;
 
+    # 允许上传大附件（报销附件、头像等），默认 1MB 不够用
+    client_max_body_size 50M;
+
     root /usr/share/nginx/html;
     index index.html;
 
@@ -146,9 +149,10 @@ curl -s -X POST http://localhost:80/api/v1/auth/login \
 | 配置项 | 值 | 说明 |
 |--------|-----|------|
 | `listen` | 80 | 监听 HTTP 80 端口 |
+| `client_max_body_size` | 50M | 允许上传大附件（报销附件、头像等），默认 1MB 会被 nginx 拦截返回 413 |
 | `root` | /usr/share/nginx/html | 前端静态文件根目录 |
 | `try_files $uri $uri/ /index.html` | - | SPA 路由支持，所有路径指向 index.html |
-| `location /api` | proxy_pass http://localhost:8999 | API 请求代理到后端服务 |
+| `location ^~ /api` | proxy_pass http://localhost:8999 | API 请求代理到后端服务（`^~` 优先级高于正则，避免 .jpg 等被静态 location 拦截） |
 | `proxy_set_header` | Host/X-Real-IP/X-Forwarded-For | 传递客户端真实 IP 和请求头 |
 | `expires 1y` | - | 静态资源缓存 1 年 |
 
@@ -332,6 +336,46 @@ location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
 curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" \
   "http://localhost/api/v1/not-exist.jpg"
 # 预期输出: 404 application/json 22
+```
+
+### 问题 6：上传附件 / 创建报销时 413 Request Entity Too Large
+
+**现象**: 前端调用 `POST /api/v1/me/claims`（创建报销，FormData 带附件）或其它上传接口时返回 413，浏览器 Console 报错 `POST http://10.254.253.187/api/v1/me/claims 413 (Request Entity Too Large)`。但直连后端 `:8999` 测试同一接口正常。
+
+**根因**: nginx 默认 `client_max_body_size` 为 **1MB**，当 FormData 中携带的附件总大小超过 1MB 时，nginx 在反向代理阶段就拦截并返回 413，请求根本到不了后端。后端业务代码本身没有问题（可用 `curl -X POST http://10.254.253.187:8999/api/v1/me/claims ...` 直连验证，返回 401 表示后端正常处理了请求）。
+
+**判断方法**:
+
+```bash
+# 走 80 端口（nginx 反代）上传 2MB 文件 —— 应返回 413
+dd if=/dev/zero of=/tmp/test.bin bs=1M count=2 2>/dev/null
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://10.254.253.187/api/v1/me/claims -F "attachment=@/tmp/test.bin"
+# 预期输出: 413
+
+# 直连 8999 后端 —— 应返回 401（业务正常，只是没带 token）
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://10.254.253.187:8999/api/v1/me/claims -F "attachment=@/tmp/test.bin"
+# 预期输出: 401
+```
+
+**解决方案**: 在 nginx 的 server 块（`/etc/nginx/conf.d/vben.conf`）顶部添加 `client_max_body_size 50M;`。该配置已固化到 [deploy.py](deploy.py) 的 nginx 模板中，重新部署会自动应用，无需手动修改。
+
+```bash
+# 1. 备份
+cp /etc/nginx/conf.d/vben.conf /etc/nginx/conf.d/vben.conf.bak.$(date +%s)
+
+# 2. 在 server 块内添加 client_max_body_size
+sed -i '/server_name _;/a\    client_max_body_size 50M;' /etc/nginx/conf.d/vben.conf
+
+# 3. 验证 + 重启
+nginx -t && systemctl restart nginx
+```
+
+**验证**:
+
+```bash
+# 修复后 2MB 文件应返回 401（被后端业务正常处理，不再被 nginx 拦截）
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://10.254.253.187/api/v1/me/claims -F "attachment=@/tmp/test.bin"
+# 预期输出: 401
 ```
 
 ---
