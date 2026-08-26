@@ -4,6 +4,8 @@ import type { SystemSettingsApi } from '#/api';
 
 import { computed, ref, watch } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import {
   ElButton,
   ElCard,
@@ -18,7 +20,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
 interface SummaryRow {
   items: { code?: string; name: string; rate?: number }[];
-  type: string;
+  typeKey: string;
+  typeLabel: string;
 }
 
 interface HolidayRow {
@@ -47,6 +50,10 @@ const emit = defineEmits<{
   ): void;
 }>();
 
+const { t } = useI18n();
+
+const i18nPrefix = 'page.system.settingsDetail.settingsPreview';
+
 const holidayYearFilter = ref(new Date().getFullYear());
 
 const summaryRows = computed<SummaryRow[]>(() => {
@@ -60,37 +67,44 @@ const summaryRows = computed<SummaryRow[]>(() => {
   );
   return [
     {
-      type: '部门',
+      typeKey: 'department',
+      typeLabel: t(`${i18nPrefix}.typeDepartment`),
       items: (s.departments || []).map((name) => ({ name })),
     },
     {
-      type: '岗位',
+      typeKey: 'position',
+      typeLabel: t(`${i18nPrefix}.typePosition`),
       items: (s.positions || []).map((name) => ({ name })),
     },
     {
-      type: '地区',
+      typeKey: 'region',
+      typeLabel: t(`${i18nPrefix}.typeRegion`),
       items: (s.regions || []).map((name) => ({ name })),
     },
     {
-      type: '模块',
+      typeKey: 'module',
+      typeLabel: t(`${i18nPrefix}.typeModule`),
       items: (s.modules || []).map((m) => ({
         code: m.module_code,
         name: m.module_name,
       })),
     },
     {
-      type: '员工可自编辑字段',
+      typeKey: 'editableFields',
+      typeLabel: t(`${i18nPrefix}.typeEditableFields`),
       items: (s.employee_self_editable_fields || []).map((code) => ({
         code,
         name: fieldLabelMap.get(code) || code,
       })),
     },
     {
-      type: '报销理由',
+      typeKey: 'claimReason',
+      typeLabel: t(`${i18nPrefix}.typeClaimReason`),
       items: (s.claim_reasons || []).map((r) => ({ name: r.name })),
     },
     {
-      type: '币种与港币汇率',
+      typeKey: 'currency',
+      typeLabel: t(`${i18nPrefix}.typeCurrency`),
       items: (s.claim_currencies || []).map((c) => ({
         name: c.currency_code,
         rate: c.to_hkd_rate,
@@ -170,11 +184,11 @@ async function handleDeleteHoliday(row: HolidayRow) {
       : `${row.start_date}/${row.end_date}`;
   try {
     await ElMessageBox.confirm(
-      `确认删除 ${row.region} ${label} 的假期设置吗？`,
-      '确认删除',
+      t(`${i18nPrefix}.deleteConfirm`, { region: row.region, date: label }),
+      t(`${i18nPrefix}.deleteConfirmTitle`),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t(`${i18nPrefix}.confirm`),
+        cancelButtonText: t(`${i18nPrefix}.cancel`),
         type: 'warning',
       },
     );
@@ -182,40 +196,61 @@ async function handleDeleteHoliday(row: HolidayRow) {
   } catch {}
 }
 
-const summaryGridOptions: VxeGridProps<SummaryRow> = {
+const summaryGridOptions = computed<VxeGridProps<SummaryRow>>(() => ({
   id: 'settings-preview-summary',
-  rowConfig: { keyField: 'type' },
+  rowConfig: { keyField: 'typeKey' },
   columns: [
-    { field: 'type', title: '类型', width: 140 },
-    { title: '内容', minWidth: 280, slots: { default: 'content' } },
+    { field: 'typeLabel', title: t(`${i18nPrefix}.columnType`), width: 140 },
+    {
+      title: t(`${i18nPrefix}.columnContent`),
+      minWidth: 280,
+      slots: { default: 'content' },
+    },
   ],
   proxyConfig: { enabled: false },
   toolbarConfig: { zoom: true, custom: false },
   customConfig: { storage: false },
-};
+}));
 
-const holidayGridOptions: VxeGridProps<HolidayRow> = {
+const holidayGridOptions = computed<VxeGridProps<HolidayRow>>(() => ({
   id: 'settings-preview-holiday',
   rowConfig: { keyField: '_key' },
   columns: [
-    { field: 'region', title: '地区', width: 120 },
-    { field: 'start_date', title: '开始日期', minWidth: 120 },
-    { field: 'end_date', title: '结束日期', minWidth: 120 },
-    { field: 'holiday_name', title: '假期名称', minWidth: 140 },
-    { title: '操作', width: 90, fixed: 'right', slots: { default: 'action' } },
+    { field: 'region', title: t(`${i18nPrefix}.columnRegion`), width: 120 },
+    {
+      field: 'start_date',
+      title: t(`${i18nPrefix}.columnStartDate`),
+      minWidth: 120,
+    },
+    {
+      field: 'end_date',
+      title: t(`${i18nPrefix}.columnEndDate`),
+      minWidth: 120,
+    },
+    {
+      field: 'holiday_name',
+      title: t(`${i18nPrefix}.columnHolidayName`),
+      minWidth: 140,
+    },
+    {
+      title: t(`${i18nPrefix}.columnAction`),
+      width: 90,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
   ],
   proxyConfig: { enabled: false },
   toolbarConfig: { zoom: true, custom: false },
   customConfig: { storage: false },
-};
+}));
 
-const catalogGridOptions: VxeGridProps<CatalogRow> = {
+const catalogGridOptions = computed<VxeGridProps<CatalogRow>>(() => ({
   id: 'settings-preview-catalog',
   rowConfig: { keyField: 'region' },
   columns: [
-    { field: 'region', title: '地区', width: 140 },
+    { field: 'region', title: t(`${i18nPrefix}.columnRegion`), width: 140 },
     {
-      title: '假期名称清单',
+      title: t(`${i18nPrefix}.columnHolidayCatalog`),
       minWidth: 280,
       slots: { default: 'names' },
     },
@@ -223,16 +258,26 @@ const catalogGridOptions: VxeGridProps<CatalogRow> = {
   proxyConfig: { enabled: false },
   toolbarConfig: { zoom: true, custom: false },
   customConfig: { storage: false },
-};
+}));
 
 const [SummaryTable, summaryTableApi] = useVbenVxeGrid({
-  gridOptions: summaryGridOptions,
+  gridOptions: summaryGridOptions.value,
 });
 const [HolidayTable, holidayTableApi] = useVbenVxeGrid({
-  gridOptions: holidayGridOptions,
+  gridOptions: holidayGridOptions.value,
 });
 const [CatalogTable, catalogTableApi] = useVbenVxeGrid({
-  gridOptions: catalogGridOptions,
+  gridOptions: catalogGridOptions.value,
+});
+
+watch(summaryGridOptions, (opts) => {
+  summaryTableApi.setGridOptions(opts);
+});
+watch(holidayGridOptions, (opts) => {
+  holidayTableApi.setGridOptions(opts);
+});
+watch(catalogGridOptions, (opts) => {
+  catalogTableApi.setGridOptions(opts);
 });
 
 watch(
@@ -263,9 +308,9 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
 </script>
 
 <template>
-  <ElCard header="当前预览">
+  <ElCard :header="t(`${i18nPrefix}.cardTitle`)">
     <p class="mb-4 text-sm text-muted-foreground">
-      这些参数统一保存在一个 MongoDB 集合中，保存后新增员工页面会直接使用。
+      {{ t(`${i18nPrefix}.hint`) }}
     </p>
 
     <div class="grid grid-cols-2 gap-6">
@@ -280,47 +325,51 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
               type="info"
               class="mr-1 mb-1"
             >
-              <template v-if="row.type === '模块'">
+              <template v-if="row.typeKey === 'module'">
                 {{ item.name }}（{{ item.code }}）
               </template>
-              <template v-else-if="row.type === '员工可自编辑字段'">
+              <template v-else-if="row.typeKey === 'editableFields'">
                 {{ item.name }}（{{ item.code }}）
               </template>
-              <template v-else-if="row.type === '币种与港币汇率'">
+              <template v-else-if="row.typeKey === 'currency'">
                 {{ item.name }} → {{ item.rate }}
               </template>
               <template v-else>{{ item.name }}</template>
             </ElTag>
           </template>
-          <span v-else class="text-xs text-muted-foreground">暂无</span>
+          <span v-else class="text-xs text-muted-foreground">
+            {{ t(`${i18nPrefix}.empty`) }}
+          </span>
         </template>
       </SummaryTable>
 
       <!-- 右列：地区假期表 -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
-          <span class="text-base font-semibold">地区假期</span>
+          <span class="text-base font-semibold">
+            {{ t(`${i18nPrefix}.sectionHoliday`) }}
+          </span>
           <ElSelect v-model="holidayYearFilter" size="small" class="w-28">
             <ElOption
               v-for="y in yearOptions"
               :key="y"
-              :label="`${y}年`"
+              :label="t(`${i18nPrefix}.yearSuffix`, { year: y })"
               :value="y"
             />
           </ElSelect>
         </div>
         <HolidayTable>
           <template #empty>
-            <ElEmpty description="暂无地区假期配置" />
+            <ElEmpty :description="t(`${i18nPrefix}.emptyHoliday`)" />
           </template>
           <template #action="{ row }">
             <ElButton
               size="small"
               type="danger"
               link
-              @click="handleDeleteHoliday(row)"
+              @click="handleDeleteHoliday(row as HolidayRow)"
             >
-              删除
+              {{ t(`${i18nPrefix}.delete`) }}
             </ElButton>
           </template>
         </HolidayTable>
@@ -328,10 +377,12 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
 
       <!-- 第二行：地区假期名称清单（跨两列，表格内容较宽） -->
       <div class="col-span-2 flex flex-col gap-2">
-        <div class="text-base font-semibold">地区假期名称清单</div>
+        <div class="text-base font-semibold">
+          {{ t(`${i18nPrefix}.sectionHolidayCatalog`) }}
+        </div>
         <CatalogTable>
           <template #empty>
-            <ElEmpty description="暂无地区假期名称清单配置" />
+            <ElEmpty :description="t(`${i18nPrefix}.emptyHolidayCatalog`)" />
           </template>
           <template #names="{ row }">
             <ElTag

@@ -1,0 +1,111 @@
+{
+  "page": {
+    "approve": {
+      "title": "审批管理",
+      "searchPlaceholder": "搜索员工姓名 / 账号 / 工号 / 备注 / 理由",
+      "allStatus": "全部状态",
+      "allTypes": "全部类型",
+      "allDepartments": "全部部门",
+      "allRegions": "全部地区",
+      "leaveTypeLabel": "请假类型：",
+      "pendingLeave": "待审批 · 请假",
+      "pendingClaim": "待审批 · 报销",
+      "recordsLeave": "审批记录 · 请假",
+      "recordsClaim": "审批记录 · 报销",
+      "claimDetail": {
+        "title": "报销详情",
+        "applicant": "申请人：",
+        "deptRegion": "部门/地区：",
+        "reason": "理由：",
+        "amount": "金额：",
+        "invoiceDate": "开票日期：",
+        "invoiceNo": "票号：",
+        "status": "状态：",
+        "attachment": "附件：",
+        "viewAttachment": "查看附件",
+        "none": "无",
+        "description": "描述：",
+        "reviewComment": "审批意见：",
+        "itemsTitle": "明细项（{count} 条）",
+        "itemInvoiceDate": "开票日期: ",
+        "itemInvoiceNo": "票号: ",
+        "close": "关闭"
+      },
+      "pendingClaimTab": {
+        "listTitle": "共 {count} 条待审批",
+        "view": "查看",
+        "detail": "详情",
+        "review": "审批",
+        "withdraw": "撤回",
+        "itemsCount": "{count} 条",
+        "column": {
+          "applicant": "申请人",
+          "account": "账号",
+          "department": "部门",
+          "region": "地区",
+          "reason": "理由",
+          "amount": "金额",
+          "items": "明细",
+          "description": "描述",
+          "status": "状态",
+          "attachment": "附件",
+          "action": "操作"
+        }
+      },
+      "pendingLeaveTab": {
+        "listTitle": "共 {count} 条待审批",
+        "viewDetail": "详情",
+        "review": "审批",
+        "withdraw": "撤回",
+        "column": {
+          "applicant": "申请人",
+          "account": "账号",
+          "employeeCode": "工号",
+          "department": "部门",
+          "region": "地区",
+          "leaveType": "类型",
+          "session": "时段",
+          "timeRange": "时间范围",
+          "reason": "原因",
+          "status": "状态",
+          "action": "操作"
+        }
+      },
+      "recordsLeaveTab": {
+        "listTitle": "共 {count} 条记录",
+        "viewDetail": "详情",
+        "column": {
+          "applicant": "申请人",
+          "account": "账号",
+          "employeeCode": "工号",
+          "department": "部门",
+          "region": "地区",
+          "leaveType": "类型",
+          "timeRange": "时间范围",
+          "myAction": "我的操作",
+          "currentStatus": "当前状态",
+          "comment": "审批备注",
+          "processedAt": "处理时间",
+          "action": "操作"
+        }
+      },
+      "recordsClaimTab": {
+        "listTitle": "共 {count} 条记录",
+        "viewDetail": "详情",
+        "column": {
+          "applicant": "申请人",
+          "account": "账号",
+          "department": "部门",
+          "region": "地区",
+          "reason": "理由",
+          "amount": "金额",
+          "myAction": "我的操作",
+          "currentStatus": "当前状态",
+          "comment": "审批备注",
+          "processedAt": "处理时间",
+          "action": "操作"
+        }
+      }
+    }
+  }
+}

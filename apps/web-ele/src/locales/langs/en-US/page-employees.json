@@ -1,0 +1,104 @@
+{
+  "page": {
+    "employees": {
+      "title": "Employee Management",
+      "list": "Employee List",
+      "profile": "Employee Profile",
+      "create": "Create Employee",
+      "edit": "Edit Employee",
+      "basicInfo": "Basic Info",
+      "status": "Status",
+      "admin": "Admin",
+      "permissions": "Permissions",
+      "resetPassword": "Reset Password",
+      "buttons": {
+        "createShort": "Create"
+      },
+      "drawer": {
+        "createTitle": "Add Employee"
+      },
+      "role": {
+        "admin": "Admin",
+        "employee": "Employee"
+      },
+      "action": {
+        "profile": "Profile",
+        "edit": "Edit",
+        "accessControl": "Access",
+        "resetPassword": "Reset Password",
+        "permissions": "Permissions",
+        "delete": "Delete"
+      },
+      "message": {
+        "statusUpdateSuccess": "Status updated successfully",
+        "statusUpdateFailed": "Failed to update status",
+        "permissionUpdateSuccess": "Permissions updated successfully",
+        "permissionUpdateFailed": "Failed to update permissions",
+        "basicInfoUpdateSuccess": "Basic info updated successfully",
+        "basicInfoUpdateFailed": "Failed to update basic info",
+        "accessControlUpdateSuccess": "Access control ID updated successfully",
+        "accessControlUpdateFailed": "Failed to update access control ID",
+        "deleteSuccess": "Employee deleted",
+        "deleteFailed": "Failed to delete employee",
+        "resetPasswordSuccess": "Password has been reset. Temporary password: {password}",
+        "resetPasswordFailed": "Failed to reset password"
+      },
+      "deleteConfirm": {
+        "message": "Are you sure to delete employee \"{name}\"? This action is irreversible and will remove the account and permissions.",
+        "title": "Delete Employee",
+        "confirmButtonText": "Confirm Delete",
+        "cancelButtonText": "Cancel"
+      },
+      "column": {
+        "userId": "User ID",
+        "employeeCode": "Employee Code",
+        "fullName": "Full Name",
+        "username": "Username",
+        "role": "Role",
+        "deptPosRegion": "Dept/Position/Region",
+        "status": "Status",
+        "initialPasswordStatus": "Initial Password Status",
+        "initialPassword": "Initial Password",
+        "permissions": "Permissions",
+        "action": "Action"
+      },
+      "search": {
+        "keywordLabel": "Keyword",
+        "keywordPlaceholder": "Search username / email / name / employee code",
+        "roleLabel": "Role",
+        "statusLabel": "Status",
+        "departmentLabel": "Department",
+        "regionLabel": "Region"
+      },
+      "statusOption": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "toolbar": {
+        "refresh": "Refresh"
+      },
+      "profileDetail": {
+        "back": "Back",
+        "basicInfo": "Basic Info",
+        "profileInfo": "Profile Info",
+        "account": "Account",
+        "fullName": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "department": "Department",
+        "position": "Position",
+        "region": "Region",
+        "save": "Save",
+        "hireDate": "Hire Date",
+        "workStartDate": "Work Start Date",
+        "hkidNumber": "HKID Number",
+        "englishAddress": "English Address",
+        "emergencyContact": "Emergency Contact",
+        "emergencyContactPhone": "Emergency Contact Phone",
+        "basicInfoUpdateSuccess": "Basic info updated successfully",
+        "profileInfoUpdateSuccess": "Profile info updated successfully",
+        "updateFailed": "Update failed"
+      }
+    }
+  }
+}

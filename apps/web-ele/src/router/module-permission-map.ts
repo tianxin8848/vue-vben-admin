@@ -164,7 +164,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:layout-dashboard',
-          title: $t('page.dashboard.title'),
+          title: $t('page.workspace.dashboard'),
         },
       },
     ],

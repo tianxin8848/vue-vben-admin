@@ -6,11 +6,7 @@ import type { LocaleSetupOptions, SupportedLanguagesType } from '@vben/locales';
 
 import { ref } from 'vue';
 
-import {
-  $t,
-  setupI18n as coreSetup,
-  loadLocalesMapFromDir,
-} from '@vben/locales';
+import { $t, setupI18n as coreSetup } from '@vben/locales';
 import { preferences } from '@vben/preferences';
 
 import dayjs from 'dayjs';
@@ -21,7 +17,71 @@ const elementLocale = ref<Language>(defaultLocale);
 
 const modules = import.meta.glob('./langs/**/*.json');
 
-const localesMap = loadLocalesMapFromDir(
+/** 深合并两个对象（递归合并嵌套对象，数组直接覆盖） */
+function deepMerge(
+  target: Record<string, any>,
+  source: Record<string, any>,
+): Record<string, any> {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    const shouldDeepMerge =
+      source[key] &&
+      typeof source[key] === 'object' &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === 'object' &&
+      !Array.isArray(target[key]);
+    result[key] = shouldDeepMerge
+      ? deepMerge(target[key], source[key])
+      : source[key];
+  }
+  return result;
+}
+
+/** 构建支持深合并的 locales map（同语言的多个 JSON 文件内容会被递归合并） */
+function buildLocalesMapWithDeepMerge(
+  regexp: RegExp,
+  modules: Record<string, () => Promise<unknown>>,
+): Record<string, () => Promise<{ default: Record<string, any> }>> {
+  const localesRaw: Record<string, Record<string, () => Promise<unknown>>> = {};
+
+  for (const path in modules) {
+    const match = path.match(regexp);
+    if (match) {
+      const [_, locale, fileName] = match;
+      if (locale && fileName) {
+        if (!localesRaw[locale]) {
+          localesRaw[locale] = {};
+        }
+        if (modules[path]) {
+          localesRaw[locale][fileName] = modules[path];
+        }
+      }
+    }
+  }
+
+  const localesMap: Record<
+    string,
+    () => Promise<{ default: Record<string, any> }>
+  > = {};
+
+  for (const [locale, files] of Object.entries(localesRaw)) {
+    localesMap[locale] = async () => {
+      let merged: Record<string, any> = {};
+      for (const [, importFn] of Object.entries(files)) {
+        const content = ((await importFn()) as any)?.default;
+        if (content) {
+          merged = deepMerge(merged, content);
+        }
+      }
+      return { default: merged };
+    };
+  }
+
+  return localesMap;
+}
+
+const localesMap = buildLocalesMapWithDeepMerge(
   /\.\/langs\/([^/]+)\/(.*)\.json$/,
   modules,
 );

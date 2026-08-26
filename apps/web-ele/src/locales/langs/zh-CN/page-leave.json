@@ -1,0 +1,336 @@
+{
+  "page": {
+    "leave": {
+      "title": "请假流程管理",
+      "list": "请假申请(管理员)",
+      "adminList": "请假人员管理",
+      "workflowCenter": "流程中心",
+      "detail": "申请详情",
+      "workflow": "审批流程",
+      "submit": "提交申请",
+      "review": "审批",
+      "revoke": "撤销申请",
+      "employeeLeave": {
+        "recordsTab": "请假记录",
+        "calendarTab": "年历视图",
+        "validation": {
+          "completeDates": "请完整选择请假日期",
+          "startAfterEnd": "开始日期不能晚于结束日期",
+          "sessionSingleDay": "上午或下午请假仅支持单日申请"
+        },
+        "message": {
+          "submitSuccess": "请假申请已提交",
+          "submitFailed": "提交失败",
+          "withdrawSuccess": "已撤回",
+          "withdrawFailed": "撤回失败"
+        },
+        "modal": {
+          "title": "填写请假单"
+        },
+        "stats": {
+          "recordCount": "当年请假记录",
+          "dayCount": "当年覆盖天数",
+          "pendingCount": "待审批记录",
+          "annualEntitlement": "当年年假总计",
+          "annualAvailable": "当年年假可用"
+        },
+        "listTitle": "我的请假记录（{count} 条）",
+        "button": {
+          "create": "填写请假单",
+          "showAll": "显示全部",
+          "hideWithdrawnRejected": "隐藏撤回/驳回",
+          "withdraw": "撤回"
+        },
+        "date": {
+          "to": "至"
+        },
+        "calendar": {
+          "detailTitle": "日期详情",
+          "noRecords": "当天没有请假记录。",
+          "typeLabel": "类型：",
+          "sessionLabel": "时段：",
+          "statusLabel": "状态：",
+          "reasonLabel": "说明："
+        },
+        "form": {
+          "leaveType": "请假类型",
+          "startDate": "开始日期",
+          "startDatePlaceholder": "选择开始日期",
+          "endDate": "结束日期",
+          "endDatePlaceholder": "选择结束日期",
+          "session": "请假时段",
+          "handoverTo": "工作交接人",
+          "handoverToPlaceholder": "选填",
+          "reason": "请假说明",
+          "reasonPlaceholder": "请填写请假原因",
+          "hint": "说明：半天请假仅支持单日申请；提交后会写入 leave_requests，审批状态默认是\"待审批\"。"
+        },
+        "table": {
+          "dateRange": "日期范围",
+          "leaveType": "请假类型",
+          "session": "时段",
+          "status": "状态",
+          "createdAt": "创建时间",
+          "action": "操作",
+          "refresh": "刷新"
+        }
+      },
+      "table": {
+        "applicant": "申请人",
+        "username": "账号",
+        "department": "部门",
+        "region": "地区",
+        "reason": "理由",
+        "amount": "金额",
+        "items": "明细",
+        "description": "描述",
+        "status": "状态",
+        "attachment": "附件",
+        "action": "操作",
+        "itemsCount": "{count} 条"
+      },
+      "workflowMaintenance": {
+        "title": "请假流程维护",
+        "description": "为不同员工维护不同审批路线。优先级数字越小越优先匹配。",
+        "refresh": "刷新",
+        "create": "新增流程",
+        "edit": "编辑",
+        "delete": "删除",
+        "enable": "启用",
+        "disable": "禁用",
+        "enabled": "启用",
+        "disabled": "禁用",
+        "listTitle": "流程列表（共 {count} 条）",
+        "unnamed": "未命名",
+        "globalDefault": "全局默认",
+        "employeeLabel": "员工：",
+        "regionLabel": "地区：",
+        "departmentLabel": "部门：",
+        "positionLabel": "岗位：",
+        "approverLevel": "{index}级：{username}",
+        "operationFailed": "操作失败",
+        "toggleDisabled": "流程已禁用",
+        "toggleEnabled": "流程已启用",
+        "confirmDelete": "确认删除流程：{name}？",
+        "confirmDeleteTitle": "确认删除",
+        "confirm": "确定",
+        "cancel": "取消",
+        "deleteSuccess": "流程已删除",
+        "deleteFailed": "删除失败",
+        "column": {
+          "name": "名称",
+          "priority": "优先级",
+          "matchCondition": "匹配条件",
+          "approverChain": "审批链",
+          "status": "状态",
+          "action": "操作"
+        },
+        "drawer": {
+          "save": "保存流程",
+          "cancel": "取消",
+          "addTitle": "新增流程",
+          "editTitle": "编辑流程",
+          "updateConfirm": "更新流程",
+          "summary": "已设置 {count} 级",
+          "validation": {
+            "nameRequired": "请输入流程名称",
+            "atLeastOneApprover": "请至少添加 1 级审批人",
+            "noDuplicate": "审批人链中不能重复选择同一个人"
+          },
+          "message": {
+            "updated": "流程已更新",
+            "created": "流程已创建",
+            "saveFailed": "保存失败"
+          },
+          "form": {
+            "nameLabel": "流程名称",
+            "namePlaceholder": "例如：大陆-研发部-经理审批",
+            "priorityLabel": "优先级",
+            "employeeLabel": "指定员工",
+            "employeePlaceholder": "不指定",
+            "regionLabel": "地区",
+            "regionPlaceholder": "不限制",
+            "departmentLabel": "部门",
+            "departmentPlaceholder": "不限制",
+            "positionLabel": "岗位",
+            "positionPlaceholder": "不限制",
+            "approverChainLabel": "审批人链",
+            "addLevel": "+ 添加一级",
+            "clear": "清空",
+            "levelBadge": "第 {index} 级",
+            "approverPlaceholder": "请选择审批人",
+            "delete": "删除",
+            "hint": "审批会按第 1 级 → 第 N 级依次流转。流程会按\"优先级 + 条件匹配\"选择一条审批路线。"
+          }
+        }
+      },
+      "common": {
+        "back": "返回",
+        "search": "搜索",
+        "edit": "编辑",
+        "delete": "删除",
+        "cancel": "取消",
+        "confirm": "确定",
+        "save": "保存",
+        "refresh": "刷新",
+        "resetFilter": "重置筛选",
+        "refreshList": "刷新列表",
+        "action": "操作"
+      },
+      "sick": "病假",
+      "annual": "年假",
+      "personal": "事假",
+      "maternity": "产假",
+      "paternity": "陪产假",
+      "other": "其他",
+      "myLeave": "我的请假",
+      "myApprovals": "我的待审批",
+      "myRecords": "我的审批记录",
+      "calendar": "请假日历",
+      "leaveTypes": {
+        "annual": "年假",
+        "personal": "事假",
+        "sick": "病假",
+        "lieu": "调休",
+        "long": "长假"
+      },
+      "approvalStatus": {
+        "approved": "已通过",
+        "pending": "待审批",
+        "rejected": "已驳回",
+        "withdrawn": "已撤回",
+        "draft": "草稿"
+      },
+      "actionStatus": {
+        "submitted": "已提交",
+        "created": "已创建"
+      },
+      "session": {
+        "full_day": "全天",
+        "morning": "上午",
+        "afternoon": "下午"
+      },
+      "calendarView": {
+        "description": "请假管理包含\"请假日历\"和\"流程维护\"，当前为日历视图。",
+        "backToWorkspace": "返回工作台",
+        "workflowMaintenance": "流程维护",
+        "overviewAndFilter": "概览与筛选",
+        "yearCalendar": "年历视图",
+        "allRegions": "总览（全部地区）",
+        "unsetRegion": "未设置地区",
+        "ungrouped": "未分组",
+        "weekdays": {
+          "sun": "星期日",
+          "mon": "星期一",
+          "tue": "星期二",
+          "wed": "星期三",
+          "thu": "星期四",
+          "fri": "星期五",
+          "sat": "星期六"
+        },
+        "weekShort": {
+          "mon": "一",
+          "tue": "二",
+          "wed": "三",
+          "thu": "四",
+          "fri": "五",
+          "sat": "六",
+          "sun": "日"
+        },
+        "weekPrefix": "周",
+        "monthNames": [
+          "一月",
+          "二月",
+          "三月",
+          "四月",
+          "五月",
+          "六月",
+          "七月",
+          "八月",
+          "九月",
+          "十月",
+          "十一月",
+          "十二月"
+        ],
+        "selectYearMonth": "选择年月",
+        "yearView": "年视图",
+        "monthView": "月视图",
+        "prevYear": "上一年",
+        "nextYear": "下一年",
+        "backToCurrentYear": "回到今年",
+        "summary": {
+          "leaveRecords": "请假记录",
+          "coveredDays": "覆盖天数",
+          "pending": "待审批",
+          "currentYear": "当前年份"
+        },
+        "stats": {
+          "visibleMembers": "当前展示成员",
+          "annualLeaveRecords": "全年请假记录",
+          "riskDayCount": "风险日期数量",
+          "peakDate": "最高峰值日期",
+          "annualLeaveTotal": "当年年假总计",
+          "annualLeaveAvailable": "当年年假可用",
+          "personUnit": "人"
+        },
+        "filter": {
+          "title": "筛选控制",
+          "team": "团队筛选",
+          "allMembers": "全部成员",
+          "employeeSearch": "员工搜索",
+          "searchPlaceholder": "输入姓名高亮全年请假",
+          "riskThreshold": "人力预警阈值",
+          "viewMode": "视图模式",
+          "standard": "标准",
+          "detail": "明细",
+          "approvalStatus": "审批状态",
+          "allStatus": "全部状态",
+          "approvedOnly": "仅已通过",
+          "pendingOnly": "仅待审批",
+          "reset": "重置筛选",
+          "legendWeekend": "周末/节假日底色",
+          "legendPending": "待审批为半透明",
+          "legendRegionalHoliday": "地区假期",
+          "legendRiskReached": "达到预警阈值"
+        },
+        "detail": {
+          "dateDetail": "日期详情",
+          "emptyHint": "点击任意日期格子后，这里会显示当天请假人员清单、假期类型、时段和审批状态。",
+          "noRecordsForDay": "当天暂无请假记录，可作为正常出勤日期。",
+          "leaveDetail": "请假详情",
+          "regionalHolidayPrefix": "地区假期：",
+          "holidayMaintenance": "地区假期维护",
+          "selectRegionFirst": "请先在上方选择具体地区，再点击某一天设置该地区的假期。",
+          "currentHolidaySet": "当前已设置假期：",
+          "noHolidaySet": "当前未设置地区假期。",
+          "setHoliday": "设置假期",
+          "unsetHoliday": "取消设置",
+          "selectRegionAndDateFirst": "请先选择地区和日期",
+          "usageInstructions": "使用说明",
+          "instructionOverviewTitle": "总览阅读",
+          "instructionOverviewBody": "每天格子直接显示请假姓名，前置色点表示假期类型，右上角徽标显示当天总请假人数。",
+          "instructionRiskTitle": "预警规则",
+          "instructionRiskBody": "单日请假人数达到阈值后，会对日期格子加红框，帮助你快速识别人力紧张日期。",
+          "instructionFilterTitle": "筛选方式",
+          "instructionFilterBody": "支持按团队看全年排期，也支持搜索某个员工，直接高亮他全年所有请假日期。",
+          "instructionFutureTitle": "后续接入",
+          "instructionFutureBody": "当前已经接入真实请假日历接口，后续可以继续补录入、审批和点击日期快速操作能力。"
+        },
+        "holidayNames": {
+          "newYear": "元旦",
+          "springFestival": "春节",
+          "qingming": "清明节",
+          "laborDay": "劳动节",
+          "dragonBoat": "端午节",
+          "midAutumn": "中秋节",
+          "nationalDay": "国庆节",
+          "christmas": "圣诞节",
+          "publicHoliday": "公众假期",
+          "companyHoliday": "公司假期",
+          "makeupDay": "补休",
+          "other": "其他假期"
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,8 @@ import type { SystemSettingsApi } from '#/api';
 
 import { computed, reactive, watch } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import {
   ElAlert,
   ElButton,
@@ -35,6 +37,8 @@ const emit = defineEmits<{
   (e: 'update:message', value: string): void;
   (e: 'update:messageType', value: '' | 'error' | 'success'): void;
 }>();
+
+const { t } = useI18n();
 
 const holidayForm = reactive({
   region: props.regions[0] ?? '',
@@ -101,7 +105,7 @@ function resolveHolidayCatalogByRegion(region: string): string[] {
   if (matchedCatalog && (matchedCatalog.holiday_names || []).length > 0) {
     return matchedCatalog.holiday_names;
   }
-  return ['其他'];
+  return [t('page.system.settingsDetail.holidayEditor.otherHolidayName')];
 }
 
 function buildHolidayNameOptions(region: string = holidayForm.region) {
@@ -142,7 +146,9 @@ function handleSave() {
     !holidayForm.startDate ||
     !holidayForm.holidayName
   ) {
-    ElMessage.warning('请填写完整假期信息');
+    ElMessage.warning(
+      t('page.system.settingsDetail.holidayEditor.formIncomplete'),
+    );
     return;
   }
   emit('save', {
@@ -166,22 +172,29 @@ initStartDate();
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-lg">地区假期维护</h3>
+      <h3 class="text-lg">
+        {{ t('page.system.settingsDetail.holidayEditor.title') }}
+      </h3>
       <span class="text-sm text-muted-foreground">
         {{
           holidayForm.region
-            ? `${holidayForm.region} · ${holidayForm.year}年`
+            ? t('page.system.settingsDetail.holidayEditor.regionYearSuffix', {
+                region: holidayForm.region,
+                year: holidayForm.year,
+              })
             : ''
         }}
       </span>
     </div>
     <p class="mb-4 text-sm text-muted-foreground">
-      在这里维护各个地区的节假日。可选择年份、日期区间（可只填一天）、假期名称和地区，保存后请假管理日历会直接读取。
+      {{ t('page.system.settingsDetail.holidayEditor.hint') }}
     </p>
 
     <div class="grid grid-cols-2 gap-3 mb-3">
       <div>
-        <div class="text-sm text-muted-foreground mb-1">地区</div>
+        <div class="text-sm text-muted-foreground mb-1">
+          {{ t('page.system.settingsDetail.holidayEditor.regionLabel') }}
+        </div>
         <ElSelect
           v-model="holidayForm.region"
           style="width: 100%"
@@ -191,7 +204,9 @@ initStartDate();
         </ElSelect>
       </div>
       <div>
-        <div class="text-sm text-muted-foreground mb-1">年份</div>
+        <div class="text-sm text-muted-foreground mb-1">
+          {{ t('page.system.settingsDetail.holidayEditor.yearLabel') }}
+        </div>
         <ElSelect
           v-model="holidayForm.year"
           style="width: 100%"
@@ -200,13 +215,19 @@ initStartDate();
           <ElOption
             v-for="y in Array.from({ length: 100 }, (_, i) => 2000 + i)"
             :key="y"
-            :label="`${y}年`"
+            :label="
+              t('page.system.settingsDetail.holidayEditor.yearSuffix', {
+                year: y,
+              })
+            "
             :value="y"
           />
         </ElSelect>
       </div>
       <div>
-        <div class="text-sm text-muted-foreground mb-1">开始日期</div>
+        <div class="text-sm text-muted-foreground mb-1">
+          {{ t('page.system.settingsDetail.holidayEditor.startDateLabel') }}
+        </div>
         <ElDatePicker
           v-model="holidayForm.startDate"
           type="date"
@@ -215,7 +236,9 @@ initStartDate();
         />
       </div>
       <div>
-        <div class="text-sm text-muted-foreground mb-1">结束日期</div>
+        <div class="text-sm text-muted-foreground mb-1">
+          {{ t('page.system.settingsDetail.holidayEditor.endDateLabel') }}
+        </div>
         <ElDatePicker
           v-model="holidayForm.endDate"
           type="date"
@@ -224,7 +247,9 @@ initStartDate();
         />
       </div>
       <div class="col-span-2">
-        <div class="text-sm text-muted-foreground mb-1">假期名称</div>
+        <div class="text-sm text-muted-foreground mb-1">
+          {{ t('page.system.settingsDetail.holidayEditor.holidayNameLabel') }}
+        </div>
         <div class="flex gap-2">
           <ElSelect v-model="holidayForm.holidayName" class="flex-1">
             <ElOption
@@ -234,13 +259,15 @@ initStartDate();
               :value="name"
             />
           </ElSelect>
-          <ElButton type="primary" @click="handleSave">保存地区假期</ElButton>
+          <ElButton type="primary" @click="handleSave">
+            {{ t('page.system.settingsDetail.holidayEditor.saveButton') }}
+          </ElButton>
         </div>
       </div>
     </div>
 
     <p class="mb-3 text-xs text-muted-foreground">
-      说明：同一地区同一天只保留一条假期记录；如果选择日期区间，会一次性写入多天并覆盖该区间内原有假期名称。
+      {{ t('page.system.settingsDetail.holidayEditor.noteHint') }}
     </p>
 
     <ElAlert
@@ -257,10 +284,18 @@ initStartDate();
         class="px-4 py-2 bg-muted/40 border-b border-border flex items-center justify-between"
       >
         <span class="text-sm font-semibold">
-          当前地区 · {{ holidayForm.year }}年 已配置假期
+          {{
+            t('page.system.settingsDetail.holidayEditor.previewTitle', {
+              year: holidayForm.year,
+            })
+          }}
         </span>
         <ElTag type="info" effect="plain" size="small">
-          {{ previewRows.length }} 天
+          {{
+            t('page.system.settingsDetail.holidayEditor.dayCount', {
+              count: previewRows.length,
+            })
+          }}
         </ElTag>
       </div>
       <ElTable
@@ -270,9 +305,23 @@ initStartDate();
         style="width: 100%"
         empty-text=""
       >
-        <ElTableColumn type="index" label="序号" width="60" align="center" />
-        <ElTableColumn prop="date" label="日期" min-width="130" />
-        <ElTableColumn label="假期名称" min-width="140">
+        <ElTableColumn
+          type="index"
+          :label="t('page.system.settingsDetail.holidayEditor.columnIndex')"
+          width="60"
+          align="center"
+        />
+        <ElTableColumn
+          prop="date"
+          :label="t('page.system.settingsDetail.holidayEditor.columnDate')"
+          min-width="130"
+        />
+        <ElTableColumn
+          :label="
+            t('page.system.settingsDetail.holidayEditor.columnHolidayName')
+          "
+          min-width="140"
+        >
           <template #default="{ row }">
             <ElTag type="danger" effect="light">
               {{ row.holiday_name }}
@@ -280,7 +329,10 @@ initStartDate();
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty description="该地区本年暂无假期配置" :image-size="60" />
+          <ElEmpty
+            :description="t('page.system.settingsDetail.holidayEditor.empty')"
+            :image-size="60"
+          />
         </template>
       </ElTable>
     </div>

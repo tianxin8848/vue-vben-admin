@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import {
   ElButton,
   ElEmpty,
@@ -24,6 +26,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
 }>();
+
+const { t } = useI18n();
 
 const currencies = computed<CurrencyRow[]>(() => {
   return props.modelValue
@@ -59,15 +63,23 @@ function handleAdd() {
   const code = newCode.value.trim().toUpperCase();
   const rate = newRate.value;
   if (!code) {
-    ElMessage.warning('请输入币种编码');
+    ElMessage.warning(
+      t('page.system.settingsDetail.currencyEditor.validation.codeRequired'),
+    );
     return;
   }
   if (!rate || !Number.isFinite(rate) || rate <= 0) {
-    ElMessage.warning('请输入有效的港币汇率（大于 0）');
+    ElMessage.warning(
+      t('page.system.settingsDetail.currencyEditor.validation.rateInvalid'),
+    );
     return;
   }
   if (currencies.value.some((c) => c.currency_code === code)) {
-    ElMessage.warning(`币种 ${code} 已存在，请编辑或先删除`);
+    ElMessage.warning(
+      t('page.system.settingsDetail.currencyEditor.validation.duplicate', {
+        code,
+      }),
+    );
     return;
   }
   syncToParent([
@@ -97,19 +109,27 @@ function handleRateChange(idx: number, val: null | number | undefined) {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-lg">币种维护</h3>
+      <h3 class="text-lg">
+        {{ t('page.system.settingsDetail.currencyEditor.title') }}
+      </h3>
       <span class="text-sm text-muted-foreground">
-        共 {{ currencies.length }} 种币种
+        {{
+          t('page.system.settingsDetail.currencyEditor.count', {
+            count: currencies.length,
+          })
+        }}
       </span>
     </div>
     <p class="mb-4 text-sm text-muted-foreground">
-      在这里维护报销页面可用币种，以及换算成港币时使用的汇率。
+      {{ t('page.system.settingsDetail.currencyEditor.hint') }}
     </p>
 
     <div class="mb-4 flex flex-wrap gap-2 items-end">
       <ElInput
         v-model="newCode"
-        placeholder="币种编码，如 USD"
+        :placeholder="
+          t('page.system.settingsDetail.currencyEditor.codePlaceholder')
+        "
         class="w-[160px]"
         maxlength="6"
       />
@@ -118,11 +138,15 @@ function handleRateChange(idx: number, val: null | number | undefined) {
         :min="0"
         :precision="4"
         :step="0.1"
-        placeholder="港币汇率"
+        :placeholder="
+          t('page.system.settingsDetail.currencyEditor.ratePlaceholder')
+        "
         class="w-[180px]"
         controls-position="right"
       />
-      <ElButton type="primary" @click="handleAdd">新增币种</ElButton>
+      <ElButton type="primary" @click="handleAdd">
+        {{ t('page.system.settingsDetail.currencyEditor.add') }}
+      </ElButton>
     </div>
 
     <div class="rounded border border-border overflow-hidden">
@@ -133,15 +157,26 @@ function handleRateChange(idx: number, val: null | number | undefined) {
         style="width: 100%"
         empty-text=""
       >
-        <ElTableColumn type="index" label="序号" width="70" align="center" />
-        <ElTableColumn label="币种编码" min-width="140">
+        <ElTableColumn
+          type="index"
+          :label="t('page.system.settingsDetail.currencyEditor.column.seq')"
+          width="70"
+          align="center"
+        />
+        <ElTableColumn
+          :label="t('page.system.settingsDetail.currencyEditor.column.code')"
+          min-width="140"
+        >
           <template #default="{ row }">
             <ElTag type="success" effect="light">
               {{ row.currency_code }}
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="兑换港币汇率" min-width="220">
+        <ElTableColumn
+          :label="t('page.system.settingsDetail.currencyEditor.column.rate')"
+          min-width="220"
+        >
           <template #default="{ row, $index }">
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">1</span>
@@ -163,7 +198,12 @@ function handleRateChange(idx: number, val: null | number | undefined) {
             </div>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" width="90" align="center" fixed="right">
+        <ElTableColumn
+          :label="t('page.system.settingsDetail.currencyEditor.column.action')"
+          width="90"
+          align="center"
+          fixed="right"
+        >
           <template #default="{ $index }">
             <ElButton
               type="danger"
@@ -171,18 +211,21 @@ function handleRateChange(idx: number, val: null | number | undefined) {
               size="small"
               @click="handleRemove($index)"
             >
-              删除
+              {{ t('page.system.settingsDetail.currencyEditor.delete') }}
             </ElButton>
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty description="暂无币种配置，请在上方新增" :image-size="60" />
+          <ElEmpty
+            :description="t('page.system.settingsDetail.currencyEditor.empty')"
+            :image-size="60"
+          />
         </template>
       </ElTable>
     </div>
 
     <p class="mt-2 text-xs text-muted-foreground">
-      汇率含义：1 单位外币 = ? 港币。香港员工报销时会按这里的汇率自动折算港币。
+      {{ t('page.system.settingsDetail.currencyEditor.footerHint') }}
     </p>
   </section>
 </template>

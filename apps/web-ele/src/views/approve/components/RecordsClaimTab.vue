@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import type { SearchForm } from '../constants';
 
+import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { ClaimApi } from '#/api';
 
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
+
+import { useI18n } from '@vben/locales';
 
 import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
 
 import {
   actionLabelMap,
@@ -25,6 +27,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewDetail: [row: ClaimApi.ClaimApprovalRecord];
 }>();
+
+const { t } = useI18n();
 
 function applyFilters() {
   const kw = props.searchForm.keyword.trim().toLowerCase();
@@ -61,48 +65,76 @@ function applyFilters() {
   });
 }
 
+const tableColumns = computed<
+  VxeGridProps<ClaimApi.ClaimApprovalRecord>['columns']
+>(() => [
+  {
+    field: 'employee_name',
+    title: t('page.approve.recordsClaimTab.column.applicant'),
+    width: 100,
+  },
+  {
+    field: 'employee_username',
+    title: t('page.approve.recordsClaimTab.column.account'),
+    width: 120,
+  },
+  {
+    field: 'employee_department',
+    title: t('page.approve.recordsClaimTab.column.department'),
+    width: 140,
+  },
+  {
+    field: 'employee_region',
+    title: t('page.approve.recordsClaimTab.column.region'),
+    width: 100,
+  },
+  {
+    field: 'claim_reason_label',
+    title: t('page.approve.recordsClaimTab.column.reason'),
+    width: 120,
+  },
+  {
+    field: 'amount',
+    title: t('page.approve.recordsClaimTab.column.amount'),
+    width: 160,
+    slots: { default: 'amount' },
+  },
+  {
+    field: 'action',
+    title: t('page.approve.recordsClaimTab.column.myAction'),
+    width: 100,
+    slots: { default: 'action' },
+  },
+  {
+    field: 'approval_status_after',
+    title: t('page.approve.recordsClaimTab.column.currentStatus'),
+    width: 100,
+    slots: { default: 'status' },
+  },
+  {
+    field: 'comment',
+    title: t('page.approve.recordsClaimTab.column.comment'),
+    minWidth: 150,
+  },
+  {
+    field: 'created_at',
+    title: t('page.approve.recordsClaimTab.column.processedAt'),
+    width: 170,
+    slots: { default: 'created_at' },
+  },
+  {
+    title: t('page.approve.recordsClaimTab.column.action'),
+    width: 100,
+    fixed: 'right',
+    slots: { default: 'view_action' },
+  },
+]);
+
 const [BasicTable, tableApi] = useVbenVxeGrid<ClaimApi.ClaimApprovalRecord>({
   gridOptions: {
     id: 'approve-records-claim',
     rowConfig: { keyField: 'id' },
-    columns: [
-      { field: 'employee_name', title: '申请人', width: 100 },
-      { field: 'employee_username', title: '账号', width: 120 },
-      { field: 'employee_department', title: '部门', width: 140 },
-      { field: 'employee_region', title: '地区', width: 100 },
-      { field: 'claim_reason_label', title: '理由', width: 120 },
-      {
-        field: 'amount',
-        title: '金额',
-        width: 160,
-        slots: { default: 'amount' },
-      },
-      {
-        field: 'action',
-        title: '我的操作',
-        width: 100,
-        slots: { default: 'action' },
-      },
-      {
-        field: 'approval_status_after',
-        title: '当前状态',
-        width: 100,
-        slots: { default: 'status' },
-      },
-      { field: 'comment', title: '审批备注', minWidth: 150 },
-      {
-        field: 'created_at',
-        title: '处理时间',
-        width: 170,
-        slots: { default: 'created_at' },
-      },
-      {
-        title: '操作',
-        width: 100,
-        fixed: 'right',
-        slots: { default: 'view_action' },
-      },
-    ],
+    columns: tableColumns.value,
     proxyConfig: {
       enabled: true,
       ajax: {
@@ -139,13 +171,21 @@ watch(
   { deep: true },
 );
 
+watch(tableColumns, () => {
+  tableApi.setGridOptions({ columns: tableColumns.value });
+});
+
 function viewDetail(row: any) {
   emit('viewDetail', row as ClaimApi.ClaimApprovalRecord);
 }
 </script>
 
 <template>
-  <BasicTable :table-title="`共 ${data.length} 条记录`">
+  <BasicTable
+    :table-title="
+      t('page.approve.recordsClaimTab.listTitle', { count: data.length })
+    "
+  >
     <template #amount="{ row }">
       <div>{{ row.amount.toFixed(2) }} {{ row.currency }}</div>
       <div v-if="row.amount_hkd" class="text-xs text-muted-foreground">
@@ -154,13 +194,13 @@ function viewDetail(row: any) {
     </template>
     <template #action="{ row }">
       <ElTag :type="actionTypeMap[row.action] || 'info'">
-        {{ $t(actionLabelMap[row.action] || row.action) }}
+        {{ t(actionLabelMap[row.action] || row.action) }}
       </ElTag>
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status_after] || 'info'">
         {{
-          $t(
+          t(
             statusLabelMap[row.approval_status_after] ||
               row.approval_status_after,
           )
@@ -173,7 +213,9 @@ function viewDetail(row: any) {
       }}
     </template>
     <template #view_action="{ row }">
-      <ElButton size="small" @click="viewDetail(row)">详情</ElButton>
+      <ElButton size="small" @click="viewDetail(row)">
+        {{ t('page.approve.recordsClaimTab.viewDetail') }}
+      </ElButton>
     </template>
   </BasicTable>
 </template>

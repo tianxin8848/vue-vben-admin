@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import { ElButton, ElInput, ElMessage, ElTag } from 'element-plus';
 
 const props = defineProps<{
@@ -10,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
 }>();
+
+const { t } = useI18n();
 
 const reasons = computed<string[]>(() =>
   props.modelValue
@@ -27,11 +31,19 @@ function syncToParent(list: string[]) {
 function handleAdd() {
   const name = newReason.value.trim();
   if (!name) {
-    ElMessage.warning('请输入报销理由');
+    ElMessage.warning(
+      t(
+        'page.system.settingsDetail.claimReasonEditor.validation.reasonRequired',
+      ),
+    );
     return;
   }
   if (reasons.value.includes(name)) {
-    ElMessage.warning('该报销理由已存在');
+    ElMessage.warning(
+      t(
+        'page.system.settingsDetail.claimReasonEditor.validation.reasonDuplicate',
+      ),
+    );
     return;
   }
   syncToParent([...reasons.value, name]);
@@ -48,23 +60,33 @@ function handleRemove(idx: number) {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-lg">报销理由维护</h3>
+      <h3 class="text-lg">
+        {{ t('page.system.settingsDetail.claimReasonEditor.title') }}
+      </h3>
       <span class="text-sm text-muted-foreground">
-        共 {{ reasons.length }} 项
+        {{
+          t('page.system.settingsDetail.claimReasonEditor.count', {
+            count: reasons.length,
+          })
+        }}
       </span>
     </div>
     <p class="mb-4 text-sm text-muted-foreground">
-      在这里维护员工报销页面可勾选的报销理由。
+      {{ t('page.system.settingsDetail.claimReasonEditor.hint') }}
     </p>
 
     <div class="mb-4 flex gap-2">
       <ElInput
         v-model="newReason"
-        placeholder="输入新的报销理由，例如：餐饮报销"
+        :placeholder="
+          t('page.system.settingsDetail.claimReasonEditor.placeholder')
+        "
         class="flex-1"
         @keyup.enter="handleAdd"
       />
-      <ElButton type="primary" @click="handleAdd">新增</ElButton>
+      <ElButton type="primary" @click="handleAdd">
+        {{ t('page.system.settingsDetail.claimReasonEditor.add') }}
+      </ElButton>
     </div>
 
     <div
@@ -83,12 +105,12 @@ function handleRemove(idx: number) {
         </ElTag>
       </template>
       <span v-else class="text-xs text-muted-foreground">
-        暂无报销理由，请在上方新增
+        {{ t('page.system.settingsDetail.claimReasonEditor.empty') }}
       </span>
     </div>
 
     <p class="mt-2 text-xs text-muted-foreground">
-      保存系统参数管理后，员工报销页面的“报销理由”下拉会直接读取这里的配置。
+      {{ t('page.system.settingsDetail.claimReasonEditor.footerHint') }}
     </p>
   </section>
 </template>

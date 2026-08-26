@@ -1,0 +1,111 @@
+{
+  "page": {
+    "approve": {
+      "title": "Approval Management",
+      "searchPlaceholder": "Search name / username / employee ID / notes / reason",
+      "allStatus": "All Status",
+      "allTypes": "All Types",
+      "allDepartments": "All Departments",
+      "allRegions": "All Regions",
+      "leaveTypeLabel": "Leave Type: ",
+      "pendingLeave": "Pending · Leave",
+      "pendingClaim": "Pending · Claim",
+      "recordsLeave": "Records · Leave",
+      "recordsClaim": "Records · Claim",
+      "claimDetail": {
+        "title": "Claim Details",
+        "applicant": "Applicant: ",
+        "deptRegion": "Dept / Region: ",
+        "reason": "Reason: ",
+        "amount": "Amount: ",
+        "invoiceDate": "Invoice Date: ",
+        "invoiceNo": "Invoice No.: ",
+        "status": "Status: ",
+        "attachment": "Attachment: ",
+        "viewAttachment": "View attachment",
+        "none": "None",
+        "description": "Description: ",
+        "reviewComment": "Review Comment: ",
+        "itemsTitle": "Items ({count} total)",
+        "itemInvoiceDate": "Invoice date: ",
+        "itemInvoiceNo": "Invoice no.: ",
+        "close": "Close"
+      },
+      "pendingClaimTab": {
+        "listTitle": "{count} pending",
+        "view": "View",
+        "detail": "Detail",
+        "review": "Review",
+        "withdraw": "Withdraw",
+        "itemsCount": "{count} items",
+        "column": {
+          "applicant": "Applicant",
+          "account": "Account",
+          "department": "Department",
+          "region": "Region",
+          "reason": "Reason",
+          "amount": "Amount",
+          "items": "Items",
+          "description": "Description",
+          "status": "Status",
+          "attachment": "Attachment",
+          "action": "Action"
+        }
+      },
+      "pendingLeaveTab": {
+        "listTitle": "{count} pending",
+        "viewDetail": "Detail",
+        "review": "Review",
+        "withdraw": "Withdraw",
+        "column": {
+          "applicant": "Applicant",
+          "account": "Account",
+          "employeeCode": "Employee ID",
+          "department": "Department",
+          "region": "Region",
+          "leaveType": "Type",
+          "session": "Session",
+          "timeRange": "Date Range",
+          "reason": "Reason",
+          "status": "Status",
+          "action": "Action"
+        }
+      },
+      "recordsLeaveTab": {
+        "listTitle": "{count} records",
+        "viewDetail": "Detail",
+        "column": {
+          "applicant": "Applicant",
+          "account": "Account",
+          "employeeCode": "Employee ID",
+          "department": "Department",
+          "region": "Region",
+          "leaveType": "Type",
+          "timeRange": "Date Range",
+          "myAction": "My Action",
+          "currentStatus": "Current Status",
+          "comment": "Review Note",
+          "processedAt": "Processed At",
+          "action": "Action"
+        }
+      },
+      "recordsClaimTab": {
+        "listTitle": "{count} records",
+        "viewDetail": "Detail",
+        "column": {
+          "applicant": "Applicant",
+          "account": "Account",
+          "department": "Department",
+          "region": "Region",
+          "reason": "Reason",
+          "amount": "Amount",
+          "myAction": "My Action",
+          "currentStatus": "Current Status",
+          "comment": "Review Note",
+          "processedAt": "Processed At",
+          "action": "Action"
+        }
+      }
+    }
+  }
+}

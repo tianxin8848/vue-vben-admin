@@ -1,0 +1,336 @@
+{
+  "page": {
+    "leave": {
+      "title": "Leave Management",
+      "list": "Leave Requests",
+      "adminList": "Leave Personnel Management",
+      "workflowCenter": "Workflow Center",
+      "detail": "Request Detail",
+      "workflow": "Approval Workflow",
+      "submit": "Submit Request",
+      "review": "Review",
+      "revoke": "Revoke",
+      "employeeLeave": {
+        "recordsTab": "Leave Records",
+        "calendarTab": "Year Calendar",
+        "validation": {
+          "completeDates": "Please select leave dates completely",
+          "startAfterEnd": "Start date cannot be later than end date",
+          "sessionSingleDay": "Morning or afternoon leave only supports single-day requests"
+        },
+        "message": {
+          "submitSuccess": "Leave request submitted",
+          "submitFailed": "Submission failed",
+          "withdrawSuccess": "Withdrawn",
+          "withdrawFailed": "Withdrawal failed"
+        },
+        "modal": {
+          "title": "Fill in Leave Form"
+        },
+        "stats": {
+          "recordCount": "Records this year",
+          "dayCount": "Covered days this year",
+          "pendingCount": "Pending records",
+          "annualEntitlement": "Annual leave total",
+          "annualAvailable": "Annual leave available"
+        },
+        "listTitle": "My Leave Records ({count} total)",
+        "button": {
+          "create": "Fill in Leave Form",
+          "showAll": "Show All",
+          "hideWithdrawnRejected": "Hide Withdrawn/Rejected",
+          "withdraw": "Withdraw"
+        },
+        "date": {
+          "to": "to"
+        },
+        "calendar": {
+          "detailTitle": "Date Details",
+          "noRecords": "No leave records on this day.",
+          "typeLabel": "Type: ",
+          "sessionLabel": "Session: ",
+          "statusLabel": "Status: ",
+          "reasonLabel": "Note: "
+        },
+        "form": {
+          "leaveType": "Leave Type",
+          "startDate": "Start Date",
+          "startDatePlaceholder": "Select start date",
+          "endDate": "End Date",
+          "endDatePlaceholder": "Select end date",
+          "session": "Session",
+          "handoverTo": "Handover To",
+          "handoverToPlaceholder": "Optional",
+          "reason": "Reason",
+          "reasonPlaceholder": "Please fill in the reason",
+          "hint": "Note: Half-day leave only supports single-day requests; after submission it will be written to leave_requests, with default status \"pending\"."
+        },
+        "table": {
+          "dateRange": "Date Range",
+          "leaveType": "Leave Type",
+          "session": "Session",
+          "status": "Status",
+          "createdAt": "Created At",
+          "action": "Action",
+          "refresh": "Refresh"
+        }
+      },
+      "table": {
+        "applicant": "Applicant",
+        "username": "Username",
+        "department": "Department",
+        "region": "Region",
+        "reason": "Reason",
+        "amount": "Amount",
+        "items": "Items",
+        "description": "Description",
+        "status": "Status",
+        "attachment": "Attachment",
+        "action": "Action",
+        "itemsCount": "{count} items"
+      },
+      "workflowMaintenance": {
+        "title": "Leave Workflow Maintenance",
+        "description": "Maintain different approval routes for different employees. Lower priority numbers match first.",
+        "refresh": "Refresh",
+        "create": "New Workflow",
+        "edit": "Edit",
+        "delete": "Delete",
+        "enable": "Enable",
+        "disable": "Disable",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "listTitle": "Workflow list ({count} total)",
+        "unnamed": "Unnamed",
+        "globalDefault": "Global Default",
+        "employeeLabel": "Employee: ",
+        "regionLabel": "Region: ",
+        "departmentLabel": "Department: ",
+        "positionLabel": "Position: ",
+        "approverLevel": "Level {index}: {username}",
+        "operationFailed": "Operation failed",
+        "toggleDisabled": "Workflow disabled",
+        "toggleEnabled": "Workflow enabled",
+        "confirmDelete": "Are you sure to delete workflow: {name}?",
+        "confirmDeleteTitle": "Confirm Delete",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "deleteSuccess": "Workflow deleted",
+        "deleteFailed": "Delete failed",
+        "column": {
+          "name": "Name",
+          "priority": "Priority",
+          "matchCondition": "Match Condition",
+          "approverChain": "Approver Chain",
+          "status": "Status",
+          "action": "Action"
+        },
+        "drawer": {
+          "save": "Save Workflow",
+          "cancel": "Cancel",
+          "addTitle": "New Workflow",
+          "editTitle": "Edit Workflow",
+          "updateConfirm": "Update Workflow",
+          "summary": "{count} level(s) set",
+          "validation": {
+            "nameRequired": "Please enter a workflow name",
+            "atLeastOneApprover": "Please add at least 1 approver level",
+            "noDuplicate": "Cannot select the same person multiple times in the approver chain"
+          },
+          "message": {
+            "updated": "Workflow updated",
+            "created": "Workflow created",
+            "saveFailed": "Save failed"
+          },
+          "form": {
+            "nameLabel": "Workflow Name",
+            "namePlaceholder": "e.g., Mainland-R&D-Manager Approval",
+            "priorityLabel": "Priority",
+            "employeeLabel": "Specific Employee",
+            "employeePlaceholder": "Any",
+            "regionLabel": "Region",
+            "regionPlaceholder": "Any",
+            "departmentLabel": "Department",
+            "departmentPlaceholder": "Any",
+            "positionLabel": "Position",
+            "positionPlaceholder": "Any",
+            "approverChainLabel": "Approver Chain",
+            "addLevel": "+ Add Level",
+            "clear": "Clear",
+            "levelBadge": "Level {index}",
+            "approverPlaceholder": "Select an approver",
+            "delete": "Delete",
+            "hint": "Approval flows sequentially from Level 1 to Level N. The workflow selects one approval route based on \"priority + condition match\"."
+          }
+        }
+      },
+      "common": {
+        "back": "Back",
+        "search": "Search",
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "save": "Save",
+        "refresh": "Refresh",
+        "resetFilter": "Reset Filters",
+        "refreshList": "Refresh List",
+        "action": "Action"
+      },
+      "sick": "Sick Leave",
+      "annual": "Annual Leave",
+      "personal": "Personal Leave",
+      "maternity": "Maternity Leave",
+      "paternity": "Paternity Leave",
+      "other": "Other",
+      "myLeave": "My Leave",
+      "myApprovals": "My Pending Approvals",
+      "myRecords": "My Approval Records",
+      "calendar": "Leave Calendar",
+      "leaveTypes": {
+        "annual": "Annual Leave",
+        "personal": "Personal Leave",
+        "sick": "Sick Leave",
+        "lieu": "Lieu Leave",
+        "long": "Long Leave"
+      },
+      "approvalStatus": {
+        "approved": "Approved",
+        "pending": "Pending",
+        "rejected": "Rejected",
+        "withdrawn": "Withdrawn",
+        "draft": "Draft"
+      },
+      "actionStatus": {
+        "submitted": "Submitted",
+        "created": "Created"
+      },
+      "session": {
+        "full_day": "Full Day",
+        "morning": "Morning",
+        "afternoon": "Afternoon"
+      },
+      "calendarView": {
+        "description": "Leave management includes \"Leave Calendar\" and \"Workflow Maintenance\". Currently in calendar view.",
+        "backToWorkspace": "Back to Workspace",
+        "workflowMaintenance": "Workflow Maintenance",
+        "overviewAndFilter": "Overview & Filter",
+        "yearCalendar": "Year Calendar",
+        "allRegions": "Overview (All Regions)",
+        "unsetRegion": "Unset Region",
+        "ungrouped": "Ungrouped",
+        "weekdays": {
+          "sun": "Sunday",
+          "mon": "Monday",
+          "tue": "Tuesday",
+          "wed": "Wednesday",
+          "thu": "Thursday",
+          "fri": "Friday",
+          "sat": "Saturday"
+        },
+        "weekShort": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        },
+        "weekPrefix": "",
+        "monthNames": [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December"
+        ],
+        "selectYearMonth": "Select year and month",
+        "yearView": "Year View",
+        "monthView": "Month View",
+        "prevYear": "Previous Year",
+        "nextYear": "Next Year",
+        "backToCurrentYear": "Back to Current Year",
+        "summary": {
+          "leaveRecords": "Leave Records",
+          "coveredDays": "Covered Days",
+          "pending": "Pending",
+          "currentYear": "Current Year"
+        },
+        "stats": {
+          "visibleMembers": "Visible Members",
+          "annualLeaveRecords": "Annual Leave Records",
+          "riskDayCount": "Risk Days",
+          "peakDate": "Peak Date",
+          "annualLeaveTotal": "Annual Leave Total",
+          "annualLeaveAvailable": "Annual Leave Available",
+          "personUnit": ""
+        },
+        "filter": {
+          "title": "Filter Controls",
+          "team": "Team",
+          "allMembers": "All Members",
+          "employeeSearch": "Employee Search",
+          "searchPlaceholder": "Enter name to highlight annual leave",
+          "riskThreshold": "Risk Threshold",
+          "viewMode": "View Mode",
+          "standard": "Standard",
+          "detail": "Detail",
+          "approvalStatus": "Approval Status",
+          "allStatus": "All Status",
+          "approvedOnly": "Approved Only",
+          "pendingOnly": "Pending Only",
+          "reset": "Reset Filters",
+          "legendWeekend": "Weekend/Holiday background",
+          "legendPending": "Pending is semi-transparent",
+          "legendRegionalHoliday": "Regional Holiday",
+          "legendRiskReached": "Risk threshold reached"
+        },
+        "detail": {
+          "dateDetail": "Date Detail",
+          "emptyHint": "Click any date cell to view the leave list, leave type, session and approval status for that day.",
+          "noRecordsForDay": "No leave records for this day. It can be treated as a regular working day.",
+          "leaveDetail": "Leave Detail",
+          "regionalHolidayPrefix": "Regional Holiday: ",
+          "holidayMaintenance": "Regional Holiday Maintenance",
+          "selectRegionFirst": "Please select a specific region above, then click a day to set the holiday for that region.",
+          "currentHolidaySet": "Current holiday set: ",
+          "noHolidaySet": "No regional holiday set.",
+          "setHoliday": "Set Holiday",
+          "unsetHoliday": "Unset",
+          "selectRegionAndDateFirst": "Please select a region and date first",
+          "usageInstructions": "Usage Instructions",
+          "instructionOverviewTitle": "Overview Reading",
+          "instructionOverviewBody": "Each day cell shows the leave names directly. The color dot indicates the leave type, and the badge in the upper right shows the total number of leaves for that day.",
+          "instructionRiskTitle": "Risk Rule",
+          "instructionRiskBody": "When the number of leaves on a single day reaches the threshold, the date cell will be highlighted with a red border to help you quickly identify staffing shortages.",
+          "instructionFilterTitle": "Filtering",
+          "instructionFilterBody": "You can view annual schedules by team, or search for an employee to highlight all their leave dates throughout the year.",
+          "instructionFutureTitle": "Future Integration",
+          "instructionFutureBody": "The leave calendar API is now integrated. Future work may add entry, approval, and quick actions on date clicks."
+        },
+        "holidayNames": {
+          "newYear": "New Year's Day",
+          "springFestival": "Spring Festival",
+          "qingming": "Qingming Festival",
+          "laborDay": "Labor Day",
+          "dragonBoat": "Dragon Boat Festival",
+          "midAutumn": "Mid-Autumn Festival",
+          "nationalDay": "National Day",
+          "christmas": "Christmas",
+          "publicHoliday": "Public Holiday",
+          "companyHoliday": "Company Holiday",
+          "makeupDay": "Makeup Day",
+          "other": "Other Holiday"
+        }
+      }
+    }
+  }
+}

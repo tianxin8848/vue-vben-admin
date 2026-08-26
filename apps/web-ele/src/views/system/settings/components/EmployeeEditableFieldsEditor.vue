@@ -3,6 +3,8 @@ import type { SystemSettingsApi } from '#/api';
 
 import { computed } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import { ElCheckbox, ElCheckboxGroup, ElEmpty } from 'element-plus';
 
 const props = defineProps<{
@@ -14,6 +16,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string[]): void;
 }>();
 
+const { t } = useI18n();
+
 interface CatalogGroup {
   fields: SystemSettingsApi.EmployeeEditableFieldItem[];
   name: string;
@@ -22,7 +26,9 @@ interface CatalogGroup {
 const groupedCatalog = computed<CatalogGroup[]>(() => {
   const map = new Map<string, SystemSettingsApi.EmployeeEditableFieldItem[]>();
   for (const item of props.catalog || []) {
-    const group = item.group || '其他';
+    const group =
+      item.group ||
+      t('page.system.settingsDetail.editableFieldsEditor.otherGroup');
     if (!map.has(group)) map.set(group, []);
     const list = map.get(group);
     if (list) list.push(item);
@@ -62,13 +68,20 @@ function handleSelectAllToggle(value: boolean | number | string) {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-lg">员工可自编辑字段维护</h3>
+      <h3 class="text-lg">
+        {{ t('page.system.settingsDetail.editableFieldsEditor.title') }}
+      </h3>
       <span class="text-sm text-muted-foreground">
-        已选 {{ selectedCodes.length }} / 共 {{ catalog.length }} 个字段
+        {{
+          t('page.system.settingsDetail.editableFieldsEditor.selectedCount', {
+            selected: selectedCodes.length,
+            total: catalog.length,
+          })
+        }}
       </span>
     </div>
     <p class="mb-4 text-sm text-muted-foreground">
-      勾选后员工可在员工工作台自行修改这些档案字段；未勾选的字段仅管理员可维护。
+      {{ t('page.system.settingsDetail.editableFieldsEditor.hint') }}
     </p>
 
     <div class="mb-3 flex gap-2">
@@ -77,7 +90,7 @@ function handleSelectAllToggle(value: boolean | number | string) {
         :indeterminate="isIndeterminate"
         @change="handleSelectAllToggle"
       >
-        全选
+        {{ t('page.system.settingsDetail.editableFieldsEditor.selectAll') }}
       </ElCheckbox>
     </div>
 
@@ -108,7 +121,7 @@ function handleSelectAllToggle(value: boolean | number | string) {
 
     <ElEmpty
       v-if="!catalog.length"
-      description="暂无可配置字段目录"
+      :description="t('page.system.settingsDetail.editableFieldsEditor.empty')"
       :image-size="60"
     />
   </section>

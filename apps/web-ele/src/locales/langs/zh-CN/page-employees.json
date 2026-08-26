@@ -1,0 +1,104 @@
+{
+  "page": {
+    "employees": {
+      "title": "员工管理",
+      "list": "员工列表",
+      "profile": "员工档案",
+      "create": "创建员工",
+      "edit": "编辑员工",
+      "basicInfo": "基本信息",
+      "status": "在职状态",
+      "admin": "管理员权限",
+      "permissions": "模块权限",
+      "resetPassword": "重置密码",
+      "buttons": {
+        "createShort": "新建"
+      },
+      "drawer": {
+        "createTitle": "新增员工"
+      },
+      "role": {
+        "admin": "管理员",
+        "employee": "员工"
+      },
+      "action": {
+        "profile": "档案",
+        "edit": "编辑",
+        "accessControl": "门禁",
+        "resetPassword": "重置密码",
+        "permissions": "权限",
+        "delete": "删除"
+      },
+      "message": {
+        "statusUpdateSuccess": "状态更新成功",
+        "statusUpdateFailed": "状态更新失败",
+        "permissionUpdateSuccess": "权限更新成功",
+        "permissionUpdateFailed": "权限更新失败",
+        "basicInfoUpdateSuccess": "基础信息更新成功",
+        "basicInfoUpdateFailed": "基础信息更新失败",
+        "accessControlUpdateSuccess": "门禁 ID 更新成功",
+        "accessControlUpdateFailed": "门禁 ID 更新失败",
+        "deleteSuccess": "员工已删除",
+        "deleteFailed": "删除员工失败",
+        "resetPasswordSuccess": "密码已重置，临时密码：{password}",
+        "resetPasswordFailed": "密码重置失败"
+      },
+      "deleteConfirm": {
+        "message": "确认删除员工「{name}」？该操作不可恢复，将一并清除其账号与权限。",
+        "title": "删除员工",
+        "confirmButtonText": "确认删除",
+        "cancelButtonText": "取消"
+      },
+      "column": {
+        "userId": "用户ID",
+        "employeeCode": "工号",
+        "fullName": "姓名",
+        "username": "账号",
+        "role": "身份",
+        "deptPosRegion": "部门/岗位/地区",
+        "status": "状态",
+        "initialPasswordStatus": "初始密码状态",
+        "initialPassword": "初始密码",
+        "permissions": "权限",
+        "action": "操作"
+      },
+      "search": {
+        "keywordLabel": "关键词",
+        "keywordPlaceholder": "搜索用户名 / 邮箱 / 姓名 / 工号",
+        "roleLabel": "身份",
+        "statusLabel": "状态",
+        "departmentLabel": "部门",
+        "regionLabel": "地区"
+      },
+      "statusOption": {
+        "active": "启用",
+        "disabled": "禁用"
+      },
+      "toolbar": {
+        "refresh": "刷新"
+      },
+      "profileDetail": {
+        "back": "返回",
+        "basicInfo": "基本信息",
+        "profileInfo": "档案信息",
+        "account": "账号",
+        "fullName": "姓名",
+        "email": "邮箱",
+        "phone": "手机号",
+        "department": "部门",
+        "position": "职位",
+        "region": "区域",
+        "save": "保存",
+        "hireDate": "入职日期",
+        "workStartDate": "工作开始日期",
+        "hkidNumber": "香港身份证号",
+        "englishAddress": "英文住址",
+        "emergencyContact": "紧急联系人",
+        "emergencyContactPhone": "紧急联系电话",
+        "basicInfoUpdateSuccess": "基本信息更新成功",
+        "profileInfoUpdateSuccess": "档案信息更新成功",
+        "updateFailed": "更新失败"
+      }
+    }
+  }
+}

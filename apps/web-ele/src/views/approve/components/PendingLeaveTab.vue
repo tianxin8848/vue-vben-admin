@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import type { SearchForm } from '../constants';
 
+import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { LeaveRequestApi } from '#/api';
 
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
+
+import { useI18n } from '@vben/locales';
 
 import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
 
 import {
   leaveTypeLabelMap,
@@ -27,6 +29,8 @@ const emit = defineEmits<{
   viewDetail: [row: LeaveRequestApi.LeaveRequest];
   withdraw: [row: LeaveRequestApi.LeaveRequest];
 }>();
+
+const { t } = useI18n();
 
 function applyFilters() {
   const kw = props.searchForm.keyword.trim().toLowerCase();
@@ -67,47 +71,75 @@ function applyFilters() {
   });
 }
 
+const tableColumns = computed<
+  VxeGridProps<LeaveRequestApi.LeaveRequest>['columns']
+>(() => [
+  {
+    field: 'employee_name',
+    title: t('page.approve.pendingLeaveTab.column.applicant'),
+    width: 100,
+  },
+  {
+    field: 'employee_username',
+    title: t('page.approve.pendingLeaveTab.column.account'),
+    width: 120,
+  },
+  {
+    field: 'employee_code',
+    title: t('page.approve.pendingLeaveTab.column.employeeCode'),
+    width: 100,
+  },
+  {
+    field: 'employee_department',
+    title: t('page.approve.pendingLeaveTab.column.department'),
+    width: 140,
+  },
+  {
+    field: 'employee_region',
+    title: t('page.approve.pendingLeaveTab.column.region'),
+    width: 100,
+  },
+  {
+    field: 'leave_type',
+    title: t('page.approve.pendingLeaveTab.column.leaveType'),
+    width: 80,
+    slots: { default: 'leave_type' },
+  },
+  {
+    field: 'session',
+    title: t('page.approve.pendingLeaveTab.column.session'),
+    width: 80,
+    slots: { default: 'session' },
+  },
+  {
+    title: t('page.approve.pendingLeaveTab.column.timeRange'),
+    minWidth: 180,
+    slots: { default: 'time_range' },
+  },
+  {
+    field: 'reason',
+    title: t('page.approve.pendingLeaveTab.column.reason'),
+    minWidth: 150,
+  },
+  {
+    field: 'approval_status',
+    title: t('page.approve.pendingLeaveTab.column.status'),
+    width: 100,
+    slots: { default: 'status' },
+  },
+  {
+    title: t('page.approve.pendingLeaveTab.column.action'),
+    width: 200,
+    fixed: 'right',
+    slots: { default: 'action' },
+  },
+]);
+
 const [BasicTable, tableApi] = useVbenVxeGrid<LeaveRequestApi.LeaveRequest>({
   gridOptions: {
     id: 'approve-pending-leave',
     rowConfig: { keyField: 'id' },
-    columns: [
-      { field: 'employee_name', title: '申请人', width: 100 },
-      { field: 'employee_username', title: '账号', width: 120 },
-      { field: 'employee_code', title: '工号', width: 100 },
-      { field: 'employee_department', title: '部门', width: 140 },
-      { field: 'employee_region', title: '地区', width: 100 },
-      {
-        field: 'leave_type',
-        title: '类型',
-        width: 80,
-        slots: { default: 'leave_type' },
-      },
-      {
-        field: 'session',
-        title: '时段',
-        width: 80,
-        slots: { default: 'session' },
-      },
-      {
-        title: '时间范围',
-        minWidth: 180,
-        slots: { default: 'time_range' },
-      },
-      { field: 'reason', title: '原因', minWidth: 150 },
-      {
-        field: 'approval_status',
-        title: '状态',
-        width: 100,
-        slots: { default: 'status' },
-      },
-      {
-        title: '操作',
-        width: 200,
-        fixed: 'right',
-        slots: { default: 'action' },
-      },
-    ],
+    columns: tableColumns.value,
     proxyConfig: {
       enabled: true,
       ajax: {
@@ -144,6 +176,10 @@ watch(
   { deep: true },
 );
 
+watch(tableColumns, () => {
+  tableApi.setGridOptions({ columns: tableColumns.value });
+});
+
 function viewDetail(row: any) {
   emit('viewDetail', row as LeaveRequestApi.LeaveRequest);
 }
@@ -156,30 +192,36 @@ function withdraw(row: any) {
 </script>
 
 <template>
-  <BasicTable :table-title="`共 ${data.length} 条待审批`">
+  <BasicTable
+    :table-title="
+      t('page.approve.pendingLeaveTab.listTitle', { count: data.length })
+    "
+  >
     <template #leave_type="{ row }">
-      {{ $t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
+      {{ t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
     </template>
     <template #session="{ row }">
-      {{ $t(sessionLabelMap[row.session] || row.session) }}
+      {{ t(sessionLabelMap[row.session] || row.session) }}
     </template>
     <template #time_range="{ row }">
       {{ row.start_date }} ~ {{ row.end_date }}
     </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
-        {{ $t(statusLabelMap[row.approval_status] || row.approval_status) }}
+        {{ t(statusLabelMap[row.approval_status] || row.approval_status) }}
       </ElTag>
     </template>
     <template #action="{ row }">
-      <ElButton size="small" @click="viewDetail(row)">详情</ElButton>
+      <ElButton size="small" @click="viewDetail(row)">
+        {{ t('page.approve.pendingLeaveTab.viewDetail') }}
+      </ElButton>
       <ElButton
         v-if="row.approval_status === 'pending'"
         size="small"
         type="primary"
         @click="review(row)"
       >
-        审批
+        {{ t('page.approve.pendingLeaveTab.review') }}
       </ElButton>
       <ElButton
         v-if="
@@ -190,7 +232,7 @@ function withdraw(row: any) {
         type="danger"
         @click="withdraw(row)"
       >
-        撤回
+        {{ t('page.approve.pendingLeaveTab.withdraw') }}
       </ElButton>
     </template>
   </BasicTable>
