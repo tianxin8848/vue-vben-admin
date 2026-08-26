@@ -86,7 +86,7 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
       hideInMenu: true,
       icon: 'lucide:user',
       order: 99,
-      title: $t('page.auth.profile'),
+      title: $t('page.workspace.profile'),
     },
   },
 ];

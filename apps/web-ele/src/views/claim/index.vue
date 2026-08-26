@@ -57,17 +57,44 @@ const activeTableTitle = computed(
 const createDrawerRef = ref<InstanceType<typeof CreateClaimDrawer>>();
 const editDrawerRef = ref<InstanceType<typeof EditClaimDrawer>>();
 
-// ─── 批量提交：选中的草稿 ─────────────────────────────────────────────────────
+// ─── 批量提交 / 导出：选中的草稿 / 已通过记录 ─────────────────────────────────
 const selectedDraftCount = ref(0);
+const selectedApprovedCount = ref(0);
 
 function updateSelection() {
   const records = tableApi.grid?.getCheckboxRecords() ?? [];
-  selectedDraftCount.value = records.length;
+  if (data.activeTab.value === 'my') {
+    selectedDraftCount.value = records.filter(
+      (r: any) => r.approval_status === 'draft',
+    ).length;
+    selectedApprovedCount.value = 0;
+  } else {
+    selectedApprovedCount.value = records.filter(
+      (r: any) => r.approval_status === 'approved',
+    ).length;
+    selectedDraftCount.value = 0;
+  }
 }
 
 function selectedDraftIds() {
   const records = tableApi.grid?.getCheckboxRecords() ?? [];
-  return records.map((r: any) => r.id);
+  return records
+    .filter((r: any) => r.approval_status === 'draft')
+    .map((r: any) => r.id);
+}
+
+function selectedApprovedIds() {
+  const records = tableApi.grid?.getCheckboxRecords() ?? [];
+  return records
+    .filter((r: any) => r.approval_status === 'approved')
+    .map((r: any) => r.id);
+}
+
+// ─── 动态 checkbox 配置：按 Tab 限定可勾选的行 ────────────────────────────────
+function currentCheckMethod({ row }: { row: ClaimApi.ClaimResponse }) {
+  return data.activeTab.value === 'my'
+    ? row.approval_status === 'draft'
+    : row.approval_status === 'approved';
 }
 
 // ─── 表格实例 ────────────────────────────────────────────────────────────────
@@ -80,11 +107,11 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
     proxyConfig: { enabled: false },
     keepSource: true,
     toolbarConfig: sharedToolbarConfig.value,
-    // 仅草稿可勾选（用于批量提交）
+    // 按 Tab 动态决定可勾选的行
     checkboxConfig: {
       highlight: true,
       checkMethod: ({ row }: { row: ClaimApi.ClaimResponse }) =>
-        row.approval_status === 'draft',
+        currentCheckMethod({ row }),
     },
   },
   gridEvents: {
@@ -104,8 +131,17 @@ function refreshTable() {
   tableApi.setGridOptions({
     columns: tabColumns.value[data.activeTab.value],
     data: dataFor(data.activeTab.value, data.dataRefs()),
+    checkboxConfig: {
+      highlight: true,
+      checkMethod: ({ row }: { row: ClaimApi.ClaimResponse }) =>
+        currentCheckMethod({ row }),
+    },
   });
+  // 清除勾选计数
   selectedDraftCount.value = 0;
+  selectedApprovedCount.value = 0;
+  // 清除表格中的勾选状态
+  tableApi.grid?.clearCheckboxRow();
 }
 
 // Tab 切换 / 数据变化后刷新表格
@@ -171,6 +207,18 @@ async function onBatchSubmit() {
     refreshTable();
   }
 }
+
+/**
+ * 导出按钮处理：
+ * - 在「我的报销」Tab：导出全部已通过（approved）记录
+ * - 在「历史记录」Tab：
+ *   - 若勾选了已通过记录 → 导出选中的
+ *   - 若未勾选 → 导出全部已通过
+ */
+async function onExport() {
+  const ids = data.activeTab.value === 'history' ? selectedApprovedIds() : [];
+  await handleExport(ids.length > 0 ? ids : undefined);
+}
 </script>
 
 <template>
@@ -205,8 +253,15 @@ async function onBatchSubmit() {
             {{ $t('page.claim.buttons.batchSubmit') }}
             <span v-if="selectedDraftCount > 0">（{{ selectedDraftCount }}）</span>
           </ElButton>
-          <ElButton :loading="isLoading" @click="handleExport">
+          <ElButton :loading="isLoading" @click="onExport">
             {{ $t('page.claim.buttons.export') }}
+            <span
+              v-if="
+                data.activeTab.value === 'history' && selectedApprovedCount > 0
+              "
+            >
+              （{{ selectedApprovedCount }}）
+            </span>
           </ElButton>
         </template>
         <template #reason="{ row }">

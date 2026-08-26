@@ -87,6 +87,7 @@ export function buildSharedToolbarConfig(t: (key: string) => string) {
  */
 export function buildTabColumns(t: (key: string) => string) {
   const history: VxeGridProps['columns'] = [
+    { type: 'checkbox', width: 50, fixed: 'left' },
     {
       field: 'reason_label',
       title: t('page.claim.columns.reason'),

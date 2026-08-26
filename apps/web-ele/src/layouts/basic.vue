@@ -81,7 +81,7 @@ const menus = computed(() => [
       router.push({ name: 'Profile' });
     },
     icon: 'lucide:user',
-    text: $t('page.auth.profile'),
+    text: $t('page.workspace.profile'),
   },
   // {
   //   handler: () => {

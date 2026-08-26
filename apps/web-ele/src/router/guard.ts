@@ -122,6 +122,16 @@ function setupAccessGuard(router: Router) {
       return to;
     }
 
+    // 强制修改初始密码：后端对初始密码用户在其他接口返回 403，
+    // 前端在此拦截，避免用户访问其他页面时触发 403。
+    const INITIAL_PASSWORD_PATH = '/auth/change-initial-password';
+    if (to.path !== INITIAL_PASSWORD_PATH) {
+      const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
+      if (userInfo?.is_initial_password === 1) {
+        return { path: INITIAL_PASSWORD_PATH, replace: true };
+      }
+    }
+
     // 是否已经生成过动态路由
     if (accessStore.isAccessChecked) {
       return true;

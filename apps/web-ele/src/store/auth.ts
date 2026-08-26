@@ -47,6 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (accessStore.loginExpired) {
         accessStore.setLoginExpired(false);
+      } else if (userInfo?.is_initial_password === 1) {
+        // 新用户使用初始密码登录，强制跳转到修改初始密码页面
+        await router.push('/auth/change-initial-password');
       } else {
         onSuccess
           ? await onSuccess?.()

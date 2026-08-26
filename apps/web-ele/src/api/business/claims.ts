@@ -155,17 +155,47 @@ export async function deleteClaimDraftApi(claimId: string) {
 }
 
 /**
- * 更新报销草稿（仅 draft 状态可更新，且只能改 amount + description）
- * 其他字段（reason_code / invoice_date / invoice_no / currency / attachment）不可修改
+ * 更新报销草稿（仅 draft 状态可更新）
+ * 使用 multipart/form-data，所有字段均可选：省略则保留原值；
+ * 空 description / invoice_no 会清空对应字段；不传文件则保留原附件。
  */
 export async function updateClaimDraftApi(
   claimId: string,
-  data: { amount: number; description?: null | string },
+  data: {
+    amount?: null | number;
+    attachment?: File | null;
+    currency?: null | string;
+    description?: null | string;
+    invoice_date?: null | string;
+    invoice_no?: null | string;
+    reason_code?: string;
+  },
 ) {
+  const formData = new FormData();
+  if (data.reason_code !== undefined)
+    formData.append('reason_code', data.reason_code);
+  if (data.invoice_date !== undefined && data.invoice_date !== null) {
+    formData.append('invoice_date', data.invoice_date);
+  }
+  if (data.invoice_no !== undefined) {
+    formData.append('invoice_no', data.invoice_no || '');
+  }
+  if (data.description !== undefined) {
+    formData.append('description', data.description || '');
+  }
+  if (data.amount !== undefined && data.amount !== null) {
+    formData.append('amount', String(data.amount));
+  }
+  if (data.currency !== undefined && data.currency !== null) {
+    formData.append('currency', data.currency);
+  }
+  if (data.attachment) {
+    formData.append('attachment', data.attachment);
+  }
   return requestClient.patch<ClaimApi.ClaimResponse>(
     `/me/claims/${claimId}`,
-    data,
-    { headers: { 'Content-Type': 'application/json' } },
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
   );
 }
 
@@ -227,9 +257,16 @@ export async function reviewClaimApi(
 
 // ─── 导出 ────────────────────────────────────────────────────────────────────
 
-/** 导出我的报销记录为 Excel（.xlsx，不含草稿） */
-export async function exportMyClaimsApi() {
+/**
+ * 导出我的报销记录为 Excel（.xlsx）
+ * 后端仅导出 approval_status = approved 的记录
+ * @param claimIds 可选，指定要导出的 claim_id 列表；不传则导出全部已通过
+ */
+export async function exportMyClaimsApi(claimIds?: string[]) {
   return requestClient.get<Blob>('/me/claims/export', {
+    params:
+      claimIds && claimIds.length > 0 ? { claim_id: claimIds } : undefined,
+    paramsSerializer: 'repeat',
     responseType: 'blob',
   });
 }

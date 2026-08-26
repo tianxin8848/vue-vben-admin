@@ -8,6 +8,7 @@ import { requestClient } from '#/api/request';
 export async function getUserInfoApi(): Promise<
   UserInfo & {
     department: null | string;
+    is_initial_password?: number;
     module_permissions: Array<{
       can_approve: boolean;
       can_create: boolean;
@@ -29,6 +30,7 @@ export async function getUserInfoApi(): Promise<
     id: string;
     is_active: boolean;
     is_admin?: boolean;
+    is_initial_password?: number;
     module_permissions: Array<{
       can_approve: boolean;
       can_create: boolean;
@@ -72,5 +74,6 @@ export async function getUserInfoApi(): Promise<
     position: result.position,
     region: result.region,
     module_permissions: result.module_permissions,
+    is_initial_password: result.is_initial_password ?? 0,
   };
 }

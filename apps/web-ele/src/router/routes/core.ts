@@ -90,6 +90,15 @@ const coreRoutes: RouteRecordRaw[] = [
           title: $t('page.auth.register'),
         },
       },
+      {
+        name: 'ChangeInitialPassword',
+        path: 'change-initial-password',
+        component: () =>
+          import('#/views/_core/authentication/change-initial-password.vue'),
+        meta: {
+          title: $t('authentication.changeInitialPassword'),
+        },
+      },
     ],
   },
 ];
