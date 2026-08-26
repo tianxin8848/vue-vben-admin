@@ -23,6 +23,7 @@ import {
   getBackupsApi,
   importDataApi,
 } from '#/api';
+import { $t } from '#/locales';
 
 const loading = ref(false);
 
@@ -73,22 +74,28 @@ async function handleExport() {
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
-    ElMessage.success('导出成功');
+    ElMessage.success($t('page.system.dataMigrationDetail.exportSuccess'));
   } catch {
-    ElMessage.error('导出失败');
+    ElMessage.error($t('page.system.dataMigrationDetail.exportFailed'));
   } finally {
     exportLoading.value = false;
   }
 }
 
 async function handleBackup() {
-  const confirmText = `确认在服务器本地备份 ${exportForm.source} 数据库到 backup/ 目录？`;
+  const confirmText = $t('page.system.dataMigrationDetail.backupConfirm', {
+    source: exportForm.source,
+  });
   try {
-    await ElMessageBox.confirm(confirmText, '确认备份', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      confirmText,
+      $t('page.system.dataMigrationDetail.backupConfirmTitle'),
+      {
+        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
+        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
+        type: 'warning',
+      },
+    );
   } catch {
     return;
   }
@@ -101,7 +108,10 @@ async function handleBackup() {
     showMessage('success', JSON.stringify(result, null, 2));
     await fetchBackups();
   } catch (error: any) {
-    showMessage('error', error.message || '备份失败');
+    showMessage(
+      'error',
+      error.message || $t('page.system.dataMigrationDetail.backupFailed'),
+    );
   } finally {
     backupLoading.value = false;
   }
@@ -116,19 +126,27 @@ function handleFileChange(_: string, event?: Event) {
 
 async function handleImport() {
   if (!importFile.value) {
-    ElMessage.warning('请先选择导入文件');
+    ElMessage.warning($t('page.system.dataMigrationDetail.selectFileFirst'));
     return;
   }
   const confirmText =
     importForm.mode === 'overwrite'
-      ? `将以覆盖模式导入到 ${importForm.target} 数据库，目标集合会被清空。确认继续？`
-      : `将以合并模式导入到 ${importForm.target} 数据库。确认继续？`;
+      ? $t('page.system.dataMigrationDetail.overwriteImportConfirm', {
+          target: importForm.target,
+        })
+      : $t('page.system.dataMigrationDetail.upsertImportConfirm', {
+          target: importForm.target,
+        });
   try {
-    await ElMessageBox.confirm(confirmText, '确认导入', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      confirmText,
+      $t('page.system.dataMigrationDetail.importConfirmTitle'),
+      {
+        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
+        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
+        type: 'warning',
+      },
+    );
   } catch {
     return;
   }
@@ -147,7 +165,10 @@ async function handleImport() {
       importFileInput.value.value = '';
     }
   } catch (error: any) {
-    showMessage('error', error.message || '导入失败');
+    showMessage(
+      'error',
+      error.message || $t('page.system.dataMigrationDetail.importFailed'),
+    );
   } finally {
     importLoading.value = false;
   }
@@ -178,22 +199,35 @@ fetchBackups();
 <template>
   <Page>
     <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <ElCard header="数据导出">
+      <ElCard :header="$t('page.system.dataMigrationDetail.exportCard')">
         <p class="card-desc">
-          导出格式为 NDJSON（逐行 JSON），支持 ObjectId 与日期类型。
+          {{ $t('page.system.dataMigrationDetail.exportDesc') }}
         </p>
         <ElForm :model="exportForm" inline>
-          <ElFormItem label="导出来源数据库">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.exportSourceLabel')"
+          >
             <ElSelect v-model="exportForm.source" class="form-select">
-              <ElOption label="本地（127.0.0.1）" value="local" />
-              <ElOption label="远程（192.168.131.44）" value="remote" />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.local')"
+                value="local"
+              />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.remote')"
+                value="remote"
+              />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="导出集合（可选）">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.exportScopeLabel')"
+          >
             <ElSelect v-model="exportForm.scope" class="form-select">
-              <ElOption label="全部集合" value="" />
               <ElOption
-                label="跳过运行态集合（session 等）"
+                :label="$t('page.system.dataMigrationDetail.allCollections')"
+                value=""
+              />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.skipRuntime')"
                 value="exclude_runtime"
               />
             </ElSelect>
@@ -204,43 +238,73 @@ fetchBackups();
               @click="handleExport"
               :loading="exportLoading"
             >
-              下载导出文件
+              {{ $t('page.system.dataMigrationDetail.downloadExport') }}
             </VbenButton>
           </ElFormItem>
           <ElFormItem>
             <VbenButton @click="handleBackup" :loading="backupLoading">
-              备份到服务器
+              {{ $t('page.system.dataMigrationDetail.backupToServer') }}
             </VbenButton>
           </ElFormItem>
         </ElForm>
-        <p class="hint">提示：导出文件可能较大，建议在网络稳定时操作。</p>
+        <p class="hint">
+          {{ $t('page.system.dataMigrationDetail.exportHint') }}
+        </p>
       </ElCard>
 
-      <ElCard header="数据导入">
-        <p class="card-desc">可将导出的 NDJSON 文件导入到另一套数据库。</p>
+      <ElCard :header="$t('page.system.dataMigrationDetail.importCard')">
+        <p class="card-desc">
+          {{ $t('page.system.dataMigrationDetail.importDesc') }}
+        </p>
         <ElForm :model="importForm" inline>
-          <ElFormItem label="导入目标数据库">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.importTargetLabel')"
+          >
             <ElSelect v-model="importForm.target" class="form-select">
-              <ElOption label="远程（192.168.131.44）" value="remote" />
-              <ElOption label="本地（127.0.0.1）" value="local" />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.remote')"
+                value="remote"
+              />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.local')"
+                value="local"
+              />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="导入模式">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.importModeLabel')"
+          >
             <ElSelect v-model="importForm.mode" class="form-select-sm">
-              <ElOption label="覆盖（清空目标集合后导入）" value="overwrite" />
-              <ElOption label="合并（按 _id upsert）" value="upsert" />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.overwriteMode')"
+                value="overwrite"
+              />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.upsertMode')"
+                value="upsert"
+              />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="用户空值处理">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.userNullStrategyLabel')"
+          >
             <ElSelect
               v-model="importForm.userNullStrategy"
               class="form-select-sm"
             >
-              <ElOption label="自动生成（推荐）" value="generate" />
-              <ElOption label="跳过异常用户" value="skip" />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.autoGenerate')"
+                value="generate"
+              />
+              <ElOption
+                :label="$t('page.system.dataMigrationDetail.skipInvalid')"
+                value="skip"
+              />
             </ElSelect>
           </ElFormItem>
-          <ElFormItem label="选择导出文件">
+          <ElFormItem
+            :label="$t('page.system.dataMigrationDetail.selectExportFile')"
+          >
             <ElInput
               ref="importFileInput"
               type="file"
@@ -255,28 +319,29 @@ fetchBackups();
               @click="handleImport"
               :loading="importLoading"
             >
-              开始导入
+              {{ $t('page.system.dataMigrationDetail.startImport') }}
             </VbenButton>
           </ElFormItem>
         </ElForm>
         <p class="hint">
-          覆盖模式会先删除目标集合数据，请确认选择正确的目标库。
+          {{ $t('page.system.dataMigrationDetail.overwriteHint') }}
         </p>
         <div v-if="importMessage" class="message" :class="importMessageType">
           {{ importMessage }}
         </div>
       </ElCard>
 
-      <ElCard header="数据备份/恢复">
+      <ElCard :header="$t('page.system.dataMigrationDetail.backupRestoreCard')">
         <p class="card-desc">
-          服务器当前目录下
-          <code>backup/</code> 文件夹中的备份文件。可用于恢复（下载后再导入）。
+          {{ $t('page.system.dataMigrationDetail.backupDesc') }}
         </p>
         <VbenButton @click="fetchBackups" :loading="loading">
-          刷新备份列表
+          {{ $t('page.system.dataMigrationDetail.refreshBackups') }}
         </VbenButton>
         <div class="backup-list" v-loading="loading">
-          <div v-if="backups.length === 0" class="empty-tip">暂无备份文件</div>
+          <div v-if="backups.length === 0" class="empty-tip">
+            {{ $t('page.system.dataMigrationDetail.noBackups') }}
+          </div>
           <div v-for="item in backups" :key="item.name" class="backup-item">
             <a
               :href="`/api/v1/data-migration/backups/${encodeURIComponent(item.name)}`"

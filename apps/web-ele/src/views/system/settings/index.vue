@@ -4,6 +4,8 @@ import type { SystemSettingsApi } from '#/api';
 import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { useI18n } from '@vben/locales';
+
 import { ElAlert, ElButton, ElCard } from 'element-plus';
 
 import {
@@ -24,6 +26,8 @@ import SettingsPreview from './components/SettingsPreview.vue';
 
 const loading = ref(false);
 const settings = ref<null | SystemSettingsApi.SystemSettingsResponse>(null);
+
+const { t } = useI18n();
 
 const deptStr = ref('');
 const posStr = ref('');
@@ -172,11 +176,17 @@ async function handleSaveSettings() {
         settings.value?.regional_holiday_catalogs || [],
     };
     settings.value = await updateSystemSettingsApi(data);
-    showFormMessage('success', '保存成功');
+    showFormMessage(
+      'success',
+      t('page.system.settingsDetail.message.saveSuccess'),
+    );
     fetchSettings();
   } catch (error: any) {
     console.error('[Settings][handleSaveSettings] 保存失败', error);
-    showFormMessage('error', error.message || '保存失败');
+    showFormMessage(
+      'error',
+      error.message || t('page.system.settingsDetail.message.saveFailed'),
+    );
   }
 }
 
@@ -185,10 +195,16 @@ async function handleSaveHoliday(
 ) {
   try {
     settings.value = await upsertRegionalHolidayRangeApi(data);
-    showHolidayMessage('success', '地区假期已保存');
+    showHolidayMessage(
+      'success',
+      t('page.system.settingsDetail.message.holidaySaved'),
+    );
     fetchSettings();
   } catch (error: any) {
-    showHolidayMessage('error', error.message || '保存失败');
+    showHolidayMessage(
+      'error',
+      error.message || t('page.system.settingsDetail.message.saveFailed'),
+    );
   }
 }
 
@@ -218,10 +234,16 @@ async function handleSaveCatalog(data: {
       regional_holiday_catalogs: updatedCatalogs,
     };
     settings.value = await updateSystemSettingsApi(updateData);
-    showCatalogMessage('success', '地区假期名称清单已保存');
+    showCatalogMessage(
+      'success',
+      t('page.system.settingsDetail.message.holidayCatalogSaved'),
+    );
     fetchSettings();
   } catch (error: any) {
-    showCatalogMessage('error', error.message || '保存失败');
+    showCatalogMessage(
+      'error',
+      error.message || t('page.system.settingsDetail.message.saveFailed'),
+    );
   }
 }
 
@@ -237,10 +259,16 @@ async function handleDeleteHoliday(
       end_date: endDate || undefined,
     };
     settings.value = await deleteRegionalHolidayRangeApi(data);
-    showHolidayMessage('success', '地区假期已删除');
+    showHolidayMessage(
+      'success',
+      t('page.system.settingsDetail.message.holidayDeleted'),
+    );
     fetchSettings();
   } catch (error: any) {
-    showHolidayMessage('error', error.message || '删除失败');
+    showHolidayMessage(
+      'error',
+      error.message || t('page.system.settingsDetail.message.deleteFailed'),
+    );
   }
 }
 
@@ -257,10 +285,12 @@ onMounted(() => {
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
         <ElCard>
           <template #header>
-            <span class="text-base font-bold">参数配置</span>
+            <span class="text-base font-bold">{{
+              t('page.system.settingsDetail.basicConfig')
+            }}</span>
           </template>
           <p class="mb-4 text-sm text-muted-foreground">
-            基础参数、员工字段与报销配置共享同一个保存动作，地区假期使用独立保存。
+            {{ t('page.system.settingsDetail.basicConfigHint') }}
           </p>
 
           <SettingsForm
@@ -286,7 +316,9 @@ onMounted(() => {
       <div v-show="activeTab === 'employee'" class="min-h-0 flex-1">
         <ElCard>
           <template #header>
-            <span class="text-base font-bold">员工可自编辑字段</span>
+            <span class="text-base font-bold">{{
+              t('page.system.settingsDetail.employeeEditableFields')
+            }}</span>
           </template>
           <EmployeeEditableFieldsEditor
             v-model="selectedEditableFields"
@@ -294,7 +326,7 @@ onMounted(() => {
           />
           <div class="mt-4 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">
-              保存系统参数管理
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
             </ElButton>
           </div>
 
@@ -313,7 +345,9 @@ onMounted(() => {
       <div v-show="activeTab === 'claim'" class="min-h-0 flex-1">
         <ElCard>
           <template #header>
-            <span class="text-base font-bold">报销配置</span>
+            <span class="text-base font-bold">{{
+              t('page.system.settingsDetail.claimConfig')
+            }}</span>
           </template>
           <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
             <ClaimReasonEditor v-model="claimReasonsStr" />
@@ -321,7 +355,7 @@ onMounted(() => {
           </div>
           <div class="mt-6 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">
-              保存系统参数管理
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
             </ElButton>
           </div>
 
@@ -340,7 +374,9 @@ onMounted(() => {
       <div v-show="activeTab === 'holiday'" class="min-h-0 flex-1">
         <ElCard>
           <template #header>
-            <span class="text-base font-bold">地区假期</span>
+            <span class="text-base font-bold">{{
+              t('page.system.settingsDetail.regionalHoliday')
+            }}</span>
           </template>
           <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
             <HolidayEditor

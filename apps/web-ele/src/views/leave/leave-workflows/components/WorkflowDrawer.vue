@@ -4,6 +4,7 @@ import type { WorkflowForm } from '../data';
 import { reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
@@ -40,21 +41,25 @@ const emit = defineEmits<{
   success: [];
 }>();
 
+const { t } = useI18n();
+
 const editingId = ref('');
 
 const workflowForm = reactive<WorkflowForm>(createDefaultWorkflowForm());
 const approverLevels = ref<string[][]>(createDefaultApproverLevels());
 
 const [Drawer, drawerApi] = useVbenDrawer({
-  confirmText: '保存流程',
-  cancelText: '取消',
+  confirmText: t('page.leave.workflowMaintenance.drawer.save'),
+  cancelText: t('page.leave.workflowMaintenance.drawer.cancel'),
   onClosed: resetForm,
   onConfirm: saveWorkflow,
-  title: '新增流程',
+  title: t('page.leave.workflowMaintenance.drawer.addTitle'),
 });
 
 function getApproverLevelsSummary() {
-  return `已设置 ${approverLevels.value.length} 级`;
+  return t('page.leave.workflowMaintenance.drawer.summary', {
+    count: approverLevels.value.length,
+  });
 }
 
 function addApproverLevel() {
@@ -96,7 +101,9 @@ function validateApprovers() {
     .map((level) => level[0])
     .filter((id): id is string => !!id);
   if (selectedIds.length === 0) {
-    ElMessage.error('请至少添加 1 级审批人');
+    ElMessage.error(
+      t('page.leave.workflowMaintenance.drawer.validation.atLeastOneApprover'),
+    );
     return false;
   }
   const seen = new Set<string>();
@@ -106,7 +113,9 @@ function validateApprovers() {
     return false;
   });
   if (duplicates.length > 0) {
-    ElMessage.error('审批人链中不能重复选择同一个人');
+    ElMessage.error(
+      t('page.leave.workflowMaintenance.drawer.validation.noDuplicate'),
+    );
     return false;
   }
   return true;
@@ -114,7 +123,9 @@ function validateApprovers() {
 
 async function saveWorkflow() {
   if (!workflowForm.name.trim()) {
-    ElMessage.error('请输入流程名称');
+    ElMessage.error(
+      t('page.leave.workflowMaintenance.drawer.validation.nameRequired'),
+    );
     return;
   }
   if (!validateApprovers()) return;
@@ -137,15 +148,21 @@ async function saveWorkflow() {
   try {
     if (editingId.value) {
       await updateLeaveWorkflowApi(editingId.value, payload);
-      ElMessage.success('流程已更新');
+      ElMessage.success(
+        t('page.leave.workflowMaintenance.drawer.message.updated'),
+      );
     } else {
       await createLeaveWorkflowApi(payload);
-      ElMessage.success('流程已创建');
+      ElMessage.success(
+        t('page.leave.workflowMaintenance.drawer.message.created'),
+      );
     }
     drawerApi.close();
     emit('success');
   } catch {
-    ElMessage.error('保存失败');
+    ElMessage.error(
+      t('page.leave.workflowMaintenance.drawer.message.saveFailed'),
+    );
   } finally {
     drawerApi.lock(false);
   }
@@ -175,14 +192,14 @@ function open(workflow?: any) {
       approverLevels.value = [['']];
     }
     drawerApi.setState({
-      title: '编辑流程',
-      confirmText: '更新流程',
+      title: t('page.leave.workflowMaintenance.drawer.editTitle'),
+      confirmText: t('page.leave.workflowMaintenance.drawer.updateConfirm'),
     });
   } else {
     resetForm();
     drawerApi.setState({
-      title: '新增流程',
-      confirmText: '保存流程',
+      title: t('page.leave.workflowMaintenance.drawer.addTitle'),
+      confirmText: t('page.leave.workflowMaintenance.drawer.save'),
     });
   }
   drawerApi.open();
@@ -194,15 +211,22 @@ defineExpose({ open });
 <template>
   <Drawer class="w-[640px]">
     <ElForm :model="workflowForm" label-width="100px">
-      <ElFormItem label="流程名称" required>
+      <ElFormItem
+        :label="t('page.leave.workflowMaintenance.drawer.form.nameLabel')"
+        required
+      >
         <ElInput
           v-model="workflowForm.name"
-          placeholder="例如：大陆-研发部-经理审批"
+          :placeholder="
+            t('page.leave.workflowMaintenance.drawer.form.namePlaceholder')
+          "
         />
       </ElFormItem>
 
       <div class="field-row">
-        <ElFormItem label="优先级">
+        <ElFormItem
+          :label="t('page.leave.workflowMaintenance.drawer.form.priorityLabel')"
+        >
           <ElInput
             v-model.number="workflowForm.priority"
             type="number"
@@ -210,10 +234,16 @@ defineExpose({ open });
             :max="9999"
           />
         </ElFormItem>
-        <ElFormItem label="指定员工">
+        <ElFormItem
+          :label="t('page.leave.workflowMaintenance.drawer.form.employeeLabel')"
+        >
           <ElSelect
             v-model="workflowForm.match.employee_id"
-            placeholder="不指定"
+            :placeholder="
+              t(
+                'page.leave.workflowMaintenance.drawer.form.employeePlaceholder',
+              )
+            "
             clearable
           >
             <ElOption
@@ -227,19 +257,31 @@ defineExpose({ open });
       </div>
 
       <div class="field-row">
-        <ElFormItem label="地区">
+        <ElFormItem
+          :label="t('page.leave.workflowMaintenance.drawer.form.regionLabel')"
+        >
           <ElSelect
             v-model="workflowForm.match.region"
-            placeholder="不限制"
+            :placeholder="
+              t('page.leave.workflowMaintenance.drawer.form.regionPlaceholder')
+            "
             clearable
           >
             <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="部门">
+        <ElFormItem
+          :label="
+            t('page.leave.workflowMaintenance.drawer.form.departmentLabel')
+          "
+        >
           <ElSelect
             v-model="workflowForm.match.department"
-            placeholder="不限制"
+            :placeholder="
+              t(
+                'page.leave.workflowMaintenance.drawer.form.departmentPlaceholder',
+              )
+            "
             clearable
           >
             <ElOption v-for="d in departments" :key="d" :label="d" :value="d" />
@@ -247,23 +289,33 @@ defineExpose({ open });
         </ElFormItem>
       </div>
 
-      <ElFormItem label="岗位">
+      <ElFormItem
+        :label="t('page.leave.workflowMaintenance.drawer.form.positionLabel')"
+      >
         <ElSelect
           v-model="workflowForm.match.position"
-          placeholder="不限制"
+          :placeholder="
+            t('page.leave.workflowMaintenance.drawer.form.positionPlaceholder')
+          "
           clearable
         >
           <ElOption v-for="p in positions" :key="p" :label="p" :value="p" />
         </ElSelect>
       </ElFormItem>
 
-      <ElFormItem label="审批人链">
+      <ElFormItem
+        :label="
+          t('page.leave.workflowMaintenance.drawer.form.approverChainLabel')
+        "
+      >
         <div class="multi-select-box">
           <div class="multi-select-actions">
             <ElButton type="primary" @click="addApproverLevel">
-              + 添加一级
+              {{ t('page.leave.workflowMaintenance.drawer.form.addLevel') }}
             </ElButton>
-            <ElButton @click="clearApproverLevels">清空</ElButton>
+            <ElButton @click="clearApproverLevels">
+              {{ t('page.leave.workflowMaintenance.drawer.form.clear') }}
+            </ElButton>
             <span class="multi-select-summary">{{
               getApproverLevelsSummary()
             }}</span>
@@ -274,8 +326,20 @@ defineExpose({ open });
               :key="index"
               class="approver-level-row"
             >
-              <span class="approver-level-badge">第{{ index + 1 }}级</span>
-              <ElSelect v-model="level[0]" placeholder="请选择审批人" clearable>
+              <span class="approver-level-badge">{{
+                t('page.leave.workflowMaintenance.drawer.form.levelBadge', {
+                  index: index + 1,
+                })
+              }}</span>
+              <ElSelect
+                v-model="level[0]"
+                :placeholder="
+                  t(
+                    'page.leave.workflowMaintenance.drawer.form.approverPlaceholder',
+                  )
+                "
+                clearable
+              >
                 <ElOption
                   v-for="emp in employeeOptions"
                   :key="emp.value"
@@ -287,14 +351,13 @@ defineExpose({ open });
                 :disabled="approverLevels.length <= 1"
                 @click="removeApproverLevel(index)"
               >
-                删除
+                {{ t('page.leave.workflowMaintenance.drawer.form.delete') }}
               </ElButton>
             </div>
           </div>
         </div>
         <div class="hint">
-          审批会按第 1 级 → 第 N 级依次流转。流程会按"优先级 +
-          条件匹配"选择一条审批路线。
+          {{ t('page.leave.workflowMaintenance.drawer.form.hint') }}
         </div>
       </ElFormItem>
     </ElForm>

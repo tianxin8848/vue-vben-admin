@@ -30,7 +30,7 @@
 :root .el-select__selected-item,
 :root .el-select__placeholder,
 :root .el-select__tags .el-tag__text {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Select 下拉面板 / Cascader / Time / Date / DateTime picker 弹层 */
@@ -49,7 +49,7 @@
 :root .el-year-table td .cell,
 :root .el-picker-panel__shortcut,
 :root .el-date-picker__time-header .el-input__inner {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* =========================================================
@@ -68,7 +68,7 @@
 :root .el-table__inner-wrapper .el-table__body td .cell,
 :root .el-table__inner-wrapper .el-table__header th,
 :root .el-table__inner-wrapper .el-table__header th .cell {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Table 底部分页 */
@@ -78,7 +78,7 @@
 :root .el-pagination__total,
 :root .el-pagination__jump,
 :root .el-pagination__sizes .el-select .el-input__wrapper .el-input__inner {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Form / Radio / Checkbox / Switch / Transfer */
@@ -89,7 +89,7 @@
 :root .el-transfer-panel__header,
 :root .el-transfer-panel__filter .el-input__inner,
 :root .el-transfer-panel__list .el-transfer-panel__item {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Dialog / Drawer / Message / Notification / Popconfirm / Card / Descriptions / Steps */
@@ -108,7 +108,7 @@
 :root .el-descriptions__content,
 :root .el-step__title,
 :root .el-step__description {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* =========================================================
@@ -163,7 +163,7 @@
 :root .el-dialog .el-button > span,
 :root .el-drawer .el-button,
 :root .el-drawer .el-button > span {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* 按钮组 / 链接文字 */
@@ -172,7 +172,7 @@
 :root .el-link,
 :root .el-link .el-link--inner,
 :root .el-link__inner {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* =========================================================
@@ -183,7 +183,7 @@
 :root .el-segmented .el-segmented__item,
 :root .el-segmented .el-segmented__item .el-segmented__item-label,
 :root .el-segmented .el-segmented__item .el-segmented__item-icon {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Tabs 标签页 */
@@ -191,7 +191,7 @@
 :root .el-tabs .el-tabs__item,
 :root .el-tab-pane,
 :root .el-tabs .el-tab-pane {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Breadcrumb 面包屑 */
@@ -199,36 +199,36 @@
 :root .el-breadcrumb .el-breadcrumb__item,
 :root .el-breadcrumb .el-breadcrumb__item .el-breadcrumb__inner,
 :root .el-breadcrumb__separator {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Dropdown 下拉菜单 / ContextMenu */
 :root .el-dropdown-menu__item,
 :root .el-dropdown-menu .el-dropdown-menu__item {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Alert / Progress / Tag / Empty / Statistic / Result / PageHeader */
 :root .el-alert__title,
 :root .el-alert__description,
 :root .el-alert__content {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-progress,
 :root .el-progress__text,
 :root .el-progress-bar__innerText {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-tag,
 :root .el-tag .el-icon {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-empty,
 :root .el-empty__description p {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-statistic,
@@ -237,7 +237,7 @@
 :root .el-statistic__decimal,
 :root .el-statistic__suffix,
 :root .el-statistic__prefix {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-result,
@@ -245,7 +245,7 @@
 :root .el-result__subtitle,
 :root .el-result__extra,
 :root .el-result__info li {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-page-header,
@@ -253,13 +253,13 @@
 :root .el-page-header__title,
 :root .el-page-header__content,
 :root .el-page-header__extra {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Timeline / Upload / Calendar / Rate / Slider / Switch / Collapse / Divider */
 :root .el-timeline-item__timestamp,
 :root .el-timeline-item__content {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-upload,
@@ -271,40 +271,40 @@
 :root .el-upload-list__item-name,
 :root .el-upload-list__item-status-label,
 :root .el-upload-list__item-actions {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-calendar,
 :root .el-calendar__header,
 :root .el-calendar-table,
 :root .el-calendar-day {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-rate,
 :root .el-rate__text,
 :root .el-rate__icon {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-slider__marks-text,
 :root .el-switch__label,
 :root .el-switch__label.is-active {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-collapse,
 :root .el-collapse-item__header,
 :root .el-collapse-item__content,
 :root .el-collapse-item__arrow {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .el-divider__text,
 :root .el-divider__text.is-left,
 :root .el-divider__text.is-right,
 :root .el-divider__text.is-center {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ========== Ant Design Vue ========== */
@@ -317,7 +317,7 @@
 :root .ant-input-password input.ant-input,
 :root .ant-input-number-input,
 :root .ant-input-number-input::placeholder {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Select / TreeSelect / Cascader / AutoComplete / DatePicker */
@@ -338,7 +338,7 @@
 :root .ant-picker-time-panel-cell-inner,
 :root .ant-picker-ranges,
 :root .ant-picker-footer {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Table（表头 + 单元格 + 空数据 + 分页） */
@@ -354,7 +354,7 @@
 :root .ant-pagination-options-size-changer .ant-select-selector,
 :root .ant-pagination-options-quick-jumper input,
 :root .ant-pagination-total-text {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Form / Radio / Checkbox / Switch / Transfer */
@@ -364,7 +364,7 @@
 :root .ant-checkbox-wrapper span.ant-checkbox + *:not(.ant-checkbox),
 :root .ant-transfer-list-header,
 :root .ant-transfer-list-content-item {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Modal / Drawer / Message / Notification / Popconfirm / Card / Descriptions / Steps / Tabs / Tag */
@@ -388,7 +388,7 @@
 :root .ant-steps-item-description,
 :root .ant-tabs-tab,
 :root .ant-tag {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ===== Ant Design Vue：ant-btn / Link 所有尺寸 + 表格/弹窗内部嵌套 ===== */
@@ -427,7 +427,7 @@
 :root .ant-modal-footer .ant-btn > span,
 :root .ant-drawer-footer .ant-btn,
 :root .ant-drawer-footer .ant-btn > span {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Ant Design Vue Link 组件 */
@@ -436,7 +436,7 @@
 :root .ant-typography-expand,
 :root .ant-typography-edit,
 :root .ant-typography-copy {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Segmented / Tabs Content / Breadcrumb / Dropdown */
@@ -445,7 +445,7 @@
 :root .ant-segmented-item-label,
 :root .ant-segmented-thumb,
 :root .ant-segmented-group {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .ant-tabs-tab-btn,
@@ -459,7 +459,7 @@
 :root .ant-dropdown-menu-item,
 :root .ant-dropdown-menu-submenu-title,
 :root .ant-dropdown-menu-title-content {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Alert / Progress / Empty / Statistic / Result / PageHeader / Timeline / Upload / Collapse / Divider / Rate */
@@ -493,7 +493,7 @@
 :root .ant-divider-inner-text,
 :root .ant-rate,
 :root .ant-rate-text {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ========== TDesign ========== */
@@ -508,7 +508,7 @@
 :root .t-input-number__input,
 :root .t-input-adornment__prepend,
 :root .t-input-adornment__append {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Select / TreeSelect / Cascader / DatePicker */
@@ -524,7 +524,7 @@
 :root .t-date-picker__cell,
 :root .t-date-picker__control,
 :root .t-date-picker__control .t-input__inner {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Table（表头 + 单元格 + 空数据 + 分页） */
@@ -536,14 +536,14 @@
 :root .t-pagination .t-is-current,
 :root .t-pagination button,
 :root .t-pagination__total {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Form / Radio / Checkbox */
 :root .t-form__label,
 :root .t-radio,
 :root .t-checkbox {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Dialog / Drawer / Popup / Card */
@@ -555,7 +555,7 @@
 :root .t-popup__content,
 :root .t-card__title,
 :root .t-card__body {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ===== TDesign：t-button 所有尺寸/主题 + 表格/弹窗内部嵌套 ===== */
@@ -596,14 +596,14 @@
 :root .t-link .t-link__content,
 :root .t-link__content,
 :root .t-space .t-button {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Segmented / Tabs / Breadcrumb / Dropdown / Menu */
 :root .t-segmented,
 :root .t-segmented__item,
 :root .t-segmented__label {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 :root .t-tabs,
@@ -618,7 +618,7 @@
 :root .t-menu-item,
 :root .t-submenu,
 :root .t-menu__item {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* Alert / Progress / Tag / Empty / Statistic / Result / Timeline / Upload / Collapse / Divider / Rate */
@@ -656,7 +656,7 @@
 :root .t-calendar,
 :root .t-calendar__cell,
 :root .t-date-picker__cell-text {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ========== VXE Table（vxe-table / vxe-grid） —— 用户报的 vxe-cell ========== */
@@ -664,7 +664,7 @@
 /* 表格整体容器 */
 :root .vxe-table,
 :root .vxe-grid {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 表头（用户贴的 DOM：.vxe-header-cell--wrapper / .vxe-cell--title） ---------- */
@@ -681,7 +681,7 @@
 :root .vxe-table .vxe-header--column .vxe-cell .vxe-cell--title,
 :root .vxe-table .vxe-header--column > .vxe-cell,
 :root .vxe-table colgroup + tbody .vxe-header--column .vxe-cell {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 单元格内容 ---------- */
@@ -694,7 +694,7 @@
 :root .vxe-table .vxe-table--body-wrapper .vxe-body--column,
 :root .vxe-table .vxe-table--body-wrapper .vxe-body--column .vxe-cell,
 :root .vxe-table .vxe-table--body-wrapper .vxe-body--column .vxe-cell .vxe-cell--content {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 表尾（合计/汇总行） ---------- */
@@ -702,14 +702,14 @@
 :root .vxe-table .vxe-footer--column,
 :root .vxe-table .vxe-footer--column .vxe-cell,
 :root .vxe-table .vxe-footer--wrapper {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 空数据 / 加载中 ---------- */
 :root .vxe-table .vxe-table--empty-block,
 :root .vxe-table .vxe-table--empty-text,
 :root .vxe-table .vxe-table--loading-text {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 工具栏 Toolbar ---------- */
@@ -720,7 +720,7 @@
 :root .vxe-table .vxe-toolbar--tip,
 :root .vxe-table .vxe-toolbar--setting,
 :root .vxe-table .vxe-toolbar--search {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 分页 Pager ---------- */
@@ -736,7 +736,7 @@
 :root .vxe-pager--sizes .vxe-select--wrapper,
 :root .vxe-pager--total,
 :root .vxe-pager--total-count {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 自定义列 / 筛选 / 导出弹框 ---------- */
@@ -749,7 +749,7 @@
 :root .vxe-table .vxe-export--panel label,
 :root .vxe-table .vxe-export--panel .vxe-export--filename,
 :root .vxe-table .vxe-export--panel .vxe-export--sheet-name {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 展开行 / 树形展开图标旁的文字 ---------- */
@@ -758,7 +758,7 @@
 :root .vxe-table .vxe-table--body-wrapper .vxe-body--expand,
 :root .vxe-table .vxe-cell--expand,
 :root .vxe-table .vxe-tree--btn-wrapper {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- vxe-select / vxe-input / vxe-date-picker 等内置表单控件文字 ---------- */
@@ -773,7 +773,7 @@
 :root .vxe-form--item-content,
 :root .vxe-radio--wrapper,
 :root .vxe-checkbox--wrapper {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }
 
 /* ---------- 模态弹窗（列设置/筛选） ---------- */
@@ -782,5 +782,5 @@
 :root .vxe-modal--title,
 :root .vxe-modal--body,
 :root .vxe-modal--footer .vxe-modal--btn {
-  font-size: var(--font-size-base) !important;
+  font-size: var(--menu-font-size) !important; font-weight: 400 !important;
 }

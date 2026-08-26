@@ -179,11 +179,11 @@ function viewProfile(id: string) {
 async function handleStatusChange(id: string, isActive: boolean) {
   try {
     await updateEmployeeStatusApi(id, { is_active: isActive });
-    ElMessage.success('状态更新成功');
+    ElMessage.success(t('page.employees.message.statusUpdateSuccess'));
     invalidateEmployees();
     await tableApi.reload();
   } catch {
-    ElMessage.error('状态更新失败');
+    ElMessage.error(t('page.employees.message.statusUpdateFailed'));
   }
 }
 
@@ -205,14 +205,14 @@ async function handlePermissionUpdate(
   permissionLoading.value = true;
   try {
     await updateEmployeePermissionsApi(target.id, payload);
-    ElMessage.success('权限更新成功');
+    ElMessage.success(t('page.employees.message.permissionUpdateSuccess'));
     showPermissionModal.value = false;
     permissionTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
     console.error('权限更新失败:', error);
-    ElMessage.error('权限更新失败');
+    ElMessage.error(t('page.employees.message.permissionUpdateFailed'));
   } finally {
     permissionLoading.value = false;
   }
@@ -236,14 +236,14 @@ async function handleBasicInfoUpdate(
   basicInfoLoading.value = true;
   try {
     await updateEmployeeBasicInfoApi(target.id, payload);
-    ElMessage.success('基础信息更新成功');
+    ElMessage.success(t('page.employees.message.basicInfoUpdateSuccess'));
     showBasicInfoModal.value = false;
     basicInfoTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
     console.error('基础信息更新失败:', error);
-    ElMessage.error('基础信息更新失败');
+    ElMessage.error(t('page.employees.message.basicInfoUpdateFailed'));
   } finally {
     basicInfoLoading.value = false;
   }
@@ -267,14 +267,14 @@ async function handleAccessControlUpdate(
   accessControlLoading.value = true;
   try {
     await updateEmployeeAccessControlApi(target.id, payload);
-    ElMessage.success('门禁 ID 更新成功');
+    ElMessage.success(t('page.employees.message.accessControlUpdateSuccess'));
     showAccessControlModal.value = false;
     accessControlTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
     console.error('门禁 ID 更新失败:', error);
-    ElMessage.error('门禁 ID 更新失败');
+    ElMessage.error(t('page.employees.message.accessControlUpdateFailed'));
   } finally {
     accessControlLoading.value = false;
   }
@@ -285,11 +285,11 @@ async function handleDelete(row: EmployeeApi.EmployeeResponse) {
   const label = row.full_name || row.username;
   try {
     await ElMessageBox.confirm(
-      `确认删除员工「${label}」？该操作不可恢复，将一并清除其账号与权限。`,
-      '删除员工',
+      t('page.employees.deleteConfirm.message', { name: label }),
+      t('page.employees.deleteConfirm.title'),
       {
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('page.employees.deleteConfirm.confirmButtonText'),
+        cancelButtonText: t('page.employees.deleteConfirm.cancelButtonText'),
         type: 'warning',
         confirmButtonClass: 'el-button--danger',
       },
@@ -299,12 +299,12 @@ async function handleDelete(row: EmployeeApi.EmployeeResponse) {
   }
   try {
     await deleteEmployeeApi(row.id);
-    ElMessage.success('员工已删除');
+    ElMessage.success(t('page.employees.message.deleteSuccess'));
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
     console.error('删除员工失败:', error);
-    ElMessage.error('删除员工失败');
+    ElMessage.error(t('page.employees.message.deleteFailed'));
   }
 }
 
@@ -313,9 +313,13 @@ async function handleResetPassword() {
   try {
     const res = await resetEmployeePasswordApi(resetEmployeeId.value);
     resetResult.value = res;
-    ElMessage.success(`密码已重置，临时密码：${res.temporary_password}`);
+    ElMessage.success(
+      t('page.employees.message.resetPasswordSuccess', {
+        password: res.temporary_password,
+      }),
+    );
   } catch {
-    ElMessage.error('密码重置失败');
+    ElMessage.error(t('page.employees.message.resetPasswordFailed'));
   }
 }
 
@@ -329,7 +333,7 @@ onMounted(async () => {
   <Page>
     <div class="flex flex-col gap-4">
       <!-- 筛选 + 表格（Reset / Search / Collapse 按钮 + 分页 + 工具栏由 BasicTable 内置） -->
-      <BasicTable table-title="员工列表">
+      <BasicTable :table-title="t('page.employees.list')">
         <template #toolbar-tools>
           <ElButton type="primary" @click="openCreateDrawer">
             {{ t('page.employees.buttons.createShort') }}
@@ -340,7 +344,11 @@ onMounted(async () => {
             :type="isManager(row.module_permissions) ? 'danger' : 'info'"
             size="small"
           >
-            {{ isManager(row.module_permissions) ? '管理员' : '员工' }}
+            {{
+              isManager(row.module_permissions)
+                ? t('page.employees.role.admin')
+                : t('page.employees.role.employee')
+            }}
           </ElTag>
         </template>
 
@@ -384,29 +392,31 @@ onMounted(async () => {
         </template>
 
         <template #action="{ row }">
-          <ElButton size="small" @click="viewProfile(row.id)">档案</ElButton>
+          <ElButton size="small" @click="viewProfile(row.id)">
+            {{ t('page.employees.action.profile') }}
+          </ElButton>
           <ElButton
             size="small"
             type="primary"
             @click="openBasicInfoModal(row)"
           >
-            编辑
+            {{ t('page.employees.action.edit') }}
           </ElButton>
           <ElButton size="small" @click="openAccessControlModal(row)">
-            门禁
+            {{ t('page.employees.action.accessControl') }}
           </ElButton>
           <ElButton size="small" type="warning" @click="openResetModal(row.id)">
-            重置密码
+            {{ t('page.employees.action.resetPassword') }}
           </ElButton>
           <ElButton
             size="small"
             :type="isManager(row.module_permissions) ? 'danger' : 'primary'"
             @click="openPermissionModal(row)"
           >
-            权限
+            {{ t('page.employees.action.permissions') }}
           </ElButton>
           <ElButton size="small" type="danger" @click="handleDelete(row)">
-            删除
+            {{ t('page.employees.action.delete') }}
           </ElButton>
         </template>
       </BasicTable>

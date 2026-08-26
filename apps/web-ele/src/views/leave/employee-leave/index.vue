@@ -26,15 +26,16 @@ import {
   getMyLeaveRequestsApi,
   withdrawLeaveRequestApi,
 } from '#/api';
+import { $t } from '#/locales';
 
 import CalendarPanel from '../components/CalendarPanel.vue';
 import {
-  leaveTypeOptions,
-  sessionOptions,
-  sharedToolbarConfig,
-  statusOptions,
+  createLeaveTypeOptions,
+  createSessionOptions,
+  createSharedToolbarConfig,
+  createStatusOptions,
+  createTableColumns,
   statusTagType,
-  tableColumns,
 } from './data';
 
 const loading = ref(false);
@@ -52,12 +53,19 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const hideWithdrawnOrRejected = ref(false);
 
+// 响应式 i18n 映射
+const leaveTypeOptions = computed(() => createLeaveTypeOptions($t));
+const sessionOptions = computed(() => createSessionOptions($t));
+const statusOptions = computed(() => createStatusOptions($t));
+const tableColumns = computed(() => createTableColumns($t));
+const sharedToolbarConfig = computed(() => createSharedToolbarConfig($t));
+
 // Tab 状态
 type TabKey = 'calendar' | 'records';
 const activeTab = ref<TabKey>('records');
 const segmentedOptions = computed(() => [
-  { label: '请假记录', value: 'records' },
-  { label: '年历视图', value: 'calendar' },
+  { label: $t('page.leave.employeeLeave.recordsTab'), value: 'records' },
+  { label: $t('page.leave.employeeLeave.calendarTab'), value: 'calendar' },
 ]);
 
 // 创建BasicTable实例
@@ -65,16 +73,25 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
   gridOptions: {
     id: 'leave-list',
     rowConfig: { keyField: 'id' },
-    columns: tableColumns,
+    columns: tableColumns.value,
     proxyConfig: { enabled: false },
     keepSource: true,
-    toolbarConfig: sharedToolbarConfig,
+    toolbarConfig: sharedToolbarConfig.value,
   },
   gridEvents: {
     toolbarToolClick(event: { code: string }) {
       if (event.code === 'manual-refresh') fetchData();
     },
   },
+});
+
+// 监听语言切换，更新表格列
+watch([tableColumns, sharedToolbarConfig], () => {
+  tableApi.setGridOptions({
+    columns: tableColumns.value,
+    toolbarConfig: sharedToolbarConfig.value,
+  });
+  refreshTable();
 });
 
 // 刷新表格
@@ -143,17 +160,19 @@ const stats = computed(() => {
 // 提交请假申请
 async function handleSubmit() {
   if (!form.start_date || !form.end_date) {
-    ElMessage.warning('请完整选择请假日期');
+    ElMessage.warning($t('page.leave.employeeLeave.validation.completeDates'));
     return;
   }
 
   if (form.start_date > form.end_date) {
-    ElMessage.warning('开始日期不能晚于结束日期');
+    ElMessage.warning($t('page.leave.employeeLeave.validation.startAfterEnd'));
     return;
   }
 
   if (form.session !== 'full_day' && form.start_date !== form.end_date) {
-    ElMessage.warning('上午或下午请假仅支持单日申请');
+    ElMessage.warning(
+      $t('page.leave.employeeLeave.validation.sessionSingleDay'),
+    );
     return;
   }
 
@@ -168,19 +187,19 @@ async function handleSubmit() {
       reason: form.reason || null,
     });
 
-    ElMessage.success('请假申请已提交');
+    ElMessage.success($t('page.leave.employeeLeave.message.submitSuccess'));
     resetForm();
     modalApi.close();
     await fetchData();
   } catch {
-    ElMessage.error('提交失败');
+    ElMessage.error($t('page.leave.employeeLeave.message.submitFailed'));
   } finally {
     modalApi.setState({ confirmLoading: false });
   }
 }
 
 const [Modal, modalApi] = useVbenModal({
-  title: '填写请假单',
+  title: $t('page.leave.employeeLeave.modal.title'),
   onConfirm: handleSubmit,
   onCancel: () => {
     resetForm();
@@ -207,10 +226,10 @@ function resetForm() {
 async function handleWithdraw(id: string) {
   try {
     await withdrawLeaveRequestApi(id);
-    ElMessage.success('已撤回');
+    ElMessage.success($t('page.leave.employeeLeave.message.withdrawSuccess'));
     await fetchData();
   } catch {
-    ElMessage.error('撤回失败');
+    ElMessage.error($t('page.leave.employeeLeave.message.withdrawFailed'));
   }
 }
 
@@ -269,7 +288,7 @@ onMounted(() => {
           "
         >
           <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年请假记录
+            {{ $t('page.leave.employeeLeave.stats.recordCount') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.recordCount }}
@@ -283,7 +302,7 @@ onMounted(() => {
           "
         >
           <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年覆盖天数
+            {{ $t('page.leave.employeeLeave.stats.dayCount') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.dayCount }}
@@ -297,7 +316,7 @@ onMounted(() => {
           "
         >
           <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            待审批记录
+            {{ $t('page.leave.employeeLeave.stats.pendingCount') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.pendingCount }}
@@ -311,7 +330,7 @@ onMounted(() => {
           "
         >
           <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年年假总计
+            {{ $t('page.leave.employeeLeave.stats.annualEntitlement') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.annualEntitlement }}
@@ -325,7 +344,7 @@ onMounted(() => {
           "
         >
           <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            当年年假可用
+            {{ $t('page.leave.employeeLeave.stats.annualAvailable') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.annualAvailable }}
@@ -335,15 +354,23 @@ onMounted(() => {
 
       <BasicTable
         v-show="activeTab === 'records'"
-        :table-title="`我的请假记录（${filteredLeaveRequests.length} 条）`"
+        :table-title="
+          $t('page.leave.employeeLeave.listTitle', {
+            count: filteredLeaveRequests.length,
+          })
+        "
         class="min-h-0"
       >
         <template #toolbar-tools>
           <ElButton type="primary" @click="() => modalApi.open()">
-            填写请假单
+            {{ $t('page.leave.employeeLeave.button.create') }}
           </ElButton>
           <ElButton @click="hideWithdrawnOrRejected = !hideWithdrawnOrRejected">
-            {{ hideWithdrawnOrRejected ? '显示全部' : '隐藏撤回/驳回' }}
+            {{
+              hideWithdrawnOrRejected
+                ? $t('page.leave.employeeLeave.button.showAll')
+                : $t('page.leave.employeeLeave.button.hideWithdrawnRejected')
+            }}
           </ElButton>
         </template>
 
@@ -351,7 +378,7 @@ onMounted(() => {
           {{
             row.start_date === row.end_date
               ? row.start_date
-              : `${row.start_date} 至 ${row.end_date}`
+              : `${row.start_date} ${$t('page.leave.employeeLeave.date.to')} ${row.end_date}`
           }}
         </template>
 
@@ -384,7 +411,7 @@ onMounted(() => {
             type="danger"
             @click="handleWithdraw(row.id)"
           >
-            撤回
+            {{ $t('page.leave.employeeLeave.button.withdraw') }}
           </ElButton>
           <span v-else style="color: hsl(var(--muted-foreground))">-</span>
         </template>
@@ -429,13 +456,14 @@ onMounted(() => {
           "
         >
           <h4 style="margin: 0 0 12px; font-size: 16px">
-            {{ selectedDateKey }} · 日期详情
+            {{ selectedDateKey }} ·
+            {{ $t('page.leave.employeeLeave.calendar.detailTitle') }}
           </h4>
           <div
             v-if="!dayMap[selectedDateKey]?.length"
             style="color: hsl(var(--muted-foreground))"
           >
-            当天没有请假记录。
+            {{ $t('page.leave.employeeLeave.calendar.noRecords') }}
           </div>
           <div v-else style="display: flex; flex-direction: column; gap: 10px">
             <div
@@ -448,19 +476,34 @@ onMounted(() => {
                 border-top: 1px solid hsl(var(--border));
               "
             >
-              <div>类型：{{ leaveTypeOptions[item.leave_type] }}</div>
-              <div>时段：{{ sessionOptions[item.session] }}</div>
-              <div>状态：{{ statusOptions[item.approval_status] }}</div>
-              <div>说明：{{ item.reason || '-' }}</div>
+              <div>
+                {{ $t('page.leave.employeeLeave.calendar.typeLabel')
+                }}{{ leaveTypeOptions[item.leave_type] }}
+              </div>
+              <div>
+                {{ $t('page.leave.employeeLeave.calendar.sessionLabel')
+                }}{{ sessionOptions[item.session] }}
+              </div>
+              <div>
+                {{ $t('page.leave.employeeLeave.calendar.statusLabel')
+                }}{{ statusOptions[item.approval_status] }}
+              </div>
+              <div>
+                {{ $t('page.leave.employeeLeave.calendar.reasonLabel')
+                }}{{ item.reason || '-' }}
+              </div>
             </div>
           </div>
         </div>
       </ElCard>
     </div>
 
-    <Modal class="w-150" title="填写请假单">
+    <Modal class="w-150" :title="$t('page.leave.employeeLeave.modal.title')">
       <ElForm :model="form" label-width="100px">
-        <ElFormItem label="请假类型" required>
+        <ElFormItem
+          :label="$t('page.leave.employeeLeave.form.leaveType')"
+          required
+        >
           <ElSelect v-model="form.leave_type" style="width: 100%">
             <ElOption
               v-for="(label, value) in leaveTypeOptions"
@@ -471,27 +514,40 @@ onMounted(() => {
           </ElSelect>
         </ElFormItem>
 
-        <ElFormItem label="开始日期" required>
+        <ElFormItem
+          :label="$t('page.leave.employeeLeave.form.startDate')"
+          required
+        >
           <ElDatePicker
             v-model="form.start_date"
             type="date"
             value-format="YYYY-MM-DD"
-            placeholder="选择开始日期"
+            :placeholder="
+              $t('page.leave.employeeLeave.form.startDatePlaceholder')
+            "
             style="width: 100%"
           />
         </ElFormItem>
 
-        <ElFormItem label="结束日期" required>
+        <ElFormItem
+          :label="$t('page.leave.employeeLeave.form.endDate')"
+          required
+        >
           <ElDatePicker
             v-model="form.end_date"
             type="date"
             value-format="YYYY-MM-DD"
-            placeholder="选择结束日期"
+            :placeholder="
+              $t('page.leave.employeeLeave.form.endDatePlaceholder')
+            "
             style="width: 100%"
           />
         </ElFormItem>
 
-        <ElFormItem label="请假时段" required>
+        <ElFormItem
+          :label="$t('page.leave.employeeLeave.form.session')"
+          required
+        >
           <ElSelect v-model="form.session" style="width: 100%">
             <ElOption
               v-for="(label, value) in sessionOptions"
@@ -502,16 +558,22 @@ onMounted(() => {
           </ElSelect>
         </ElFormItem>
 
-        <ElFormItem label="工作交接人">
-          <ElInput v-model="form.handover_to" placeholder="选填" clearable />
+        <ElFormItem :label="$t('page.leave.employeeLeave.form.handoverTo')">
+          <ElInput
+            v-model="form.handover_to"
+            :placeholder="
+              $t('page.leave.employeeLeave.form.handoverToPlaceholder')
+            "
+            clearable
+          />
         </ElFormItem>
 
-        <ElFormItem label="请假说明">
+        <ElFormItem :label="$t('page.leave.employeeLeave.form.reason')">
           <ElInput
             v-model="form.reason"
             type="textarea"
             :rows="3"
-            placeholder="请填写请假原因"
+            :placeholder="$t('page.leave.employeeLeave.form.reasonPlaceholder')"
           />
         </ElFormItem>
 
@@ -522,8 +584,7 @@ onMounted(() => {
             color: hsl(var(--muted-foreground));
           "
         >
-          说明：半天请假仅支持单日申请；提交后会写入
-          leave_requests，审批状态默认是"待审批"。
+          {{ $t('page.leave.employeeLeave.form.hint') }}
         </div>
       </ElForm>
     </Modal>

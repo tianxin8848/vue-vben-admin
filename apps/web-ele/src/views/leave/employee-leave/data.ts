@@ -1,28 +1,36 @@
 import type { VxeGridProps } from '#/adapter/vxe-table';
 
+type TFunc = (key: string, named?: Record<string, any>) => string;
+
 // 请假类型映射
-export const leaveTypeOptions: Record<string, string> = {
-  annual: '年假',
-  personal: '事假',
-  sick: '病假',
-  lieu: '调休',
-  long: '长假',
-};
+export function createLeaveTypeOptions(t: TFunc): Record<string, string> {
+  return {
+    annual: t('page.leave.leaveTypes.annual'),
+    personal: t('page.leave.leaveTypes.personal'),
+    sick: t('page.leave.leaveTypes.sick'),
+    lieu: t('page.leave.leaveTypes.lieu'),
+    long: t('page.leave.leaveTypes.long'),
+  };
+}
 
 // 请假时段映射
-export const sessionOptions: Record<string, string> = {
-  full_day: '全天',
-  morning: '上午',
-  afternoon: '下午',
-};
+export function createSessionOptions(t: TFunc): Record<string, string> {
+  return {
+    full_day: t('page.leave.session.full_day'),
+    morning: t('page.leave.session.morning'),
+    afternoon: t('page.leave.session.afternoon'),
+  };
+}
 
 // 审批状态映射
-export const statusOptions: Record<string, string> = {
-  pending: '待审批',
-  approved: '已批准',
-  rejected: '已驳回',
-  withdrawn: '已撤回',
-};
+export function createStatusOptions(t: TFunc): Record<string, string> {
+  return {
+    pending: t('page.leave.approvalStatus.pending'),
+    approved: t('page.leave.approvalStatus.approved'),
+    rejected: t('page.leave.approvalStatus.rejected'),
+    withdrawn: t('page.leave.approvalStatus.withdrawn'),
+  };
+}
 
 // 审批状态对应的 ElTag 类型
 export const statusTypeMap: Record<
@@ -42,57 +50,63 @@ export function statusTagType(
 }
 
 // 表格列配置
-export const tableColumns: VxeGridProps['columns'] = [
-  {
-    field: 'date_range',
-    title: '日期范围',
-    minWidth: 200,
-    slots: { default: 'date_range' },
-  },
-  {
-    field: 'leave_type',
-    title: '请假类型',
-    width: 120,
-    align: 'center',
-    slots: { default: 'leave_type' },
-  },
-  {
-    field: 'session',
-    title: '时段',
-    width: 100,
-    align: 'center',
-    slots: { default: 'session' },
-  },
-  {
-    field: 'approval_status',
-    title: '状态',
-    width: 120,
-    align: 'center',
-    slots: { default: 'status' },
-  },
-  {
-    field: 'created_at',
-    title: '创建时间',
-    width: 180,
-    slots: { default: 'created_at' },
-  },
-  {
-    title: '操作',
-    width: 120,
-    fixed: 'right',
-    slots: { default: 'action' },
-  },
-];
+export function createTableColumns(t: TFunc): VxeGridProps['columns'] {
+  return [
+    {
+      field: 'date_range',
+      title: t('page.leave.employeeLeave.table.dateRange'),
+      minWidth: 200,
+      slots: { default: 'date_range' },
+    },
+    {
+      field: 'leave_type',
+      title: t('page.leave.employeeLeave.table.leaveType'),
+      width: 120,
+      align: 'center',
+      slots: { default: 'leave_type' },
+    },
+    {
+      field: 'session',
+      title: t('page.leave.employeeLeave.table.session'),
+      width: 100,
+      align: 'center',
+      slots: { default: 'session' },
+    },
+    {
+      field: 'approval_status',
+      title: t('page.leave.employeeLeave.table.status'),
+      width: 120,
+      align: 'center',
+      slots: { default: 'status' },
+    },
+    {
+      field: 'created_at',
+      title: t('page.leave.employeeLeave.table.createdAt'),
+      width: 180,
+      slots: { default: 'created_at' },
+    },
+    {
+      title: t('page.leave.employeeLeave.table.action'),
+      width: 120,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
+  ];
+}
 
 // 表格工具栏配置
-export const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
-  custom: true,
-  tools: [
-    {
-      code: 'manual-refresh',
-      icon: 'vxe-icon-refresh',
-      circle: true,
-      name: '刷新',
-    },
-  ],
-};
+export function createSharedToolbarConfig(
+  t: TFunc,
+): VxeGridProps['toolbarConfig'] {
+  return {
+    custom: true,
+    tools: [
+      {
+        code: 'manual-refresh',
+        icon: 'vxe-icon-refresh',
+        circle: true,
+        name: t('page.leave.employeeLeave.table.refresh'),
+      },
+    ],
+  };
+}

@@ -18,6 +18,7 @@ import {
 } from 'element-plus';
 
 import { getLeaveApprovalsMetaApi } from '#/api';
+import { $t } from '#/locales';
 
 import ClaimDetailDialog from './components/ClaimDetailDialog.vue';
 import ClaimReviewDialog from './components/ClaimReviewDialog.vue';
@@ -173,45 +174,63 @@ onMounted(async () => {
         <div class="search-bar">
           <ElInput
             v-model="searchForm.keyword"
-            placeholder="搜索员工姓名 / 账号 / 工号 / 备注 / 理由"
+            :placeholder="$t('page.approve.searchPlaceholder')"
             style="width: 280px"
             clearable
           />
           <ElSelect
             v-model="searchForm.status"
-            placeholder="全部状态"
+            :placeholder="$t('page.approve.allStatus')"
             style="width: 120px"
             clearable
           >
-            <ElOption label="全部状态" value="" />
-            <ElOption label="待审批" value="pending" />
-            <ElOption label="已通过" value="approved" />
-            <ElOption label="已驳回" value="rejected" />
-            <ElOption label="已撤回" value="withdrawn" />
+            <ElOption :label="$t('page.approve.allStatus')" value="" />
+            <ElOption
+              :label="$t('page.leave.approvalStatus.pending')"
+              value="pending"
+            />
+            <ElOption
+              :label="$t('page.leave.approvalStatus.approved')"
+              value="approved"
+            />
+            <ElOption
+              :label="$t('page.leave.approvalStatus.rejected')"
+              value="rejected"
+            />
+            <ElOption
+              :label="$t('page.leave.approvalStatus.withdrawn')"
+              value="withdrawn"
+            />
           </ElSelect>
           <ElSelect
             v-if="
               activeTab === 'pending-leave' || activeTab === 'records-leave'
             "
             v-model="searchForm.leave_type"
-            placeholder="全部类型"
+            :placeholder="$t('page.approve.allTypes')"
             style="width: 120px"
             clearable
           >
-            <ElOption label="全部类型" value="" />
-            <ElOption label="年假" value="annual" />
-            <ElOption label="事假" value="personal" />
-            <ElOption label="病假" value="sick" />
-            <ElOption label="调休" value="lieu" />
-            <ElOption label="长假" value="long" />
+            <ElOption :label="$t('page.approve.allTypes')" value="" />
+            <ElOption
+              :label="$t('page.leave.leaveTypes.annual')"
+              value="annual"
+            />
+            <ElOption
+              :label="$t('page.leave.leaveTypes.personal')"
+              value="personal"
+            />
+            <ElOption :label="$t('page.leave.leaveTypes.sick')" value="sick" />
+            <ElOption :label="$t('page.leave.leaveTypes.lieu')" value="lieu" />
+            <ElOption :label="$t('page.leave.leaveTypes.long')" value="long" />
           </ElSelect>
           <ElSelect
             v-model="searchForm.department"
-            placeholder="全部部门"
+            :placeholder="$t('page.approve.allDepartments')"
             style="width: 140px"
             clearable
           >
-            <ElOption label="全部部门" value="" />
+            <ElOption :label="$t('page.approve.allDepartments')" value="" />
             <ElOption
               v-for="opt in departmentOptions"
               :key="opt.value"
@@ -221,11 +240,11 @@ onMounted(async () => {
           </ElSelect>
           <ElSelect
             v-model="searchForm.region"
-            placeholder="全部地区"
+            :placeholder="$t('page.approve.allRegions')"
             style="width: 120px"
             clearable
           >
-            <ElOption label="全部地区" value="" />
+            <ElOption :label="$t('page.approve.allRegions')" value="" />
             <ElOption
               v-for="opt in regionOptions"
               :key="opt.value"
@@ -233,8 +252,12 @@ onMounted(async () => {
               :value="opt.value"
             />
           </ElSelect>
-          <ElButton @click="handleReset">重置筛选</ElButton>
-          <ElButton @click="fetchApprovalData">刷新列表</ElButton>
+          <ElButton @click="handleReset">
+            {{ $t('page.leave.common.resetFilter') }}
+          </ElButton>
+          <ElButton @click="fetchApprovalData">
+            {{ $t('page.leave.common.refreshList') }}
+          </ElButton>
         </div>
       </ElCard>
 
@@ -245,7 +268,10 @@ onMounted(async () => {
           :tab-transition="false"
           :tab-pane-transition="false"
         >
-          <ElTabPane label="待审批 · 请假" name="pending-leave">
+          <ElTabPane
+            :label="$t('page.approve.pendingLeave')"
+            name="pending-leave"
+          >
             <div class="tab-pane-wrapper">
               <PendingLeaveTab
                 :data="leaveRequests"
@@ -257,7 +283,10 @@ onMounted(async () => {
             </div>
           </ElTabPane>
 
-          <ElTabPane label="待审批 · 报销" name="pending-claim">
+          <ElTabPane
+            :label="$t('page.approve.pendingClaim')"
+            name="pending-claim"
+          >
             <div class="tab-pane-wrapper">
               <PendingClaimTab
                 :data="claimApprovals"
@@ -269,7 +298,10 @@ onMounted(async () => {
             </div>
           </ElTabPane>
 
-          <ElTabPane label="审批记录 · 请假" name="records-leave">
+          <ElTabPane
+            :label="$t('page.approve.recordsLeave')"
+            name="records-leave"
+          >
             <div class="tab-pane-wrapper">
               <RecordsLeaveTab
                 :data="leaveApprovalRecords"
@@ -279,7 +311,10 @@ onMounted(async () => {
             </div>
           </ElTabPane>
 
-          <ElTabPane label="审批记录 · 报销" name="records-claim">
+          <ElTabPane
+            :label="$t('page.approve.recordsClaim')"
+            name="records-claim"
+          >
             <div class="tab-pane-wrapper">
               <RecordsClaimTab
                 :data="claimApprovalRecords"

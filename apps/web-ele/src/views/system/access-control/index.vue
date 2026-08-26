@@ -22,6 +22,7 @@ import {
   getAccessControlEmployeesApi,
   updateEmployeeAccessControlV2Api,
 } from '#/api';
+import { $t } from '#/locales';
 
 const router = useRouter();
 const loading = ref(false);
@@ -89,11 +90,11 @@ async function handleSaveAccessControl() {
     await updateEmployeeAccessControlV2Api(editEmployeeId.value, {
       access_control_id: editForm.accessControlId,
     });
-    ElMessage.success('门禁ID更新成功');
+    ElMessage.success($t('page.system.accessControlDetail.updateSuccess'));
     closeEditModal();
     fetchEmployees();
   } catch {
-    ElMessage.error('更新失败');
+    ElMessage.error($t('page.system.accessControlDetail.updateFailed'));
   }
 }
 
@@ -106,24 +107,35 @@ fetchEmployees();
 
 <template>
   <Page>
-    <ElButton @click="goBack" style="margin-bottom: 16px">返回</ElButton>
+    <ElButton @click="goBack" style="margin-bottom: 16px">
+      {{ $t('page.leave.common.back') }}
+    </ElButton>
 
     <ElCard class="search-card">
       <div class="search-bar">
         <ElInput
           v-model="searchForm.keyword"
-          placeholder="搜索姓名 / 账号 / 门禁ID"
+          :placeholder="$t('page.system.accessControlDetail.searchPlaceholder')"
           style="width: 280px"
           clearable
           @keyup.enter="handleSearch"
         />
-        <ElButton type="primary" @click="handleSearch">搜索</ElButton>
-        <ElButton @click="handleReset">重置筛选</ElButton>
-        <ElButton @click="fetchEmployees">刷新列表</ElButton>
+        <ElButton type="primary" @click="handleSearch">
+          {{ $t('page.leave.common.search') }}
+        </ElButton>
+        <ElButton @click="handleReset">
+          {{ $t('page.leave.common.resetFilter') }}
+        </ElButton>
+        <ElButton @click="fetchEmployees">
+          {{ $t('page.leave.common.refreshList') }}
+        </ElButton>
       </div>
     </ElCard>
 
-    <ElCard class="table-card" header="门禁列表">
+    <ElCard
+      class="table-card"
+      :header="$t('page.system.accessControlDetail.listTitle')"
+    >
       <ElTable
         :data="filteredEmployees"
         border
@@ -131,9 +143,21 @@ fetchEmployees();
         v-loading="loading"
         size="small"
       >
-        <ElTableColumn prop="full_name" label="姓名" min-width="120" />
-        <ElTableColumn prop="username" label="账号" min-width="140" />
-        <ElTableColumn prop="access_control_id" label="门禁ID" min-width="180">
+        <ElTableColumn
+          prop="full_name"
+          :label="$t('page.system.accessControlDetail.employeeName')"
+          min-width="120"
+        />
+        <ElTableColumn
+          prop="username"
+          :label="$t('page.system.accessControlDetail.username')"
+          min-width="140"
+        />
+        <ElTableColumn
+          prop="access_control_id"
+          :label="$t('page.system.accessControlDetail.accessId')"
+          min-width="180"
+        >
           <template #default="{ row }">
             <span v-if="row.access_control_id">{{
               row.access_control_id
@@ -141,39 +165,54 @@ fetchEmployees();
             <span v-else class="no-value">-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" width="100" fixed="right">
+        <ElTableColumn
+          :label="$t('page.leave.common.action')"
+          width="100"
+          fixed="right"
+        >
           <template #default="{ row }">
             <ElButton
               size="small"
               type="primary"
               @click="openEditModal(row as AccessControlEmployeeItem)"
             >
-              编辑
+              {{ $t('page.leave.common.edit') }}
             </ElButton>
           </template>
         </ElTableColumn>
       </ElTable>
     </ElCard>
 
-    <ElDialog v-model="showEditModal" title="编辑门禁ID" width="450px">
+    <ElDialog
+      v-model="showEditModal"
+      :title="$t('page.system.accessControlDetail.editTitle')"
+      width="450px"
+    >
       <div v-if="editEmployee" style="padding: 10px 0">
         <p style="margin-bottom: 12px; color: #64748b">
-          员工：{{ editEmployee.full_name }}（{{ editEmployee.username }}）
+          {{ $t('page.system.accessControlDetail.employeeLabel')
+          }}{{ editEmployee.full_name }}（{{ editEmployee.username }}）
         </p>
         <ElForm :model="editForm" label-width="80px">
-          <ElFormItem label="门禁ID">
+          <ElFormItem
+            :label="$t('page.system.accessControlDetail.accessIdLabel')"
+          >
             <ElInput
               v-model="editForm.accessControlId"
-              placeholder="请输入门禁ID"
+              :placeholder="
+                $t('page.system.accessControlDetail.inputPlaceholder')
+              "
               style="width: 100%"
             />
           </ElFormItem>
         </ElForm>
       </div>
       <template #footer>
-        <ElButton @click="closeEditModal">取消</ElButton>
+        <ElButton @click="closeEditModal">
+          {{ $t('page.leave.common.cancel') }}
+        </ElButton>
         <ElButton type="primary" @click="handleSaveAccessControl">
-          保存
+          {{ $t('page.leave.common.save') }}
         </ElButton>
       </template>
     </ElDialog>

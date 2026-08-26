@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { WorkbenchQuickNavItem } from '@vben/common-ui';
 
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page, WorkbenchQuickNav } from '@vben/common-ui';
@@ -12,6 +13,8 @@ import {
   ElTag,
 } from 'element-plus';
 
+import { $t } from '#/locales';
+
 const router = useRouter();
 
 interface AccessItem {
@@ -20,67 +23,67 @@ interface AccessItem {
   path: string;
 }
 
-const accessItems: AccessItem[] = [
+const accessItems = computed<AccessItem[]>(() => [
   {
-    name: '员工工作台',
+    name: $t('page.workspace.accessNav.employeeWorkspace'),
     path: '/employee',
-    description: '个人信息维护、详细档案与模块权限查看。',
+    description: $t('page.workspace.accessNav.employeeWorkspaceDesc'),
   },
   {
-    name: '请假申请',
+    name: $t('page.workspace.accessNav.leaveRequest'),
     path: '/employee/leave',
-    description: '员工提交请假申请，查看请假记录与状态。',
+    description: $t('page.workspace.accessNav.leaveRequestDesc'),
   },
   {
-    name: '审批记录',
+    name: $t('page.workspace.accessNav.approvalRecords'),
     path: '/employee/approvals',
-    description: '审批人查看待审批与已审批的请假记录。',
+    description: $t('page.workspace.accessNav.approvalRecordsDesc'),
   },
   {
-    name: '报销申请',
+    name: $t('page.workspace.accessNav.claimRequest'),
     path: '/employee/claims',
-    description: '员工提交报销申请，查看报销记录与状态。',
+    description: $t('page.workspace.accessNav.claimRequestDesc'),
   },
   {
-    name: '请假详情',
+    name: $t('page.workspace.accessNav.leaveDetail'),
     path: '/employee/leave/detail/:id',
-    description: '查看单条请假申请的详细信息，从请假列表跳转进入。',
+    description: $t('page.workspace.accessNav.leaveDetailDesc'),
   },
-];
+]);
 
 // 系统参数管理配置快捷导航：点击跳转到 settings 页面对应分区
-const settingsQuickNavItems: WorkbenchQuickNavItem[] = [
+const settingsQuickNavItems = computed<WorkbenchQuickNavItem[]>(() => [
   {
     color: '#1fdaca',
     icon: 'ion:settings-outline',
-    title: '基础参数',
+    title: $t('page.workspace.settingsNav.basic'),
     url: '/employee/manage/settings?tab=basic',
   },
   {
     color: '#bf0c2c',
     icon: 'ion:people-outline',
-    title: '员工字段',
+    title: $t('page.workspace.settingsNav.employeeFields'),
     url: '/employee/manage/settings?tab=employee',
   },
   {
     color: '#e18525',
     icon: 'ion:cash-outline',
-    title: '报销配置',
+    title: $t('page.workspace.settingsNav.claimConfig'),
     url: '/employee/manage/settings?tab=claim',
   },
   {
     color: '#3fb27f',
     icon: 'ion:calendar-outline',
-    title: '地区假期',
+    title: $t('page.workspace.settingsNav.regionalHoliday'),
     url: '/employee/manage/settings?tab=holiday',
   },
   {
     color: '#00d8ff',
     icon: 'ion:eye-outline',
-    title: '当前预览',
+    title: $t('page.workspace.settingsNav.currentPreview'),
     url: '/employee/manage/settings?tab=preview',
   },
-];
+]);
 
 function handleSettingsNavClick(item: WorkbenchQuickNavItem) {
   if (item.url) {
@@ -93,14 +96,14 @@ function handleSettingsNavClick(item: WorkbenchQuickNavItem) {
   <Page>
     <WorkbenchQuickNav
       :items="settingsQuickNavItems"
-      title="系统参数管理配置"
+      :title="$t('page.workspace.settingsNav.cardTitle')"
       class="mb-4"
       @click="handleSettingsNavClick"
     />
 
     <ElCard shadow="never">
       <template #header>
-        <span>功能入口导航</span>
+        <span>{{ $t('page.workspace.accessNav.cardTitle') }}</span>
       </template>
       <ElDescriptions :column="1" border>
         <ElDescriptionsItem

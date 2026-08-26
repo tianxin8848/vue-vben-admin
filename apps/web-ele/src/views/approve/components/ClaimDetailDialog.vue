@@ -3,6 +3,8 @@ import type { ClaimApi } from '#/api';
 
 import { ElButton, ElDialog, ElTag } from 'element-plus';
 
+import { $t } from '#/locales';
+
 import { statusLabelMap, statusTypeMap } from '../constants';
 
 defineProps<{
@@ -22,42 +24,56 @@ function close() {
 <template>
   <ElDialog
     :model-value="modelValue"
-    title="报销详情"
+    :title="$t('page.approve.claimDetail.title')"
     width="680px"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div v-if="current" style="padding: 10px 0">
       <div class="info-grid">
         <div class="info-item">
-          <span class="info-label">申请人：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.applicant')
+          }}</span>
           <strong>{{ current.employee_name }}</strong>（{{ current.employee_username }}）
         </div>
         <div class="info-item">
-          <span class="info-label">部门/地区：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.deptRegion')
+          }}</span>
           {{ current.employee_department || '-' }} /
           {{ current.employee_region || '-' }}
         </div>
         <div class="info-item">
-          <span class="info-label">理由：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.reason')
+          }}</span>
           {{ current.reason_label }}
         </div>
         <div class="info-item">
-          <span class="info-label">金额：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.amount')
+          }}</span>
           {{ current.amount.toFixed(2) }} {{ current.currency }}
           <span v-if="current.amount_hkd" class="text-xs text-muted-foreground">
             ≈ HKD {{ current.amount_hkd.toFixed(2) }}
           </span>
         </div>
         <div class="info-item">
-          <span class="info-label">开票日期：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.invoiceDate')
+          }}</span>
           {{ current.invoice_date || '-' }}
         </div>
         <div class="info-item">
-          <span class="info-label">票号：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.invoiceNo')
+          }}</span>
           {{ current.invoice_no || '-' }}
         </div>
         <div class="info-item">
-          <span class="info-label">状态：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.status')
+          }}</span>
           <ElTag :type="statusTypeMap[current.approval_status] || 'info'">
             {{
               statusLabelMap[current.approval_status] || current.approval_status
@@ -65,23 +81,32 @@ function close() {
           </ElTag>
         </div>
         <div class="info-item">
-          <span class="info-label">附件：</span>
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.attachment')
+          }}</span>
           <a
             v-if="current.attachment_url"
             :href="current.attachment_url"
             target="_blank"
           >
-            {{ current.attachment_name || '查看附件' }}
+            {{
+              current.attachment_name ||
+              $t('page.approve.claimDetail.viewAttachment')
+            }}
           </a>
-          <span v-else>无</span>
+          <span v-else>{{ $t('page.approve.claimDetail.none') }}</span>
         </div>
         <div class="info-item info-item--full">
-          <span class="info-label">描述：</span>
-          {{ current.description || '无' }}
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.description')
+          }}</span>
+          {{ current.description || $t('page.approve.claimDetail.none') }}
         </div>
         <div class="info-item info-item--full">
-          <span class="info-label">审批意见：</span>
-          {{ current.review_comment || '无' }}
+          <span class="info-label">{{
+            $t('page.approve.claimDetail.reviewComment')
+          }}</span>
+          {{ current.review_comment || $t('page.approve.claimDetail.none') }}
         </div>
       </div>
 
@@ -89,7 +114,13 @@ function close() {
         v-if="current.items && current.items.length > 0"
         class="items-section"
       >
-        <div class="items-title">明细项（{{ current.items.length }} 条）</div>
+        <div class="items-title">
+          {{
+            $t('page.approve.claimDetail.itemsTitle', {
+              count: current.items.length,
+            })
+          }}
+        </div>
         <div
           v-for="(it, idx) in current.items"
           :key="it.item_id ?? idx"
@@ -111,10 +142,12 @@ function close() {
             <div v-if="it.description">{{ it.description }}</div>
             <div v-if="it.invoice_date || it.invoice_no" class="mt-0-5">
               <span v-if="it.invoice_date">
-                开票日期: {{ it.invoice_date }}
+                {{ $t('page.approve.claimDetail.itemInvoiceDate')
+                }}{{ it.invoice_date }}
               </span>
               <span v-if="it.invoice_no" class="ml-2">
-                票号: {{ it.invoice_no }}
+                {{ $t('page.approve.claimDetail.itemInvoiceNo')
+                }}{{ it.invoice_no }}
               </span>
             </div>
           </div>
@@ -125,14 +158,19 @@ function close() {
               target="_blank"
               class="text-xs"
             >
-              {{ it.attachment_name || '查看附件' }}
+              {{
+                it.attachment_name ||
+                $t('page.approve.claimDetail.viewAttachment')
+              }}
             </a>
           </div>
         </div>
       </div>
     </div>
     <template #footer>
-      <ElButton @click="close">关闭</ElButton>
+      <ElButton @click="close">
+        {{ $t('page.approve.claimDetail.close') }}
+      </ElButton>
     </template>
   </ElDialog>
 </template>

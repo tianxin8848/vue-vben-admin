@@ -46,7 +46,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:calendar-check',
-          title: '请假管理',
+          title: $t('page.system.leaveManagement'),
           authority: ['user'],
         },
       },
@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:git-branch',
-          title: '请假流程',
+          title: $t('page.system.leaveWorkflow'),
           authority: ['user'],
         },
       },
@@ -70,7 +70,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-list',
-          title: '审批管理',
+          title: $t('page.system.approvalManagement'),
           authority: ['user'],
         },
       },
@@ -94,7 +94,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:database',
-          title: '数据处理维护',
+          title: $t('page.system.dataMigration'),
           authority: ['admin', 'user'],
         },
       },
@@ -106,7 +106,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:key',
-          title: '门禁管理',
+          title: $t('page.system.accessControl'),
           authority: ['admin', 'user'],
         },
       },

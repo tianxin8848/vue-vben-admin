@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:layout-dashboard',
-          title: '界面访问说明',
+          title: $t('page.workspace.guide'),
           authority: ['user'],
         },
       },
@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:calendar',
-          title: '请假申请',
+          title: $t('page.workspace.myLeave'),
           authority: ['user'],
         },
       },
@@ -57,7 +57,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
-          title: '审批记录',
+          title: $t('page.workspace.myApprovals'),
           authority: ['user'],
         },
       },

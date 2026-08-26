@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import type { SearchForm } from '../constants';
 
+import type { VxeGridProps } from '#/adapter/vxe-table';
 import type { ClaimApi } from '#/api';
 
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
+
+import { useI18n } from '@vben/locales';
 
 import { ElButton, ElTag } from 'element-plus';
 
@@ -21,6 +24,8 @@ const emit = defineEmits<{
   viewDetail: [row: ClaimApi.ClaimResponse];
   withdraw: [row: ClaimApi.ClaimResponse];
 }>();
+
+const { t } = useI18n();
 
 function applyFilters() {
   const kw = props.searchForm.keyword.trim().toLowerCase();
@@ -56,48 +61,76 @@ function applyFilters() {
   });
 }
 
+const tableColumns = computed<VxeGridProps<ClaimApi.ClaimResponse>['columns']>(
+  () => [
+    {
+      field: 'employee_name',
+      title: t('page.approve.pendingClaimTab.column.applicant'),
+      width: 100,
+    },
+    {
+      field: 'employee_username',
+      title: t('page.approve.pendingClaimTab.column.account'),
+      width: 120,
+    },
+    {
+      field: 'employee_department',
+      title: t('page.approve.pendingClaimTab.column.department'),
+      width: 140,
+    },
+    {
+      field: 'employee_region',
+      title: t('page.approve.pendingClaimTab.column.region'),
+      width: 100,
+    },
+    {
+      field: 'reason_label',
+      title: t('page.approve.pendingClaimTab.column.reason'),
+      width: 120,
+    },
+    {
+      field: 'amount',
+      title: t('page.approve.pendingClaimTab.column.amount'),
+      width: 160,
+      slots: { default: 'amount' },
+    },
+    {
+      field: 'items',
+      title: t('page.approve.pendingClaimTab.column.items'),
+      width: 80,
+      slots: { default: 'items' },
+    },
+    {
+      field: 'description',
+      title: t('page.approve.pendingClaimTab.column.description'),
+      minWidth: 150,
+    },
+    {
+      field: 'approval_status',
+      title: t('page.approve.pendingClaimTab.column.status'),
+      width: 100,
+      slots: { default: 'status' },
+    },
+    {
+      field: 'attachment_url',
+      title: t('page.approve.pendingClaimTab.column.attachment'),
+      width: 100,
+      slots: { default: 'attachment' },
+    },
+    {
+      title: t('page.approve.pendingClaimTab.column.action'),
+      width: 220,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
+  ],
+);
+
 const [BasicTable, tableApi] = useVbenVxeGrid<ClaimApi.ClaimResponse>({
   gridOptions: {
     id: 'approve-pending-claim',
     rowConfig: { keyField: 'id' },
-    columns: [
-      { field: 'employee_name', title: '申请人', width: 100 },
-      { field: 'employee_username', title: '账号', width: 120 },
-      { field: 'employee_department', title: '部门', width: 140 },
-      { field: 'employee_region', title: '地区', width: 100 },
-      { field: 'reason_label', title: '理由', width: 120 },
-      {
-        field: 'amount',
-        title: '金额',
-        width: 160,
-        slots: { default: 'amount' },
-      },
-      {
-        field: 'items',
-        title: '明细',
-        width: 80,
-        slots: { default: 'items' },
-      },
-      { field: 'description', title: '描述', minWidth: 150 },
-      {
-        field: 'approval_status',
-        title: '状态',
-        width: 100,
-        slots: { default: 'status' },
-      },
-      {
-        field: 'attachment_url',
-        title: '附件',
-        width: 100,
-        slots: { default: 'attachment' },
-      },
-      {
-        title: '操作',
-        width: 220,
-        fixed: 'right',
-        slots: { default: 'action' },
-      },
-    ],
+    columns: tableColumns.value,
     proxyConfig: {
       enabled: true,
       ajax: {
@@ -134,6 +167,10 @@ watch(
   { deep: true },
 );
 
+watch(tableColumns, () => {
+  tableApi.setGridOptions({ columns: tableColumns.value });
+});
+
 function viewDetail(row: any) {
   emit('viewDetail', row as ClaimApi.ClaimResponse);
 }
@@ -146,14 +183,24 @@ function withdraw(row: any) {
 </script>
 
 <template>
-  <BasicTable :table-title="`共 ${data.length} 条待审批`">
+  <BasicTable
+    :table-title="
+      t('page.approve.pendingClaimTab.listTitle', { count: data.length })
+    "
+  >
     <template #amount="{ row }">
       <div>{{ row.amount.toFixed(2) }} {{ row.currency }}</div>
       <div v-if="row.amount_hkd" class="text-xs text-muted-foreground">
         ≈ HKD {{ row.amount_hkd.toFixed(2) }}
       </div>
     </template>
-    <template #items="{ row }"> {{ row.items?.length || 0 }} 条 </template>
+    <template #items="{ row }">
+      {{
+        t('page.approve.pendingClaimTab.itemsCount', {
+          count: row.items?.length || 0,
+        })
+      }}
+    </template>
     <template #status="{ row }">
       <ElTag :type="statusTypeMap[row.approval_status] || 'info'">
         {{ statusLabelMap[row.approval_status] || row.approval_status }}
@@ -161,19 +208,21 @@ function withdraw(row: any) {
     </template>
     <template #attachment="{ row }">
       <a v-if="row.attachment_url" :href="row.attachment_url" target="_blank">
-        {{ row.attachment_name || '查看' }}
+        {{ row.attachment_name || t('page.approve.pendingClaimTab.view') }}
       </a>
       <span v-else>-</span>
     </template>
     <template #action="{ row }">
-      <ElButton size="small" @click="viewDetail(row)">详情</ElButton>
+      <ElButton size="small" @click="viewDetail(row)">
+        {{ t('page.approve.pendingClaimTab.detail') }}
+      </ElButton>
       <ElButton
         v-if="row.approval_status === 'pending'"
         size="small"
         type="primary"
         @click="review(row)"
       >
-        审批
+        {{ t('page.approve.pendingClaimTab.review') }}
       </ElButton>
       <ElButton
         v-if="row.approval_status === 'pending'"
@@ -181,7 +230,7 @@ function withdraw(row: any) {
         type="danger"
         @click="withdraw(row)"
       >
-        撤回
+        {{ t('page.approve.pendingClaimTab.withdraw') }}
       </ElButton>
     </template>
   </BasicTable>

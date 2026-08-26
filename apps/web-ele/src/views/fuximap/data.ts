@@ -2,111 +2,127 @@ import type { VbenFormProps } from '#/adapter/form';
 import type { VxeGridProps } from '#/adapter/vxe-table';
 
 /** 工具栏配置（含刷新按钮） */
-export const sharedToolbarConfig: VxeGridProps['toolbarConfig'] = {
-  custom: true,
-  zoom: true,
-  tools: [
-    {
-      code: 'manual-refresh',
-      circle: true,
-      icon: 'vxe-icon-refresh',
-      name: '刷新',
-    },
-  ],
-};
+export function buildSharedToolbarConfig(
+  t: (key: string) => string,
+): VxeGridProps['toolbarConfig'] {
+  return {
+    custom: true,
+    zoom: true,
+    tools: [
+      {
+        code: 'manual-refresh',
+        circle: true,
+        icon: 'vxe-icon-refresh',
+        name: t('page.fuximap.refresh'),
+      },
+    ],
+  };
+}
 
 /** 构建筛选表单 schema */
-export function buildFormSchema(): VbenFormProps['schema'] {
+export function buildFormSchema(
+  t: (key: string) => string,
+): VbenFormProps['schema'] {
   return [
     {
       component: 'Input',
       fieldName: 'keyword',
-      label: '关键词',
+      label: t('page.fuximap.keyword'),
       componentProps: {
         clearable: true,
-        placeholder: '搜索客户名称 / 地址 / 电话 / 备注',
+        placeholder: t('page.fuximap.keywordPlaceholder'),
       },
     },
   ];
 }
 
 /** 构建表格列配置 */
-export function buildColumns(): VxeGridProps['columns'] {
+export function buildColumns(
+  t: (key: string) => string,
+): VxeGridProps['columns'] {
   return [
-    { type: 'seq', width: 60, title: '序号' },
+    { type: 'seq', width: 60, title: t('page.fuximap.serialNo') },
     {
       field: 'name',
       sortable: true,
-      title: '客户名称',
+      title: t('page.fuximap.customerName'),
       width: 180,
     },
     {
       field: 'address',
       minWidth: 220,
-      title: '地址',
+      title: t('page.fuximap.address'),
     },
     {
       slots: { default: 'coords' },
-      title: '经纬度',
+      title: t('page.fuximap.coords'),
       width: 220,
       visible: false,
     },
     {
       field: 'phone',
       sortable: true,
-      title: '联系电话',
+      title: t('page.fuximap.contactPhone'),
       width: 160,
     },
     {
       slots: { default: 'contacts_summary' },
       minWidth: 260,
-      title: '联系人',
+      title: t('page.fuximap.contactsSummary'),
     },
     {
       field: 'notes',
       minWidth: 200,
       showOverflow: true,
-      title: '备注',
+      title: t('page.fuximap.notes'),
     },
     {
       slots: { default: 'created_at' },
       sortable: true,
-      title: '创建时间',
+      title: t('page.fuximap.createdAt'),
       width: 180,
     },
     {
       fixed: 'right',
       resizable: false,
       slots: { default: 'action' },
-      title: '操作',
+      title: t('page.fuximap.actions'),
       width: 200,
     },
   ];
 }
 
-export function buildCustomerFormSchema(): VbenFormProps['schema'] {
+export function buildCustomerFormSchema(
+  t: (key: string) => string,
+): VbenFormProps['schema'] {
   return [
     {
       component: 'Input',
       fieldName: 'name',
-      label: '客户名称',
+      label: t('page.fuximap.customerName'),
       rules: 'required',
-      componentProps: { placeholder: '请输入客户名称', clearable: true },
+      componentProps: {
+        placeholder: t('page.fuximap.customerNamePlaceholder'),
+        clearable: true,
+      },
     },
     {
       component: 'Input',
       fieldName: 'address',
-      label: '地址',
+      label: t('page.fuximap.address'),
       rules: 'required',
-      componentProps: { placeholder: '请输入详细地址', clearable: true },
+      componentProps: {
+        placeholder: t('page.fuximap.addressPlaceholder'),
+        clearable: true,
+      },
     },
     {
       component: 'InputNumber',
       fieldName: 'longitude',
-      label: '经度',
+      label: t('page.fuximap.longitude'),
       rules: 'selectRequired',
       componentProps: {
-        placeholder: '经度（-180 ~ 180）',
+        placeholder: t('page.fuximap.longitudePlaceholder'),
         min: -180,
         max: 180,
         step: 0.000_001,
@@ -118,10 +134,10 @@ export function buildCustomerFormSchema(): VbenFormProps['schema'] {
     {
       component: 'InputNumber',
       fieldName: 'latitude',
-      label: '纬度',
+      label: t('page.fuximap.latitude'),
       rules: 'selectRequired',
       componentProps: {
-        placeholder: '纬度（-90 ~ 90）',
+        placeholder: t('page.fuximap.latitudePlaceholder'),
         min: -90,
         max: 90,
         step: 0.000_001,
@@ -133,15 +149,18 @@ export function buildCustomerFormSchema(): VbenFormProps['schema'] {
     {
       component: 'Input',
       fieldName: 'phone',
-      label: '电话',
-      componentProps: { placeholder: '请输入联系电话', clearable: true },
+      label: t('page.fuximap.phone'),
+      componentProps: {
+        placeholder: t('page.fuximap.phoneFormPlaceholder'),
+        clearable: true,
+      },
     },
     {
       component: 'Input',
       fieldName: 'notes',
-      label: '备注',
+      label: t('page.fuximap.notes'),
       componentProps: {
-        placeholder: '请输入备注信息',
+        placeholder: t('page.fuximap.notesPlaceholder'),
         type: 'textarea',
         rows: 3,
         resize: 'none',

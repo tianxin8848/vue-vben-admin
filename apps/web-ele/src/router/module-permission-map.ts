@@ -109,7 +109,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:calendar',
-          title: '请假申请',
+          title: $t('page.workspace.myLeave'),
         },
       },
       {
@@ -149,7 +149,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
-          title: '审批记录',
+          title: $t('page.workspace.myApprovals'),
         },
       },
     ],
@@ -164,7 +164,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:layout-dashboard',
-          title: '工作台',
+          title: $t('page.dashboard.title'),
         },
       },
     ],
@@ -183,7 +183,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:clipboard-list',
-      title: '审批管理',
+      title: $t('page.system.approvalManagement'),
     },
   },
   access_control: {
@@ -193,7 +193,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:key',
-      title: '门禁管理',
+      title: $t('page.system.accessControl'),
     },
   },
   data_migration: {
@@ -203,7 +203,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:database',
-      title: '数据处理维护',
+      title: $t('page.system.dataMigration'),
     },
   },
   leave_calendar: {
@@ -213,7 +213,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:calendar-check',
-      title: '请假人员管理',
+      title: $t('page.leave.adminList'),
     },
   },
   leave_workflows: {
@@ -223,7 +223,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:git-branch',
-      title: '流程中心',
+      title: $t('page.leave.workflowCenter'),
     },
   },
   system_settings: {
@@ -263,7 +263,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:map-pinned',
-      title: '客户分布',
+      title: $t('page.fuximap.customerDistribution'),
     },
   },
 };
@@ -384,7 +384,7 @@ export function buildRoutesFromPermissions(
         meta: {
           icon: 'lucide:map',
           order: 2,
-          title: '客户地图',
+          title: $t('page.fuximap.title'),
         },
         children: [child],
       });

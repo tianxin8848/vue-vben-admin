@@ -13,6 +13,7 @@ import {
   getLeaveWorkflowsMetaApi,
   updateLeaveWorkflowApi,
 } from '#/api';
+import { $t } from '#/locales';
 
 import WorkflowDrawer from './components/WorkflowDrawer.vue';
 import { gridOptions } from './data';
@@ -41,7 +42,7 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
 
 const employeeOptions = computed(() => {
   return employees.value.map((emp) => ({
-    label: `${emp.username || ''} / ${emp.full_name || '未命名'}`,
+    label: `${emp.username || ''} / ${emp.full_name || $t('page.leave.workflowMaintenance.unnamed')}`,
     value: emp.id,
     username: emp.username || '',
     full_name: emp.full_name || null,
@@ -52,15 +53,10 @@ const drawerRef = ref<InstanceType<typeof WorkflowDrawer>>();
 
 function formatNow() {
   const now = new Date();
-  const weekLabels = [
-    '星期日',
-    '星期一',
-    '星期二',
-    '星期三',
-    '星期四',
-    '星期五',
-    '星期六',
-  ];
+  const weekKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const weekLabels = weekKeys.map(
+    (k) => $t(`page.leave.calendarView.weekdays.${k}`) as string,
+  );
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
@@ -82,13 +78,24 @@ function buildMatchText(match: any) {
   if (match.employee_id) {
     const emp = employees.value.find((e) => e.id === match.employee_id);
     parts.push(
-      `员工：${emp ? `${emp.username} / ${emp.full_name || '未命名'}` : match.employee_id}`,
+      `${$t('page.leave.workflowMaintenance.employeeLabel')}${emp ? `${emp.username} / ${emp.full_name || $t('page.leave.workflowMaintenance.unnamed')}` : match.employee_id}`,
     );
   }
-  if (match.region) parts.push(`地区：${match.region}`);
-  if (match.department) parts.push(`部门：${match.department}`);
-  if (match.position) parts.push(`岗位：${match.position}`);
-  return parts.length > 0 ? parts.join('，') : '全局默认';
+  if (match.region)
+    parts.push(
+      `${$t('page.leave.workflowMaintenance.regionLabel')}${match.region}`,
+    );
+  if (match.department)
+    parts.push(
+      `${$t('page.leave.workflowMaintenance.departmentLabel')}${match.department}`,
+    );
+  if (match.position)
+    parts.push(
+      `${$t('page.leave.workflowMaintenance.positionLabel')}${match.position}`,
+    );
+  return parts.length > 0
+    ? parts.join('，')
+    : $t('page.leave.workflowMaintenance.globalDefault');
 }
 
 async function toggleWorkflowStatus(workflow: any) {
@@ -98,9 +105,13 @@ async function toggleWorkflowStatus(workflow: any) {
       is_active: !workflow.is_active,
     });
     await fetchWorkflows();
-    ElMessage.success(workflow.is_active ? '流程已禁用' : '流程已启用');
+    ElMessage.success(
+      workflow.is_active
+        ? $t('page.leave.workflowMaintenance.toggleDisabled')
+        : $t('page.leave.workflowMaintenance.toggleEnabled'),
+    );
   } catch {
-    ElMessage.error('操作失败');
+    ElMessage.error($t('page.leave.workflowMaintenance.operationFailed'));
   } finally {
     loading.value = false;
   }
@@ -108,11 +119,17 @@ async function toggleWorkflowStatus(workflow: any) {
 
 async function deleteWorkflow(workflow: any) {
   try {
-    await ElMessageBox.confirm(`确认删除流程：${workflow.name}？`, '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      $t('page.leave.workflowMaintenance.confirmDelete', {
+        name: workflow.name,
+      }),
+      $t('page.leave.workflowMaintenance.confirmDeleteTitle'),
+      {
+        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
+        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
+        type: 'warning',
+      },
+    );
   } catch {
     return;
   }
@@ -120,9 +137,9 @@ async function deleteWorkflow(workflow: any) {
   try {
     await deleteLeaveWorkflowApi(workflow.id);
     await fetchWorkflows();
-    ElMessage.success('流程已删除');
+    ElMessage.success($t('page.leave.workflowMaintenance.deleteSuccess'));
   } catch {
-    ElMessage.error('删除失败');
+    ElMessage.error($t('page.leave.workflowMaintenance.deleteFailed'));
   } finally {
     loading.value = false;
   }
@@ -187,20 +204,30 @@ onUnmounted(() => {
 
 <template>
   <Page v-loading="loading">
-    <template #title>请假流程维护</template>
+    <template #title>{{ $t('page.leave.workflowMaintenance.title') }}</template>
     <template #description>
-      为不同员工维护不同审批路线。优先级数字越小越优先匹配。
+      {{ $t('page.leave.workflowMaintenance.description') }}
     </template>
     <template #extra>
       <div style="display: flex; gap: 12px; align-items: center">
         <span style="font-size: 14px; font-weight: 700">{{ currentTime }}</span>
-        <ElButton @click="fetchWorkflows">刷新</ElButton>
+        <ElButton @click="fetchWorkflows">
+          {{ $t('page.leave.workflowMaintenance.refresh') }}
+        </ElButton>
       </div>
     </template>
 
-    <BasicTable :table-title="`流程列表（共 ${workflows.length} 条）`">
+    <BasicTable
+      :table-title="
+        $t('page.leave.workflowMaintenance.listTitle', {
+          count: workflows.length,
+        })
+      "
+    >
       <template #toolbar-tools>
-        <ElButton type="primary" @click="openCreateDrawer">新增流程</ElButton>
+        <ElButton type="primary" @click="openCreateDrawer">
+          {{ $t('page.leave.workflowMaintenance.create') }}
+        </ElButton>
       </template>
       <template #name="{ row }">
         <strong>{{ row.name }}</strong>
@@ -216,18 +243,27 @@ onUnmounted(() => {
           type="info"
           style="margin-right: 4px"
         >
-          {{ index + 1 }}级：{{ item.username }}
+          {{
+            $t('page.leave.workflowMaintenance.approverLevel', {
+              index: index + 1,
+              username: item.username,
+            })
+          }}
         </ElTag>
         <span v-if="!row.approvers.length">-</span>
       </template>
       <template #status="{ row }">
         <ElTag :type="row.is_active ? 'success' : 'danger'" size="small">
-          {{ row.is_active ? '启用' : '禁用' }}
+          {{
+            row.is_active
+              ? $t('page.leave.workflowMaintenance.enabled')
+              : $t('page.leave.workflowMaintenance.disabled')
+          }}
         </ElTag>
       </template>
       <template #action="{ row }">
         <ElButton size="small" link type="primary" @click="openEditDrawer(row)">
-          编辑
+          {{ $t('page.leave.workflowMaintenance.edit') }}
         </ElButton>
         <ElButton
           size="small"
@@ -235,10 +271,14 @@ onUnmounted(() => {
           type="primary"
           @click="toggleWorkflowStatus(row)"
         >
-          {{ row.is_active ? '禁用' : '启用' }}
+          {{
+            row.is_active
+              ? $t('page.leave.workflowMaintenance.disable')
+              : $t('page.leave.workflowMaintenance.enable')
+          }}
         </ElButton>
         <ElButton size="small" link type="danger" @click="deleteWorkflow(row)">
-          删除
+          {{ $t('page.leave.workflowMaintenance.delete') }}
         </ElButton>
       </template>
     </BasicTable>

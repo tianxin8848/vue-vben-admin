@@ -4,6 +4,8 @@ import type { CustomerApi } from '#/api';
 
 import { computed, ref, watch } from 'vue';
 
+import { useI18n } from '@vben/locales';
+
 import {
   ElButton,
   ElDrawer,
@@ -34,6 +36,8 @@ const emit = defineEmits<{
   'update:visible': [value: boolean];
 }>();
 
+const { t } = useI18n();
+
 const loading = ref(false);
 
 function closeDrawer() {
@@ -41,19 +45,26 @@ function closeDrawer() {
 }
 
 const isEdit = computed(() => !!props.editing);
-const title = computed(() => (isEdit.value ? '编辑客户' : '新增客户'));
+const title = computed(() =>
+  isEdit.value ? t('page.fuximap.editCustomer') : t('page.fuximap.addCustomer'),
+);
 
 // ─── 基础信息表单 ──────────────────────────────────────────────────────────
-const baseFormOptions: VbenFormProps = {
-  schema: buildCustomerFormSchema(),
+const baseFormOptions = computed<VbenFormProps>(() => ({
+  schema: buildCustomerFormSchema(t),
   commonConfig: {
     labelWidth: 80,
     componentProps: { clearable: true },
   },
   wrapperClass: 'grid-cols-1',
-};
+}));
 
-const [BaseForm, baseFormApi] = useVbenForm(baseFormOptions);
+const [BaseForm, baseFormApi] = useVbenForm(baseFormOptions.value);
+
+// 监听语言切换，更新表单 schema
+watch(baseFormOptions, () => {
+  baseFormApi.updateSchema(buildCustomerFormSchema(t) ?? []);
+});
 
 // ─── 联系人表格 ────────────────────────────────────────────────────────────
 interface ContactRow {
@@ -143,15 +154,15 @@ async function handleSubmit() {
 
     if (isEdit.value && props.editing) {
       await updateCustomerApi(props.editing.id, payload);
-      ElMessage.success('客户已更新');
+      ElMessage.success(t('page.fuximap.updateSuccess'));
     } else {
       await createCustomerApi(payload);
-      ElMessage.success('客户已创建');
+      ElMessage.success(t('page.fuximap.createSuccess'));
     }
     emit('success');
     closeDrawer();
   } catch (error: any) {
-    console.error('[fuximap] 提交失败:', error);
+    console.error(`[fuximap] ${t('page.fuximap.submitFailed')}`, error);
   } finally {
     loading.value = false;
   }
@@ -173,7 +184,7 @@ async function handleSubmit() {
       <!-- 基础信息 -->
       <section>
         <h3 class="mb-3 text-sm font-semibold text-muted-foreground">
-          基础信息
+          {{ t('page.fuximap.basicInfo') }}
         </h3>
         <BaseForm />
       </section>
@@ -181,49 +192,63 @@ async function handleSubmit() {
       <!-- 联系人 -->
       <section>
         <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-muted-foreground">联系人</h3>
+          <h3 class="text-sm font-semibold text-muted-foreground">
+            {{ t('page.fuximap.contacts') }}
+          </h3>
           <ElButton size="small" type="primary" @click="addContact">
-            新增联系人
+            {{ t('page.fuximap.addContact') }}
           </ElButton>
         </div>
         <ElTable :data="contactsRef" border size="small">
-          <ElTableColumn label="角色" min-width="120">
+          <ElTableColumn :label="t('page.fuximap.role')" min-width="120">
             <template #default="{ row }">
               <ElInput
                 v-model="row.role"
-                placeholder="如：技术/商务/负责人"
+                :placeholder="t('page.fuximap.rolePlaceholder')"
                 size="small"
               />
             </template>
           </ElTableColumn>
-          <ElTableColumn label="姓名" min-width="120">
+          <ElTableColumn :label="t('page.fuximap.name')" min-width="120">
             <template #default="{ row }">
-              <ElInput v-model="row.name" placeholder="姓名" size="small" />
+              <ElInput
+                v-model="row.name"
+                :placeholder="t('page.fuximap.namePlaceholder')"
+                size="small"
+              />
             </template>
           </ElTableColumn>
-          <ElTableColumn label="电话" min-width="140">
+          <ElTableColumn :label="t('page.fuximap.phone')" min-width="140">
             <template #default="{ row }">
-              <ElInput v-model="row.phone" placeholder="电话" size="small" />
+              <ElInput
+                v-model="row.phone"
+                :placeholder="t('page.fuximap.phonePlaceholder')"
+                size="small"
+              />
             </template>
           </ElTableColumn>
-          <ElTableColumn label="邮箱" min-width="180">
+          <ElTableColumn :label="t('page.fuximap.email')" min-width="180">
             <template #default="{ row }">
               <ElInput
                 v-model="row.email"
-                placeholder="email@example.com"
+                :placeholder="t('page.fuximap.emailPlaceholder')"
                 size="small"
               />
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" width="70" align="center">
+          <ElTableColumn
+            :label="t('page.fuximap.actions')"
+            width="70"
+            align="center"
+          >
             <template #default="{ row }">
-              <ElTooltip content="删除">
+              <ElTooltip :content="t('page.fuximap.delete')">
                 <ElButton
                   link
                   type="danger"
                   @click="removeContact(row as ContactRow)"
                 >
-                  删除
+                  {{ t('page.fuximap.delete') }}
                 </ElButton>
               </ElTooltip>
             </template>
@@ -234,9 +259,9 @@ async function handleSubmit() {
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <ElButton @click="closeDrawer">取消</ElButton>
+        <ElButton @click="closeDrawer">{{ t('page.fuximap.cancel') }}</ElButton>
         <ElButton :loading="loading" type="primary" @click="handleSubmit">
-          保存
+          {{ t('page.fuximap.save') }}
         </ElButton>
       </div>
     </template>

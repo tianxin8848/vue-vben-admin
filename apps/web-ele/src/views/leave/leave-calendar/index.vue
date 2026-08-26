@@ -34,8 +34,8 @@ const loading = ref(false);
 type TabKey = 'calendar' | 'overview';
 const activeTab = ref<TabKey>('calendar');
 const segmentedOptions = computed(() => [
-  { label: '概览与筛选', value: 'overview' },
-  { label: '年历视图', value: 'calendar' },
+  { label: $t('page.leave.calendarView.overviewAndFilter'), value: 'overview' },
+  { label: $t('page.leave.calendarView.yearCalendar'), value: 'calendar' },
 ]);
 
 const currentTime = ref('');
