@@ -202,6 +202,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     component: 'system/data-migration/index',
     meta: {
       affixTab: false,
+      hideInMenu: true,
       icon: 'lucide:database',
       title: $t('page.system.dataMigration'),
     },
@@ -232,6 +233,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     component: 'system/settings/index',
     meta: {
       affixTab: false,
+      hideInMenu: true,
       icon: 'lucide:cog',
       title: $t('page.system.settings'),
     },
