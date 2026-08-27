@@ -89,6 +89,39 @@
           "action": "Action"
         }
       },
+      "claimReview": {
+        "title": "Claim Review",
+        "applicant": "Applicant: {name} ({username})",
+        "reason": "Reason: {reason} | {amount} {currency}",
+        "amountHkd": "≈ HKD {amount}",
+        "itemsTitle": "Items (select items to reject when rejecting; leave empty to reject all)",
+        "itemInvoiceDate": "Invoice Date: {date}",
+        "itemInvoiceNo": "Invoice No.: {no}",
+        "viewAttachment": "View Attachment",
+        "reviewComment": "Review Comment",
+        "reviewPlaceholder": "Optional if approved; required if rejected",
+        "rejectRequired": "Reason is required for rejection",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "operateFailed": "Operation failed",
+        "cancel": "Cancel",
+        "reject": "Reject",
+        "approve": "Approve"
+      },
+      "leaveReview": {
+        "title": "Leave Review",
+        "applicant": "Applicant: {name} ({username})",
+        "timeRange": "Date: {start} ~ {end}",
+        "reviewComment": "Review Comment",
+        "reviewPlaceholder": "Optional if approved; required if rejected",
+        "rejectRequired": "Reason is required for rejection",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "operateFailed": "Operation failed",
+        "cancel": "Cancel",
+        "reject": "Reject",
+        "approve": "Approve"
+      },
       "recordsClaimTab": {
         "listTitle": "{count} records",
         "viewDetail": "Detail",

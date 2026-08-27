@@ -1,15 +1,12 @@
 {
 	"folders": [
-		{
-			"path": "../../.."
-		},
-		{
-			"path": "../../../../ruoyi-plus-vben5"
-		},
-		{
-			"path": "../../../../../8-24/OA-System"
-		}
-	],
+    {
+      "path": "../../.."
+    },
+    {
+      "path": "../../../../../8-24/OA-System"
+    }
+  ],
   "settings": {
     "workbench.list.smoothScrolling": true,
     "workbench.tree.indent": 10,

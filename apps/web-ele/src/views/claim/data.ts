@@ -95,22 +95,10 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'reason' },
     },
     {
-      field: 'items',
-      title: t('page.claim.columns.items'),
-      width: 90,
-      slots: { default: 'items' },
-    },
-    {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 110,
-      slots: { default: 'invoice_date' },
     },
     {
       field: 'invoice_no',
@@ -153,22 +141,10 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'reason' },
     },
     {
-      field: 'items',
-      title: t('page.claim.columns.items'),
-      width: 90,
-      slots: { default: 'items' },
-    },
-    {
       field: 'amount',
       title: t('page.claim.columns.amount'),
       minWidth: 130,
       slots: { default: 'amount' },
-    },
-    {
-      field: 'invoice_date',
-      title: t('page.claim.columns.invoiceDate'),
-      width: 110,
-      slots: { default: 'invoice_date' },
     },
     {
       field: 'invoice_no',

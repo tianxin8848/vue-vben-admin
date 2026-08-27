@@ -33,6 +33,8 @@ const { t } = useI18n();
 function applyFilters() {
   const kw = props.searchForm.keyword.trim().toLowerCase();
   return props.data.filter((row) => {
+    // pending 是提交快照或多级链流转中的中间态，不属于“已处理”，不进记录列表
+    if (row.approval_status_after === 'pending') return false;
     if (
       props.searchForm.status &&
       row.approval_status_after !== props.searchForm.status

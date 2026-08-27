@@ -5,14 +5,14 @@
       "description": "Submit claims, track approval progress and view history",
       "tabs": {
         "my": "My Claims",
-        "history": "History",
+        "history": "Claim History",
         "pending": "My Pending Approvals",
         "records": "Approval Records"
       },
       "columns": {
-        "reason": "Claim Reason",
-        "amount": "Amount",
-        "description": "Description",
+        "reason": "Claim Category",
+        "amount": "Original Amount",
+        "description": "Claim reason",
         "finalStatus": "Final Status",
         "status": "Status",
         "reviewComment": "Review Comment",
@@ -43,7 +43,7 @@
         "withdrawn": "Withdrawn"
       },
       "buttons": {
-        "create": "New Draft",
+        "create": "New Records",
         "createShort": "New",
         "review": "Review",
         "submit": "Submit",
@@ -64,14 +64,14 @@
         "saveChanges": "Save Changes"
       },
       "form": {
-        "reasonLabel": "Claim Reason",
-        "amountLabel": "Amount",
+        "reasonLabel": "Claim Category",
+        "amountLabel": "Original Amount",
         "currencyLabel": "Currency",
         "invoiceDateLabel": "Invoice Date",
         "invoiceNoLabel": "Invoice No.",
         "invoiceDatePlaceholder": "Select invoice date",
         "invoiceNoPlaceholder": "Enter invoice no.",
-        "descriptionLabel": "Description",
+        "descriptionLabel": "Claim reason",
         "attachmentLabel": "Attachment",
         "reviewCommentLabel": "Review Comment",
         "employeeLabel": "Applicant",

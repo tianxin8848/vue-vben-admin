@@ -112,7 +112,7 @@ async function submitCreate() {
     !createForm.full_name ||
     !createForm.department
   ) {
-    ElMessage.warning('请填写必填项');
+    ElMessage.warning(t('page.employees.createDrawer.requiredFields'));
     return;
   }
   const payload: EmployeeApi.EmployeeCreate = {
@@ -128,12 +128,12 @@ async function submitCreate() {
   createDrawerApi.lock(true);
   try {
     await createEmployeeApi(payload);
-    ElMessage.success('创建成功');
+    ElMessage.success(t('page.employees.createDrawer.createSuccess'));
     createDrawerApi.close();
     emit('success');
   } catch (error: any) {
     console.error('创建员工失败:', error);
-    ElMessage.error('创建员工失败');
+    ElMessage.error(t('page.employees.createDrawer.createFailed'));
   } finally {
     createDrawerApi.lock(false);
   }
@@ -150,31 +150,31 @@ defineExpose({ open });
 <template>
   <CreateDrawer class="w-[600px]">
     <ElForm :model="createForm" label-width="100px">
-      <ElFormItem label="用户名 *">
+      <ElFormItem :label="`${t('page.employees.createDrawer.username')} *`">
         <ElInput
           v-model="createForm.username"
-          placeholder="请输入用户名"
+          :placeholder="t('page.employees.createDrawer.usernamePlaceholder')"
           class="w-full"
         />
       </ElFormItem>
-      <ElFormItem label="邮箱 *">
+      <ElFormItem :label="`${t('page.employees.createDrawer.email')} *`">
         <ElInput
           v-model="createForm.email"
-          placeholder="请输入邮箱"
+          :placeholder="t('page.employees.createDrawer.emailPlaceholder')"
           class="w-full"
         />
       </ElFormItem>
-      <ElFormItem label="姓名 *">
+      <ElFormItem :label="`${t('page.employees.createDrawer.fullName')} *`">
         <ElInput
           v-model="createForm.full_name"
-          placeholder="请输入姓名"
+          :placeholder="t('page.employees.createDrawer.fullNamePlaceholder')"
           class="w-full"
         />
       </ElFormItem>
-      <ElFormItem label="部门 *">
+      <ElFormItem :label="`${t('page.employees.createDrawer.department')} *`">
         <ElSelect
           v-model="createForm.department"
-          placeholder="请选择部门"
+          :placeholder="t('page.employees.createDrawer.departmentPlaceholder')"
           class="w-full"
         >
           <ElOption
@@ -185,17 +185,17 @@ defineExpose({ open });
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="手机号">
+      <ElFormItem :label="t('page.employees.createDrawer.phone')">
         <ElInput
           v-model="createForm.phone"
-          placeholder="请输入手机号"
+          :placeholder="t('page.employees.createDrawer.phonePlaceholder')"
           class="w-full"
         />
       </ElFormItem>
-      <ElFormItem label="地区">
+      <ElFormItem :label="t('page.employees.createDrawer.region')">
         <ElSelect
           v-model="createForm.region"
-          placeholder="请选择地区"
+          :placeholder="t('page.employees.createDrawer.regionPlaceholder')"
           class="w-full"
           clearable
         >
@@ -207,10 +207,10 @@ defineExpose({ open });
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="岗位">
+      <ElFormItem :label="t('page.employees.createDrawer.position')">
         <ElSelect
           v-model="createForm.position"
-          placeholder="请选择岗位"
+          :placeholder="t('page.employees.createDrawer.positionPlaceholder')"
           class="w-full"
           clearable
         >
@@ -222,17 +222,21 @@ defineExpose({ open });
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem label="模块权限">
+      <ElFormItem :label="t('page.employees.createDrawer.modulePermissions')">
         <div v-if="moduleOptions.length" class="w-full">
           <div class="mb-2 flex items-center gap-2">
             <ElButton size="small" type="default" @click="selectAllModules">
-              全选模块
+              {{ t('page.employees.createDrawer.selectAll') }}
             </ElButton>
             <ElButton size="small" type="default" @click="clearModules">
-              清空选择
+              {{ t('page.employees.createDrawer.clearAll') }}
             </ElButton>
             <span class="text-sm text-muted-foreground">
-              已选择 {{ selectedModuleCodes.length }} 个模块
+              {{
+                t('page.employees.createDrawer.selectedCount', {
+                  count: selectedModuleCodes.length,
+                })
+              }}
             </span>
           </div>
           <div class="flex flex-wrap gap-4">
@@ -249,11 +253,11 @@ defineExpose({ open });
             </ElCheckbox>
           </div>
           <p class="mt-2 text-xs text-muted-foreground">
-            勾选后默认开通该模块的查看权限
+            {{ t('page.employees.createDrawer.moduleTip') }}
           </p>
         </div>
         <div v-else class="text-sm text-muted-foreground">
-          暂无可选模块，请先到"系统参数管理维护"中配置
+          {{ t('page.employees.createDrawer.noModules') }}
         </div>
       </ElFormItem>
     </ElForm>

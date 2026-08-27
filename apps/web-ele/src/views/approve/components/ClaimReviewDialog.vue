@@ -15,6 +15,7 @@ import {
 } from 'element-plus';
 
 import { reviewClaimApi } from '#/api';
+import { $t } from '#/locales';
 
 const props = defineProps<{
   current: ClaimApi.ClaimResponse | null;
@@ -38,7 +39,7 @@ function reset() {
 async function submit(action: 'approved' | 'rejected') {
   if (!props.current) return;
   if (action === 'rejected' && !form.reviewComment.trim()) {
-    ElMessage.warning('驳回必须填写原因');
+    ElMessage.warning($t('page.approve.claimReview.rejectRequired'));
     return;
   }
   submitting.value = true;
@@ -51,12 +52,16 @@ async function submit(action: 'approved' | 'rejected') {
           : undefined,
       review_comment: form.reviewComment.trim() || null,
     });
-    ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
+    ElMessage.success(
+      action === 'approved'
+        ? $t('page.approve.claimReview.approved')
+        : $t('page.approve.claimReview.rejected'),
+    );
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
   } catch {
-    ElMessage.error('操作失败');
+    ElMessage.error($t('page.approve.claimReview.operateFailed'));
   } finally {
     submitting.value = false;
   }
@@ -66,26 +71,40 @@ async function submit(action: 'approved' | 'rejected') {
 <template>
   <ElDialog
     :model-value="modelValue"
-    title="审批报销"
+    :title="$t('page.approve.claimReview.title')"
     width="640px"
     @update:model-value="emit('update:modelValue', $event)"
     @closed="reset"
   >
     <div v-if="current" style="padding: 10px 0">
       <p>
-        申请人：{{ current.employee_name }}（{{ current.employee_username }}）
+        {{
+          $t('page.approve.claimReview.applicant', {
+            name: current.employee_name,
+            username: current.employee_username,
+          })
+        }}
       </p>
       <p>
-        理由：{{ current.reason_label }} | {{ current.amount.toFixed(2) }}
-        {{ current.currency }}
+        {{
+          $t('page.approve.claimReview.reason', {
+            reason: current.reason_label,
+            amount: current.amount.toFixed(2),
+            currency: current.currency,
+          })
+        }}
         <span v-if="current.amount_hkd" class="text-xs text-muted-foreground">
-          ≈ HKD {{ current.amount_hkd.toFixed(2) }}
+          {{
+            $t('page.approve.claimReview.amountHkd', {
+              amount: current.amount_hkd.toFixed(2),
+            })
+          }}
         </span>
       </p>
 
       <div v-if="current.items && current.items.length > 0" class="mt-2">
         <div class="mb-2 text-sm font-medium">
-          明细项（驳回时可勾选要驳回的明细，留空表示全部驳回）
+          {{ $t('page.approve.claimReview.itemsTitle') }}
         </div>
         <ElCheckboxGroup v-model="rejectedItemIds">
           <div
@@ -105,7 +124,11 @@ async function submit(action: 'approved' | 'rejected') {
                   v-if="it.amount_hkd"
                   class="text-xs text-muted-foreground"
                 >
-                  ≈ HKD {{ it.amount_hkd.toFixed(2) }}
+                  {{
+                    $t('page.approve.claimReview.amountHkd', {
+                      amount: it.amount_hkd.toFixed(2),
+                    })
+                  }}
                 </span>
               </span>
             </ElCheckbox>
@@ -122,10 +145,18 @@ async function submit(action: 'approved' | 'rejected') {
               <div v-if="it.description">{{ it.description }}</div>
               <div v-if="it.invoice_date || it.invoice_no" class="mt-0-5">
                 <span v-if="it.invoice_date">
-                  开票日期: {{ it.invoice_date }}
+                  {{
+                    $t('page.approve.claimReview.itemInvoiceDate', {
+                      date: it.invoice_date,
+                    })
+                  }}
                 </span>
                 <span v-if="it.invoice_no" class="ml-2">
-                  票号: {{ it.invoice_no }}
+                  {{
+                    $t('page.approve.claimReview.itemInvoiceNo', {
+                      no: it.invoice_no,
+                    })
+                  }}
                 </span>
               </div>
             </div>
@@ -136,7 +167,10 @@ async function submit(action: 'approved' | 'rejected') {
                 target="_blank"
                 class="text-xs"
               >
-                {{ it.attachment_name || '查看附件' }}
+                {{
+                  it.attachment_name ||
+                  $t('page.approve.claimReview.viewAttachment')
+                }}
               </a>
             </div>
           </div>
@@ -144,27 +178,31 @@ async function submit(action: 'approved' | 'rejected') {
       </div>
 
       <ElForm :model="form" label-width="80px" style="margin-top: 16px">
-        <ElFormItem label="审批备注">
+        <ElFormItem :label="$t('page.approve.claimReview.reviewComment')">
           <ElInput
             v-model="form.reviewComment"
             type="textarea"
             :rows="4"
-            placeholder="通过可不填；驳回必须填写原因"
+            :placeholder="$t('page.approve.claimReview.reviewPlaceholder')"
           />
         </ElFormItem>
       </ElForm>
     </div>
     <template #footer>
-      <ElButton @click="emit('update:modelValue', false)">取消</ElButton>
+      <ElButton @click="emit('update:modelValue', false)">
+{{
+        $t('page.approve.claimReview.cancel')
+      }}
+</ElButton>
       <ElButton type="danger" :loading="submitting" @click="submit('rejected')">
-        驳回
+        {{ $t('page.approve.claimReview.reject') }}
       </ElButton>
       <ElButton
         type="primary"
         :loading="submitting"
         @click="submit('approved')"
       >
-        通过
+        {{ $t('page.approve.claimReview.approve') }}
       </ElButton>
     </template>
   </ElDialog>

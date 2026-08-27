@@ -14,6 +14,8 @@ import {
   ElSelect,
 } from 'element-plus';
 
+import { $t } from '#/locales';
+
 interface SelectOption {
   label: string;
   value: string;
@@ -73,7 +75,7 @@ watch(
 
 function handleSubmit() {
   if (!form.username || !form.email || !form.full_name) {
-    ElMessage.warning('用户名 / 邮箱 / 姓名不能为空');
+    ElMessage.warning($t('page.employees.basicInfoEdit.requiredFields'));
     return;
   }
   emit('submit', { ...form });
@@ -87,28 +89,46 @@ function handleClose() {
 <template>
   <ElDialog
     v-model="visible"
-    :title="`编辑基础信息 - ${employeeLabel}`"
+    :title="$t('page.employees.basicInfoEdit.title', { name: employeeLabel })"
     width="640px"
     destroy-on-close
   >
     <ElForm :model="form" label-width="80px">
       <div class="grid grid-cols-2 gap-x-4">
-        <ElFormItem label="用户名">
-          <ElInput v-model="form.username" placeholder="登录账号" />
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.username')">
+          <ElInput
+            v-model="form.username"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.usernamePlaceholder')
+            "
+          />
         </ElFormItem>
-        <ElFormItem label="邮箱">
-          <ElInput v-model="form.email" placeholder="邮箱" />
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.email')">
+          <ElInput
+            v-model="form.email"
+            :placeholder="$t('page.employees.basicInfoEdit.emailPlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="姓名">
-          <ElInput v-model="form.full_name" placeholder="姓名" />
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.fullName')">
+          <ElInput
+            v-model="form.full_name"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.fullNamePlaceholder')
+            "
+          />
         </ElFormItem>
-        <ElFormItem label="手机号">
-          <ElInput v-model="form.phone" placeholder="手机号" />
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.phone')">
+          <ElInput
+            v-model="form.phone"
+            :placeholder="$t('page.employees.basicInfoEdit.phonePlaceholder')"
+          />
         </ElFormItem>
-        <ElFormItem label="部门">
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.department')">
           <ElSelect
             v-model="form.department"
-            placeholder="选择部门"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.departmentPlaceholder')
+            "
             clearable
             filterable
             style="width: 100%"
@@ -121,10 +141,12 @@ function handleClose() {
             />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="岗位">
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.position')">
           <ElSelect
             v-model="form.position"
-            placeholder="选择岗位"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.positionPlaceholder')
+            "
             clearable
             filterable
             style="width: 100%"
@@ -137,10 +159,10 @@ function handleClose() {
             />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="地区">
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.region')">
           <ElSelect
             v-model="form.region"
-            placeholder="选择地区"
+            :placeholder="$t('page.employees.basicInfoEdit.regionPlaceholder')"
             clearable
             filterable
             style="width: 100%"
@@ -157,9 +179,13 @@ function handleClose() {
     </ElForm>
 
     <template #footer>
-      <ElButton :loading="loading" @click="handleClose">取消</ElButton>
+      <ElButton :loading="loading" @click="handleClose">
+{{
+        $t('page.employees.basicInfoEdit.cancel')
+      }}
+</ElButton>
       <ElButton :loading="loading" type="primary" @click="handleSubmit">
-        保存
+        {{ $t('page.employees.basicInfoEdit.save') }}
       </ElButton>
     </template>
   </ElDialog>

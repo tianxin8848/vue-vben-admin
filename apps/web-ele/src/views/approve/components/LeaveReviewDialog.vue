@@ -37,7 +37,7 @@ function reset() {
 async function submit(action: 'approved' | 'rejected') {
   if (!props.current) return;
   if (action === 'rejected' && !form.reviewComment.trim()) {
-    ElMessage.warning('驳回必须填写原因');
+    ElMessage.warning($t('page.approve.leaveReview.rejectRequired'));
     return;
   }
   submitting.value = true;
@@ -46,12 +46,16 @@ async function submit(action: 'approved' | 'rejected') {
       approval_status: action,
       review_comment: form.reviewComment.trim() || null,
     });
-    ElMessage.success(action === 'approved' ? '已通过' : '已驳回');
+    ElMessage.success(
+      action === 'approved'
+        ? $t('page.approve.leaveReview.approved')
+        : $t('page.approve.leaveReview.rejected'),
+    );
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
   } catch {
-    ElMessage.error('操作失败');
+    ElMessage.error($t('page.approve.leaveReview.operateFailed'));
   } finally {
     submitting.value = false;
   }
@@ -61,46 +65,60 @@ async function submit(action: 'approved' | 'rejected') {
 <template>
   <ElDialog
     :model-value="modelValue"
-    title="审批请假"
+    :title="$t('page.approve.leaveReview.title')"
     width="500px"
     @update:model-value="emit('update:modelValue', $event)"
     @closed="reset"
   >
     <div v-if="current" style="padding: 10px 0">
       <p>
-        申请人：{{ current.employee_name }}（{{ current.employee_username }}）
+        {{
+          $t('page.approve.leaveReview.applicant', {
+            name: current.employee_name,
+            username: current.employee_username,
+          })
+        }}
       </p>
       <p>
         {{ $t('page.approve.leaveTypeLabel')
-        }}{{
-          $t(leaveTypeLabelMap[current.leave_type] || current.leave_type)
-        }}
+        }}{{ $t(leaveTypeLabelMap[current.leave_type] || current.leave_type) }}
         |
         {{ $t(sessionLabelMap[current.session] || current.session) }}
       </p>
-      <p>时间：{{ current.start_date }} ~ {{ current.end_date }}</p>
+      <p>
+        {{
+          $t('page.approve.leaveReview.timeRange', {
+            start: current.start_date,
+            end: current.end_date,
+          })
+        }}
+      </p>
       <ElForm :model="form" label-width="80px" style="margin-top: 16px">
-        <ElFormItem label="审批备注">
+        <ElFormItem :label="$t('page.approve.leaveReview.reviewComment')">
           <ElInput
             v-model="form.reviewComment"
             type="textarea"
             :rows="4"
-            placeholder="通过可不填；驳回必须填写原因"
+            :placeholder="$t('page.approve.leaveReview.reviewPlaceholder')"
           />
         </ElFormItem>
       </ElForm>
     </div>
     <template #footer>
-      <ElButton @click="emit('update:modelValue', false)">取消</ElButton>
+      <ElButton @click="emit('update:modelValue', false)">
+{{
+        $t('page.approve.leaveReview.cancel')
+      }}
+</ElButton>
       <ElButton type="danger" :loading="submitting" @click="submit('rejected')">
-        驳回
+        {{ $t('page.approve.leaveReview.reject') }}
       </ElButton>
       <ElButton
         type="primary"
         :loading="submitting"
         @click="submit('approved')"
       >
-        通过
+        {{ $t('page.approve.leaveReview.approve') }}
       </ElButton>
     </template>
   </ElDialog>

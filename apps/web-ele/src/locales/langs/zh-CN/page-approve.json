@@ -89,6 +89,39 @@
           "action": "操作"
         }
       },
+      "claimReview": {
+        "title": "审批报销",
+        "applicant": "申请人：{name}（{username}）",
+        "reason": "理由：{reason} | {amount} {currency}",
+        "amountHkd": "≈ HKD {amount}",
+        "itemsTitle": "明细项（驳回时可勾选要驳回的明细，留空表示全部驳回）",
+        "itemInvoiceDate": "开票日期: {date}",
+        "itemInvoiceNo": "票号: {no}",
+        "viewAttachment": "查看附件",
+        "reviewComment": "审批备注",
+        "reviewPlaceholder": "通过可不填；驳回必须填写原因",
+        "rejectRequired": "驳回必须填写原因",
+        "approved": "已通过",
+        "rejected": "已驳回",
+        "operateFailed": "操作失败",
+        "cancel": "取消",
+        "reject": "驳回",
+        "approve": "通过"
+      },
+      "leaveReview": {
+        "title": "审批请假",
+        "applicant": "申请人：{name}（{username}）",
+        "timeRange": "时间：{start} ~ {end}",
+        "reviewComment": "审批备注",
+        "reviewPlaceholder": "通过可不填；驳回必须填写原因",
+        "rejectRequired": "驳回必须填写原因",
+        "approved": "已通过",
+        "rejected": "已驳回",
+        "operateFailed": "操作失败",
+        "cancel": "取消",
+        "reject": "驳回",
+        "approve": "通过"
+      },
       "recordsClaimTab": {
         "listTitle": "共 {count} 条记录",
         "viewDetail": "详情",

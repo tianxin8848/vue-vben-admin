@@ -29,7 +29,7 @@
         },
         "stats": {
           "recordCount": "Records this year",
-          "dayCount": "Covered days this year",
+          "dayCount": " Taken leave days (this year)",
           "pendingCount": "Pending records",
           "annualEntitlement": "Annual leave total",
           "annualAvailable": "Annual leave available"
