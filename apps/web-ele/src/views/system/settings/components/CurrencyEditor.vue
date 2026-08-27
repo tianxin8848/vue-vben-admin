@@ -5,10 +5,14 @@ import { useI18n } from '@vben/locales';
 
 import {
   ElButton,
+  ElDialog,
   ElEmpty,
+  ElForm,
+  ElFormItem,
   ElInput,
   ElInputNumber,
   ElMessage,
+  ElMessageBox,
   ElTable,
   ElTableColumn,
   ElTag,
@@ -25,9 +29,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
+  (e: 'save'): void;
 }>();
 
 const { t } = useI18n();
+
+const i18nPrefix = 'page.system.settingsDetail.currencyEditor';
 
 const currencies = computed<CurrencyRow[]>(() => {
   return props.modelValue
@@ -52,34 +59,34 @@ const currencies = computed<CurrencyRow[]>(() => {
 const newCode = ref('');
 const newRate = ref<null | number>(null);
 
+// 编辑币种编码 dialog 状态
+const editDialogVisible = ref(false);
+const editingIdx = ref(-1);
+const editingCode = ref('');
+const editingRate = ref<null | number>(null);
+
 function syncToParent(list: CurrencyRow[]) {
   const str = list
     .map((item) => `${item.currency_code},${item.to_hkd_rate}`)
     .join('\n');
   emit('update:modelValue', str);
+  // 单条变更后立即触发父组件全量 PUT
+  emit('save');
 }
 
 function handleAdd() {
   const code = newCode.value.trim().toUpperCase();
   const rate = newRate.value;
   if (!code) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.currencyEditor.validation.codeRequired'),
-    );
+    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
     return;
   }
   if (!rate || !Number.isFinite(rate) || rate <= 0) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.currencyEditor.validation.rateInvalid'),
-    );
+    ElMessage.warning(t(`${i18nPrefix}.validation.rateInvalid`));
     return;
   }
   if (currencies.value.some((c) => c.currency_code === code)) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.currencyEditor.validation.duplicate', {
-        code,
-      }),
-    );
+    ElMessage.warning(t(`${i18nPrefix}.validation.duplicate`, { code }));
     return;
   }
   syncToParent([
@@ -90,10 +97,62 @@ function handleAdd() {
   newRate.value = null;
 }
 
-function handleRemove(idx: number) {
-  const next = [...currencies.value];
-  next.splice(idx, 1);
+function openEdit(idx: number) {
+  const row = currencies.value[idx];
+  if (!row) return;
+  editingIdx.value = idx;
+  editingCode.value = row.currency_code;
+  editingRate.value = row.to_hkd_rate;
+  editDialogVisible.value = true;
+}
+
+function submitEdit() {
+  const code = editingCode.value.trim().toUpperCase();
+  const rate = editingRate.value;
+  if (!code) {
+    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
+    return;
+  }
+  if (!rate || !Number.isFinite(rate) || rate <= 0) {
+    ElMessage.warning(t(`${i18nPrefix}.validation.rateInvalid`));
+    return;
+  }
+  const isDuplicate =
+    currencies.value.some((c) => c.currency_code === code) &&
+    currencies.value[editingIdx.value]?.currency_code !== code;
+  if (isDuplicate) {
+    ElMessage.warning(t(`${i18nPrefix}.validation.duplicate`, { code }));
+    return;
+  }
+  const next = currencies.value.map((c, i) =>
+    i === editingIdx.value ? { currency_code: code, to_hkd_rate: rate } : c,
+  );
   syncToParent(next);
+  editingCode.value = '';
+  editingRate.value = null;
+  editingIdx.value = -1;
+  editDialogVisible.value = false;
+}
+
+async function handleRemove(idx: number) {
+  const row = currencies.value[idx];
+  if (!row) return;
+  try {
+    await ElMessageBox.confirm(
+      t(`${i18nPrefix}.deleteConfirm`, { code: row.currency_code }),
+      t(`${i18nPrefix}.deleteConfirmTitle`),
+      {
+        confirmButtonText: t(`${i18nPrefix}.confirm`),
+        cancelButtonText: t(`${i18nPrefix}.cancel`),
+        type: 'warning',
+      },
+    );
+    const next = [...currencies.value];
+    next.splice(idx, 1);
+    syncToParent(next);
+  } catch {
+    // 用户取消删除
+  }
 }
 
 function handleRateChange(idx: number, val: null | number | undefined) {
@@ -109,27 +168,19 @@ function handleRateChange(idx: number, val: null | number | undefined) {
 <template>
   <section>
     <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-lg">
-        {{ t('page.system.settingsDetail.currencyEditor.title') }}
-      </h3>
+      <h3 class="text-lg">{{ t(`${i18nPrefix}.title`) }}</h3>
       <span class="text-sm text-muted-foreground">
-        {{
-          t('page.system.settingsDetail.currencyEditor.count', {
-            count: currencies.length,
-          })
-        }}
+        {{ t(`${i18nPrefix}.count`, { count: currencies.length }) }}
       </span>
     </div>
     <p class="mb-4 text-sm text-muted-foreground">
-      {{ t('page.system.settingsDetail.currencyEditor.hint') }}
+      {{ t(`${i18nPrefix}.hint`) }}
     </p>
 
     <div class="mb-4 flex flex-wrap gap-2 items-end">
       <ElInput
         v-model="newCode"
-        :placeholder="
-          t('page.system.settingsDetail.currencyEditor.codePlaceholder')
-        "
+        :placeholder="t(`${i18nPrefix}.codePlaceholder`)"
         class="w-[160px]"
         maxlength="6"
       />
@@ -138,14 +189,12 @@ function handleRateChange(idx: number, val: null | number | undefined) {
         :min="0"
         :precision="4"
         :step="0.1"
-        :placeholder="
-          t('page.system.settingsDetail.currencyEditor.ratePlaceholder')
-        "
+        :placeholder="t(`${i18nPrefix}.ratePlaceholder`)"
         class="w-[180px]"
         controls-position="right"
       />
       <ElButton type="primary" @click="handleAdd">
-        {{ t('page.system.settingsDetail.currencyEditor.add') }}
+        {{ t(`${i18nPrefix}.add`) }}
       </ElButton>
     </div>
 
@@ -159,24 +208,18 @@ function handleRateChange(idx: number, val: null | number | undefined) {
       >
         <ElTableColumn
           type="index"
-          :label="t('page.system.settingsDetail.currencyEditor.column.seq')"
+          :label="t(`${i18nPrefix}.column.seq`)"
           width="70"
           align="center"
         />
-        <ElTableColumn
-          :label="t('page.system.settingsDetail.currencyEditor.column.code')"
-          min-width="140"
-        >
+        <ElTableColumn :label="t(`${i18nPrefix}.column.code`)" min-width="140">
           <template #default="{ row }">
             <ElTag type="success" effect="light">
               {{ row.currency_code }}
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn
-          :label="t('page.system.settingsDetail.currencyEditor.column.rate')"
-          min-width="220"
-        >
+        <ElTableColumn :label="t(`${i18nPrefix}.column.rate`)" min-width="220">
           <template #default="{ row, $index }">
             <div class="flex items-center gap-2">
               <span class="text-muted-foreground">1</span>
@@ -199,33 +242,77 @@ function handleRateChange(idx: number, val: null | number | undefined) {
           </template>
         </ElTableColumn>
         <ElTableColumn
-          :label="t('page.system.settingsDetail.currencyEditor.column.action')"
-          width="90"
+          :label="t(`${i18nPrefix}.column.action`)"
+          width="140"
           align="center"
           fixed="right"
         >
           <template #default="{ $index }">
             <ElButton
-              type="danger"
-              link
               size="small"
+              link
+              type="primary"
+              @click="openEdit($index)"
+            >
+              {{ t(`${i18nPrefix}.edit`) }}
+            </ElButton>
+            <ElButton
+              size="small"
+              link
+              type="danger"
               @click="handleRemove($index)"
             >
-              {{ t('page.system.settingsDetail.currencyEditor.delete') }}
+              {{ t(`${i18nPrefix}.delete`) }}
             </ElButton>
           </template>
         </ElTableColumn>
         <template #empty>
-          <ElEmpty
-            :description="t('page.system.settingsDetail.currencyEditor.empty')"
-            :image-size="60"
-          />
+          <ElEmpty :description="t(`${i18nPrefix}.empty`)" :image-size="60" />
         </template>
       </ElTable>
     </div>
 
     <p class="mt-2 text-xs text-muted-foreground">
-      {{ t('page.system.settingsDetail.currencyEditor.footerHint') }}
+      {{ t(`${i18nPrefix}.footerHint`) }}
     </p>
+
+    <!-- 编辑币种对话框（可同时改 code 和 rate） -->
+    <ElDialog
+      v-model="editDialogVisible"
+      :title="t(`${i18nPrefix}.editTitle`)"
+      width="400px"
+    >
+      <ElForm
+        :model="{ code: editingCode, rate: editingRate }"
+        label-width="100px"
+      >
+        <ElFormItem :label="t(`${i18nPrefix}.column.code`)">
+          <ElInput
+            v-model="editingCode"
+            :placeholder="t(`${i18nPrefix}.codePlaceholder`)"
+            maxlength="6"
+          />
+        </ElFormItem>
+        <ElFormItem :label="t(`${i18nPrefix}.column.rate`)">
+          <ElInputNumber
+            v-model="editingRate"
+            :min="0"
+            :precision="4"
+            :step="0.01"
+            :placeholder="t(`${i18nPrefix}.ratePlaceholder`)"
+            controls-position="right"
+            class="!w-full"
+          />
+        </ElFormItem>
+      </ElForm>
+      <template #footer>
+        <ElButton @click="editDialogVisible = false">
+          {{ t(`${i18nPrefix}.cancel`) }}
+        </ElButton>
+        <ElButton type="primary" @click="submitEdit">
+          {{ t(`${i18nPrefix}.confirm`) }}
+        </ElButton>
+      </template>
+    </ElDialog>
   </section>
 </template>

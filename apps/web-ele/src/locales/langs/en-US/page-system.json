@@ -136,6 +136,8 @@
           "addDept": "Add Department",
           "addPos": "Add Position",
           "addRegion": "Add Region",
+          "edit": "Edit",
+          "delete": "Delete",
           "selectAll": "Select All",
           "clear": "Clear",
           "moduleCount": "Module List (Selected {selected} / Total {total})",
@@ -146,17 +148,23 @@
             "posName": "Position Name",
             "regionName": "Region Name",
             "moduleName": "Module Name",
-            "moduleCode": "Module Code"
+            "moduleCode": "Module Code",
+            "action": "Action"
           },
           "dialog": {
             "deptTitle": "Add Department",
             "posTitle": "Add Position",
             "regionTitle": "Add Region",
+            "deptEditTitle": "Edit Department",
+            "posEditTitle": "Edit Position",
+            "regionEditTitle": "Edit Region",
             "deptPlaceholder": "Please enter department name",
             "posPlaceholder": "Please enter position name",
             "regionPlaceholder": "Please enter region name",
             "cancel": "Cancel",
-            "confirm": "Confirm"
+            "confirm": "Confirm",
+            "deleteConfirmTitle": "Confirm Delete",
+            "deleteConfirm": "Are you sure to delete \"{name}\"?"
           },
           "validation": {
             "deptNameRequired": "Please enter department name",
@@ -170,8 +178,20 @@
           "hint": "Maintain the claim reasons that employees can select on the claim page.",
           "placeholder": "Enter a new claim reason, e.g., Meals",
           "add": "Add",
+          "edit": "Edit",
+          "delete": "Delete",
+          "editTitle": "Edit Claim Reason",
+          "deleteConfirmTitle": "Confirm Delete",
+          "deleteConfirm": "Are you sure to delete \"{name}\"?",
+          "confirm": "Confirm",
+          "cancel": "Cancel",
           "empty": "No claim reasons yet, please add above",
           "footerHint": "After saving system settings, the \"Claim Reason\" dropdown on the employee claim page will read this configuration directly.",
+          "column": {
+            "seq": "No.",
+            "reason": "Claim Reason",
+            "action": "Action"
+          },
           "validation": {
             "reasonRequired": "Please enter a claim reason",
             "reasonDuplicate": "This claim reason already exists"
@@ -184,7 +204,13 @@
           "codePlaceholder": "Currency code, e.g., USD",
           "ratePlaceholder": "HKD exchange rate",
           "add": "Add Currency",
+          "edit": "Edit",
           "delete": "Delete",
+          "editTitle": "Edit Currency",
+          "deleteConfirmTitle": "Confirm Delete",
+          "deleteConfirm": "Are you sure to delete currency \"{code}\"?",
+          "confirm": "Confirm",
+          "cancel": "Cancel",
           "empty": "No currency configured, please add above",
           "footerHint": "Exchange rate meaning: 1 unit of foreign currency = ? HKD. Hong Kong employees' claims will be automatically converted to HKD using the rates here.",
           "column": {
@@ -194,9 +220,9 @@
             "action": "Action"
           },
           "validation": {
-            "codeRequired": "Please enter a currency code",
+            "codeRequired": "Please enter currency code",
             "rateInvalid": "Please enter a valid HKD exchange rate (greater than 0)",
-            "duplicate": "Currency {code} already exists, please edit or delete it first"
+            "duplicate": "Currency {code} already exists, please edit or delete first"
           }
         },
         "message": {

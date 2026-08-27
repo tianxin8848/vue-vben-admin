@@ -136,6 +136,8 @@
           "addDept": "新增部门",
           "addPos": "新增岗位",
           "addRegion": "新增地区",
+          "edit": "编辑",
+          "delete": "删除",
           "selectAll": "全选",
           "clear": "清空",
           "moduleCount": "模块列表（已选 {selected} / 共 {total} 个）",
@@ -146,17 +148,23 @@
             "posName": "岗位名称",
             "regionName": "地区名称",
             "moduleName": "模块名称",
-            "moduleCode": "模块代码"
+            "moduleCode": "模块代码",
+            "action": "操作"
           },
           "dialog": {
             "deptTitle": "新增部门",
             "posTitle": "新增岗位",
             "regionTitle": "新增地区",
+            "deptEditTitle": "编辑部门",
+            "posEditTitle": "编辑岗位",
+            "regionEditTitle": "编辑地区",
             "deptPlaceholder": "请输入部门名称",
             "posPlaceholder": "请输入岗位名称",
             "regionPlaceholder": "请输入地区名称",
             "cancel": "取消",
-            "confirm": "确认"
+            "confirm": "确认",
+            "deleteConfirmTitle": "确认删除",
+            "deleteConfirm": "确认删除「{name}」吗？"
           },
           "validation": {
             "deptNameRequired": "请输入部门名称",
@@ -170,8 +178,20 @@
           "hint": "在这里维护员工报销页面可勾选的报销理由。",
           "placeholder": "输入新的报销理由，例如：餐饮报销",
           "add": "新增",
+          "edit": "编辑",
+          "delete": "删除",
+          "editTitle": "编辑报销理由",
+          "deleteConfirmTitle": "确认删除",
+          "deleteConfirm": "确认删除「{name}」吗？",
+          "confirm": "确认",
+          "cancel": "取消",
           "empty": "暂无报销理由，请在上方新增",
           "footerHint": "保存系统参数管理后，员工报销页面的“报销理由”下拉会直接读取这里的配置。",
+          "column": {
+            "seq": "序号",
+            "reason": "报销理由",
+            "action": "操作"
+          },
           "validation": {
             "reasonRequired": "请输入报销理由",
             "reasonDuplicate": "该报销理由已存在"
@@ -184,7 +204,13 @@
           "codePlaceholder": "币种编码，如 USD",
           "ratePlaceholder": "港币汇率",
           "add": "新增币种",
+          "edit": "编辑",
           "delete": "删除",
+          "editTitle": "编辑币种",
+          "deleteConfirmTitle": "确认删除",
+          "deleteConfirm": "确认删除币种「{code}」吗？",
+          "confirm": "确认",
+          "cancel": "取消",
           "empty": "暂无币种配置，请在上方新增",
           "footerHint": "汇率含义：1 单位外币 = ? 港币。香港员工报销时会按这里的汇率自动折算港币。",
           "column": {

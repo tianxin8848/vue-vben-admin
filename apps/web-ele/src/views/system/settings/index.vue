@@ -350,8 +350,14 @@ onMounted(() => {
             }}</span>
           </template>
           <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
-            <ClaimReasonEditor v-model="claimReasonsStr" />
-            <CurrencyEditor v-model="claimCurrenciesStr" />
+            <ClaimReasonEditor
+              v-model="claimReasonsStr"
+              @save="handleSaveSettings"
+            />
+            <CurrencyEditor
+              v-model="claimCurrenciesStr"
+              @save="handleSaveSettings"
+            />
           </div>
           <div class="mt-6 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">

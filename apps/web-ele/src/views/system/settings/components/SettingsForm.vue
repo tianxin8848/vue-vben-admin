@@ -13,6 +13,7 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
+  ElMessageBox,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -22,6 +23,8 @@ interface ListItem {
   id: string;
   name: string;
 }
+
+type EmitUpdateName = 'update:deptStr' | 'update:posStr' | 'update:regionStr';
 
 const props = defineProps<{
   deptStr: string;
@@ -51,13 +54,6 @@ const deptList = ref<ListItem[]>([]);
 const posList = ref<ListItem[]>([]);
 const regionList = ref<ListItem[]>([]);
 
-const showDeptDialog = ref(false);
-const showPosDialog = ref(false);
-const showRegionDialog = ref(false);
-const newDeptName = ref('');
-const newPosName = ref('');
-const newRegionName = ref('');
-
 function strToList(str: string): ListItem[] {
   return str
     .split('\n')
@@ -81,61 +77,100 @@ function updateLists() {
   regionTableApi.setGridOptions({ data: regionList.value });
 }
 
-function handleDeptAdd() {
-  if (!newDeptName.value.trim()) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.form.validation.deptNameRequired'),
-    );
-    return;
-  }
-  deptList.value.push({
-    id: String(Date.now()),
-    name: newDeptName.value.trim(),
-  });
-  localDeptStr.value = listToStr(deptList.value);
-  emit('update:deptStr', localDeptStr.value);
-  deptTableApi.setGridOptions({ data: deptList.value });
-  newDeptName.value = '';
-  showDeptDialog.value = false;
-  emit('save');
-}
+/**
+ * 创建一个字符串列表的增/改/删处理器。
+ *
+ * 后端 PUT /api/v1/system-settings 是全量更新：每次都要把整个 string[]
+ * 一起发过去，无法只改单条。这里在本地维护 list，每次单条变更后
+ * 通过 emit('update:xxxStr') 同步字符串给父组件，再 emit('save') 触发
+ * 父组件全量 PUT。
+ */
+function createListOps(
+  listRef: typeof deptList,
+  localStrRef: typeof localDeptStr,
+  emitName: EmitUpdateName,
+  tableApiRef: { setGridOptions: (opts: { data: ListItem[] }) => void },
+  validationKey: string,
+) {
+  const mode = ref<'add' | 'edit'>('add');
+  const editingId = ref('');
+  const inputValue = ref('');
+  const dialogVisible = ref(false);
 
-function handlePosAdd() {
-  if (!newPosName.value.trim()) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.form.validation.posNameRequired'),
-    );
-    return;
+  function openAdd() {
+    mode.value = 'add';
+    editingId.value = '';
+    inputValue.value = '';
+    dialogVisible.value = true;
   }
-  posList.value.push({
-    id: String(Date.now()),
-    name: newPosName.value.trim(),
-  });
-  localPosStr.value = listToStr(posList.value);
-  emit('update:posStr', localPosStr.value);
-  posTableApi.setGridOptions({ data: posList.value });
-  newPosName.value = '';
-  showPosDialog.value = false;
-  emit('save');
-}
 
-function handleRegionAdd() {
-  if (!newRegionName.value.trim()) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.form.validation.regionNameRequired'),
-    );
-    return;
+  function openEdit(row: ListItem) {
+    mode.value = 'edit';
+    editingId.value = row.id;
+    inputValue.value = row.name;
+    dialogVisible.value = true;
   }
-  regionList.value.push({
-    id: String(Date.now()),
-    name: newRegionName.value.trim(),
-  });
-  localRegionStr.value = listToStr(regionList.value);
-  emit('update:regionStr', localRegionStr.value);
-  regionTableApi.setGridOptions({ data: regionList.value });
-  newRegionName.value = '';
-  showRegionDialog.value = false;
-  emit('save');
+
+  function submit() {
+    const value = inputValue.value.trim();
+    if (!value) {
+      ElMessage.warning(t(validationKey));
+      return;
+    }
+
+    if (mode.value === 'add') {
+      listRef.value.push({ id: String(Date.now()), name: value });
+    } else {
+      const target = listRef.value.find((i) => i.id === editingId.value);
+      if (target) {
+        target.name = value;
+      }
+    }
+
+    localStrRef.value = listToStr(listRef.value);
+    emit(emitName, localStrRef.value);
+    tableApiRef.setGridOptions({ data: listRef.value });
+    inputValue.value = '';
+    editingId.value = '';
+    dialogVisible.value = false;
+    emit('save');
+  }
+
+  async function remove(row: ListItem) {
+    try {
+      await ElMessageBox.confirm(
+        t('page.system.settingsDetail.form.dialog.deleteConfirm', {
+          name: row.name,
+        }),
+        t('page.system.settingsDetail.form.dialog.deleteConfirmTitle'),
+        {
+          confirmButtonText: t(
+            'page.system.settingsDetail.form.dialog.confirm',
+          ),
+          cancelButtonText: t('page.system.settingsDetail.form.dialog.cancel'),
+          type: 'warning',
+        },
+      );
+      listRef.value = listRef.value.filter((i) => i.id !== row.id);
+      localStrRef.value = listToStr(listRef.value);
+      emit(emitName, localStrRef.value);
+      tableApiRef.setGridOptions({ data: listRef.value });
+      emit('save');
+    } catch {
+      // 用户取消删除
+    }
+  }
+
+  return {
+    mode,
+    editingId,
+    inputValue,
+    dialogVisible,
+    openAdd,
+    openEdit,
+    submit,
+    remove,
+  };
 }
 
 async function updateCheckboxState() {
@@ -179,6 +214,12 @@ const deptGridOptions = computed<VxeGridProps<ListItem>>(() => ({
       title: t('page.system.settingsDetail.form.column.deptName'),
       minWidth: 150,
     },
+    {
+      title: t('page.system.settingsDetail.form.column.action'),
+      width: 140,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
   ],
 }));
 
@@ -196,6 +237,12 @@ const posGridOptions = computed<VxeGridProps<ListItem>>(() => ({
       title: t('page.system.settingsDetail.form.column.posName'),
       minWidth: 150,
     },
+    {
+      title: t('page.system.settingsDetail.form.column.action'),
+      width: 140,
+      fixed: 'right',
+      slots: { default: 'action' },
+    },
   ],
 }));
 
@@ -212,6 +259,12 @@ const regionGridOptions = computed<VxeGridProps<ListItem>>(() => ({
       field: 'name',
       title: t('page.system.settingsDetail.form.column.regionName'),
       minWidth: 150,
+    },
+    {
+      title: t('page.system.settingsDetail.form.column.action'),
+      width: 140,
+      fixed: 'right',
+      slots: { default: 'action' },
     },
   ],
 }));
@@ -256,6 +309,46 @@ const [ModuleTable, moduleTableApi] = useVbenVxeGrid({
     checkboxAll: handleCheckboxChange,
   },
 });
+
+// 部门 / 岗位 / 地区 三组列表的增删改处理器（共享同一套逻辑）
+const deptOps = createListOps(
+  deptList,
+  localDeptStr,
+  'update:deptStr',
+  deptTableApi,
+  'page.system.settingsDetail.form.validation.deptNameRequired',
+);
+const posOps = createListOps(
+  posList,
+  localPosStr,
+  'update:posStr',
+  posTableApi,
+  'page.system.settingsDetail.form.validation.posNameRequired',
+);
+const regionOps = createListOps(
+  regionList,
+  localRegionStr,
+  'update:regionStr',
+  regionTableApi,
+  'page.system.settingsDetail.form.validation.regionNameRequired',
+);
+
+// 三个 dialog 标题根据 mode 动态切换"新增/编辑"
+const deptDialogTitle = computed(() =>
+  deptOps.mode.value === 'edit'
+    ? t('page.system.settingsDetail.form.dialog.deptEditTitle')
+    : t('page.system.settingsDetail.form.dialog.deptTitle'),
+);
+const posDialogTitle = computed(() =>
+  posOps.mode.value === 'edit'
+    ? t('page.system.settingsDetail.form.dialog.posEditTitle')
+    : t('page.system.settingsDetail.form.dialog.posTitle'),
+);
+const regionDialogTitle = computed(() =>
+  regionOps.mode.value === 'edit'
+    ? t('page.system.settingsDetail.form.dialog.regionEditTitle')
+    : t('page.system.settingsDetail.form.dialog.regionTitle'),
+);
 
 watch(deptGridOptions, () => {
   deptTableApi.setGridOptions(deptGridOptions.value);
@@ -371,11 +464,30 @@ function clearModules() {
           <span class="text-base font-semibold">{{
             t('page.system.settingsDetail.form.deptList')
           }}</span>
-          <ElButton size="small" type="primary" @click="showDeptDialog = true">
+          <ElButton size="small" type="primary" @click="deptOps.openAdd()">
             {{ t('page.system.settingsDetail.form.addDept') }}
           </ElButton>
         </div>
-        <DeptTable />
+        <DeptTable>
+          <template #action="{ row }">
+            <ElButton
+              size="small"
+              link
+              type="primary"
+              @click="deptOps.openEdit(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.edit') }}
+            </ElButton>
+            <ElButton
+              size="small"
+              link
+              type="danger"
+              @click="deptOps.remove(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.delete') }}
+            </ElButton>
+          </template>
+        </DeptTable>
       </div>
 
       <!-- 岗位列表 -->
@@ -384,11 +496,30 @@ function clearModules() {
           <span class="text-base font-semibold">{{
             t('page.system.settingsDetail.form.posList')
           }}</span>
-          <ElButton size="small" type="primary" @click="showPosDialog = true">
+          <ElButton size="small" type="primary" @click="posOps.openAdd()">
             {{ t('page.system.settingsDetail.form.addPos') }}
           </ElButton>
         </div>
-        <PosTable />
+        <PosTable>
+          <template #action="{ row }">
+            <ElButton
+              size="small"
+              link
+              type="primary"
+              @click="posOps.openEdit(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.edit') }}
+            </ElButton>
+            <ElButton
+              size="small"
+              link
+              type="danger"
+              @click="posOps.remove(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.delete') }}
+            </ElButton>
+          </template>
+        </PosTable>
       </div>
 
       <!-- 地区列表 -->
@@ -397,15 +528,30 @@ function clearModules() {
           <span class="text-base font-semibold">{{
             t('page.system.settingsDetail.form.regionList')
           }}</span>
-          <ElButton
-            size="small"
-            type="primary"
-            @click="showRegionDialog = true"
-          >
+          <ElButton size="small" type="primary" @click="regionOps.openAdd()">
             {{ t('page.system.settingsDetail.form.addRegion') }}
           </ElButton>
         </div>
-        <RegionTable />
+        <RegionTable>
+          <template #action="{ row }">
+            <ElButton
+              size="small"
+              link
+              type="primary"
+              @click="regionOps.openEdit(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.edit') }}
+            </ElButton>
+            <ElButton
+              size="small"
+              link
+              type="danger"
+              @click="regionOps.remove(row as ListItem)"
+            >
+              {{ t('page.system.settingsDetail.form.delete') }}
+            </ElButton>
+          </template>
+        </RegionTable>
       </div>
 
       <!-- 模块列表 -->
@@ -421,15 +567,11 @@ function clearModules() {
           </span>
           <div class="flex gap-2">
             <ElButton size="small" @click="selectAllModules">
-{{
-              t('page.system.settingsDetail.form.selectAll')
-            }}
-</ElButton>
+              {{ t('page.system.settingsDetail.form.selectAll') }}
+            </ElButton>
             <ElButton size="small" @click="clearModules">
-{{
-              t('page.system.settingsDetail.form.clear')
-            }}
-</ElButton>
+              {{ t('page.system.settingsDetail.form.clear') }}
+            </ElButton>
           </div>
         </div>
         <ModuleTable />
@@ -446,15 +588,16 @@ function clearModules() {
     </div>
   </div>
 
+  <!-- 部门新增/编辑对话框 -->
   <ElDialog
-    v-model="showDeptDialog"
-    :title="t('page.system.settingsDetail.form.dialog.deptTitle')"
+    v-model="deptOps.dialogVisible.value"
+    :title="deptDialogTitle"
     width="400px"
   >
-    <ElForm :model="{ name: newDeptName }" label-width="80px">
+    <ElForm :model="{ name: deptOps.inputValue.value }" label-width="80px">
       <ElFormItem :label="t('page.system.settingsDetail.form.column.deptName')">
         <ElInput
-          v-model="newDeptName"
+          v-model="deptOps.inputValue.value"
           :placeholder="
             t('page.system.settingsDetail.form.dialog.deptPlaceholder')
           "
@@ -462,28 +605,25 @@ function clearModules() {
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showDeptDialog = false">
-{{
-        t('page.system.settingsDetail.form.dialog.cancel')
-      }}
-</ElButton>
-      <ElButton type="primary" @click="handleDeptAdd">
-{{
-        t('page.system.settingsDetail.form.dialog.confirm')
-      }}
-</ElButton>
+      <ElButton @click="deptOps.dialogVisible.value = false">
+        {{ t('page.system.settingsDetail.form.dialog.cancel') }}
+      </ElButton>
+      <ElButton type="primary" @click="deptOps.submit">
+        {{ t('page.system.settingsDetail.form.dialog.confirm') }}
+      </ElButton>
     </template>
   </ElDialog>
 
+  <!-- 岗位新增/编辑对话框 -->
   <ElDialog
-    v-model="showPosDialog"
-    :title="t('page.system.settingsDetail.form.dialog.posTitle')"
+    v-model="posOps.dialogVisible.value"
+    :title="posDialogTitle"
     width="400px"
   >
-    <ElForm :model="{ name: newPosName }" label-width="80px">
+    <ElForm :model="{ name: posOps.inputValue.value }" label-width="80px">
       <ElFormItem :label="t('page.system.settingsDetail.form.column.posName')">
         <ElInput
-          v-model="newPosName"
+          v-model="posOps.inputValue.value"
           :placeholder="
             t('page.system.settingsDetail.form.dialog.posPlaceholder')
           "
@@ -491,30 +631,27 @@ function clearModules() {
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showPosDialog = false">
-{{
-        t('page.system.settingsDetail.form.dialog.cancel')
-      }}
-</ElButton>
-      <ElButton type="primary" @click="handlePosAdd">
-{{
-        t('page.system.settingsDetail.form.dialog.confirm')
-      }}
-</ElButton>
+      <ElButton @click="posOps.dialogVisible.value = false">
+        {{ t('page.system.settingsDetail.form.dialog.cancel') }}
+      </ElButton>
+      <ElButton type="primary" @click="posOps.submit">
+        {{ t('page.system.settingsDetail.form.dialog.confirm') }}
+      </ElButton>
     </template>
   </ElDialog>
 
+  <!-- 地区新增/编辑对话框 -->
   <ElDialog
-    v-model="showRegionDialog"
-    :title="t('page.system.settingsDetail.form.dialog.regionTitle')"
+    v-model="regionOps.dialogVisible.value"
+    :title="regionDialogTitle"
     width="400px"
   >
-    <ElForm :model="{ name: newRegionName }" label-width="80px">
+    <ElForm :model="{ name: regionOps.inputValue.value }" label-width="80px">
       <ElFormItem
         :label="t('page.system.settingsDetail.form.column.regionName')"
       >
         <ElInput
-          v-model="newRegionName"
+          v-model="regionOps.inputValue.value"
           :placeholder="
             t('page.system.settingsDetail.form.dialog.regionPlaceholder')
           "
@@ -522,16 +659,12 @@ function clearModules() {
       </ElFormItem>
     </ElForm>
     <template #footer>
-      <ElButton @click="showRegionDialog = false">
-{{
-        t('page.system.settingsDetail.form.dialog.cancel')
-      }}
-</ElButton>
-      <ElButton type="primary" @click="handleRegionAdd">
-{{
-        t('page.system.settingsDetail.form.dialog.confirm')
-      }}
-</ElButton>
+      <ElButton @click="regionOps.dialogVisible.value = false">
+        {{ t('page.system.settingsDetail.form.dialog.cancel') }}
+      </ElButton>
+      <ElButton type="primary" @click="regionOps.submit">
+        {{ t('page.system.settingsDetail.form.dialog.confirm') }}
+      </ElButton>
     </template>
   </ElDialog>
 </template>
