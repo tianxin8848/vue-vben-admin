@@ -34,8 +34,20 @@ const inputValue = computed(() => {
   return new TinyColor(themeColorPrimary.value || '').toHexString();
 });
 
+// 不需要在面板上显示的内置主题类型
+const HIDDEN_THEME_TYPES = new Set<BuiltinThemeType>([
+  'deep-blue',
+  'deep-green',
+  'default',
+  'green',
+  'orange',
+  'sky-blue',
+]);
+
 const builtinThemePresets = computed(() => {
-  return [...BUILT_IN_THEME_PRESETS];
+  return BUILT_IN_THEME_PRESETS.filter(
+    (item) => !HIDDEN_THEME_TYPES.has(item.type),
+  );
 });
 
 function typeView(name: BuiltinThemeType) {

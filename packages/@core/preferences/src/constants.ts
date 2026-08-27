@@ -51,7 +51,7 @@ const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
     type: 'orange',
   },
   {
-    color: 'hsl(0 75% 42%)',
+    color: 'hsl(0,74%,54%)',
     type: 'rose',
   },
   {
