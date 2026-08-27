@@ -364,7 +364,9 @@ export function useElementPlusDesignTokens() {
         '--el-text-color-regular': getCssVariableValue('--foreground'),
       };
 
-      updateCSSVariables(variables, `__vben_design_styles__`);
+      // dark 模式下用 :root.dark（特异性 0,2,0）覆盖 EP dark CSS 的 html.dark（0,1,1）
+      const selector = isDark.value ? ':root.dark' : ':root';
+      updateCSSVariables(variables, `__vben_design_styles__`, selector);
     },
     { immediate: true },
   );
