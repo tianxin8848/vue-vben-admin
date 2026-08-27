@@ -34,6 +34,13 @@ export interface RegionalHoliday {
   date: string;
   holiday_name: string;
   region: string;
+  /**
+   * 是否为调休补班日（周末补班）。
+   * - true：周末但需上班 → 工作日
+   * - false / 缺省：休息日（法定假日或普通周末）
+   * 后端如未提供该字段，按缺省（休息日）处理。
+   */
+  is_workday?: boolean;
 }
 
 export interface Props {
@@ -105,6 +112,26 @@ export function isWeekend(dateKey: string): boolean {
   const d = new Date(`${dateKey}T00:00:00`);
   const day = d.getDay();
   return day === 0 || day === 6;
+}
+
+/**
+ * 判断某日是否为休息日。
+ * 规则：
+ *   1. 若当日匹配到区域假日记录：
+ *      - is_workday === true → 调休补班日 → 工作日（返回 false）
+ *      - 否则 → 法定假日 → 休息日（返回 true）
+ *   2. 无假日记录时，周末 → 休息日，工作日 → 工作日
+ * @param dateKey  YYYY-MM-DD
+ * @param holidays 已按当前地区过滤的假日列表
+ */
+export function isRestDay(
+  dateKey: string,
+  holidays: RegionalHoliday[] = [],
+): boolean {
+  if (!dateKey) return false;
+  const matched = holidays.find((h) => h.date === dateKey);
+  if (matched) return matched.is_workday !== true;
+  return isWeekend(dateKey);
 }
 
 export function getDisplayLimit(entryCount: number): number {

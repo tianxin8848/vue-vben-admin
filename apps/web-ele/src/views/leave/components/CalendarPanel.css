@@ -89,8 +89,14 @@
   background: hsl(var(--muted));
 }
 
-.calendar-cell.is-weekend {
-  background: hsl(var(--muted));
+/* 工作日：浅红底（周一至周五且非法定假日） */
+.calendar-cell.is-workday {
+  background: rgb(254 226 226);
+}
+
+/* 休息日：绿底（周末、法定假日、非调休补班日） */
+.calendar-cell.is-rest {
+  background: rgb(220 252 231);
 }
 
 .calendar-cell.is-selected {
@@ -191,11 +197,9 @@
   border-radius: 2px;
 }
 
-/* ===== 区域假日（月视图） ===== */
-.calendar-cell.is-holiday {
-  box-shadow: inset 3px 0 0 #ef4444;
-}
-
+/* ===== 区域假日（月视图） =====
+   假日不再单独着色：休息日通过 .is-rest 统一显示绿色底；
+   holiday-tag 仅作为假日名称的文本提示，使用中性色，不再用红色。 */
 .holiday-tag {
   padding: 1px 5px;
   margin-bottom: 4px;
@@ -204,9 +208,9 @@
   font-size: 10px;
   font-weight: 600;
   line-height: 1.4;
-  color: #dc2626;
+  color: hsl(var(--foreground));
   white-space: nowrap;
-  background: rgb(239 68 68 / 12%);
+  background: hsl(var(--muted));
   border-radius: 3px;
 }
 
@@ -312,8 +316,14 @@
   cursor: default;
 }
 
-.mini-cell.is-weekend {
-  background: hsl(var(--muted));
+/* 工作日：浅红底 */
+.mini-cell.is-workday {
+  background: rgb(254 226 226);
+}
+
+/* 休息日：绿底 */
+.mini-cell.is-rest {
+  background: rgb(220 252 231);
 }
 
 .mini-cell.is-selected {
@@ -369,14 +379,4 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-}
-
-/* ===== 区域假日（年视图） ===== */
-.mini-cell.is-holiday {
-  background: rgb(239 68 68 / 12%);
-}
-
-.mini-cell.is-holiday .mini-day-number {
-  font-weight: 700;
-  color: #dc2626;
 }

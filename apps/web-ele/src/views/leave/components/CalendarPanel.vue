@@ -13,7 +13,7 @@ import {
   getMoreCount,
   getUniqueLeaveTypes,
   getVisibleEntries,
-  isWeekend,
+  isRestDay,
   WEEK_KEYS,
 } from './data';
 
@@ -240,12 +240,14 @@ function goCurrentYear() {
             class="calendar-cell"
             :class="{
               'is-empty': !cell.day,
-              'is-weekend': cell.day && isWeekend(cell.date),
+              'is-workday':
+                cell.day &&
+                !isRestDay(cell.date, getHolidaysForDate(cell.date)),
+              'is-rest':
+                cell.day && isRestDay(cell.date, getHolidaysForDate(cell.date)),
               'is-selected': cell.day && isSelected(cell.date),
               'has-leave': cell.day && getEntriesForDate(cell.date).length > 0,
               'is-risk': cell.day && isRiskDay(cell.date),
-              'is-holiday':
-                cell.day && getHolidaysForDate(cell.date).length > 0,
             }"
             @click="onCellClick(cell)"
           >
@@ -344,13 +346,16 @@ function goCurrentYear() {
                   class="mini-cell"
                   :class="{
                     'is-empty': !cell.day,
-                    'is-weekend': cell.day && isWeekend(cell.date),
+                    'is-workday':
+                      cell.day &&
+                      !isRestDay(cell.date, getHolidaysForDate(cell.date)),
+                    'is-rest':
+                      cell.day &&
+                      isRestDay(cell.date, getHolidaysForDate(cell.date)),
                     'is-selected': cell.day && isSelected(cell.date),
                     'has-leave':
                       cell.day && getEntriesForDate(cell.date).length > 0,
                     'is-risk': cell.day && isRiskDay(cell.date),
-                    'is-holiday':
-                      cell.day && getHolidaysForDate(cell.date).length > 0,
                   }"
                   :title="
                     cell.day && getHolidaysForDate(cell.date).length > 0
