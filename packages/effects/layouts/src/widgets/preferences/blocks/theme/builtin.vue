@@ -42,6 +42,7 @@ const HIDDEN_THEME_TYPES = new Set<BuiltinThemeType>([
   'green',
   'orange',
   'sky-blue',
+  'yellow',
 ]);
 
 const builtinThemePresets = computed(() => {
