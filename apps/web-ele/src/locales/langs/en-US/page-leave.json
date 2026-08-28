@@ -28,10 +28,10 @@
           "title": "Fill in Leave Form"
         },
         "stats": {
-          "recordCount": "Records this year",
-          "dayCount": " Taken leave days (this year)",
+          "recordCount": "Records current year",
+          "dayCount": " Taken leave days (current year)",
           "pendingCount": "Pending records",
-          "annualEntitlement": "Annual leave total",
+          "annualEntitlement": "Annual leave entitlement",
           "annualAvailable": "Annual leave available"
         },
         "listTitle": "My Leave Records ({count} total)",

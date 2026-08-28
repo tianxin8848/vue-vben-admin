@@ -31,7 +31,6 @@ import PendingLeaveTab from './components/PendingLeaveTab.vue';
 import RecordsClaimTab from './components/RecordsClaimTab.vue';
 import RecordsLeaveTab from './components/RecordsLeaveTab.vue';
 import { useApprovalData } from './composables/useApprovalData';
-import { leaveRequestFromRecord } from './constants';
 
 const {
   leaveRequests,
@@ -97,11 +96,6 @@ function onViewLeaveDetail(row: LeaveRequestApi.LeaveRequest) {
   showLeaveDetailDialog.value = true;
 }
 
-function onViewLeaveRecord(row: LeaveRequestApi.ApprovalRecord) {
-  currentLeave.value = leaveRequestFromRecord(row);
-  showLeaveDetailDialog.value = true;
-}
-
 function onReviewLeave(row: LeaveRequestApi.LeaveRequest) {
   currentLeave.value = row;
   showLeaveReviewDialog.value = true;
@@ -114,40 +108,6 @@ function onWithdrawLeave(row: LeaveRequestApi.LeaveRequest) {
 
 function onViewClaimDetail(row: ClaimApi.ClaimResponse) {
   currentClaim.value = row;
-  showClaimDetailDialog.value = true;
-}
-
-function onViewClaimRecord(row: ClaimApi.ClaimApprovalRecord) {
-  currentClaim.value = {
-    id: row.claim_request_id,
-    employee_id: row.employee_id,
-    employee_username: row.employee_username,
-    employee_name: row.employee_name,
-    employee_department: row.employee_department,
-    employee_region: row.employee_region,
-    reason_code: row.claim_reason_code,
-    reason_label: row.claim_reason_label,
-    description: null,
-    amount: row.amount,
-    currency: row.currency,
-    exchange_rate_to_hkd: null,
-    amount_hkd: row.amount_hkd,
-    approval_status: row.approval_status_after,
-    approval_chain: [],
-    current_approver_id: row.current_approver_id_after,
-    approval_history: [],
-    attachment_url: null,
-    attachment_name: null,
-    invoice_date: null,
-    invoice_no: null,
-    items: [],
-    created_by_id: row.employee_id,
-    created_by_name: row.employee_name,
-    review_comment: row.comment,
-    reviewed_at: row.created_at,
-    created_at: row.created_at,
-    updated_at: null,
-  } as unknown as ClaimApi.ClaimResponse;
   showClaimDetailDialog.value = true;
 }
 
@@ -306,7 +266,6 @@ onMounted(async () => {
               <RecordsLeaveTab
                 :data="leaveApprovalRecords"
                 :search-form="searchForm"
-                @view-detail="onViewLeaveRecord"
               />
             </div>
           </ElTabPane>
@@ -319,7 +278,6 @@ onMounted(async () => {
               <RecordsClaimTab
                 :data="claimApprovalRecords"
                 :search-form="searchForm"
-                @view-detail="onViewClaimRecord"
               />
             </div>
           </ElTabPane>

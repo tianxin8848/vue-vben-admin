@@ -8,7 +8,7 @@ import { computed, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElTag } from 'element-plus';
+import { ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
@@ -22,10 +22,6 @@ import {
 const props = defineProps<{
   data: ClaimApi.ClaimApprovalRecord[];
   searchForm: SearchForm;
-}>();
-
-const emit = defineEmits<{
-  viewDetail: [row: ClaimApi.ClaimApprovalRecord];
 }>();
 
 const { t } = useI18n();
@@ -124,12 +120,6 @@ const tableColumns = computed<
     width: 170,
     slots: { default: 'created_at' },
   },
-  {
-    title: t('page.approve.recordsClaimTab.column.action'),
-    width: 100,
-    fixed: 'right',
-    slots: { default: 'view_action' },
-  },
 ]);
 
 const [BasicTable, tableApi] = useVbenVxeGrid<ClaimApi.ClaimApprovalRecord>({
@@ -176,10 +166,6 @@ watch(
 watch(tableColumns, () => {
   tableApi.setGridOptions({ columns: tableColumns.value });
 });
-
-function viewDetail(row: any) {
-  emit('viewDetail', row as ClaimApi.ClaimApprovalRecord);
-}
 </script>
 
 <template>
@@ -213,11 +199,6 @@ function viewDetail(row: any) {
       {{
         row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'
       }}
-    </template>
-    <template #view_action="{ row }">
-      <ElButton size="small" @click="viewDetail(row)">
-        {{ t('page.approve.recordsClaimTab.viewDetail') }}
-      </ElButton>
     </template>
   </BasicTable>
 </template>

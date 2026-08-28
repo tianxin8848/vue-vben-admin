@@ -25,10 +25,6 @@ const props = defineProps<{
   searchForm: SearchForm;
 }>();
 
-const emit = defineEmits<{
-  viewDetail: [row: LeaveRequestApi.ApprovalRecord];
-}>();
-
 const { t } = useI18n();
 
 function applyFilters() {
@@ -135,12 +131,6 @@ const tableColumns = computed<
     width: 170,
     slots: { default: 'created_at' },
   },
-  {
-    title: t('page.approve.recordsLeaveTab.column.action'),
-    width: 100,
-    fixed: 'right',
-    slots: { default: 'view_action' },
-  },
 ]);
 
 const [BasicTable, tableApi] = useVbenVxeGrid<LeaveRequestApi.ApprovalRecord>({
@@ -187,10 +177,6 @@ watch(
 watch(tableColumns, () => {
   tableApi.setGridOptions({ columns: tableColumns.value });
 });
-
-function viewDetail(row: any) {
-  emit('viewDetail', row as LeaveRequestApi.ApprovalRecord);
-}
 </script>
 
 <template>
@@ -224,11 +210,6 @@ function viewDetail(row: any) {
       {{
         row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'
       }}
-    </template>
-    <template #view_action="{ row }">
-      <ElButton size="small" @click="viewDetail(row)">
-        {{ t('page.approve.recordsLeaveTab.viewDetail') }}
-      </ElButton>
     </template>
   </BasicTable>
 </template>
