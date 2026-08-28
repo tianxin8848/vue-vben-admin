@@ -30,6 +30,19 @@ import StatsPanel from '../components/StatsPanel.vue';
 const router = useRouter();
 const loading = ref(false);
 
+// 假期类型颜色图例（与 DetailPanel.vue 中 leaveTypeConfig 保持一致）
+const leaveTypeLegend = [
+  { key: 'annual', labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
+  {
+    key: 'personal',
+    labelKey: 'page.leave.leaveTypes.personal',
+    color: '#fb923c',
+  },
+  { key: 'sick', labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
+  { key: 'lieu', labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
+  { key: 'long', labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
+] as const;
+
 // Tab 状态
 type TabKey = 'calendar' | 'overview';
 const activeTab = ref<TabKey>('calendar');
@@ -345,6 +358,19 @@ onUnmounted(() => {
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span>{{ currentTime }}</span>
+          <div class="flex flex-wrap items-center gap-3">
+            <span
+              v-for="cfg in leaveTypeLegend"
+              :key="cfg.key"
+              class="inline-flex items-center gap-1 text-xs text-muted-foreground"
+            >
+              <span
+                :style="{ background: cfg.color }"
+                class="inline-block size-2.5 rounded-full"
+              ></span>
+              {{ $t(cfg.labelKey) }}
+            </span>
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <ElButton @click="goBackHome">
               {{ $t('page.leave.calendarView.backToWorkspace') }}
