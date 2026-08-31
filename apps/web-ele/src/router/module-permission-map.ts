@@ -233,6 +233,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     component: 'system/settings/index',
     meta: {
       affixTab: false,
+      fullPathKey: false,
       hideInMenu: true,
       icon: 'lucide:cog',
       title: $t('page.system.settings'),
