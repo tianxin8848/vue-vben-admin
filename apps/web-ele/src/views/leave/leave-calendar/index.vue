@@ -1,16 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import {
-  ElButton,
-  ElCard,
-  ElOption,
-  ElSegmented,
-  ElSelect,
-} from 'element-plus';
+import { ElCard, ElOption, ElSegmented, ElSelect } from 'element-plus';
 
 import {
   deleteRegionalHolidayApi,
@@ -27,7 +20,6 @@ import DetailPanel from '../components/DetailPanel.vue';
 import FilterPanel from '../components/FilterPanel.vue';
 import StatsPanel from '../components/StatsPanel.vue';
 
-const router = useRouter();
 const loading = ref(false);
 
 // 假期类型颜色图例（与 DetailPanel.vue 中 leaveTypeConfig 保持一致）
@@ -329,14 +321,6 @@ async function loadEmployees() {
   }
 }
 
-function goBackHome() {
-  router.push('/employee/manage/users');
-}
-
-function goToWorkflow() {
-  router.push('/employee/manage/leave-workflows');
-}
-
 onMounted(() => {
   startLiveClock();
   Promise.all([
@@ -372,15 +356,6 @@ onUnmounted(() => {
             </span>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <ElButton @click="goBackHome">
-              {{ $t('page.leave.calendarView.backToWorkspace') }}
-            </ElButton>
-            <ElButton type="primary" plain>
-              {{ $t('page.leave.calendar') }}
-            </ElButton>
-            <ElButton @click="goToWorkflow">
-              {{ $t('page.leave.calendarView.workflowMaintenance') }}
-            </ElButton>
             <ElSelect
               v-model="searchForm.region"
               @change="searchForm.region = $event"
@@ -396,14 +371,13 @@ onUnmounted(() => {
               <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
             </ElSelect>
           </div>
+          <ElSegmented
+            v-model="activeTab"
+            :options="segmentedOptions"
+            style="margin-bottom: 12px"
+          />
         </div>
       </template>
-
-      <ElSegmented
-        v-model="activeTab"
-        :options="segmentedOptions"
-        style="margin-bottom: 12px"
-      />
 
       <div v-show="activeTab === 'overview'">
         <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
