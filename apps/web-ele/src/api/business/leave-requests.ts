@@ -32,6 +32,9 @@ export namespace LeaveRequestApi {
     handover_to: null | string;
     id: string;
     leave_type: LeaveType;
+    medical_certificate_id: null | string;
+    medical_certificate_name: null | string;
+    medical_certificate_url: null | string;
     reason: null | string;
     review_comment: null | string;
     reviewed_at: null | string;
@@ -217,10 +220,27 @@ export async function getLeaveCalendarApi(
   );
 }
 
-/** 创建请假申请 */
+/** 创建请假申请（病假时通过 FormData 上传病假证明） */
 export async function createLeaveRequestApi(
   data: LeaveRequestApi.CreateLeaveRequestParams,
+  medicalCertificate?: File | null,
 ) {
+  if (medicalCertificate) {
+    const formData = new FormData();
+    formData.append('leave_type', data.leave_type);
+    formData.append('start_date', data.start_date);
+    formData.append('end_date', data.end_date);
+    formData.append('session', data.session ?? 'full_day');
+    if (data.handover_to) formData.append('handover_to', data.handover_to);
+    if (data.reason) formData.append('reason', data.reason);
+    if (data.employee_id) formData.append('employee_id', data.employee_id);
+    formData.append('medical_certificate', medicalCertificate);
+    return requestClient.post<LeaveRequestApi.LeaveRequest>(
+      '/me/leave-requests',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+  }
   return requestClient.post<LeaveRequestApi.LeaveRequest>(
     '/me/leave-requests',
     data,

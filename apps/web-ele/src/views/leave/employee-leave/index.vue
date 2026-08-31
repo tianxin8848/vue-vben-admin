@@ -17,6 +17,7 @@ import {
   ElSegmented,
   ElSelect,
   ElTag,
+  ElUpload,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -54,6 +55,10 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
   handover_to: null,
   reason: null,
 });
+
+// 病假证明文件
+const medicalCertificate = ref<File | null>(null);
+const isSickLeave = computed(() => form.leave_type === 'sick');
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const departmentRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
@@ -174,6 +179,15 @@ const stats = computed(() => {
   };
 });
 
+// 病假证明文件选择 / 移除
+function handleMedicalCertificateChange(file: { raw?: File }) {
+  medicalCertificate.value = file.raw ?? null;
+}
+
+function handleMedicalCertificateRemove() {
+  medicalCertificate.value = null;
+}
+
 // 提交请假申请
 async function handleSubmit() {
   if (!form.start_date || !form.end_date) {
@@ -193,16 +207,26 @@ async function handleSubmit() {
     return;
   }
 
+  if (isSickLeave.value && !medicalCertificate.value) {
+    ElMessage.warning(
+      $t('page.leave.employeeLeave.validation.medicalCertificateRequired'),
+    );
+    return;
+  }
+
   modalApi.setState({ confirmLoading: true });
   try {
-    await createLeaveRequestApi({
-      leave_type: form.leave_type,
-      start_date: form.start_date,
-      end_date: form.end_date,
-      session: form.session,
-      handover_to: form.handover_to || null,
-      reason: form.reason || null,
-    });
+    await createLeaveRequestApi(
+      {
+        leave_type: form.leave_type,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        session: form.session,
+        handover_to: form.handover_to || null,
+        reason: form.reason || null,
+      },
+      medicalCertificate.value,
+    );
 
     ElMessage.success($t('page.leave.employeeLeave.message.submitSuccess'));
     resetForm();
@@ -237,6 +261,7 @@ function resetForm() {
   form.session = 'full_day';
   form.handover_to = null;
   form.reason = null;
+  medicalCertificate.value = null;
 }
 
 // 撤回请假申请
@@ -691,6 +716,37 @@ onMounted(() => {
             :rows="3"
             :placeholder="$t('page.leave.employeeLeave.form.reasonPlaceholder')"
           />
+        </ElFormItem>
+
+        <ElFormItem
+          v-if="isSickLeave"
+          :label="$t('page.leave.employeeLeave.form.medicalCertificate')"
+          required
+        >
+          <ElUpload
+            :auto-upload="false"
+            :limit="1"
+            :on-change="handleMedicalCertificateChange"
+            :on-remove="handleMedicalCertificateRemove"
+            :on-exceed="
+              () =>
+                medicalCertificate &&
+                ElMessage.warning(
+                  $t(
+                    'page.leave.employeeLeave.validation.medicalCertificateSingle',
+                  ),
+                )
+            "
+          >
+            <ElButton type="primary" plain>
+              {{ $t('page.leave.employeeLeave.form.medicalCertificateButton') }}
+            </ElButton>
+            <template #tip>
+              <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
+                {{ $t('page.leave.employeeLeave.form.medicalCertificateHint') }}
+              </div>
+            </template>
+          </ElUpload>
         </ElFormItem>
 
         <div
