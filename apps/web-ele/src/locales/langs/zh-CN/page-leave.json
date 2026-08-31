@@ -13,6 +13,7 @@
       "employeeLeave": {
         "recordsTab": "请假记录",
         "calendarTab": "年历视图",
+        "departmentTab": "部门请假",
         "validation": {
           "completeDates": "请完整选择请假日期",
           "startAfterEnd": "开始日期不能晚于结束日期",
@@ -32,7 +33,9 @@
           "dayCount": "当年覆盖天数",
           "pendingCount": "待审批记录",
           "annualEntitlement": "当年年假总计",
-          "annualAvailable": "当年年假可用"
+          "annualAvailable": "当年年假可用",
+          "lieuGranted": "当年调休已授",
+          "lieuAvailable": "当年调休可用"
         },
         "listTitle": "我的请假记录（{count} 条）",
         "button": {
@@ -73,6 +76,10 @@
           "createdAt": "创建时间",
           "action": "操作",
           "refresh": "刷新"
+        },
+        "department": {
+          "listTitle": "同部门请假记录（{count} 条）",
+          "empty": "同部门暂无请假记录。"
         }
       },
       "table": {
@@ -219,6 +226,20 @@
         "allRegions": "总览（全部地区）",
         "unsetRegion": "未设置地区",
         "ungrouped": "未分组",
+        "lieuAdmin": {
+          "title": "调休额度管理",
+          "selectEmployee": "请选择员工",
+          "query": "查询",
+          "queryFailed": "查询失败",
+          "grant": "授予",
+          "grantSuccess": "已增加 {days} 天调休",
+          "grantFailed": "授予失败",
+          "daysPositive": "天数必须大于 0",
+          "granted": "已授天数",
+          "used": "已用天数",
+          "available": "可用天数",
+          "capped": "是否触顶"
+        },
         "weekdays": {
           "sun": "星期日",
           "mon": "星期一",

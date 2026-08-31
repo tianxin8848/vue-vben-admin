@@ -13,6 +13,7 @@
       "employeeLeave": {
         "recordsTab": "Leave Records",
         "calendarTab": "Year Calendar",
+        "departmentTab": "Department",
         "validation": {
           "completeDates": "Please select leave dates completely",
           "startAfterEnd": "Start date cannot be later than end date",
@@ -32,7 +33,9 @@
           "dayCount": " Taken leave days (current year)",
           "pendingCount": "Pending records",
           "annualEntitlement": "Annual leave entitlement",
-          "annualAvailable": "Annual leave available"
+          "annualAvailable": "Annual leave available",
+          "lieuGranted": "Lieu granted",
+          "lieuAvailable": "Lieu available"
         },
         "listTitle": "My Leave Records ({count} total)",
         "button": {
@@ -73,6 +76,10 @@
           "createdAt": "Created At",
           "action": "Action",
           "refresh": "Refresh"
+        },
+        "department": {
+          "listTitle": "Department Leave Records ({count} total)",
+          "empty": "No leave records in your department."
         }
       },
       "table": {
@@ -219,6 +226,20 @@
         "allRegions": "Overview (All Regions)",
         "unsetRegion": "Unset Region",
         "ungrouped": "Ungrouped",
+        "lieuAdmin": {
+          "title": "Lieu Leave Management",
+          "selectEmployee": "Select an employee",
+          "query": "Query",
+          "queryFailed": "Query failed",
+          "grant": "Grant",
+          "grantSuccess": "Granted {days} day(s) of lieu leave",
+          "grantFailed": "Grant failed",
+          "daysPositive": "Days must be greater than 0",
+          "granted": "Granted",
+          "used": "Used",
+          "available": "Available",
+          "capped": "Capped"
+        },
         "weekdays": {
           "sun": "Sunday",
           "mon": "Monday",

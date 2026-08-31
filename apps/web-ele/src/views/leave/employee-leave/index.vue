@@ -23,7 +23,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createLeaveRequestApi,
   getAnnualLeaveSummaryApi,
+  getMyDepartmentLeaveRequestsApi,
   getMyLeaveRequestsApi,
+  getMyLeaveTypesApi,
+  getMyLieuLeaveSummaryApi,
   withdrawLeaveRequestApi,
 } from '#/api';
 import { $t } from '#/locales';
@@ -51,20 +54,31 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
 });
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
+const departmentRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
+const remoteLeaveTypes = ref<LeaveRequestApi.LeaveTypeOption[]>([]);
+const lieuSummary = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
 const hideWithdrawnOrRejected = ref(false);
 
-// 响应式 i18n 映射
-const leaveTypeOptions = computed(() => createLeaveTypeOptions($t));
+// 响应式 i18n 映射（接口返回的 code 优先，未覆盖时回退到本地映射）
+const leaveTypeOptions = computed(() => {
+  const fallback = createLeaveTypeOptions($t);
+  const merged: Record<string, string> = { ...fallback };
+  remoteLeaveTypes.value.forEach((item) => {
+    merged[item.code] = item.label;
+  });
+  return merged;
+});
 const sessionOptions = computed(() => createSessionOptions($t));
 const statusOptions = computed(() => createStatusOptions($t));
 const tableColumns = computed(() => createTableColumns($t));
 const sharedToolbarConfig = computed(() => createSharedToolbarConfig($t));
 
 // Tab 状态
-type TabKey = 'calendar' | 'records';
+type TabKey = 'calendar' | 'department' | 'records';
 const activeTab = ref<TabKey>('records');
 const segmentedOptions = computed(() => [
   { label: $t('page.leave.employeeLeave.recordsTab'), value: 'records' },
+  { label: $t('page.leave.employeeLeave.departmentTab'), value: 'department' },
   { label: $t('page.leave.employeeLeave.calendarTab'), value: 'calendar' },
 ]);
 
@@ -103,6 +117,13 @@ function refreshTable() {
 
 // 年假汇总
 const annualSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
+
+// 切换 Tab 时按需加载部门请假
+watch(activeTab, (tab) => {
+  if (tab === 'department' && departmentRequests.value.length === 0) {
+    fetchDepartmentData();
+  }
+});
 
 // 年历相关
 const currentYear = ref(new Date().getFullYear());
@@ -154,6 +175,8 @@ const stats = computed(() => {
     ).length,
     annualEntitlement: annualSummary.value?.entitlement_days ?? '-',
     annualAvailable: annualSummary.value?.available_days ?? '-',
+    lieuGranted: lieuSummary.value?.granted_days ?? '-',
+    lieuAvailable: lieuSummary.value?.available_days ?? '-',
   };
 });
 
@@ -237,18 +260,41 @@ async function handleWithdraw(id: string) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [requests, summary] = await Promise.all([
+    const [requests, summary, lieu] = await Promise.all([
       getMyLeaveRequestsApi(),
       getAnnualLeaveSummaryApi(currentYear.value),
+      getMyLieuLeaveSummaryApi(currentYear.value).catch(() => null),
     ]);
     leaveRequests.value = requests || [];
     annualSummary.value = summary;
+    lieuSummary.value = lieu;
     refreshTable();
   } catch {
     leaveRequests.value = [];
     annualSummary.value = null;
+    lieuSummary.value = null;
   } finally {
     loading.value = false;
+  }
+}
+
+// 加载同部门请假
+async function fetchDepartmentData() {
+  try {
+    const data = await getMyDepartmentLeaveRequestsApi();
+    departmentRequests.value = data || [];
+  } catch {
+    departmentRequests.value = [];
+  }
+}
+
+// 加载请假类型目录
+async function fetchLeaveTypes() {
+  try {
+    const data = await getMyLeaveTypesApi();
+    remoteLeaveTypes.value = data || [];
+  } catch {
+    remoteLeaveTypes.value = [];
   }
 }
 
@@ -262,6 +308,7 @@ function onSelectDate(date: Date) {
 
 onMounted(() => {
   fetchData();
+  fetchLeaveTypes();
 });
 </script>
 
@@ -275,7 +322,7 @@ onMounted(() => {
         v-show="activeTab === 'records'"
         style="
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(7, 1fr);
           gap: 12px;
           margin-bottom: 16px;
         "
@@ -350,6 +397,34 @@ onMounted(() => {
             {{ stats.annualAvailable }}
           </div>
         </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.employeeLeave.stats.lieuGranted') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.lieuGranted }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.employeeLeave.stats.lieuAvailable') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.lieuAvailable }}
+          </div>
+        </div>
       </div>
 
       <BasicTable
@@ -416,6 +491,58 @@ onMounted(() => {
           <span v-else style="color: hsl(var(--muted-foreground))">-</span>
         </template>
       </BasicTable>
+
+      <!-- 同部门同事请假 -->
+      <ElCard v-show="activeTab === 'department'" class="flex-1">
+        <template #header>
+          <span>{{
+            $t('page.leave.employeeLeave.department.listTitle', {
+              count: departmentRequests.length,
+            })
+          }}</span>
+        </template>
+        <div
+          v-if="!departmentRequests.length"
+          style="color: hsl(var(--muted-foreground))"
+        >
+          {{ $t('page.leave.employeeLeave.department.empty') }}
+        </div>
+        <div v-else style="display: flex; flex-direction: column; gap: 10px">
+          <div
+            v-for="item in departmentRequests"
+            :key="item.id"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 12px;
+              align-items: center;
+              padding: 10px 12px;
+              background: hsl(var(--muted));
+              border-radius: 10px;
+            "
+          >
+            <span style="font-weight: 600">{{ item.employee_name }}</span>
+            <ElTag type="info">{{ leaveTypeOptions[item.leave_type] }}</ElTag>
+            <ElTag>{{ sessionOptions[item.session] }}</ElTag>
+            <ElTag :type="statusTagType(item.approval_status)">
+              {{ statusOptions[item.approval_status] }}
+            </ElTag>
+            <span style="color: hsl(var(--muted-foreground))">
+              {{ item.start_date }}
+              <template v-if="item.start_date !== item.end_date">
+                {{ $t('page.leave.employeeLeave.date.to') }}
+                {{ item.end_date }}
+              </template>
+            </span>
+            <span
+              v-if="item.reason"
+              style="color: hsl(var(--muted-foreground))"
+            >
+              {{ item.reason }}
+            </span>
+          </div>
+        </div>
+      </ElCard>
 
       <!-- 我的请假年历 -->
       <ElCard

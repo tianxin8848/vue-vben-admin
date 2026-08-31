@@ -141,6 +141,29 @@ export namespace LeaveRequestApi {
     }[];
     regions: string[];
   }
+
+  /** 请假类型目录项（/me/leave-requests/leave-types） */
+  export interface LeaveTypeOption {
+    code: string;
+    label: string;
+  }
+
+  /** 调休汇总（granted/used/available，capped 表示是否触顶） */
+  export interface LieuLeaveSummary {
+    available_days: number;
+    capped: boolean;
+    employee_id: string;
+    granted_days: number;
+    used_days: number;
+    year: number;
+  }
+
+  /** 增加调休额度请求体 */
+  export interface AddLieuLeaveGrantParams {
+    days: number;
+    employee_id: string;
+    year: number;
+  }
 }
 
 // ─── 请假申请 ────────────────────────────────────────────────────────────────
@@ -242,5 +265,47 @@ export async function withdrawLeaveRequestApi(
   return requestClient.request<LeaveRequestApi.LeaveRequest>(
     `/leave-requests/${id}/withdraw`,
     { method: 'PATCH', data },
+  );
+}
+
+// ─── 今日后端新增接口 ────────────────────────────────────────────────────────
+
+/** 当前用户可用请假类型目录 */
+export async function getMyLeaveTypesApi() {
+  return requestClient.get<LeaveRequestApi.LeaveTypeOption[]>(
+    '/me/leave-requests/leave-types',
+  );
+}
+
+/** 当前用户同部门同事的请假列表 */
+export async function getMyDepartmentLeaveRequestsApi() {
+  return requestClient.get<LeaveRequestApi.LeaveRequest[]>(
+    '/me/leave-requests/department',
+  );
+}
+
+/** 当前用户指定年份的调休汇总 */
+export async function getMyLieuLeaveSummaryApi(year: number) {
+  return requestClient.get<LeaveRequestApi.LieuLeaveSummary>(
+    '/me/leave-requests/lieu-leave/summary',
+    { params: { year } },
+  );
+}
+
+/** 指定员工、年份的调休汇总（需 leave_calendar 权限） */
+export async function getLieuLeaveSummaryApi(employeeId: string, year: number) {
+  return requestClient.get<LeaveRequestApi.LieuLeaveSummary>(
+    '/leave-requests/lieu-leave/summary',
+    { params: { employee_id: employeeId, year } },
+  );
+}
+
+/** 为指定员工、年份增加调休天数（需 leave_calendar 权限） */
+export async function addLieuLeaveGrantApi(
+  data: LeaveRequestApi.AddLieuLeaveGrantParams,
+) {
+  return requestClient.post<LeaveRequestApi.LieuLeaveSummary>(
+    '/leave-requests/lieu-leave/grants',
+    data,
   );
 }

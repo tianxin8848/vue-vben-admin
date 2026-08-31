@@ -3,14 +3,24 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { ElCard, ElOption, ElSegmented, ElSelect } from 'element-plus';
+import {
+  ElButton,
+  ElCard,
+  ElInputNumber,
+  ElMessage,
+  ElOption,
+  ElSegmented,
+  ElSelect,
+} from 'element-plus';
 
 import {
+  addLieuLeaveGrantApi,
   deleteRegionalHolidayApi,
   getAnnualLeaveSummaryApi,
   getEmployeesApi,
   getLeaveCalendarApi,
   getLeaveCalendarMetaApi,
+  getLieuLeaveSummaryApi,
   upsertRegionalHolidayApi,
 } from '#/api';
 import { $t } from '#/locales';
@@ -334,10 +344,187 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer) clearInterval(timer);
 });
+
+// ─── 调休额度管理（管理员） ────────────────────────────────────────────────
+const lieuTargetEmployeeId = ref('');
+const lieuQueryYear = ref(new Date().getFullYear());
+const lieuQueryResult = ref<null | {
+  available_days: number;
+  capped: boolean;
+  employee_id: string;
+  granted_days: number;
+  used_days: number;
+  year: number;
+}>(null);
+const lieuGrantDays = ref(1);
+const lieuLoading = ref(false);
+
+async function queryLieuSummary() {
+  if (!lieuTargetEmployeeId.value) {
+    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
+    return;
+  }
+  lieuLoading.value = true;
+  try {
+    const data = await getLieuLeaveSummaryApi(
+      lieuTargetEmployeeId.value,
+      lieuQueryYear.value,
+    );
+    lieuQueryResult.value = data;
+  } catch {
+    lieuQueryResult.value = null;
+    ElMessage.error($t('page.leave.calendarView.lieuAdmin.queryFailed'));
+  } finally {
+    lieuLoading.value = false;
+  }
+}
+
+async function grantLieu() {
+  if (!lieuTargetEmployeeId.value) {
+    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
+    return;
+  }
+  if (!lieuGrantDays.value || lieuGrantDays.value <= 0) {
+    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.daysPositive'));
+    return;
+  }
+  lieuLoading.value = true;
+  try {
+    const data = await addLieuLeaveGrantApi({
+      employee_id: lieuTargetEmployeeId.value,
+      year: lieuQueryYear.value,
+      days: lieuGrantDays.value,
+    });
+    lieuQueryResult.value = data;
+    ElMessage.success(
+      $t('page.leave.calendarView.lieuAdmin.grantSuccess', {
+        days: lieuGrantDays.value,
+      }),
+    );
+  } catch {
+    ElMessage.error($t('page.leave.calendarView.lieuAdmin.grantFailed'));
+  } finally {
+    lieuLoading.value = false;
+  }
+}
 </script>
 
 <template>
   <Page>
+    <!-- 调休额度管理（管理员） -->
+    <ElCard style="margin-bottom: 12px">
+      <template #header>
+        <span>{{ $t('page.leave.calendarView.lieuAdmin.title') }}</span>
+      </template>
+      <div
+        style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center"
+      >
+        <ElSelect
+          v-model="lieuTargetEmployeeId"
+          filterable
+          :placeholder="$t('page.leave.calendarView.lieuAdmin.selectEmployee')"
+          style="width: 240px"
+        >
+          <ElOption
+            v-for="emp in employeesDirectory"
+            :key="emp.id"
+            :label="`${emp.name}（${emp.username}）`"
+            :value="emp.id"
+          />
+        </ElSelect>
+        <ElInputNumber
+          v-model="lieuQueryYear"
+          :min="2000"
+          :max="2100"
+          :step="1"
+          style="width: 140px"
+        />
+        <ElButton
+          type="primary"
+          :loading="lieuLoading"
+          @click="queryLieuSummary"
+        >
+          {{ $t('page.leave.calendarView.lieuAdmin.query') }}
+        </ElButton>
+        <ElInputNumber
+          v-model="lieuGrantDays"
+          :min="0.5"
+          :step="0.5"
+          :precision="1"
+          style="width: 140px"
+        />
+        <ElButton type="success" :loading="lieuLoading" @click="grantLieu">
+          {{ $t('page.leave.calendarView.lieuAdmin.grant') }}
+        </ElButton>
+      </div>
+      <div
+        v-if="lieuQueryResult"
+        style="
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-top: 16px;
+        "
+      >
+        <div
+          style="
+            padding: 12px 16px;
+            background: hsl(var(--muted));
+            border-radius: 10px;
+          "
+        >
+          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.calendarView.lieuAdmin.granted') }}
+          </div>
+          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
+            {{ lieuQueryResult.granted_days }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 12px 16px;
+            background: hsl(var(--muted));
+            border-radius: 10px;
+          "
+        >
+          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.calendarView.lieuAdmin.used') }}
+          </div>
+          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
+            {{ lieuQueryResult.used_days }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 12px 16px;
+            background: hsl(var(--muted));
+            border-radius: 10px;
+          "
+        >
+          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.calendarView.lieuAdmin.available') }}
+          </div>
+          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
+            {{ lieuQueryResult.available_days }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 12px 16px;
+            background: hsl(var(--muted));
+            border-radius: 10px;
+          "
+        >
+          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
+            {{ $t('page.leave.calendarView.lieuAdmin.capped') }}
+          </div>
+          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
+            {{ lieuQueryResult.capped ? '✓' : '—' }}
+          </div>
+        </div>
+      </div>
+    </ElCard>
+
     <ElCard>
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
