@@ -54,7 +54,7 @@ export function useClaimData() {
     }
   }
 
-  /** 历史记录（已结束：已通过 / 已驳回 / 已撤回） */
+  /** 历史记录：仅已批准（approved） */
   async function loadMyHistory() {
     try {
       myHistory.value = await getMyClaimsApi(HISTORY_STATUSES);

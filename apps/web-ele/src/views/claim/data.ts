@@ -20,12 +20,8 @@ export const MY_ACTIVE_STATUSES: ClaimApi.ClaimApprovalStatus[] = [
   'pending',
 ];
 
-/** 「历史记录」Tab 的状态过滤：已通过 / 已驳回 / 已撤回（已结束） */
-export const HISTORY_STATUSES: ClaimApi.ClaimApprovalStatus[] = [
-  'approved',
-  'rejected',
-  'withdrawn',
-];
+/** 「历史记录」Tab 的状态过滤：仅显示已批准（approved） */
+export const HISTORY_STATUSES: ClaimApi.ClaimApprovalStatus[] = ['approved'];
 
 export function formatDate(dt: null | string) {
   if (!dt) return '-';

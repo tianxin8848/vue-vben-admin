@@ -9,6 +9,9 @@ import {
   getMyPendingClaimApprovalsApi,
 } from '#/api';
 
+/** Records Claim 审批记录只保留已通过/已拒绝，排除撤回（withdrawn）和流转中间态（pending） */
+const RECORDS_CLAIM_ALLOWED_STATUSES = new Set(['approved', 'rejected']);
+
 export function useApprovalData() {
   const loading = ref(false);
 
@@ -30,7 +33,9 @@ export function useApprovalData() {
       leaveRequests.value = pendingLeave;
       leaveApprovalRecords.value = recordsLeave;
       claimApprovals.value = pendingClaim;
-      claimApprovalRecords.value = recordsClaim;
+      claimApprovalRecords.value = recordsClaim.filter((r) =>
+        RECORDS_CLAIM_ALLOWED_STATUSES.has(r.approval_status_after),
+      );
     } finally {
       loading.value = false;
     }
