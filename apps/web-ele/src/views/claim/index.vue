@@ -6,7 +6,7 @@ import { computed, ref, watch } from 'vue';
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElSegmented, ElTag } from 'element-plus';
+import { ElButton, ElDatePicker, ElSegmented, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
@@ -21,6 +21,7 @@ import {
   buildTabColumns,
   buildTableTitles,
   dataFor,
+  filterByInvoiceDate,
   formatDate,
   formatStatus,
   statusTypeMap,
@@ -60,6 +61,17 @@ const editDrawerRef = ref<InstanceType<typeof EditClaimDrawer>>();
 // ─── 批量提交 / 导出：选中的草稿 / 已通过记录 ─────────────────────────────────
 const selectedDraftCount = ref(0);
 const selectedApprovedCount = ref(0);
+
+// ─── 日期范围筛选（按 invoice_date 客户端过滤） ──────────────────────────────
+const dateRange = ref<[string, string] | null>(null);
+const isFilterActive = computed(
+  () => !!dateRange.value && (!!dateRange.value[0] || !!dateRange.value[1]),
+);
+const filteredCount = computed(() => {
+  if (!isFilterActive.value) return 0;
+  const all = dataFor(data.activeTab.value, data.dataRefs());
+  return filterByInvoiceDate(all, dateRange.value).length;
+});
 
 function updateSelection() {
   const records = tableApi.grid?.getCheckboxRecords() ?? [];
@@ -128,9 +140,11 @@ const [BasicTable, tableApi] = useVbenVxeGrid({
 });
 
 function refreshTable() {
+  const rawData = dataFor(data.activeTab.value, data.dataRefs());
+  const filteredData = filterByInvoiceDate(rawData, dateRange.value);
   tableApi.setGridOptions({
     columns: tabColumns.value[data.activeTab.value],
-    data: dataFor(data.activeTab.value, data.dataRefs()),
+    data: filteredData,
     checkboxConfig: {
       highlight: true,
       checkMethod: ({ row }: { row: ClaimApi.ClaimResponse }) =>
@@ -156,6 +170,9 @@ watch(
   () => [tabColumns.value, sharedToolbarConfig.value],
   () => refreshTable(),
 );
+
+// 日期筛选变化时重刷表格
+watch(dateRange, () => refreshTable(), { deep: true });
 
 // ─── 新建 / 编辑 ─────────────────────────────────────────────────────────────
 function openCreateDrawer() {
@@ -233,6 +250,38 @@ async function onExport() {
           })
         }}
       </p>
+
+      <!-- 按开票时间筛选发票 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-sm text-muted-foreground">
+          {{ $t('page.claim.filter.dateRange') }}
+        </span>
+        <ElDatePicker
+          v-model="dateRange"
+          type="daterange"
+          :range-separator="'-'"
+          :start-placeholder="$t('page.claim.filter.dateRangePlaceholder')"
+          :end-placeholder="$t('page.claim.filter.dateRangePlaceholder')"
+          value-format="YYYY-MM-DD"
+          clearable
+          style="width: 280px"
+        />
+        <ElButton
+          v-if="isFilterActive"
+          size="small"
+          @click="dateRange = null"
+        >
+          {{ $t('page.claim.filter.reset') }}
+        </ElButton>
+        <span
+          v-if="isFilterActive"
+          class="text-xs text-muted-foreground"
+        >
+          {{
+            $t('page.claim.filter.filteredCount', { count: filteredCount })
+          }}
+        </span>
+      </div>
 
       <BasicTable :table-title="activeTableTitle" class="min-h-0 flex-1">
         <template #toolbar-tools>

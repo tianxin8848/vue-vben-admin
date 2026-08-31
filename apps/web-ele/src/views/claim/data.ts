@@ -28,6 +28,25 @@ export function formatDate(dt: null | string) {
   return dt.replace('T', ' ').slice(0, 16);
 }
 
+/**
+ * 按 invoice_date 进行客户端日期范围过滤。
+ * - 未选范围时视为无筛选
+ * - 选中范围后排除无 invoice_date 的记录及范围外的记录
+ */
+export function filterByInvoiceDate(
+  list: ClaimApi.ClaimResponse[],
+  range: [string, string] | null,
+): ClaimApi.ClaimResponse[] {
+  if (!range || (!range[0] && !range[1])) return list;
+  const [start, end] = range;
+  return list.filter((item) => {
+    if (!item.invoice_date) return false;
+    if (start && item.invoice_date < start) return false;
+    if (end && item.invoice_date > end) return false;
+    return true;
+  });
+}
+
 export function buildSegmentedOptions(t: (key: string) => string) {
   return [
     { label: t('page.claim.tabs.my'), value: 'my' },
@@ -103,6 +122,12 @@ export function buildTabColumns(t: (key: string) => string) {
       slots: { default: 'invoice_no' },
     },
     {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 130,
+      slots: { default: 'invoice_date' },
+    },
+    {
       field: 'description',
       title: t('page.claim.columns.description'),
       minWidth: 160,
@@ -147,6 +172,12 @@ export function buildTabColumns(t: (key: string) => string) {
       title: t('page.claim.columns.invoiceNo'),
       width: 130,
       slots: { default: 'invoice_no' },
+    },
+    {
+      field: 'invoice_date',
+      title: t('page.claim.columns.invoiceDate'),
+      width: 130,
+      slots: { default: 'invoice_date' },
     },
     {
       field: 'description',

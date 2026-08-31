@@ -83,6 +83,12 @@
         "reasonPlaceholder": "请选择",
         "reviewCommentPlaceholder": "通过可不填；驳回必须填写原因"
       },
+      "filter": {
+        "dateRange": "开票时间范围",
+        "dateRangePlaceholder": "选择开票时间范围",
+        "reset": "重置",
+        "filteredCount": "已筛选 {count} 条"
+      },
       "drawer": {
         "createTitle": "新建报销草稿",
         "reviewTitle": "审批报销申请",

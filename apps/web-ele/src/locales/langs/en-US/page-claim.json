@@ -83,6 +83,12 @@
         "reasonPlaceholder": "Please select",
         "reviewCommentPlaceholder": "Optional for approval; required for rejection"
       },
+      "filter": {
+        "dateRange": "Invoice Date Range",
+        "dateRangePlaceholder": "Select invoice date range",
+        "reset": "Reset",
+        "filteredCount": "{count} filtered"
+      },
       "drawer": {
         "createTitle": "New Claim Draft",
         "reviewTitle": "Review Claim",
