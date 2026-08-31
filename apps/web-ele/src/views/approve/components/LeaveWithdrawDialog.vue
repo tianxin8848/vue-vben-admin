@@ -15,7 +15,7 @@ import {
 import { withdrawLeaveRequestApi } from '#/api';
 import { $t } from '#/locales';
 
-import { leaveTypeLabelMap, sessionLabelMap } from '../constants';
+import { resolveLeaveTypeLabel, sessionLabelMap } from '../constants';
 
 const props = defineProps<{
   current: LeaveRequestApi.LeaveRequest | null;
@@ -67,9 +67,7 @@ async function submit() {
       </p>
       <p>
         {{ $t('page.approve.leaveTypeLabel')
-        }}{{
-          $t(leaveTypeLabelMap[current.leave_type] || current.leave_type)
-        }}
+        }}{{ resolveLeaveTypeLabel(current.leave_type) }}
         |
         {{ $t(sessionLabelMap[current.session] || current.session) }}
       </p>

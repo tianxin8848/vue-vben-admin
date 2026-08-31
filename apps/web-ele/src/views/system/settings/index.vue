@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import type { SystemSettingsApi } from '#/api';
 
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { useI18n } from '@vben/locales';
 
-import { ElAlert, ElButton, ElCard } from 'element-plus';
+import { ElAlert, ElButton, ElCard, ElSegmented } from 'element-plus';
 
 import {
   ALL_MODULE_CATALOG,
@@ -21,6 +21,7 @@ import CurrencyEditor from './components/CurrencyEditor.vue';
 import EmployeeEditableFieldsEditor from './components/EmployeeEditableFieldsEditor.vue';
 import HolidayCatalogEditor from './components/HolidayCatalogEditor.vue';
 import HolidayEditor from './components/HolidayEditor.vue';
+import LeaveTypesEditor from './components/LeaveTypesEditor.vue';
 import SettingsForm from './components/SettingsForm.vue';
 import SettingsPreview from './components/SettingsPreview.vue';
 
@@ -37,6 +38,7 @@ const claimCurrenciesStr = ref('');
 
 const selectedModules = ref<string[]>([]);
 const selectedEditableFields = ref<string[]>([]);
+const leaveTypes = ref<SystemSettingsApi.LeaveTypeItem[]>([]);
 
 const formMessage = ref('');
 const formMessageType = ref<'' | 'error' | 'success'>('');
@@ -45,17 +47,37 @@ const holidayMessageType = ref<'' | 'error' | 'success'>('');
 const catalogMessage = ref('');
 const catalogMessageType = ref<'' | 'error' | 'success'>('');
 
-type SettingsTab = 'basic' | 'claim' | 'employee' | 'holiday' | 'preview';
+type SettingsTab =
+  | 'basic'
+  | 'claim'
+  | 'employee'
+  | 'holiday'
+  | 'leave'
+  | 'preview';
 const VALID_TABS = new Set<SettingsTab>([
   'basic',
   'claim',
   'employee',
   'holiday',
+  'leave',
   'preview',
 ]);
 const activeTab = ref<SettingsTab>('basic');
 
 const route = useRoute();
+
+// Tab 切换器选项
+const segmentedOptions = computed(() => [
+  { label: t('page.system.settingsDetail.basicConfig'), value: 'basic' },
+  {
+    label: t('page.system.settingsDetail.employeeEditableFields'),
+    value: 'employee',
+  },
+  { label: t('page.system.settingsDetail.claimConfig'), value: 'claim' },
+  { label: t('page.system.settingsDetail.regionalHoliday'), value: 'holiday' },
+  { label: t('page.system.settingsDetail.leaveTypeConfig'), value: 'leave' },
+  { label: t('page.system.settingsDetail.previewTab'), value: 'preview' },
+]);
 
 // 从路由 query 读取分区标识，用于工作台快捷导航跳转后定位分区
 function applyTabFromQuery() {
@@ -137,6 +159,7 @@ async function fetchSettings() {
       selectedEditableFields.value = [
         ...(settings.value.employee_self_editable_fields || []),
       ];
+      leaveTypes.value = [...(settings.value.leave_types || [])];
     }
   } catch (error: any) {
     console.error('[Settings][fetchSettings] 请求失败', error);
@@ -174,6 +197,7 @@ async function handleSaveSettings() {
       regional_holidays: settings.value?.regional_holidays || [],
       regional_holiday_catalogs:
         settings.value?.regional_holiday_catalogs || [],
+      leave_types: [...leaveTypes.value],
     };
     settings.value = await updateSystemSettingsApi(data);
     showFormMessage(
@@ -281,6 +305,13 @@ onMounted(() => {
 <template>
   <Page v-loading="loading">
     <div class="flex h-full flex-col gap-2">
+      <!-- Tab 切换器 -->
+      <ElSegmented
+        v-model="activeTab"
+        :options="segmentedOptions"
+        style="margin-bottom: 8px"
+      />
+
       <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
         <ElCard>
@@ -411,6 +442,32 @@ onMounted(() => {
           :settings="settings"
           @delete-holiday="handleDeleteHoliday"
         />
+      </div>
+
+      <!-- 请假类型管理 -->
+      <div v-show="activeTab === 'leave'" class="min-h-0 flex-1">
+        <ElCard>
+          <template #header>
+            <span class="text-base font-bold">{{
+              t('page.system.settingsDetail.leaveTypeConfig')
+            }}</span>
+          </template>
+          <LeaveTypesEditor v-model="leaveTypes" @save="handleSaveSettings" />
+          <div class="mt-4 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
+            </ElButton>
+          </div>
+
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </ElCard>
       </div>
     </div>
   </Page>

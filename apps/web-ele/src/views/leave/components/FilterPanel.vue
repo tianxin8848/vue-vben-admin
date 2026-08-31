@@ -11,6 +11,8 @@ import {
 
 import { $t } from '#/locales';
 
+import { leaveTypeLegendItems } from '../shared/leave-types';
+
 interface SearchForm {
   team: string;
   region: string;
@@ -31,14 +33,6 @@ const emit = defineEmits<{
   (e: 'update:searchForm', value: SearchForm): void;
   (e: 'resetFilters'): void;
 }>();
-
-const leaveTypeConfig: Record<string, { color: string; labelKey: string }> = {
-  annual: { labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
-  personal: { labelKey: 'page.leave.leaveTypes.personal', color: '#fb923c' },
-  sick: { labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
-  lieu: { labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
-  long: { labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
-};
 
 function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
   emit('update:searchForm', { ...props.searchForm, [key]: value });
@@ -146,6 +140,8 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
       "
     >
       <div
+        v-for="cfg in leaveTypeLegendItems"
+        :key="cfg.key"
         style="
           display: flex;
           gap: 8px;
@@ -153,8 +149,6 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
           font-size: 13px;
           color: #64748b;
         "
-        v-for="(config, type) in leaveTypeConfig"
-        :key="type"
       >
         <span
           style="
@@ -163,9 +157,9 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
             height: 12px;
             border-radius: 50%;
           "
-          :style="{ background: config.color }"
+          :style="{ background: cfg.color }"
         ></span>
-        {{ $t(config.labelKey) }}
+        {{ cfg.label }}
       </div>
       <div
         style="

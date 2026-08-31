@@ -25,7 +25,6 @@ import {
   getAnnualLeaveSummaryApi,
   getMyDepartmentLeaveRequestsApi,
   getMyLeaveRequestsApi,
-  getMyLeaveTypesApi,
   getMyLieuLeaveSummaryApi,
   withdrawLeaveRequestApi,
 } from '#/api';
@@ -33,7 +32,10 @@ import { $t } from '#/locales';
 
 import CalendarPanel from '../components/CalendarPanel.vue';
 import {
-  createLeaveTypeOptions,
+  leaveTypeLabelOverride,
+  loadLeaveTypeLabels,
+} from '../shared/leave-types';
+import {
   createSessionOptions,
   createSharedToolbarConfig,
   createStatusOptions,
@@ -55,19 +57,11 @@ const form = reactive<LeaveRequestApi.CreateLeaveRequestParams>({
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const departmentRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
-const remoteLeaveTypes = ref<LeaveRequestApi.LeaveTypeOption[]>([]);
 const lieuSummary = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
 const hideWithdrawnOrRejected = ref(false);
 
-// 响应式 i18n 映射（接口返回的 code 优先，未覆盖时回退到本地映射）
-const leaveTypeOptions = computed(() => {
-  const fallback = createLeaveTypeOptions($t);
-  const merged: Record<string, string> = { ...fallback };
-  remoteLeaveTypes.value.forEach((item) => {
-    merged[item.code] = item.label;
-  });
-  return merged;
-});
+// 请假类型映射：直接用接口 system-settings.leave_types（code → 显示文本）
+const leaveTypeOptions = computed(() => leaveTypeLabelOverride.value);
 const sessionOptions = computed(() => createSessionOptions($t));
 const statusOptions = computed(() => createStatusOptions($t));
 const tableColumns = computed(() => createTableColumns($t));
@@ -288,14 +282,9 @@ async function fetchDepartmentData() {
   }
 }
 
-// 加载请假类型目录
+// 加载请假类型目录（来自 system-settings.leave_types）
 async function fetchLeaveTypes() {
-  try {
-    const data = await getMyLeaveTypesApi();
-    remoteLeaveTypes.value = data || [];
-  } catch {
-    remoteLeaveTypes.value = [];
-  }
+  await loadLeaveTypeLabels();
 }
 
 // 日期选择

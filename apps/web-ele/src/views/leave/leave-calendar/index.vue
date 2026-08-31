@@ -29,21 +29,12 @@ import CalendarPanel from '../components/CalendarPanel.vue';
 import DetailPanel from '../components/DetailPanel.vue';
 import FilterPanel from '../components/FilterPanel.vue';
 import StatsPanel from '../components/StatsPanel.vue';
+import {
+  leaveTypeLegendItems,
+  loadLeaveTypeLabels,
+} from '../shared/leave-types';
 
 const loading = ref(false);
-
-// 假期类型颜色图例（与 DetailPanel.vue 中 leaveTypeConfig 保持一致）
-const leaveTypeLegend = [
-  { key: 'annual', labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
-  {
-    key: 'personal',
-    labelKey: 'page.leave.leaveTypes.personal',
-    color: '#fb923c',
-  },
-  { key: 'sick', labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
-  { key: 'lieu', labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
-  { key: 'long', labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
-] as const;
 
 // Tab 状态
 type TabKey = 'calendar' | 'overview';
@@ -338,6 +329,7 @@ onMounted(() => {
     loadSystemSettings(),
     loadEmployees(),
     loadAnnualLeaveSummary(),
+    loadLeaveTypeLabels(),
   ]);
 });
 
@@ -531,7 +523,7 @@ async function grantLieu() {
           <span>{{ currentTime }}</span>
           <div class="flex flex-wrap items-center gap-3">
             <span
-              v-for="cfg in leaveTypeLegend"
+              v-for="cfg in leaveTypeLegendItems"
               :key="cfg.key"
               class="inline-flex items-center gap-1 text-xs text-muted-foreground"
             >
@@ -539,7 +531,7 @@ async function grantLieu() {
                 :style="{ background: cfg.color }"
                 class="inline-block size-2.5 rounded-full"
               ></span>
-              {{ $t(cfg.labelKey) }}
+              {{ cfg.label }}
             </span>
           </div>
           <div class="flex flex-wrap items-center gap-2">

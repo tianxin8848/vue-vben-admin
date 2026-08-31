@@ -38,6 +38,12 @@ export namespace SystemSettingsApi {
     label: string;
   }
 
+  /** 请假类型项（系统参数维护的请假类型目录） */
+  export interface LeaveTypeItem {
+    code: string;
+    label: string;
+  }
+
   /** 系统设置响应 */
   export interface SystemSettingsResponse {
     claim_currencies: ClaimCurrencyItem[];
@@ -48,6 +54,7 @@ export namespace SystemSettingsApi {
     employee_self_editable_fields: string[];
     employee_self_editable_fields_initialized: boolean;
     id: string;
+    leave_types: LeaveTypeItem[];
     modules: SystemModuleItem[];
     positions: string[];
     regional_holiday_catalogs: RegionalHolidayCatalogItem[];
@@ -62,6 +69,7 @@ export namespace SystemSettingsApi {
     claim_reasons?: ClaimReasonItem[];
     departments?: string[];
     employee_self_editable_fields?: string[];
+    leave_types?: LeaveTypeItem[];
     modules?: SystemModuleItem[];
     positions?: string[];
     regional_holiday_catalogs?: RegionalHolidayCatalogItem[];
@@ -82,10 +90,17 @@ export namespace SystemSettingsApi {
     region: string;
   }
 
-  /** 批量新增/更新区域假日请求参数 */
+  /**
+   * 批量新增/更新区域假日请求参数
+   * previous_* 用于"更新"场景定位旧记录：传值表示把 previous_* 标识的旧记录
+   * 更新为新的 region/start_date/end_date/holiday_name；不传则按新建处理。
+   */
   export interface RegionalHolidayRangeUpsert {
     end_date?: null | string;
     holiday_name: string;
+    previous_end_date?: null | string;
+    previous_region?: null | string;
+    previous_start_date?: null | string;
     region: string;
     start_date: string;
   }

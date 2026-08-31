@@ -16,6 +16,11 @@ import {
 
 import { getLeaveRequestApi, reviewLeaveRequestApi } from '#/api';
 
+import {
+  loadLeaveTypeLabels,
+  resolveLeaveTypeLabel,
+} from '../shared/leave-types';
+
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
@@ -24,14 +29,6 @@ const requestId = route.params.id as string;
 const leaveRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
 const showReviewModal = ref(false);
 const reviewComment = ref('');
-
-const leaveTypeOptions: Record<string, string> = {
-  sick: '病假',
-  annual: '年假',
-  personal: '事假',
-  lieu: '调休',
-  long: '长假',
-};
 
 const statusOptions: Record<string, string> = {
   pending: '待审批',
@@ -85,6 +82,7 @@ function goBack() {
 
 onMounted(() => {
   fetchDetail();
+  loadLeaveTypeLabels();
 });
 </script>
 
@@ -104,7 +102,7 @@ onMounted(() => {
         <div class="detail-row">
           <span class="label">请假类型</span>
           <span class="value">{{
-            leaveTypeOptions[leaveRequest.leave_type]
+            resolveLeaveTypeLabel(leaveRequest.leave_type)
           }}</span>
         </div>
         <div class="detail-row">

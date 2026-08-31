@@ -1,4 +1,8 @@
-import type { LeaveRequestApi } from '#/api';
+import type { LeaveRequestApi, SystemSettingsApi } from '#/api';
+
+import { ref } from 'vue';
+
+import { getSystemSettingsApi } from '#/api';
 
 /** 搜索表单类型 */
 export interface SearchForm {
@@ -9,13 +13,46 @@ export interface SearchForm {
   region: string;
 }
 
-export const leaveTypeLabelMap: Record<string, string> = {
-  annual: 'page.leave.leaveTypes.annual',
-  personal: 'page.leave.leaveTypes.personal',
-  sick: 'page.leave.leaveTypes.sick',
-  lieu: 'page.leave.leaveTypes.lieu',
-  long: 'page.leave.leaveTypes.long',
-};
+/**
+ * 接口返回的请假类型映射（code → 直接显示文本，非 i18n key）。
+ * 由 loadLeaveTypeLabels() 从 /api/v1/system-settings 的 leave_types 加载。
+ */
+export const leaveTypeLabelOverride = ref<Record<string, string>>({});
+
+/**
+ * 接口返回的请假类型下拉选项（{label, value}，label 为直接显示文本）。
+ * 由 loadLeaveTypeLabels() 加载，供搜索栏下拉使用。
+ */
+export const leaveTypeOptionList = ref<Array<{ label: string; value: string }>>(
+  [],
+);
+
+/** 从 system-settings 加载 leave_types，填充 override 与下拉选项 */
+export async function loadLeaveTypeLabels() {
+  try {
+    const settings = await getSystemSettingsApi();
+    const items: SystemSettingsApi.LeaveTypeItem[] = settings.leave_types || [];
+    const map: Record<string, string> = {};
+    const options: Array<{ label: string; value: string }> = [];
+    items.forEach((item) => {
+      if (!item.code) return;
+      map[item.code] = item.label;
+      options.push({ label: item.label, value: item.code });
+    });
+    leaveTypeLabelOverride.value = map;
+    leaveTypeOptionList.value = options;
+  } catch {
+    // 加载失败时保持回退映射，不影响审批页基本可用
+  }
+}
+
+/**
+ * 解析请假类型 code → 显示文本（直接来自接口 leave_types.label）。
+ * 未加载或未命中时回退到 code 本身。
+ */
+export function resolveLeaveTypeLabel(code: string): string {
+  return leaveTypeLabelOverride.value[code] || code;
+}
 
 export const sessionLabelMap: Record<string, string> = {
   full_day: 'page.leave.session.full_day',
@@ -67,15 +104,6 @@ export const statusOptions: Array<{ label: string; value: string }> = [
   { label: 'page.leave.approvalStatus.approved', value: 'approved' },
   { label: 'page.leave.approvalStatus.rejected', value: 'rejected' },
   { label: 'page.leave.approvalStatus.withdrawn', value: 'withdrawn' },
-];
-
-/** 请假类型选项（用于搜索栏下拉，仅在请假 Tab 显示，label 为 i18n 键路径） */
-export const leaveTypeOptions: Array<{ label: string; value: string }> = [
-  { label: 'page.leave.leaveTypes.annual', value: 'annual' },
-  { label: 'page.leave.leaveTypes.personal', value: 'personal' },
-  { label: 'page.leave.leaveTypes.sick', value: 'sick' },
-  { label: 'page.leave.leaveTypes.lieu', value: 'lieu' },
-  { label: 'page.leave.leaveTypes.long', value: 'long' },
 ];
 
 /** 把 ApprovalRecord 还原成 LeaveRequest，用于详情弹窗展示 */

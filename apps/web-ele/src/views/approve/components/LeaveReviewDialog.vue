@@ -15,7 +15,7 @@ import {
 import { reviewLeaveRequestApi } from '#/api';
 import { $t } from '#/locales';
 
-import { leaveTypeLabelMap, sessionLabelMap } from '../constants';
+import { resolveLeaveTypeLabel, sessionLabelMap } from '../constants';
 
 const props = defineProps<{
   current: LeaveRequestApi.LeaveRequest | null;
@@ -81,7 +81,7 @@ async function submit(action: 'approved' | 'rejected') {
       </p>
       <p>
         {{ $t('page.approve.leaveTypeLabel')
-        }}{{ $t(leaveTypeLabelMap[current.leave_type] || current.leave_type) }}
+        }}{{ resolveLeaveTypeLabel(current.leave_type) }}
         |
         {{ $t(sessionLabelMap[current.session] || current.session) }}
       </p>
@@ -106,10 +106,8 @@ async function submit(action: 'approved' | 'rejected') {
     </div>
     <template #footer>
       <ElButton @click="emit('update:modelValue', false)">
-{{
-        $t('page.approve.leaveReview.cancel')
-      }}
-</ElButton>
+        {{ $t('page.approve.leaveReview.cancel') }}
+      </ElButton>
       <ElButton type="danger" :loading="submitting" @click="submit('rejected')">
         {{ $t('page.approve.leaveReview.reject') }}
       </ElButton>

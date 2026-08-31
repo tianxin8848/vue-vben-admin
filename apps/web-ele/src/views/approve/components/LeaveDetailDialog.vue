@@ -6,7 +6,7 @@ import { ElButton, ElDialog, ElTag } from 'element-plus';
 import { $t } from '#/locales';
 
 import {
-  leaveTypeLabelMap,
+  resolveLeaveTypeLabel,
   sessionLabelMap,
   statusLabelMap,
   statusTypeMap,
@@ -50,7 +50,7 @@ function close() {
         </div>
         <div class="info-item">
           <span class="info-label">请假类型：</span>
-          {{ $t(leaveTypeLabelMap[current.leave_type] || current.leave_type) }}
+          {{ resolveLeaveTypeLabel(current.leave_type) }}
         </div>
         <div class="info-item">
           <span class="info-label">时段：</span>

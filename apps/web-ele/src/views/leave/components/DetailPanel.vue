@@ -13,6 +13,11 @@ import {
 
 import { $t } from '#/locales';
 
+import {
+  getLeaveTypeColor,
+  resolveLeaveTypeLabel,
+} from '../shared/leave-types';
+
 interface CalendarRecord {
   id: string;
   employee_name: string;
@@ -48,14 +53,6 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: 'removeHoliday' | 'setHoliday'): void;
 }>();
-
-const leaveTypeConfig: Record<string, { color: string; labelKey: string }> = {
-  annual: { labelKey: 'page.leave.leaveTypes.annual', color: '#60a5fa' },
-  personal: { labelKey: 'page.leave.leaveTypes.personal', color: '#fb923c' },
-  sick: { labelKey: 'page.leave.leaveTypes.sick', color: '#f87171' },
-  lieu: { labelKey: 'page.leave.leaveTypes.lieu', color: '#4ade80' },
-  long: { labelKey: 'page.leave.leaveTypes.long', color: '#a78bfa' },
-};
 
 const approvalStatusConfig: Record<
   string,
@@ -103,16 +100,6 @@ function getActiveRegionKey() {
   if (!props.region || props.region === '' || props.region === 'all') return '';
   if (props.region === '__unset__') return '';
   return props.region;
-}
-
-function getLeaveTypeColor(type: string) {
-  return leaveTypeConfig[type]?.color || '#94a3b8';
-}
-
-function getLeaveTypeLabel(type: string) {
-  return leaveTypeConfig[type]
-    ? ($t(leaveTypeConfig[type].labelKey) as string)
-    : type;
 }
 
 function getApprovalStatusType(
@@ -252,7 +239,7 @@ function removeHoliday() {
               }"
               size="large"
             >
-              {{ getLeaveTypeLabel(String(type)) }}
+              {{ resolveLeaveTypeLabel(String(type)) }}
             </ElTag>
             <span style="font-size: 13px; color: hsl(var(--muted-foreground))">{{ entries.length }}
               {{ $t('page.leave.calendarView.stats.personUnit') }}</span>

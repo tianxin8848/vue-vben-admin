@@ -69,6 +69,8 @@
         "employeeEditableFields": "Employee Self-Editable Fields",
         "claimConfig": "Claim Configuration",
         "regionalHoliday": "Regional Holidays",
+        "leaveTypeConfig": "Leave Types",
+        "previewTab": "Preview",
         "saveSystemSettings": "Save System Settings",
         "editableFieldsEditor": {
           "title": "Employee Self-Editable Fields",
@@ -98,6 +100,36 @@
           "empty": "No holidays configured for this region this year",
           "otherHolidayName": "Other",
           "formIncomplete": "Please fill in all holiday information"
+        },
+        "leaveTypeEditor": {
+          "title": "Leave Type Management",
+          "count": "{count} item(s)",
+          "hint": "Maintain the system leave type catalog. code is unique and used as the backend field value; label is for frontend display.",
+          "add": "Add",
+          "edit": "Edit",
+          "delete": "Delete",
+          "editTitle": "Edit Leave Type",
+          "placeholder": {
+            "code": "Enter type code (e.g. annual)",
+            "label": "Enter display name (e.g. Annual Leave)"
+          },
+          "validation": {
+            "codeRequired": "Please enter the type code",
+            "labelRequired": "Please enter the display name",
+            "codeDuplicate": "Type code already exists"
+          },
+          "deleteConfirm": "Delete leave type \"{name}\"?",
+          "deleteConfirmTitle": "Confirm Delete",
+          "confirm": "OK",
+          "cancel": "Cancel",
+          "empty": "No leave types",
+          "footerHint": "code is used as the backend field value; label is for frontend display. Click Save after changes.",
+          "column": {
+            "seq": "No.",
+            "code": "Code",
+            "label": "Label",
+            "action": "Action"
+          }
         },
         "settingsPreview": {
           "cardTitle": "Current Preview",

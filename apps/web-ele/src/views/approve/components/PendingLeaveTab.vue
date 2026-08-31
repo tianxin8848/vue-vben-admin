@@ -13,7 +13,7 @@ import { ElButton, ElTag } from 'element-plus';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
 import {
-  leaveTypeLabelMap,
+  resolveLeaveTypeLabel,
   sessionLabelMap,
   statusLabelMap,
   statusTypeMap,
@@ -198,7 +198,7 @@ function withdraw(row: any) {
     "
   >
     <template #leave_type="{ row }">
-      {{ t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
+      {{ resolveLeaveTypeLabel(row.leave_type) }}
     </template>
     <template #session="{ row }">
       {{ t(sessionLabelMap[row.session] || row.session) }}

@@ -15,7 +15,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   actionLabelMap,
   actionTypeMap,
-  leaveTypeLabelMap,
+  resolveLeaveTypeLabel,
   statusLabelMap,
   statusTypeMap,
 } from '../constants';
@@ -186,7 +186,7 @@ watch(tableColumns, () => {
     "
   >
     <template #leave_type="{ row }">
-      {{ t(leaveTypeLabelMap[row.leave_type] || row.leave_type) }}
+      {{ resolveLeaveTypeLabel(row.leave_type) }}
     </template>
     <template #time_range="{ row }">
       {{ row.start_date }} ~ {{ row.end_date }}

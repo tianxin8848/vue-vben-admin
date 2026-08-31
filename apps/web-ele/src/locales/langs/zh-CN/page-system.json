@@ -69,6 +69,8 @@
         "employeeEditableFields": "员工可自编辑字段",
         "claimConfig": "报销配置",
         "regionalHoliday": "地区假期",
+        "leaveTypeConfig": "请假类型",
+        "previewTab": "预览",
         "saveSystemSettings": "保存系统参数管理",
         "editableFieldsEditor": {
           "title": "员工可自编辑字段维护",
@@ -98,6 +100,36 @@
           "empty": "该地区本年暂无假期配置",
           "otherHolidayName": "其他",
           "formIncomplete": "请填写完整假期信息"
+        },
+        "leaveTypeEditor": {
+          "title": "请假类型管理",
+          "count": "{count} 项",
+          "hint": "维护系统请假类型目录，code 唯一且作为后端字段值，label 用于前端展示。",
+          "add": "添加",
+          "edit": "编辑",
+          "delete": "删除",
+          "editTitle": "编辑请假类型",
+          "placeholder": {
+            "code": "输入类型代码（如 annual）",
+            "label": "输入显示名称（如 年假）"
+          },
+          "validation": {
+            "codeRequired": "请输入类型代码",
+            "labelRequired": "请输入显示名称",
+            "codeDuplicate": "类型代码已存在"
+          },
+          "deleteConfirm": "确认删除请假类型「{name}」？",
+          "deleteConfirmTitle": "删除确认",
+          "confirm": "确定",
+          "cancel": "取消",
+          "empty": "暂无请假类型",
+          "footerHint": "code 用于后端字段值，label 用于前端展示；增删改后点击保存生效。",
+          "column": {
+            "seq": "序号",
+            "code": "类型代码",
+            "label": "显示名称",
+            "action": "操作"
+          }
         },
         "settingsPreview": {
           "cardTitle": "当前预览",

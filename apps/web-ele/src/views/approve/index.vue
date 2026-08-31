@@ -3,7 +3,7 @@ import type { SearchForm } from './constants';
 
 import type { ClaimApi, LeaveRequestApi } from '#/api';
 
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -31,6 +31,7 @@ import PendingLeaveTab from './components/PendingLeaveTab.vue';
 import RecordsClaimTab from './components/RecordsClaimTab.vue';
 import RecordsLeaveTab from './components/RecordsLeaveTab.vue';
 import { useApprovalData } from './composables/useApprovalData';
+import { leaveTypeOptionList, loadLeaveTypeLabels } from './constants';
 
 const {
   leaveRequests,
@@ -70,6 +71,9 @@ async function fetchSystemSettings() {
     // 获取系统设置失败时保持空选项
   }
 }
+
+// 请假类型下拉：直接用接口返回的 leave_types（显示文本），无需 i18n
+const leaveTypeSelectOptions = computed(() => leaveTypeOptionList.value);
 
 function handleReset() {
   searchForm.keyword = '';
@@ -123,6 +127,7 @@ function onWithdrawClaim(row: ClaimApi.ClaimResponse) {
 
 onMounted(async () => {
   await fetchSystemSettings();
+  loadLeaveTypeLabels();
   await fetchApprovalData();
 });
 </script>
@@ -173,16 +178,11 @@ onMounted(async () => {
           >
             <ElOption :label="$t('page.approve.allTypes')" value="" />
             <ElOption
-              :label="$t('page.leave.leaveTypes.annual')"
-              value="annual"
+              v-for="opt in leaveTypeSelectOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
             />
-            <ElOption
-              :label="$t('page.leave.leaveTypes.personal')"
-              value="personal"
-            />
-            <ElOption :label="$t('page.leave.leaveTypes.sick')" value="sick" />
-            <ElOption :label="$t('page.leave.leaveTypes.lieu')" value="lieu" />
-            <ElOption :label="$t('page.leave.leaveTypes.long')" value="long" />
           </ElSelect>
           <ElSelect
             v-model="searchForm.department"
