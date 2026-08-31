@@ -24,7 +24,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createLeaveRequestApi,
   getAnnualLeaveSummaryApi,
-  getMyDepartmentLeaveRequestsApi,
   getMyLeaveRequestsApi,
   getMyLieuLeaveSummaryApi,
   withdrawLeaveRequestApi,
@@ -61,7 +60,6 @@ const medicalCertificate = ref<File | null>(null);
 const isSickLeave = computed(() => form.leave_type === 'sick');
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
-const departmentRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const lieuSummary = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
 const hideWithdrawnOrRejected = ref(false);
 
@@ -73,11 +71,10 @@ const tableColumns = computed(() => createTableColumns($t));
 const sharedToolbarConfig = computed(() => createSharedToolbarConfig($t));
 
 // Tab 状态
-type TabKey = 'calendar' | 'department' | 'records';
+type TabKey = 'calendar' | 'records';
 const activeTab = ref<TabKey>('records');
 const segmentedOptions = computed(() => [
   { label: $t('page.leave.employeeLeave.recordsTab'), value: 'records' },
-  { label: $t('page.leave.employeeLeave.departmentTab'), value: 'department' },
   { label: $t('page.leave.employeeLeave.calendarTab'), value: 'calendar' },
 ]);
 
@@ -116,13 +113,6 @@ function refreshTable() {
 
 // 年假汇总
 const annualSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
-
-// 切换 Tab 时按需加载部门请假
-watch(activeTab, (tab) => {
-  if (tab === 'department' && departmentRequests.value.length === 0) {
-    fetchDepartmentData();
-  }
-});
 
 // 年历相关
 const currentYear = ref(new Date().getFullYear());
@@ -294,16 +284,6 @@ async function fetchData() {
     lieuSummary.value = null;
   } finally {
     loading.value = false;
-  }
-}
-
-// 加载同部门请假
-async function fetchDepartmentData() {
-  try {
-    const data = await getMyDepartmentLeaveRequestsApi();
-    departmentRequests.value = data || [];
-  } catch {
-    departmentRequests.value = [];
   }
 }
 
@@ -507,56 +487,6 @@ onMounted(() => {
       </BasicTable>
 
       <!-- 同部门同事请假 -->
-      <ElCard v-show="activeTab === 'department'" class="flex-1">
-        <template #header>
-          <span>{{
-            $t('page.leave.employeeLeave.department.listTitle', {
-              count: departmentRequests.length,
-            })
-          }}</span>
-        </template>
-        <div
-          v-if="!departmentRequests.length"
-          style="color: hsl(var(--muted-foreground))"
-        >
-          {{ $t('page.leave.employeeLeave.department.empty') }}
-        </div>
-        <div v-else style="display: flex; flex-direction: column; gap: 10px">
-          <div
-            v-for="item in departmentRequests"
-            :key="item.id"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 12px;
-              align-items: center;
-              padding: 10px 12px;
-              background: hsl(var(--muted));
-              border-radius: 10px;
-            "
-          >
-            <span style="font-weight: 600">{{ item.employee_name }}</span>
-            <ElTag type="info">{{ leaveTypeOptions[item.leave_type] }}</ElTag>
-            <ElTag>{{ sessionOptions[item.session] }}</ElTag>
-            <ElTag :type="statusTagType(item.approval_status)">
-              {{ statusOptions[item.approval_status] }}
-            </ElTag>
-            <span style="color: hsl(var(--muted-foreground))">
-              {{ item.start_date }}
-              <template v-if="item.start_date !== item.end_date">
-                {{ $t('page.leave.employeeLeave.date.to') }}
-                {{ item.end_date }}
-              </template>
-            </span>
-            <span
-              v-if="item.reason"
-              style="color: hsl(var(--muted-foreground))"
-            >
-              {{ item.reason }}
-            </span>
-          </div>
-        </div>
-      </ElCard>
 
       <!-- 我的请假年历 -->
       <ElCard
