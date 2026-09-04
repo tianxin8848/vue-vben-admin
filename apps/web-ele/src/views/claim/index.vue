@@ -259,27 +259,18 @@ async function onExport() {
         <ElDatePicker
           v-model="dateRange"
           type="daterange"
-          :range-separator="'-'"
+          range-separator="-"
           :start-placeholder="$t('page.claim.filter.dateRangePlaceholder')"
           :end-placeholder="$t('page.claim.filter.dateRangePlaceholder')"
           value-format="YYYY-MM-DD"
           clearable
           style="width: 280px"
         />
-        <ElButton
-          v-if="isFilterActive"
-          size="small"
-          @click="dateRange = null"
-        >
+        <ElButton v-if="isFilterActive" size="small" @click="dateRange = null">
           {{ $t('page.claim.filter.reset') }}
         </ElButton>
-        <span
-          v-if="isFilterActive"
-          class="text-xs text-muted-foreground"
-        >
-          {{
-            $t('page.claim.filter.filteredCount', { count: filteredCount })
-          }}
+        <span v-if="isFilterActive" class="text-xs text-muted-foreground">
+          {{ $t('page.claim.filter.filteredCount', { count: filteredCount }) }}
         </span>
       </div>
 
@@ -302,7 +293,11 @@ async function onExport() {
             {{ $t('page.claim.buttons.batchSubmit') }}
             <span v-if="selectedDraftCount > 0">（{{ selectedDraftCount }}）</span>
           </ElButton>
-          <ElButton :loading="isLoading" @click="onExport">
+          <ElButton
+            v-if="data.activeTab.value === 'history'"
+            :loading="isLoading"
+            @click="onExport"
+          >
             {{ $t('page.claim.buttons.export') }}
             <span
               v-if="
@@ -364,42 +359,52 @@ async function onExport() {
           {{ row.review_comment || '-' }}
         </template>
         <template #my_action="{ row }">
-          <template v-if="row.approval_status === 'draft'">
+          <div class="flex shrink-0 flex-nowrap items-center gap-1">
+            <template v-if="row.approval_status === 'draft'">
+              <ElButton
+                size="small"
+                type="primary"
+                class="shrink-0"
+                style="white-space: nowrap"
+                :loading="isLoading"
+                @click="openEditDrawer(row as ClaimApi.ClaimResponse)"
+              >
+                {{ $t('page.claim.buttons.edit') }}
+              </ElButton>
+              <ElButton
+                size="small"
+                type="success"
+                class="shrink-0"
+                style="white-space: nowrap"
+                :loading="isLoading"
+                @click="onSubmitSingle(row as ClaimApi.ClaimResponse)"
+              >
+                {{ $t('page.claim.buttons.submit') }}
+              </ElButton>
+              <ElButton
+                size="small"
+                type="danger"
+                class="shrink-0"
+                style="white-space: nowrap"
+                :loading="isLoading"
+                @click="onDeleteDraft(row as ClaimApi.ClaimResponse)"
+              >
+                {{ $t('page.claim.buttons.delete') }}
+              </ElButton>
+            </template>
             <ElButton
+              v-else-if="row.approval_status === 'pending'"
               size="small"
-              type="primary"
+              type="warning"
+              class="shrink-0"
+              style="white-space: nowrap"
               :loading="isLoading"
-              @click="openEditDrawer(row as ClaimApi.ClaimResponse)"
+              @click="onWithdraw(row as ClaimApi.ClaimResponse)"
             >
-              {{ $t('page.claim.buttons.edit') }}
+              {{ $t('page.claim.buttons.withdraw') }}
             </ElButton>
-            <ElButton
-              size="small"
-              type="success"
-              :loading="isLoading"
-              @click="onSubmitSingle(row as ClaimApi.ClaimResponse)"
-            >
-              {{ $t('page.claim.buttons.submit') }}
-            </ElButton>
-            <ElButton
-              size="small"
-              type="danger"
-              :loading="isLoading"
-              @click="onDeleteDraft(row as ClaimApi.ClaimResponse)"
-            >
-              {{ $t('page.claim.buttons.delete') }}
-            </ElButton>
-          </template>
-          <ElButton
-            v-else-if="row.approval_status === 'pending'"
-            size="small"
-            type="warning"
-            :loading="isLoading"
-            @click="onWithdraw(row as ClaimApi.ClaimResponse)"
-          >
-            {{ $t('page.claim.buttons.withdraw') }}
-          </ElButton>
-          <span v-else>-</span>
+            <span v-else>-</span>
+          </div>
         </template>
       </BasicTable>
     </div>

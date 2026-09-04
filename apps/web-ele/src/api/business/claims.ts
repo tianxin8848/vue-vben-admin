@@ -268,5 +268,7 @@ export async function exportMyClaimsApi(claimIds?: string[]) {
       claimIds && claimIds.length > 0 ? { claim_id: claimIds } : undefined,
     paramsSerializer: 'repeat',
     responseType: 'blob',
+    // 导出 Excel 可能耗时较长，单独放宽至 60s
+    timeout: 60_000,
   });
 }
