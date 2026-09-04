@@ -271,15 +271,53 @@ async function fetchData() {
   loading.value = true;
   try {
     const [requests, summary, lieu] = await Promise.all([
-      getMyLeaveRequestsApi(),
-      getAnnualLeaveSummaryApi(currentYear.value),
-      getMyLieuLeaveSummaryApi(currentYear.value).catch(() => null),
+      getMyLeaveRequestsApi().catch((error) => {
+        console.error('[employee-leave] getMyLeaveRequestsApi 失敗：', error);
+        return [];
+      }),
+      getAnnualLeaveSummaryApi(currentYear.value).catch((error) => {
+        console.error(
+          '[employee-leave] getAnnualLeaveSummaryApi 失敗：',
+          error,
+        );
+        return null;
+      }),
+      getMyLieuLeaveSummaryApi(currentYear.value).catch((error) => {
+        console.error(
+          '[employee-leave] getMyLieuLeaveSummaryApi 失敗：',
+          error,
+        );
+        return null;
+      }),
     ]);
+
+    // 调试输出（临时保留用于验证 total_days，后续移除）
+    //   使用 console.warn 而非 console.log 以通过 no-console 规则
+    //   （oxlint/eslint no-console 仅允许 warn/error）
+    console.warn(
+      '[employee-leave] getMyLeaveRequestsApi 返回數量：',
+      requests?.length,
+      requests,
+    );
+    console.warn('[employee-leave] annualSummary：', summary);
+    console.warn('[employee-leave] lieuSummary：', lieu);
+
+    if (requests && requests.length > 0) {
+      const first = requests[0] ?? {};
+      console.warn(
+        '[employee-leave] requests[0] 全部字段：',
+        Object.keys(first),
+        'total_days =',
+        (first as any).total_days,
+      );
+    }
+
     leaveRequests.value = requests || [];
     annualSummary.value = summary;
     lieuSummary.value = lieu;
     refreshTable();
-  } catch {
+  } catch (error) {
+    console.error('[employee-leave] fetchData 整體失敗：', error);
     leaveRequests.value = [];
     annualSummary.value = null;
     lieuSummary.value = null;
