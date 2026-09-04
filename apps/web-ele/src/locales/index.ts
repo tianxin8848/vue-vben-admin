@@ -6,7 +6,7 @@ import type { LocaleSetupOptions, SupportedLanguagesType } from '@vben/locales';
 
 import { ref } from 'vue';
 
-import { $t, setupI18n as coreSetup } from '@vben/locales';
+import { $t, $tm, setupI18n as coreSetup } from '@vben/locales';
 import { preferences } from '@vben/preferences';
 
 import dayjs from 'dayjs';
@@ -159,4 +159,4 @@ async function setupI18n(app: App, options: LocaleSetupOptions = {}) {
   });
 }
 
-export { $t, elementLocale, setupI18n };
+export { $t, $tm, elementLocale, setupI18n };

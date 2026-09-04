@@ -5,7 +5,7 @@ import { computed, ref, watch } from 'vue';
 
 import { ElButton, ElDatePicker } from 'element-plus';
 
-import { $t } from '#/locales';
+import { $t, $tm } from '#/locales';
 
 import {
   generateMonthCells,
@@ -59,7 +59,9 @@ const WEEK_DAYS = computed(() =>
   WEEK_KEYS.map((k) => $t(`page.leave.calendarView.weekShort.${k}`) as string),
 );
 const MONTH_NAMES = computed(() => {
-  const names = $t('page.leave.calendarView.monthNames');
+  // monthNames 为 list 型 i18n 数据（数组），$t 会做翻译拼接返回字符串，
+  // 需用 $tm 拿到原始数组，才能按下标取到各月份名称。
+  const names = $tm('page.leave.calendarView.monthNames');
   return Array.isArray(names) ? names : [];
 });
 
