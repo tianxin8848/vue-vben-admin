@@ -163,6 +163,7 @@ const stats = computed(() => {
       (item) => item.approval_status === 'pending',
     ).length,
     annualEntitlement: annualSummary.value?.entitlement_days ?? '-',
+    annualUsed: annualSummary.value?.used_days ?? '-',
     annualAvailable: annualSummary.value?.available_days ?? '-',
     lieuGranted: lieuSummary.value?.granted_days ?? '-',
     lieuAvailable: lieuSummary.value?.available_days ?? '-',
@@ -328,49 +329,14 @@ onMounted(() => {
             border-radius: 14px;
           "
         >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.employeeLeave.stats.recordCount') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.recordCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.employeeLeave.stats.dayCount') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.dayCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.employeeLeave.stats.pendingCount') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.pendingCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
             {{ $t('page.leave.employeeLeave.stats.annualEntitlement') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
@@ -384,7 +350,35 @@ onMounted(() => {
             border-radius: 14px;
           "
         >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
+            {{ $t('page.leave.employeeLeave.stats.annualUsed') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.annualUsed }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
             {{ $t('page.leave.employeeLeave.stats.annualAvailable') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
@@ -398,7 +392,14 @@ onMounted(() => {
             border-radius: 14px;
           "
         >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
             {{ $t('page.leave.employeeLeave.stats.lieuGranted') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
@@ -412,11 +413,60 @@ onMounted(() => {
             border-radius: 14px;
           "
         >
-          <div style="font-size: 13px; color: hsl(var(--muted-foreground))">
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
             {{ $t('page.leave.employeeLeave.stats.lieuAvailable') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
             {{ stats.lieuAvailable }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
+            {{ $t('page.leave.employeeLeave.stats.dayCount') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.dayCount }}
+          </div>
+        </div>
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
+            {{ $t('page.leave.employeeLeave.stats.pendingCount') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.pendingCount }}
           </div>
         </div>
       </div>

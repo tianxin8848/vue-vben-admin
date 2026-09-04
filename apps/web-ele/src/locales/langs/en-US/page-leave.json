@@ -32,10 +32,11 @@
         },
         "stats": {
           "recordCount": "Records current year",
-          "dayCount": " Taken leave days (current year)",
+          "dayCount": "Total Leave Taken (Current Year)",
           "pendingCount": "Pending records",
           "annualEntitlement": "Annual leave entitlement",
-          "annualAvailable": "Annual leave available",
+          "annualUsed": "Annual Leave Taken",
+          "annualAvailable": "Annual Leave Balance",
           "lieuGranted": "Compensatory leave granted ",
           "lieuAvailable": "Compensatory leave available"
         },

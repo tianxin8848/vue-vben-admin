@@ -35,6 +35,7 @@
           "dayCount": "当年覆盖天数",
           "pendingCount": "待审批记录",
           "annualEntitlement": "当年年假总计",
+          "annualUsed": "当年年假已用",
           "annualAvailable": "当年年假可用",
           "lieuGranted": "当年调休已授",
           "lieuAvailable": "当年调休可用"
