@@ -66,6 +66,7 @@
           "leaveType": "Type",
           "session": "Session",
           "timeRange": "Date Range",
+          "totalDays": "Days",
           "reason": "Reason",
           "status": "Status",
           "action": "Action"
@@ -82,6 +83,7 @@
           "region": "Region",
           "leaveType": "Type",
           "timeRange": "Date Range",
+          "totalDays": "Days",
           "myAction": "My Action",
           "currentStatus": "Current Status",
           "comment": "Review Note",

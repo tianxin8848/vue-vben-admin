@@ -123,6 +123,7 @@ export namespace LeaveRequestApi {
     reason: null | string;
     session: LeaveSession;
     start_date: string;
+    total_days: number;
   }
 
   /** 请假日历/审批页筛选下拉数据 */

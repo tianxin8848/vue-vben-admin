@@ -82,6 +82,7 @@
           "region": "地区",
           "leaveType": "类型",
           "timeRange": "时间范围",
+          "totalDays": "天数",
           "myAction": "我的操作",
           "currentStatus": "当前状态",
           "comment": "审批备注",

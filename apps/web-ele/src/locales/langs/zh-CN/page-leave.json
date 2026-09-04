@@ -76,6 +76,7 @@
         },
         "table": {
           "dateRange": "日期范围",
+          "totalDays": "天数",
           "leaveType": "请假类型",
           "session": "时段",
           "status": "状态",

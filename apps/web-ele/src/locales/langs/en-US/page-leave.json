@@ -76,6 +76,7 @@
         },
         "table": {
           "dateRange": "Date Range",
+          "totalDays": "Days",
           "leaveType": "Leave Type",
           "session": "Session",
           "status": "Status",

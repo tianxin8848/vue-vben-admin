@@ -117,6 +117,11 @@ const tableColumns = computed<
     slots: { default: 'time_range' },
   },
   {
+    field: 'total_days',
+    title: t('page.approve.pendingLeaveTab.column.totalDays'),
+    width: 80,
+  },
+  {
     field: 'reason',
     title: t('page.approve.pendingLeaveTab.column.reason'),
     minWidth: 150,

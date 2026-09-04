@@ -48,6 +48,12 @@ export function createTableColumns(t: TFunc): VxeGridProps['columns'] {
       slots: { default: 'date_range' },
     },
     {
+      field: 'total_days',
+      title: t('page.leave.employeeLeave.table.totalDays'),
+      width: 80,
+      align: 'center',
+    },
+    {
       field: 'leave_type',
       title: t('page.leave.employeeLeave.table.leaveType'),
       width: 120,

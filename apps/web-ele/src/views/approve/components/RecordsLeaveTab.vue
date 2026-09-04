@@ -109,6 +109,11 @@ const tableColumns = computed<
     slots: { default: 'time_range' },
   },
   {
+    field: 'total_days',
+    title: t('page.approve.recordsLeaveTab.column.totalDays'),
+    width: 80,
+  },
+  {
     field: 'action',
     title: t('page.approve.recordsLeaveTab.column.myAction'),
     width: 100,
