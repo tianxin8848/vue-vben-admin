@@ -35,6 +35,7 @@
           "dayCount": "Total Leave Taken (Current Year)",
           "pendingCount": "Pending records",
           "annualEntitlement": "Annual leave entitlement",
+          "annualLeaveAccrual": "Annual leave accrual",
           "annualUsed": "Annual Leave Taken",
           "annualAvailable": "Annual Leave Balance",
           "lieuGranted": "Compensatory leave granted ",
@@ -234,7 +235,7 @@
         "unsetRegion": "Unset Region",
         "ungrouped": "Ungrouped",
         "lieuAdmin": {
-          "title": "Lieu Leave Management",
+          "title": "Pro‑rata Annual Leave",
           "selectEmployee": "Select an employee",
           "query": "Query",
           "queryFailed": "Query failed",

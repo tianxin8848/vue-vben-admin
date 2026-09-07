@@ -113,6 +113,11 @@
   background: hsl(var(--accent));
 }
 
+/* 工作日有请假时，保留珊瑚红底，不被 has-leave 覆盖 */
+.calendar-cell.is-workday.has-leave {
+  background: rgb(254 226 226);
+}
+
 .cell-top {
   display: flex;
   align-items: center;

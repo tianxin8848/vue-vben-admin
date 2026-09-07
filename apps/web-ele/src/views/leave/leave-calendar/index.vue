@@ -358,12 +358,27 @@ async function queryLieuSummary() {
   }
   lieuLoading.value = true;
   try {
+    console.warn(
+      '[lieuAdmin] 調用 getLieuLeaveSummaryApi：employeeId=',
+      lieuTargetEmployeeId.value,
+      'year=',
+      lieuQueryYear.value,
+    );
     const data = await getLieuLeaveSummaryApi(
       lieuTargetEmployeeId.value,
       lieuQueryYear.value,
     );
+    console.warn('[lieuAdmin] getLieuLeaveSummaryApi 返回：', data);
     lieuQueryResult.value = data;
-  } catch {
+  } catch (error) {
+    console.error(
+      '[lieuAdmin] getLieuLeaveSummaryApi 失敗：',
+      error,
+      'employeeId=',
+      lieuTargetEmployeeId.value,
+      'year=',
+      lieuQueryYear.value,
+    );
     lieuQueryResult.value = null;
     ElMessage.error($t('page.leave.calendarView.lieuAdmin.queryFailed'));
   } finally {
@@ -382,18 +397,31 @@ async function grantLieu() {
   }
   lieuLoading.value = true;
   try {
-    const data = await addLieuLeaveGrantApi({
+    const params = {
       employee_id: lieuTargetEmployeeId.value,
       year: lieuQueryYear.value,
       days: lieuGrantDays.value,
-    });
+    };
+    console.warn('[lieuAdmin] 調用 addLieuLeaveGrantApi：params=', params);
+    const data = await addLieuLeaveGrantApi(params);
+    console.warn('[lieuAdmin] addLieuLeaveGrantApi 返回：', data);
     lieuQueryResult.value = data;
     ElMessage.success(
       $t('page.leave.calendarView.lieuAdmin.grantSuccess', {
         days: lieuGrantDays.value,
       }),
     );
-  } catch {
+  } catch (error) {
+    console.error(
+      '[lieuAdmin] addLieuLeaveGrantApi 失敗：',
+      error,
+      'employeeId=',
+      lieuTargetEmployeeId.value,
+      'year=',
+      lieuQueryYear.value,
+      'days=',
+      lieuGrantDays.value,
+    );
     ElMessage.error($t('page.leave.calendarView.lieuAdmin.grantFailed'));
   } finally {
     lieuLoading.value = false;
