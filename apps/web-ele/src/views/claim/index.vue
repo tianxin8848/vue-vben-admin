@@ -73,6 +73,26 @@ const filteredCount = computed(() => {
   return filterByInvoiceDate(all, dateRange.value).length;
 });
 
+// ─── 快速日期筛选：近7天 / 近1月 / 近3月 ─────────────────────────────────────
+function setQuickRange(type: '1m' | '3m' | '7d') {
+  const end = new Date();
+  const start = new Date();
+  if (type === '7d') {
+    start.setDate(start.getDate() - 7);
+  } else if (type === '1m') {
+    start.setMonth(start.getMonth() - 1);
+  } else if (type === '3m') {
+    start.setMonth(start.getMonth() - 3);
+  }
+  const fmt = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  dateRange.value = [fmt(start), fmt(end)];
+}
+
 function updateSelection() {
   const records = tableApi.grid?.getCheckboxRecords() ?? [];
   if (data.activeTab.value === 'my') {
@@ -242,14 +262,6 @@ async function onExport() {
   <Page>
     <div class="flex h-full flex-col gap-2">
       <ElSegmented v-model="data.activeTab.value" :options="segmentedOptions" />
-      <p v-if="data.userInfo.value" class="text-sm text-muted-foreground">
-        {{
-          $t('page.claim.messages.currentUser', {
-            fullName: data.userInfo.value.full_name,
-            username: data.userInfo.value.username,
-          })
-        }}
-      </p>
 
       <!-- 按开票时间筛选发票 -->
       <div class="flex flex-wrap items-center gap-2">
@@ -266,6 +278,15 @@ async function onExport() {
           clearable
           style="width: 280px"
         />
+        <ElButton size="small" @click="setQuickRange('7d')">
+          {{ $t('page.claim.filter.quick7d') }}
+        </ElButton>
+        <ElButton size="small" @click="setQuickRange('1m')">
+          {{ $t('page.claim.filter.quick1m') }}
+        </ElButton>
+        <ElButton size="small" @click="setQuickRange('3m')">
+          {{ $t('page.claim.filter.quick3m') }}
+        </ElButton>
         <ElButton v-if="isFilterActive" size="small" @click="dateRange = null">
           {{ $t('page.claim.filter.reset') }}
         </ElButton>

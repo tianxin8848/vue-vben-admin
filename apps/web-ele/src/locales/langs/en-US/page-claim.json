@@ -86,6 +86,9 @@
       "filter": {
         "dateRange": "Invoice Date Range",
         "dateRangePlaceholder": "Select invoice date range",
+        "quick7d": "Last 7 days",
+        "quick1m": "Last month",
+        "quick3m": "Last 3 months",
         "reset": "Reset",
         "filteredCount": "{count} filtered"
       },
