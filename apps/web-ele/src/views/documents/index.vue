@@ -8,6 +8,8 @@ import { useI18n } from '@vben/locales';
 
 import dayjs from 'dayjs';
 import {
+  ElBreadcrumb,
+  ElBreadcrumbItem,
   ElButton,
   ElDialog,
   ElEmpty,
@@ -26,27 +28,48 @@ import {
 } from 'element-plus';
 
 import {
+  browseDocumentsApi,
+  buildDocumentFileUrl,
   createDocumentApi,
+  createFolderApi,
   deleteDocumentApi,
+  deleteFolderApi,
   getDocumentMetaApi,
-  getDocumentsApi,
   getUserInfoApi,
+  listFolderMoveTargetsApi,
   updateDocumentApi,
+  updateFolderApi,
 } from '#/api';
 
 const { t } = useI18n();
 
 // ─── 数据与权限 ─────────────────────────────────────────────────────────────
 const loading = ref(false);
+/** document_library_manage：可上传 / 新建文件夹 / 编辑 / 移动 / 删除 */
+const canManage = ref(false);
+
+const currentFolderId = ref<null | string>(null);
+const ancestors = ref<DocumentApi.FolderResponse[]>([]);
+const folders = ref<DocumentApi.FolderResponse[]>([]);
 const documents = ref<DocumentApi.DocumentResponse[]>([]);
 const keyword = ref('');
 
-/** document_library_manage：可上传 / 编辑 / 删除 */
-const canManage = ref(false);
 const meta = ref<DocumentApi.DocumentMeta>({
   allowed_extensions: [],
   departments: [],
   max_size: 20 * 1024 * 1024,
+});
+
+/** 面包屑：根目录 + 后端返回的祖先链 */
+const crumbs = computed(() => [
+  { id: null as null | string, name: t('page.documents.root') },
+  ...ancestors.value.map((f) => ({ id: f.id, name: f.name })),
+]);
+
+const filteredFolders = computed(() => {
+  const kw = keyword.value.trim().toLowerCase();
+  if (!kw) return folders.value;
+  return folders.value.filter((f) => f.name?.toLowerCase().includes(kw));
 });
 
 const filteredDocuments = computed(() => {
@@ -72,12 +95,20 @@ const uploadTip = computed(() =>
   }),
 );
 
-async function loadDocuments() {
+async function loadBrowse(folderId: null | string = currentFolderId.value) {
   loading.value = true;
   try {
-    documents.value = await getDocumentsApi();
+    const data = await browseDocumentsApi(folderId);
+    currentFolderId.value = data.folder_id ?? null;
+    ancestors.value = data.ancestors ?? [];
+    folders.value = data.folders ?? [];
+    documents.value = data.documents ?? [];
   } catch (error) {
-    console.error('[documents] load failed', error);
+    console.error('[documents] browse failed', error);
+    // 文件夹可能已被删除：退回根目录
+    if (folderId) {
+      await loadBrowse(null);
+    }
   } finally {
     loading.value = false;
   }
@@ -92,14 +123,19 @@ async function loadMeta() {
   }
 }
 
-// ─── 上传 / 编辑 弹窗 ───────────────────────────────────────────────────────
-const dialogVisible = ref(false);
-const dialogMode = ref<'create' | 'edit'>('create');
-const submitting = ref(false);
+function openFolder(folderId: null | string) {
+  keyword.value = '';
+  loadBrowse(folderId);
+}
+
+// ─── 上传 / 编辑文件 弹窗 ────────────────────────────────────────────────────
+const docDialogVisible = ref(false);
+const docDialogMode = ref<'create' | 'edit'>('create');
+const docSubmitting = ref(false);
 const uploadRef = ref<InstanceType<typeof ElUpload>>();
 const editingId = ref<null | string>(null);
 
-const form = reactive<{
+const docForm = reactive<{
   departments: string[];
   file: File | null;
   title: string;
@@ -109,35 +145,35 @@ const form = reactive<{
   file: null,
 });
 
-function resetForm() {
-  form.title = '';
-  form.departments = [];
-  form.file = null;
+function resetDocForm() {
+  docForm.title = '';
+  docForm.departments = [];
+  docForm.file = null;
   editingId.value = null;
   uploadRef.value?.clearFiles();
 }
 
 function openCreate() {
-  dialogMode.value = 'create';
-  resetForm();
-  dialogVisible.value = true;
+  docDialogMode.value = 'create';
+  resetDocForm();
+  docDialogVisible.value = true;
 }
 
-function openEdit(row: DocumentApi.DocumentResponse) {
-  dialogMode.value = 'edit';
-  resetForm();
+function openEditDoc(row: DocumentApi.DocumentResponse) {
+  docDialogMode.value = 'edit';
+  resetDocForm();
   editingId.value = row.id;
-  form.title = row.title;
-  form.departments = [...(row.viewer_departments ?? [])];
-  dialogVisible.value = true;
+  docForm.title = row.title;
+  docForm.departments = [...(row.viewer_departments ?? [])];
+  docDialogVisible.value = true;
 }
 
 function handleFileChange(uploadFile: { raw?: File }) {
-  form.file = uploadFile.raw ?? null;
+  docForm.file = uploadFile.raw ?? null;
 }
 
 function validateFile(): boolean {
-  const file = form.file;
+  const file = docForm.file;
   if (!file) {
     ElMessage.warning(t('page.documents.fileRequired'));
     return false;
@@ -159,43 +195,155 @@ function validateFile(): boolean {
   return true;
 }
 
-async function handleSubmit() {
-  if (dialogMode.value === 'create') {
+async function handleDocSubmit() {
+  if (docDialogMode.value === 'create') {
     if (!validateFile()) return;
-  } else if (!form.title.trim()) {
+  } else if (!docForm.title.trim()) {
     ElMessage.warning(t('page.documents.titleRequired'));
     return;
   }
 
-  submitting.value = true;
+  docSubmitting.value = true;
   try {
-    if (dialogMode.value === 'create') {
+    if (docDialogMode.value === 'create') {
       const fd = new FormData();
-      if (form.title.trim()) fd.append('title', form.title.trim());
-      if (form.file) fd.append('file', form.file);
-      for (const dept of form.departments) {
+      if (docForm.title.trim()) fd.append('title', docForm.title.trim());
+      if (docForm.file) fd.append('file', docForm.file);
+      // 上传到当前所在目录，空串表示根目录
+      fd.append('folder_id', currentFolderId.value ?? '');
+      for (const dept of docForm.departments) {
         fd.append('viewer_departments', dept);
       }
       await createDocumentApi(fd);
       ElMessage.success(t('page.documents.createSuccess'));
     } else if (editingId.value) {
       await updateDocumentApi(editingId.value, {
-        title: form.title.trim(),
-        viewer_departments: form.departments,
+        title: docForm.title.trim(),
+        viewer_departments: docForm.departments,
       });
       ElMessage.success(t('page.documents.updateSuccess'));
     }
-    dialogVisible.value = false;
-    await loadDocuments();
+    docDialogVisible.value = false;
+    await loadBrowse();
   } catch (error) {
     console.error('[documents] submit failed', error);
   } finally {
-    submitting.value = false;
+    docSubmitting.value = false;
   }
 }
 
-// ─── 删除 ───────────────────────────────────────────────────────────────────
-async function handleDelete(row: DocumentApi.DocumentResponse) {
+// ─── 新建 / 重命名 文件夹 ────────────────────────────────────────────────────
+/** 弹出输入框获取文件夹名；取消返回 null */
+async function promptFolderName(initial = ''): Promise<null | string> {
+  try {
+    const res = await ElMessageBox.prompt(t('page.documents.folderNameLabel'), {
+      confirmButtonText: t('page.documents.confirm'),
+      cancelButtonText: t('page.documents.cancel'),
+      inputValue: initial,
+      inputPlaceholder: t('page.documents.folderNamePlaceholder'),
+      inputValidator: (value: string) =>
+        value.trim().length > 0 || t('page.documents.folderNameRequired'),
+    });
+    return (res.value ?? '').trim();
+  } catch {
+    return null;
+  }
+}
+
+async function handleCreateFolder() {
+  const name = await promptFolderName();
+  if (!name) return;
+  try {
+    await createFolderApi({
+      name,
+      parent_id: currentFolderId.value,
+    });
+    ElMessage.success(t('page.documents.folderCreateSuccess'));
+    await loadBrowse();
+  } catch (error) {
+    console.error('[documents] create folder failed', error);
+  }
+}
+
+async function handleRenameFolder(folder: DocumentApi.FolderResponse) {
+  const name = await promptFolderName(folder.name);
+  if (!name) return;
+  try {
+    await updateFolderApi(folder.id, { name });
+    ElMessage.success(t('page.documents.folderRenameSuccess'));
+    await loadBrowse();
+  } catch (error) {
+    console.error('[documents] rename folder failed', error);
+  }
+}
+
+// ─── 移动（文件 / 文件夹共用一个弹窗） ───────────────────────────────────────
+const moveDialogVisible = ref(false);
+const moveSubmitting = ref(false);
+const moveTargets = ref<DocumentApi.FolderMoveTarget[]>([]);
+/** '' 代表根目录（后端 id = null） */
+const moveTargetId = ref('');
+const moveContext = ref<{
+  excludeId?: null | string;
+  id: string;
+  kind: 'file' | 'folder';
+  parentId: null | string;
+}>({ id: '', kind: 'file', parentId: null });
+
+async function openMoveFile(row: DocumentApi.DocumentResponse) {
+  await prepareMove({
+    id: row.id,
+    kind: 'file',
+    parentId: row.folder_id ?? null,
+  });
+}
+
+async function openMoveFolder(folder: DocumentApi.FolderResponse) {
+  await prepareMove({
+    id: folder.id,
+    kind: 'folder',
+    parentId: folder.parent_id ?? null,
+    excludeId: folder.id,
+  });
+}
+
+async function prepareMove(ctx: {
+  excludeId?: null | string;
+  id: string;
+  kind: 'file' | 'folder';
+  parentId: null | string;
+}) {
+  moveContext.value = ctx;
+  moveTargetId.value = ctx.parentId ?? '';
+  moveTargets.value = [];
+  moveDialogVisible.value = true;
+  try {
+    moveTargets.value = await listFolderMoveTargetsApi(ctx.excludeId);
+  } catch (error) {
+    console.error('[documents] load move targets failed', error);
+  }
+}
+
+async function confirmMove() {
+  const target = moveTargetId.value || null;
+  moveSubmitting.value = true;
+  try {
+    moveContext.value.kind === 'folder'
+      ? await updateFolderApi(moveContext.value.id, { parent_id: target })
+      : await updateDocumentApi(moveContext.value.id, { folder_id: target });
+    ElMessage.success(t('page.documents.moveSuccess'));
+    moveDialogVisible.value = false;
+    // 被移动的对象可能已不在当前目录
+    await loadBrowse();
+  } catch (error) {
+    console.error('[documents] move failed', error);
+  } finally {
+    moveSubmitting.value = false;
+  }
+}
+
+// ─── 删除（文件 / 文件夹） ───────────────────────────────────────────────────
+async function handleDeleteDoc(row: DocumentApi.DocumentResponse) {
   try {
     await ElMessageBox.confirm(
       t('page.documents.confirmDelete', { name: row.title }),
@@ -213,9 +361,33 @@ async function handleDelete(row: DocumentApi.DocumentResponse) {
   try {
     await deleteDocumentApi(row.id);
     ElMessage.success(t('page.documents.deleteSuccess'));
-    await loadDocuments();
+    await loadBrowse();
   } catch (error) {
     console.error('[documents] delete failed', error);
+  }
+}
+
+async function handleDeleteFolder(folder: DocumentApi.FolderResponse) {
+  try {
+    await ElMessageBox.confirm(
+      t('page.documents.confirmDeleteFolder', { name: folder.name }),
+      t('page.documents.deleteFolderTitle'),
+      {
+        confirmButtonText: t('page.documents.confirmDeleteBtn'),
+        cancelButtonText: t('page.documents.cancel'),
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+      },
+    );
+  } catch {
+    return;
+  }
+  try {
+    await deleteFolderApi(folder.id);
+    ElMessage.success(t('page.documents.deleteFolderSuccess'));
+    await loadBrowse();
+  } catch (error) {
+    console.error('[documents] delete folder failed', error);
   }
 }
 
@@ -232,7 +404,7 @@ function formatTime(v?: null | string) {
 }
 
 function fileUrl(row: DocumentApi.DocumentResponse) {
-  return row.file_url || `/api/v1/documents/${row.id}/file`;
+  return row.file_url || buildDocumentFileUrl(row.id);
 }
 
 // ─── 初始化 ─────────────────────────────────────────────────────────────────
@@ -249,30 +421,98 @@ onMounted(async () => {
   if (canManage.value) {
     await loadMeta();
   }
-  await loadDocuments();
+  await loadBrowse(null);
 });
 </script>
 
 <template>
   <Page :title="t('page.documents.title')">
     <div class="flex flex-col gap-4">
-      <!-- 工具栏 -->
+      <!-- 工具栏：面包屑 + 搜索 + 操作 -->
       <div
         class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-3"
       >
-        <ElInput
-          v-model="keyword"
-          :placeholder="t('page.documents.keywordPlaceholder')"
-          clearable
-          class="w-72"
-        />
+        <div class="flex flex-wrap items-center gap-4">
+          <ElBreadcrumb separator="/">
+            <ElBreadcrumbItem
+              v-for="(crumb, idx) in crumbs"
+              :key="crumb.id ?? 'root'"
+            >
+              <ElLink
+                v-if="idx < crumbs.length - 1"
+                :underline="false"
+                @click="openFolder(crumb.id)"
+              >
+                {{ crumb.name }}
+              </ElLink>
+              <span v-else class="font-medium">{{ crumb.name }}</span>
+            </ElBreadcrumbItem>
+          </ElBreadcrumb>
+          <ElInput
+            v-model="keyword"
+            :placeholder="t('page.documents.keywordPlaceholder')"
+            clearable
+            class="w-64"
+          />
+        </div>
         <div class="flex items-center gap-2">
-          <ElButton @click="loadDocuments">
+          <ElButton @click="loadBrowse()">
             {{ t('page.documents.refresh') }}
           </ElButton>
-          <ElButton v-if="canManage" type="primary" @click="openCreate">
-            {{ t('page.documents.upload') }}
-          </ElButton>
+          <template v-if="canManage">
+            <ElButton @click="handleCreateFolder">
+              {{ t('page.documents.newFolder') }}
+            </ElButton>
+            <ElButton type="primary" @click="openCreate">
+              {{ t('page.documents.upload') }}
+            </ElButton>
+          </template>
+        </div>
+      </div>
+
+      <!-- 文件夹 -->
+      <div
+        v-if="filteredFolders.length"
+        class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      >
+        <div
+          v-for="folder in filteredFolders"
+          :key="folder.id"
+          class="flex flex-col gap-2 rounded-lg border bg-card p-4 shadow-sm transition-colors hover:border-primary"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <ElTag type="warning" size="small">
+              {{ t('page.documents.folderTag') }}
+            </ElTag>
+          </div>
+          <button
+            type="button"
+            class="truncate text-left text-sm font-semibold text-foreground hover:text-primary"
+            :title="folder.name"
+            @click="openFolder(folder.id)"
+          >
+            {{ folder.name }}
+          </button>
+          <div class="mt-1 flex flex-wrap gap-1">
+            <ElButton size="small" @click="openFolder(folder.id)">
+              {{ t('page.documents.open') }}
+            </ElButton>
+            <template v-if="canManage">
+              <ElButton size="small" @click="handleRenameFolder(folder)">
+                {{ t('page.documents.rename') }}
+              </ElButton>
+              <ElButton size="small" @click="openMoveFolder(folder)">
+                {{ t('page.documents.move') }}
+              </ElButton>
+              <ElButton
+                size="small"
+                type="danger"
+                @click="handleDeleteFolder(folder)"
+              >
+                {{ t('page.documents.delete') }}
+              </ElButton>
+            </template>
+          </div>
         </div>
       </div>
 
@@ -332,7 +572,9 @@ onMounted(async () => {
                   {{ dept }}
                 </ElTag>
               </template>
-              <span v-else class="text-muted-foreground">-</span>
+              <span v-else class="text-muted-foreground">{{
+                t('page.documents.managersOnly')
+              }}</span>
             </template>
           </ElTableColumn>
           <ElTableColumn
@@ -359,7 +601,7 @@ onMounted(async () => {
           <ElTableColumn
             :label="t('page.documents.actions')"
             fixed="right"
-            :width="canManage ? 220 : 100"
+            :width="canManage ? 270 : 100"
           >
             <template #default="{ row }">
               <ElLink
@@ -376,14 +618,22 @@ onMounted(async () => {
                   class="mr-3"
                   type="warning"
                   :underline="false"
-                  @click="openEdit(row as DocumentApi.DocumentResponse)"
+                  @click="openEditDoc(row as DocumentApi.DocumentResponse)"
                 >
                   {{ t('page.documents.edit') }}
                 </ElLink>
                 <ElLink
+                  class="mr-3"
+                  type="info"
+                  :underline="false"
+                  @click="openMoveFile(row as DocumentApi.DocumentResponse)"
+                >
+                  {{ t('page.documents.move') }}
+                </ElLink>
+                <ElLink
                   type="danger"
                   :underline="false"
-                  @click="handleDelete(row as DocumentApi.DocumentResponse)"
+                  @click="handleDeleteDoc(row as DocumentApi.DocumentResponse)"
                 >
                   {{ t('page.documents.delete') }}
                 </ElLink>
@@ -397,11 +647,11 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 上传 / 编辑 弹窗 -->
+    <!-- 上传 / 编辑文件 弹窗 -->
     <ElDialog
-      v-model="dialogVisible"
+      v-model="docDialogVisible"
       :title="
-        dialogMode === 'create'
+        docDialogMode === 'create'
           ? t('page.documents.upload')
           : t('page.documents.editTitle')
       "
@@ -410,14 +660,14 @@ onMounted(async () => {
       <ElForm label-position="top">
         <ElFormItem :label="t('page.documents.formTitle')">
           <ElInput
-            v-model="form.title"
+            v-model="docForm.title"
             :placeholder="t('page.documents.titlePlaceholder')"
             :maxlength="200"
             clearable
           />
         </ElFormItem>
         <ElFormItem
-          v-if="dialogMode === 'create'"
+          v-if="docDialogMode === 'create'"
           :label="t('page.documents.file')"
           required
         >
@@ -435,10 +685,18 @@ onMounted(async () => {
               </span>
             </template>
           </ElUpload>
+          <p class="mt-1 text-xs text-muted-foreground">
+            {{
+              t('page.documents.uploadLocation', {
+                folder:
+                  crumbs[crumbs.length - 1]?.name || t('page.documents.root'),
+              })
+            }}
+          </p>
         </ElFormItem>
         <ElFormItem :label="t('page.documents.formDepartments')">
           <ElSelect
-            v-model="form.departments"
+            v-model="docForm.departments"
             :placeholder="t('page.documents.departmentsPlaceholder')"
             class="w-full"
             clearable
@@ -456,10 +714,42 @@ onMounted(async () => {
         </ElFormItem>
       </ElForm>
       <template #footer>
-        <ElButton @click="dialogVisible = false">
+        <ElButton @click="docDialogVisible = false">
           {{ t('page.documents.cancel') }}
         </ElButton>
-        <ElButton :loading="submitting" type="primary" @click="handleSubmit">
+        <ElButton
+          :loading="docSubmitting"
+          type="primary"
+          @click="handleDocSubmit"
+        >
+          {{ t('page.documents.save') }}
+        </ElButton>
+      </template>
+    </ElDialog>
+
+    <!-- 移动 弹窗 -->
+    <ElDialog
+      v-model="moveDialogVisible"
+      :title="t('page.documents.moveTitle')"
+      width="460px"
+    >
+      <ElForm label-position="top">
+        <ElFormItem :label="t('page.documents.moveTarget')">
+          <ElSelect v-model="moveTargetId" class="w-full">
+            <ElOption
+              v-for="target in moveTargets"
+              :key="target.id ?? 'root'"
+              :label="target.label"
+              :value="target.id ?? ''"
+            />
+          </ElSelect>
+        </ElFormItem>
+      </ElForm>
+      <template #footer>
+        <ElButton @click="moveDialogVisible = false">
+          {{ t('page.documents.cancel') }}
+        </ElButton>
+        <ElButton :loading="moveSubmitting" type="primary" @click="confirmMove">
           {{ t('page.documents.save') }}
         </ElButton>
       </template>
