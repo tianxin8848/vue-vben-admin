@@ -78,10 +78,27 @@ export namespace LeaveRequestApi {
 
   /** 年假汇总响应 */
   export interface AnnualLeaveSummary {
+    annual_available_days: number;
+    annual_available_raw: number;
+    annual_entitlement_days: number;
+    annual_entitlement_raw: number;
+    annual_used_days: number;
+    as_of: string;
     available_days: number;
+    carry_over_projected_days: number;
     entitlement_days: number;
     region: null | string;
+    usable_from: string;
     used_days: number;
+    year: number;
+  }
+
+  /** 结转假期汇总响应（/me/leave-requests/bought-forward/summary） */
+  export interface BoughtForwardSummary {
+    carry_over_available_days: number;
+    carry_over_granted_days: number;
+    carry_over_used_days: number;
+    expires_on: string;
     year: number;
   }
 
@@ -156,11 +173,11 @@ export namespace LeaveRequestApi {
 
   /** 调休汇总（granted/used/available，capped 表示是否触顶） */
   export interface LieuLeaveSummary {
-    available_days: number;
-    capped: boolean;
     employee_id: string;
-    granted_days: number;
-    used_days: number;
+    lieu_available_days: number;
+    lieu_capped: boolean;
+    lieu_granted_days: number;
+    lieu_used_days: number;
     year: number;
   }
 
@@ -311,6 +328,14 @@ export async function getMyDepartmentLeaveRequestsApi() {
 export async function getMyLieuLeaveSummaryApi(year: number) {
   return requestClient.get<LeaveRequestApi.LieuLeaveSummary>(
     '/me/leave-requests/lieu-leave/summary',
+    { params: { year } },
+  );
+}
+
+/** 当前用户指定年份的结转假期汇总（carry_over） */
+export async function getBoughtForwardSummaryApi(year: number) {
+  return requestClient.get<LeaveRequestApi.BoughtForwardSummary>(
+    '/me/leave-requests/bought-forward/summary',
     { params: { year } },
   );
 }

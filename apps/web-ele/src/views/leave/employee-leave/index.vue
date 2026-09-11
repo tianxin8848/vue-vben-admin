@@ -24,6 +24,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createLeaveRequestApi,
   getAnnualLeaveSummaryApi,
+  getBoughtForwardSummaryApi,
   getMyLeaveRequestsApi,
   getMyLieuLeaveSummaryApi,
   withdrawLeaveRequestApi,
@@ -61,6 +62,9 @@ const isSickLeave = computed(() => form.leave_type === 'sick');
 
 const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
 const lieuSummary = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
+const boughtForwardSummary = ref<LeaveRequestApi.BoughtForwardSummary | null>(
+  null,
+);
 const hideWithdrawnOrRejected = ref(false);
 
 // 请假类型映射：直接用接口 system-settings.leave_types（code → 显示文本）
@@ -162,11 +166,25 @@ const stats = computed(() => {
     pendingCount: yearRecords.filter(
       (item) => item.approval_status === 'pending',
     ).length,
-    annualEntitlement: annualSummary.value?.entitlement_days ?? '-',
-    annualUsed: annualSummary.value?.used_days ?? '-',
-    annualAvailable: annualSummary.value?.available_days ?? '-',
-    lieuGranted: lieuSummary.value?.granted_days ?? '-',
-    lieuAvailable: lieuSummary.value?.available_days ?? '-',
+    // 年假：data1.annual_entitlement_days
+    annualEntitlement: annualSummary.value?.annual_entitlement_days ?? '-',
+    // 年假累计（原始精度）：data1.annual_entitlement_raw
+    annualLeaveAccrual: annualSummary.value?.annual_entitlement_raw ?? '-',
+    // 年假已用：data1.annual_used_days
+    annualUsed: annualSummary.value?.annual_used_days ?? '-',
+    // 年假可用：data1.annual_available_days
+    annualAvailable: annualSummary.value?.annual_available_days ?? '-',
+    // 调休已授予：data2.lieu_granted_days
+    lieuGranted: lieuSummary.value?.lieu_granted_days ?? '-',
+    // 调休可用：data2.lieu_available_days
+    lieuAvailable: lieuSummary.value?.lieu_available_days ?? '-',
+    // 调休已用：data2.lieu_used_days
+    lieuUsed: lieuSummary.value?.lieu_used_days ?? '-',
+    // 结转已用：data3.carry_over_used_days
+    carryForward: boughtForwardSummary.value?.carry_over_used_days ?? '-',
+    // 结转可用：data3.carry_over_available_days
+    broughtForward:
+      boughtForwardSummary.value?.carry_over_available_days ?? '-',
   };
 });
 
@@ -270,7 +288,7 @@ async function handleWithdraw(id: string) {
 async function fetchData() {
   loading.value = true;
   try {
-    const [requests, summary, lieu] = await Promise.all([
+    const [requests, summary, lieu, boughtForward] = await Promise.all([
       getMyLeaveRequestsApi().catch((error) => {
         console.error('[employee-leave] getMyLeaveRequestsApi 失敗：', error);
         return [];
@@ -283,8 +301,12 @@ async function fetchData() {
         return null;
       }),
       getMyLieuLeaveSummaryApi(currentYear.value).catch((error) => {
+        console.error('[employee-leave] getMyLiuLeaveSummaryApi 失敗：', error);
+        return null;
+      }),
+      getBoughtForwardSummaryApi(currentYear.value).catch((error) => {
         console.error(
-          '[employee-leave] getMyLieuLeaveSummaryApi 失敗：',
+          '[employee-leave] getBoughtForwardSummaryApi 失敗：',
           error,
         );
         return null;
@@ -301,6 +323,7 @@ async function fetchData() {
     );
     console.warn('[employee-leave] annualSummary：', summary);
     console.warn('[employee-leave] lieuSummary：', lieu);
+    console.warn('[employee-leave] boughtForwardSummary：', boughtForward);
 
     if (requests && requests.length > 0) {
       const first = requests[0] ?? {};
@@ -315,12 +338,14 @@ async function fetchData() {
     leaveRequests.value = requests || [];
     annualSummary.value = summary;
     lieuSummary.value = lieu;
+    boughtForwardSummary.value = boughtForward;
     refreshTable();
   } catch (error) {
     console.error('[employee-leave] fetchData 整體失敗：', error);
     leaveRequests.value = [];
     annualSummary.value = null;
     lieuSummary.value = null;
+    boughtForwardSummary.value = null;
   } finally {
     loading.value = false;
   }
@@ -381,6 +406,29 @@ onMounted(() => {
             {{ stats.annualEntitlement }}
           </div>
         </div>
+
+        <div
+          style="
+            padding: 14px 16px;
+            background: hsl(var(--muted));
+            border-radius: 14px;
+          "
+        >
+          <div
+            style="
+              min-height: 40px;
+              font-size: 13px;
+              line-height: 1.4;
+              color: hsl(var(--muted-foreground));
+            "
+          >
+            {{ $t('page.leave.employeeLeave.stats.annualLeaveAccrual') }}
+          </div>
+          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+            {{ stats.annualLeaveAccrual }}
+          </div>
+        </div>
+
         <div
           style="
             padding: 14px 16px;
@@ -402,6 +450,7 @@ onMounted(() => {
             {{ stats.annualUsed }}
           </div>
         </div>
+
         <div
           style="
             padding: 14px 16px;
@@ -423,34 +472,85 @@ onMounted(() => {
             {{ stats.annualAvailable }}
           </div>
         </div>
+
+        <!-- Leave Compensatory (Lieu) Leave Granted -->
         <div
           style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-column: 1 / -1;
+            gap: 12px;
           "
         >
           <div
             style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
             "
           >
-            {{ $t('page.leave.employeeLeave.stats.lieuGranted') }}
+            <div
+              style="
+                min-height: 40px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: hsl(var(--muted-foreground));
+              "
+            >
+              {{ $t('page.leave.employeeLeave.stats.lieuGranted') }}
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.lieuGranted }}
+            </div>
           </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.lieuGranted }}
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div
+              style="
+                min-height: 40px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: hsl(var(--muted-foreground));
+              "
+            >
+              {{ $t('page.leave.employeeLeave.stats.lieuAvailable') }}
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.lieuAvailable }}
+            </div>
+          </div>
+          <!-- Leave Compensatory (Lieu) Leave Taken -->
+          <div
+            style="
+              padding: 14px 16px;
+              background: hsl(var(--muted));
+              border-radius: 14px;
+            "
+          >
+            <div
+              style="
+                min-height: 40px;
+                font-size: 13px;
+                line-height: 1.4;
+                color: hsl(var(--muted-foreground));
+              "
+            >
+              {{ $t('page.leave.employeeLeave.stats.lieuUsed') }}
+            </div>
+            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
+              {{ stats.lieuUsed }}
+            </div>
           </div>
         </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
+
+        <!-- Leave Carry Forward -->
+
+        <div style="background: hsl(var(--muted)); border-radius: 14px">
           <div
             style="
               min-height: 40px;
@@ -459,19 +559,14 @@ onMounted(() => {
               color: hsl(var(--muted-foreground));
             "
           >
-            {{ $t('page.leave.employeeLeave.stats.lieuAvailable') }}
+            {{ $t('page.leave.employeeLeave.stats.carryForward') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.lieuAvailable }}
+            {{ stats.carryForward }}
           </div>
         </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
+
+        <div style="background: hsl(var(--muted)); border-radius: 14px">
           <div
             style="
               min-height: 40px;
@@ -480,31 +575,10 @@ onMounted(() => {
               color: hsl(var(--muted-foreground));
             "
           >
-            {{ $t('page.leave.employeeLeave.stats.dayCount') }}
+            {{ $t('page.leave.employeeLeave.stats.broughtForward') }}
           </div>
           <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.dayCount }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.pendingCount') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.pendingCount }}
+            {{ stats.broughtForward }}
           </div>
         </div>
       </div>

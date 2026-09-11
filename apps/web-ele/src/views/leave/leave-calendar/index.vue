@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { LeaveRequestApi } from '#/api';
+
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
@@ -340,14 +342,7 @@ onUnmounted(() => {
 // ─── 调休额度管理（管理员） ────────────────────────────────────────────────
 const lieuTargetEmployeeId = ref('');
 const lieuQueryYear = ref(new Date().getFullYear());
-const lieuQueryResult = ref<null | {
-  available_days: number;
-  capped: boolean;
-  employee_id: string;
-  granted_days: number;
-  used_days: number;
-  year: number;
-}>(null);
+const lieuQueryResult = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
 const lieuGrantDays = ref(1);
 const lieuLoading = ref(false);
 
@@ -497,7 +492,7 @@ async function grantLieu() {
             {{ $t('page.leave.calendarView.lieuAdmin.granted') }}
           </div>
           <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.granted_days }}
+            {{ lieuQueryResult.lieu_granted_days }}
           </div>
         </div>
         <div
@@ -511,7 +506,7 @@ async function grantLieu() {
             {{ $t('page.leave.calendarView.lieuAdmin.used') }}
           </div>
           <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.used_days }}
+            {{ lieuQueryResult.lieu_used_days }}
           </div>
         </div>
         <div
@@ -525,7 +520,7 @@ async function grantLieu() {
             {{ $t('page.leave.calendarView.lieuAdmin.available') }}
           </div>
           <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.available_days }}
+            {{ lieuQueryResult.lieu_available_days }}
           </div>
         </div>
         <div
@@ -539,7 +534,7 @@ async function grantLieu() {
             {{ $t('page.leave.calendarView.lieuAdmin.capped') }}
           </div>
           <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.capped ? '✓' : '—' }}
+            {{ lieuQueryResult.lieu_capped ? '✓' : '—' }}
           </div>
         </div>
       </div>

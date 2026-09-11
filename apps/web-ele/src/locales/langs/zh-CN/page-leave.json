@@ -35,10 +35,14 @@
           "dayCount": "当年覆盖天数",
           "pendingCount": "待审批记录",
           "annualEntitlement": "当年年假总计",
+          "annualLeaveAccrual": "当年年假应计",
           "annualUsed": "当年年假已用",
           "annualAvailable": "当年年假可用",
           "lieuGranted": "当年调休已授",
-          "lieuAvailable": "当年调休可用"
+          "lieuUsed": "当年调休已用",
+          "lieuAvailable": "当年调休可用",
+          "carryForward": "当年年假结转",
+          "broughtForward": "当年年假承前"
         },
         "listTitle": "我的请假记录（{count} 条）",
         "button": {

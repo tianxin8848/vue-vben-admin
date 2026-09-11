@@ -39,7 +39,10 @@
           "annualUsed": "Annual Leave Taken",
           "annualAvailable": "Annual Leave Balance",
           "lieuGranted": "Compensatory leave granted ",
-          "lieuAvailable": "Compensatory leave available"
+          "lieuUsed": "Compensatory leave taken",
+          "lieuAvailable": "Compensatory leave available",
+          "carryForward": "Leave Carry Forward (current year)",
+          "broughtForward": "Leave Brought Forward (current year)"
         },
         "listTitle": "My Leave Records ({count} total)",
         "button": {
