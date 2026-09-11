@@ -8,12 +8,15 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import {
   ElButton,
   ElCard,
+  ElCol,
   ElDatePicker,
+  ElDivider,
   ElForm,
   ElFormItem,
   ElInput,
   ElMessage,
   ElOption,
+  ElRow,
   ElSegmented,
   ElSelect,
   ElTag,
@@ -160,6 +163,9 @@ const stats = computed(() => {
     ),
   );
 
+  // 年假累计（原始精度）：data1.annual_entitlement_raw，前端四舍五入到整数
+  const accrualRaw = annualSummary.value?.annual_entitlement_raw;
+
   return {
     recordCount: yearRecords.length,
     dayCount: Object.keys(dayMap.value).length,
@@ -168,8 +174,10 @@ const stats = computed(() => {
     ).length,
     // 年假：data1.annual_entitlement_days
     annualEntitlement: annualSummary.value?.annual_entitlement_days ?? '-',
-    // 年假累计（原始精度）：data1.annual_entitlement_raw
-    annualLeaveAccrual: annualSummary.value?.annual_entitlement_raw ?? '-',
+    annualLeaveAccrual:
+      accrualRaw === null || accrualRaw === undefined
+        ? '-'
+        : Math.round(accrualRaw),
     // 年假已用：data1.annual_used_days
     annualUsed: annualSummary.value?.annual_used_days ?? '-',
     // 年假可用：data1.annual_available_days
@@ -187,6 +195,61 @@ const stats = computed(() => {
       boughtForwardSummary.value?.carry_over_available_days ?? '-',
   };
 });
+
+// 统计卡片分组配置（与 i18n key 对应）
+const statGroups = computed(() => [
+  {
+    groupKey: 'annual',
+    items: [
+      {
+        statKey: 'annualEntitlement',
+        labelKey: 'page.leave.employeeLeave.stats.annualEntitlement',
+      },
+      {
+        statKey: 'annualLeaveAccrual',
+        labelKey: 'page.leave.employeeLeave.stats.annualLeaveAccrual',
+      },
+      {
+        statKey: 'annualUsed',
+        labelKey: 'page.leave.employeeLeave.stats.annualUsed',
+      },
+      {
+        statKey: 'annualAvailable',
+        labelKey: 'page.leave.employeeLeave.stats.annualAvailable',
+      },
+    ],
+  },
+  {
+    groupKey: 'lieu',
+    items: [
+      {
+        statKey: 'lieuGranted',
+        labelKey: 'page.leave.employeeLeave.stats.lieuGranted',
+      },
+      {
+        statKey: 'lieuAvailable',
+        labelKey: 'page.leave.employeeLeave.stats.lieuAvailable',
+      },
+      {
+        statKey: 'lieuUsed',
+        labelKey: 'page.leave.employeeLeave.stats.lieuUsed',
+      },
+    ],
+  },
+  {
+    groupKey: 'carryover',
+    items: [
+      {
+        statKey: 'carryForward',
+        labelKey: 'page.leave.employeeLeave.stats.carryForward',
+      },
+      {
+        statKey: 'broughtForward',
+        labelKey: 'page.leave.employeeLeave.stats.broughtForward',
+      },
+    ],
+  },
+]);
 
 // 病假证明文件选择 / 移除
 function handleMedicalCertificateChange(file: { raw?: File }) {
@@ -275,11 +338,19 @@ function resetForm() {
 
 // 撤回请假申请
 async function handleWithdraw(id: string) {
+  // withdrawLeaveRequestApi 实际请求：PATCH /api/v1/me/leave-requests/{id}/withdraw
+  console.warn('[withdraw] request =>', {
+    method: 'PATCH',
+    url: `/api/v1/me/leave-requests/${id}/withdraw`,
+    id,
+  });
   try {
-    await withdrawLeaveRequestApi(id);
+    const result = await withdrawLeaveRequestApi(id);
+    console.warn('[withdraw] response =>', result);
     ElMessage.success($t('page.leave.employeeLeave.message.withdrawSuccess'));
     await fetchData();
-  } catch {
+  } catch (error) {
+    console.error('[withdraw] failed =>', error);
     ElMessage.error($t('page.leave.employeeLeave.message.withdrawFailed'));
   }
 }
@@ -376,212 +447,43 @@ onMounted(() => {
       <ElSegmented v-model="activeTab" :options="segmentedOptions" />
 
       <!-- 统计数据 -->
-      <div
+      <ElCard
         v-show="activeTab === 'records'"
-        style="
-          display: grid;
-          grid-template-columns: repeat(7, 1fr);
-          gap: 12px;
-          margin-bottom: 16px;
-        "
+        class="mb-4 flex-shrink-0"
+        shadow="never"
+        body-style="padding: 16px;"
       >
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.annualEntitlement') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualEntitlement }}
-          </div>
-        </div>
-
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.annualLeaveAccrual') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualLeaveAccrual }}
-          </div>
-        </div>
-
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.annualUsed') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualUsed }}
-          </div>
-        </div>
-
-        <div
-          style="
-            padding: 14px 16px;
-            background: hsl(var(--muted));
-            border-radius: 14px;
-          "
-        >
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.annualAvailable') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.annualAvailable }}
-          </div>
-        </div>
-
-        <!-- Leave Compensatory (Lieu) Leave Granted -->
-        <div
-          style="
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-column: 1 / -1;
-            gap: 12px;
-          "
-        >
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div
-              style="
-                min-height: 40px;
-                font-size: 13px;
-                line-height: 1.4;
-                color: hsl(var(--muted-foreground));
-              "
+        <template v-for="group in statGroups" :key="group.groupKey">
+          <ElDivider content-position="left">
+            {{ $t(`page.leave.employeeLeave.group.${group.groupKey}`) }}
+          </ElDivider>
+          <ElRow :gutter="12">
+            <ElCol
+              v-for="item in group.items"
+              :key="item.statKey"
+              :xs="24"
+              :sm="12"
+              :md="8"
+              :lg="6"
             >
-              {{ $t('page.leave.employeeLeave.stats.lieuGranted') }}
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.lieuGranted }}
-            </div>
-          </div>
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div
-              style="
-                min-height: 40px;
-                font-size: 13px;
-                line-height: 1.4;
-                color: hsl(var(--muted-foreground));
-              "
-            >
-              {{ $t('page.leave.employeeLeave.stats.lieuAvailable') }}
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.lieuAvailable }}
-            </div>
-          </div>
-          <!-- Leave Compensatory (Lieu) Leave Taken -->
-          <div
-            style="
-              padding: 14px 16px;
-              background: hsl(var(--muted));
-              border-radius: 14px;
-            "
-          >
-            <div
-              style="
-                min-height: 40px;
-                font-size: 13px;
-                line-height: 1.4;
-                color: hsl(var(--muted-foreground));
-              "
-            >
-              {{ $t('page.leave.employeeLeave.stats.lieuUsed') }}
-            </div>
-            <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-              {{ stats.lieuUsed }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Leave Carry Forward -->
-
-        <div style="background: hsl(var(--muted)); border-radius: 14px">
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.carryForward') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.carryForward }}
-          </div>
-        </div>
-
-        <div style="background: hsl(var(--muted)); border-radius: 14px">
-          <div
-            style="
-              min-height: 40px;
-              font-size: 13px;
-              line-height: 1.4;
-              color: hsl(var(--muted-foreground));
-            "
-          >
-            {{ $t('page.leave.employeeLeave.stats.broughtForward') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 22px; font-weight: 700">
-            {{ stats.broughtForward }}
-          </div>
-        </div>
-      </div>
+              <ElCard
+                shadow="hover"
+                class="mb-3"
+                body-style="padding: 14px 16px;"
+              >
+                <div
+                  class="min-h-10 text-xs leading-tight text-muted-foreground"
+                >
+                  {{ $t(item.labelKey) }}
+                </div>
+                <div class="mt-2 text-2xl font-bold">
+                  {{ stats[item.statKey as keyof typeof stats] }}
+                </div>
+              </ElCard>
+            </ElCol>
+          </ElRow>
+        </template>
+      </ElCard>
 
       <BasicTable
         v-show="activeTab === 'records'"

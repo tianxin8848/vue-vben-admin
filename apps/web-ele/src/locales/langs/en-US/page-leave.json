@@ -44,6 +44,11 @@
           "carryForward": "Leave Carry Forward (current year)",
           "broughtForward": "Leave Brought Forward (current year)"
         },
+        "group": {
+          "annual": "Annual Leave",
+          "lieu": "Compensatory Leave",
+          "carryover": "Carry / Brought Forward"
+        },
         "listTitle": "My Leave Records ({count} total)",
         "button": {
           "create": "Fill in Leave Form",

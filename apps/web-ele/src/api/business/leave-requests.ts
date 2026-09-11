@@ -297,13 +297,13 @@ export async function reviewLeaveRequestApi(
   );
 }
 
-/** 撤回请假申请 */
+/** 撤回当前用户的请假申请（后端注册在 /me 前缀下） */
 export async function withdrawLeaveRequestApi(
   id: string,
   data: LeaveRequestApi.WithdrawParams = {},
 ) {
   return requestClient.request<LeaveRequestApi.LeaveRequest>(
-    `/leave-requests/${id}/withdraw`,
+    `/me/leave-requests/${id}/withdraw`,
     { method: 'PATCH', data },
   );
 }

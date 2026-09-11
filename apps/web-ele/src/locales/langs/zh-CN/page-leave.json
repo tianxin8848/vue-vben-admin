@@ -44,6 +44,11 @@
           "carryForward": "当年年假结转",
           "broughtForward": "当年年假承前"
         },
+        "group": {
+          "annual": "年假",
+          "lieu": "调休",
+          "carryover": "结转 / 承前"
+        },
         "listTitle": "我的请假记录（{count} 条）",
         "button": {
           "create": "填写请假单",
