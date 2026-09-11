@@ -2,6 +2,7 @@ export * from './business/claims';
 export * from './business/customers';
 export * from './business/dashboard';
 export * from './business/data-migration';
+export * from './business/documents';
 export * from './business/employees';
 export * from './business/leave-requests';
 export * from './business/leave-workflows';

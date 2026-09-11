@@ -1,0 +1,42 @@
+{
+  "page": {
+    "documents": {
+      "title": "文件资料",
+      "library": "文件资料库",
+      "keywordPlaceholder": "搜索文件标题 / 文件名 / 上传者",
+      "refresh": "刷新",
+      "upload": "上传文件",
+      "titleCol": "文件标题",
+      "fileName": "文件名",
+      "size": "大小",
+      "viewerDepartments": "可见部门",
+      "uploader": "上传者",
+      "createdAt": "上传时间",
+      "actions": "操作",
+      "view": "查看 / 下载",
+      "edit": "编辑",
+      "delete": "删除",
+      "empty": "暂无文件",
+      "editTitle": "编辑文件",
+      "formTitle": "文件标题",
+      "titlePlaceholder": "不填则默认使用文件名",
+      "file": "文件",
+      "selectFile": "选择文件",
+      "uploadTip": "支持 {ext}，单个文件不超过 {size}MB",
+      "formDepartments": "可见部门",
+      "departmentsPlaceholder": "不选则仅文件管理员可见",
+      "cancel": "取消",
+      "save": "保存",
+      "fileRequired": "请先选择要上传的文件",
+      "extNotAllowed": "该文件格式不支持",
+      "fileTooLarge": "文件大小不能超过 {size}MB",
+      "titleRequired": "文件标题不能为空",
+      "createSuccess": "文件已上传",
+      "updateSuccess": "文件信息已更新",
+      "confirmDelete": "确认删除文件「{name}」？该操作不可恢复。",
+      "deleteTitle": "删除文件",
+      "confirmDeleteBtn": "确认删除",
+      "deleteSuccess": "文件已删除"
+    }
+  }
+}

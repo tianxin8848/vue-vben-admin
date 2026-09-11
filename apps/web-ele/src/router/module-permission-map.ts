@@ -42,6 +42,7 @@ export const ROUTE_NAME_TO_MODULE_CODE: Record<string, string> = {
   EmployeeManageUserProfile: 'user_management',
   EmployeeManageUsers: 'user_management',
   FuxiMapCustomers: 'customer_map',
+  DocumentLibrary: 'document_library',
   LeaveManageAdmin: 'leave_calendar',
   LeaveManageApprovals: 'approval_management',
   LeaveManageWorkflows: 'leave_workflows',
@@ -269,6 +270,16 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
       title: $t('page.fuximap.customerDistribution'),
     },
   },
+  document_library: {
+    name: 'DocumentLibrary',
+    path: 'library',
+    component: 'documents/index',
+    meta: {
+      affixTab: false,
+      icon: 'lucide:file-text',
+      title: $t('page.documents.library'),
+    },
+  },
 };
 
 /**
@@ -388,6 +399,31 @@ export function buildRoutesFromPermissions(
           icon: 'lucide:map',
           order: 2,
           title: $t('page.fuximap.title'),
+        },
+        children: [child],
+      });
+    }
+  }
+
+  // ─── 文件资料 (document_library / document_library_manage) ─────────────
+  // 后端 get_current_document_library_user 允许任一模块 can_view 访问；
+  // 上传/编辑/删除等管理能力由页面根据 document_library_manage 控制。
+  if (
+    canViewModule('document_library') ||
+    canViewModule('document_library_manage')
+  ) {
+    const documentTpl = MANAGEMENT_ROUTE_TEMPLATES.document_library;
+    if (documentTpl) {
+      const child = cloneRoute(documentTpl);
+      routes.push({
+        name: 'Documents',
+        path: '/documents',
+        component: 'BasicLayout',
+        redirect: '/documents/library',
+        meta: {
+          icon: 'lucide:folder-open',
+          order: 3,
+          title: $t('page.documents.title'),
         },
         children: [child],
       });

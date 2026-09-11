@@ -1,0 +1,42 @@
+{
+  "page": {
+    "documents": {
+      "title": "Documents",
+      "library": "Document Library",
+      "keywordPlaceholder": "Search title / file name / uploader",
+      "refresh": "Refresh",
+      "upload": "Upload",
+      "titleCol": "Title",
+      "fileName": "File Name",
+      "size": "Size",
+      "viewerDepartments": "Visible Departments",
+      "uploader": "Uploader",
+      "createdAt": "Uploaded At",
+      "actions": "Actions",
+      "view": "View / Download",
+      "edit": "Edit",
+      "delete": "Delete",
+      "empty": "No documents",
+      "editTitle": "Edit Document",
+      "formTitle": "Title",
+      "titlePlaceholder": "Defaults to the file name if left empty",
+      "file": "File",
+      "selectFile": "Select File",
+      "uploadTip": "Allowed: {ext}. Max {size}MB per file.",
+      "formDepartments": "Visible Departments",
+      "departmentsPlaceholder": "Leave empty for managers only",
+      "cancel": "Cancel",
+      "save": "Save",
+      "fileRequired": "Please select a file to upload",
+      "extNotAllowed": "This file type is not allowed",
+      "fileTooLarge": "File size must not exceed {size}MB",
+      "titleRequired": "Title cannot be empty",
+      "createSuccess": "Document uploaded",
+      "updateSuccess": "Document updated",
+      "confirmDelete": "Delete document \"{name}\"? This action cannot be undone.",
+      "deleteTitle": "Delete Document",
+      "confirmDeleteBtn": "Delete",
+      "deleteSuccess": "Document deleted"
+    }
+  }
+}
