@@ -61,11 +61,9 @@ async function handleConfirm() {
   const target = targetId.value || null;
   submitting.value = true;
   try {
-    if (ctx.kind === 'folder') {
-      await updateFolderApi(ctx.id, { parent_id: target });
-    } else {
-      await updateDocumentApi(ctx.id, { folder_id: target });
-    }
+    await (ctx.kind === 'folder'
+      ? updateFolderApi(ctx.id, { parent_id: target })
+      : updateDocumentApi(ctx.id, { folder_id: target }));
     ElMessage.success(t('page.documents.moveSuccess'));
     visible.value = false;
     emit('success');
