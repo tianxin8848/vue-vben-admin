@@ -27,6 +27,8 @@ const emit = defineEmits<{
 const [Form, formApi] = useVbenForm(
   reactive({
     commonConfig: {
+      // 标签列宽需容纳最长的英文标签（如 Emergency Contact Relationship），避免折行
+      labelWidth: 220,
       // 所有表单项
       componentProps: {
         class: 'w-full',

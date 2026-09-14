@@ -38,15 +38,15 @@
           "annualLeaveAccrual": "Annual leave accrual",
           "annualUsed": "Annual Leave Taken",
           "annualAvailable": "Annual Leave Balance",
-          "lieuGranted": "Compensatory leave granted ",
-          "lieuUsed": "Compensatory leave taken",
-          "lieuAvailable": "Compensatory leave available",
+          "lieuGranted": "Compensation leave granted ",
+          "lieuUsed": "Compensation leave taken",
+          "lieuAvailable": "Compensation leave available",
           "carryForward": "Leave Carry Forward (current year)",
           "broughtForward": "Leave Brought Forward (current year)"
         },
         "group": {
           "annual": "Annual Leave",
-          "lieu": "Compensatory Leave",
+          "lieu": "Compensation Leave",
           "carryover": "Carry / Brought Forward"
         },
         "listTitle": "My Leave Records ({count} total)",
@@ -243,7 +243,7 @@
         "unsetRegion": "Unset Region",
         "ungrouped": "Ungrouped",
         "lieuAdmin": {
-          "title": "Pro‑rata Annual Leave",
+          "title": "Compensation Leave Grant",
           "selectEmployee": "Select an employee",
           "query": "Query",
           "queryFailed": "Query failed",

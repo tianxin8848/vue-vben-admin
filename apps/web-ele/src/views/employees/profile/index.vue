@@ -141,15 +141,13 @@ onMounted(() => {
 <template>
   <Page>
     <ElButton @click="goBack" style="margin-bottom: 16px">
-{{
-      t('page.employees.profileDetail.back')
-    }}
-</ElButton>
+      {{ t('page.employees.profileDetail.back') }}
+    </ElButton>
     <ElCard
       v-if="employee"
       :header="t('page.employees.profileDetail.basicInfo')"
     >
-      <ElForm :model="basicInfoForm" label-width="120px">
+      <ElForm :model="basicInfoForm" label-width="auto">
         <ElFormItem :label="t('page.employees.profileDetail.account')">
           <ElInput :model-value="employee.username" disabled />
         </ElFormItem>
@@ -205,7 +203,7 @@ onMounted(() => {
       :header="t('page.employees.profileDetail.profileInfo')"
       style="margin-top: 20px"
     >
-      <ElForm :model="profileForm" label-width="120px">
+      <ElForm :model="profileForm" label-width="auto">
         <ElFormItem :label="t('page.employees.profileDetail.hireDate')">
           <ElDatePicker
             v-model="profileForm.hire_date"

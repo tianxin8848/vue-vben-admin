@@ -2,7 +2,7 @@ import { requestClient } from '#/api/request';
 
 export namespace LeaveRequestApi {
   // 后端 leave_type 已从枚举放宽为 str（max_length=50），
-  // 接口返回的任意 code（如 maternity/paternity/parental/compensatory/statutory_holiday）都允许
+  // 接口返回的任意 code（如 maternity/paternity/parental/Compensation/statutory_holiday）都允许
   export type LeaveType = string;
   export type LeaveSession = 'afternoon' | 'full_day' | 'morning';
   export type ApprovalStatus =
