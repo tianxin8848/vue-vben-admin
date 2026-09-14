@@ -38,6 +38,7 @@ const visible = defineModel<boolean>('visible', { default: false });
 const form = reactive<EmployeeApi.EmployeeBasicInfoUpdate>({
   department: null,
   email: null,
+  employee_code: null,
   full_name: null,
   phone: null,
   position: null,
@@ -63,6 +64,7 @@ function syncForm() {
   form.department = e.department;
   form.position = e.position;
   form.region = e.region;
+  form.employee_code = e.employee_code;
 }
 
 watch(
@@ -114,6 +116,15 @@ function handleClose() {
             v-model="form.full_name"
             :placeholder="
               $t('page.employees.basicInfoEdit.fullNamePlaceholder')
+            "
+          />
+        </ElFormItem>
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.employeeCode')">
+          <ElInput
+            v-model="form.employee_code"
+            :maxlength="32"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.employeeCodePlaceholder')
             "
           />
         </ElFormItem>
@@ -180,10 +191,8 @@ function handleClose() {
 
     <template #footer>
       <ElButton :loading="loading" @click="handleClose">
-{{
-        $t('page.employees.basicInfoEdit.cancel')
-      }}
-</ElButton>
+        {{ $t('page.employees.basicInfoEdit.cancel') }}
+      </ElButton>
       <ElButton :loading="loading" type="primary" @click="handleSubmit">
         {{ $t('page.employees.basicInfoEdit.save') }}
       </ElButton>

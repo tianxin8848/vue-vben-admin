@@ -75,29 +75,9 @@ const tableColumns = computed<
   VxeGridProps<LeaveRequestApi.LeaveRequest>['columns']
 >(() => [
   {
-    field: 'employee_name',
-    title: t('page.approve.pendingLeaveTab.column.applicant'),
-    width: 100,
-  },
-  {
     field: 'employee_username',
     title: t('page.approve.pendingLeaveTab.column.account'),
     width: 120,
-  },
-  {
-    field: 'employee_code',
-    title: t('page.approve.pendingLeaveTab.column.employeeCode'),
-    width: 100,
-  },
-  {
-    field: 'employee_department',
-    title: t('page.approve.pendingLeaveTab.column.department'),
-    width: 140,
-  },
-  {
-    field: 'employee_region',
-    title: t('page.approve.pendingLeaveTab.column.region'),
-    width: 100,
   },
   {
     field: 'leave_type',

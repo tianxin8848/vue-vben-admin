@@ -315,11 +315,6 @@ onMounted(() => {
       <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
       <div v-show="activeTab === 'basic'" class="min-h-0 flex-1">
         <ElCard>
-          <template #header>
-            <span class="text-base font-bold">{{
-              t('page.system.settingsDetail.basicConfig')
-            }}</span>
-          </template>
           <p class="mb-4 text-sm text-muted-foreground">
             {{ t('page.system.settingsDetail.basicConfigHint') }}
           </p>
@@ -346,11 +341,6 @@ onMounted(() => {
       <!-- 员工可自编辑字段 -->
       <div v-show="activeTab === 'employee'" class="min-h-0 flex-1">
         <ElCard>
-          <template #header>
-            <span class="text-base font-bold">{{
-              t('page.system.settingsDetail.employeeEditableFields')
-            }}</span>
-          </template>
           <EmployeeEditableFieldsEditor
             v-model="selectedEditableFields"
             :catalog="settings?.employee_profile_field_catalog || []"
@@ -375,11 +365,6 @@ onMounted(() => {
       <!-- 报销配置：报销理由 / 币种 -->
       <div v-show="activeTab === 'claim'" class="min-h-0 flex-1">
         <ElCard>
-          <template #header>
-            <span class="text-base font-bold">{{
-              t('page.system.settingsDetail.claimConfig')
-            }}</span>
-          </template>
           <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
             <ClaimReasonEditor
               v-model="claimReasonsStr"
@@ -410,11 +395,6 @@ onMounted(() => {
       <!-- 地区假期：假期维护 / 假期名称清单 -->
       <div v-show="activeTab === 'holiday'" class="min-h-0 flex-1">
         <ElCard>
-          <template #header>
-            <span class="text-base font-bold">{{
-              t('page.system.settingsDetail.regionalHoliday')
-            }}</span>
-          </template>
           <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
             <HolidayEditor
               :regions="settings?.regions || []"
@@ -447,11 +427,6 @@ onMounted(() => {
       <!-- 请假类型管理 -->
       <div v-show="activeTab === 'leave'" class="min-h-0 flex-1">
         <ElCard>
-          <template #header>
-            <span class="text-base font-bold">{{
-              t('page.system.settingsDetail.leaveTypeConfig')
-            }}</span>
-          </template>
           <LeaveTypesEditor v-model="leaveTypes" @save="handleSaveSettings" />
           <div class="mt-4 flex justify-end">
             <ElButton type="primary" @click="handleSaveSettings">

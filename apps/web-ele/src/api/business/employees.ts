@@ -93,6 +93,7 @@ export namespace EmployeeApi {
   export interface EmployeeCreate {
     department: string;
     email: string;
+    employee_code?: null | string;
     full_name: string;
     is_active?: boolean;
     module_permissions?: ModulePermission[];
@@ -106,6 +107,7 @@ export namespace EmployeeApi {
   export interface EmployeeBasicInfoUpdate {
     department?: null | string;
     email?: null | string;
+    employee_code?: null | string;
     full_name?: null | string;
     phone?: null | string;
     position?: null | string;

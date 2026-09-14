@@ -45,6 +45,7 @@ const { t } = useI18n();
 const createForm = reactive({
   department: '',
   email: '',
+  employee_code: '',
   full_name: '',
   phone: '',
   position: '',
@@ -95,6 +96,7 @@ function resetForm() {
   createForm.phone = '';
   createForm.position = '';
   createForm.region = '';
+  createForm.employee_code = '';
   selectedModuleCodes.value = [];
 }
 
@@ -118,6 +120,7 @@ async function submitCreate() {
   const payload: EmployeeApi.EmployeeCreate = {
     department: createForm.department,
     email: createForm.email,
+    employee_code: createForm.employee_code || undefined,
     full_name: createForm.full_name,
     module_permissions: buildModulePermissions(),
     phone: createForm.phone || undefined,
@@ -168,6 +171,16 @@ defineExpose({ open });
         <ElInput
           v-model="createForm.full_name"
           :placeholder="t('page.employees.createDrawer.fullNamePlaceholder')"
+          class="w-full"
+        />
+      </ElFormItem>
+      <ElFormItem :label="t('page.employees.createDrawer.employeeCode')">
+        <ElInput
+          v-model="createForm.employee_code"
+          :maxlength="32"
+          :placeholder="
+            t('page.employees.createDrawer.employeeCodePlaceholder')
+          "
           class="w-full"
         />
       </ElFormItem>
