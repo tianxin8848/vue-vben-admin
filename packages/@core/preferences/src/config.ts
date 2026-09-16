@@ -90,7 +90,7 @@ const defaultPreferences: Preferences = {
     collapsedButton: true,
     collapsedShowTitle: false,
     collapseWidth: 60,
-    draggable: true,
+    draggable: false,
     enable: true,
     expandOnHover: true,
     extraCollapse: false,
