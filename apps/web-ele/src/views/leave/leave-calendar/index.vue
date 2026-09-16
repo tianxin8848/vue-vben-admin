@@ -1,586 +1,62 @@
 <script lang="ts" setup>
-import type { LeaveRequestApi } from '#/api';
-
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import {
-  ElButton,
-  ElCard,
-  ElInputNumber,
-  ElMessage,
-  ElOption,
-  ElSegmented,
-  ElSelect,
-} from 'element-plus';
-
-import {
-  addLieuLeaveGrantApi,
-  deleteRegionalHolidayApi,
-  getAnnualLeaveSummaryApi,
-  getEmployeesApi,
-  getLeaveCalendarApi,
-  getLeaveCalendarMetaApi,
-  getLieuLeaveSummaryApi,
-  upsertRegionalHolidayApi,
-} from '#/api';
-import { $t } from '#/locales';
+import { ElCard } from 'element-plus';
 
 import CalendarPanel from '../components/CalendarPanel.vue';
 import DetailPanel from '../components/DetailPanel.vue';
 import FilterPanel from '../components/FilterPanel.vue';
 import StatsPanel from '../components/StatsPanel.vue';
-import {
-  leaveTypeLegendItems,
-  loadLeaveTypeLabels,
-} from '../shared/leave-types';
+import CalendarToolbar from './components/CalendarToolbar.vue';
+import LieuAdminPanel from './components/LieuAdminPanel.vue';
+import { useCalendarData } from './composables/useCalendarData';
+import { useLiveClock } from './composables/useLiveClock';
 
-const loading = ref(false);
+// ─── 视图状态 ──────────────────────────────────────────────────────────────────
+const activeTab = ref<'calendar' | 'overview'>('calendar');
 
-// Tab 状态
-type TabKey = 'calendar' | 'overview';
-const activeTab = ref<TabKey>('calendar');
-const segmentedOptions = computed(() => [
-  { label: $t('page.leave.calendarView.overviewAndFilter'), value: 'overview' },
-  { label: $t('page.leave.calendarView.yearCalendar'), value: 'calendar' },
-]);
+// ─── 实时时钟（UTC+8，与日历取日基准一致） ──────────────────────────────────────
+const { currentTime } = useLiveClock();
 
-const currentTime = ref('');
-let timer: null | number = null;
-
-const currentYear = ref(2026);
-const selectedDateKey = ref('');
-
-const searchForm = reactive({
-  team: '',
-  region: '',
-  employee_keyword: '',
-  approval_status: '',
-  risk_threshold: 5,
-  view_mode: 'standard' as 'detail' | 'standard',
-});
-
-const regions = ref<string[]>([]);
-const teams = ref<string[]>([]);
-const employeesDirectory = ref<any[]>([]);
-const regionalHolidays = ref<any[]>([]);
-
-const calendarRecords = ref<any[]>([]);
-
-const annualLeaveSummary = ref<null | {
-  available_days: number;
-  entitlement_days: number;
-  used_days: number;
-  year: number;
-}>(null);
-
-function toUTC8DateKey(date: Date): string {
-  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
-  const y = utc8.getUTCFullYear();
-  const m = String(utc8.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(utc8.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function getUTC8Now(): Date {
-  return new Date(Date.now() + 8 * 3600 * 1000);
-}
-
-const dayMap = computed(() => {
-  const map: Record<string, any[]> = {};
-  calendarRecords.value.forEach((record) => {
-    (record.date_keys || []).forEach((dateKey: string) => {
-      if (!dateKey.startsWith(`${currentYear.value}-`)) return;
-      map[dateKey] = map[dateKey] || [];
-      map[dateKey].push({ ...record });
-    });
-  });
-  Object.values(map).forEach((entries) => {
-    entries.sort((left: any, right: any) =>
-      left.employee_name.localeCompare(right.employee_name, 'zh-CN'),
-    );
-  });
-  return map;
-});
-
-const filteredEmployees = computed(() => {
-  const keyword = searchForm.employee_keyword.trim();
-  const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
-  const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
-  let source = employeesDirectory.value;
-  if (source.length === 0) {
-    source = calendarRecords.value.map((item) => ({
-      id: item.id,
-      username: item.employee_username,
-      name: item.employee_name,
-      team: item.employee_department || ungroupedLabel,
-      region: item.employee_region || unsetRegionLabel,
-    }));
-  }
-  return source.filter((employee) => {
-    const matchesTeam =
-      searchForm.team === '' ||
-      searchForm.team === 'all' ||
-      employee.team === searchForm.team;
-    const matchesRegion =
-      searchForm.region === '' ||
-      searchForm.region === 'all' ||
-      (searchForm.region === '__unset__'
-        ? employee.region === unsetRegionLabel
-        : employee.region === searchForm.region);
-    const matchesKeyword =
-      !keyword ||
-      employee.name.includes(keyword) ||
-      employee.username.includes(keyword);
-    return matchesTeam && matchesRegion && matchesKeyword;
-  });
-});
-
-const stats = computed(() => {
-  const riskyDates = Object.entries(dayMap.value).filter(
-    ([, entries]) => entries.length >= searchForm.risk_threshold,
-  );
-  const peak = riskyDates.toSorted(
-    (left, right) => right[1].length - left[1].length,
-  )[0];
-  const personUnit = $t('page.leave.calendarView.stats.personUnit');
-  return {
-    visibleEmployeeCount: filteredEmployees.value.length,
-    leaveRecordCount: calendarRecords.value.length,
-    riskDayCount: riskyDates.length,
-    peakDayText: peak
-      ? `${peak[0].slice(5)} · ${peak[1].length}${personUnit}`
-      : '-',
-  };
-});
-
-function onSelectDate(date: Date) {
-  selectedDateKey.value = toUTC8DateKey(date);
-}
-
-function onPanelChange(date: Date) {
-  const utc8 = new Date(date.getTime() + 8 * 3600 * 1000);
-  const newYear = utc8.getUTCFullYear();
-  const yearChanged = newYear !== currentYear.value;
-  currentYear.value = newYear;
-  if (yearChanged) {
-    fetchCalendar();
-    loadAnnualLeaveSummary();
-  }
-}
-
-function formatNow() {
-  const utc8Now = getUTC8Now();
-  const weekKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const weekLabels = weekKeys.map(
-    (k) => $t(`page.leave.calendarView.weekdays.${k}`) as string,
-  );
-  const year = utc8Now.getUTCFullYear();
-  const month = String(utc8Now.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(utc8Now.getUTCDate()).padStart(2, '0');
-  const hours = String(utc8Now.getUTCHours()).padStart(2, '0');
-  const minutes = String(utc8Now.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(utc8Now.getUTCSeconds()).padStart(2, '0');
-  const dayOfWeek = utc8Now.getUTCDay();
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekLabels[dayOfWeek]}`;
-}
-
-function startLiveClock() {
-  currentTime.value = formatNow();
-  timer = window.setInterval(() => {
-    currentTime.value = formatNow();
-  }, 1000);
-}
-
-function resetFilters() {
-  searchForm.team = '';
-  searchForm.region = '';
-  searchForm.employee_keyword = '';
-  searchForm.approval_status = '';
-  searchForm.risk_threshold = 5;
-  searchForm.view_mode = 'standard';
-  selectedDateKey.value = '';
-  fetchCalendar();
-}
-
-function updateSearchForm(value: typeof searchForm) {
-  Object.assign(searchForm, value);
-}
-
-function getActiveRegionKey() {
-  if (
-    !searchForm.region ||
-    searchForm.region === '' ||
-    searchForm.region === 'all'
-  )
-    return '';
-  if (searchForm.region === '__unset__') return '';
-  return searchForm.region;
-}
-
-async function setHoliday() {
-  const activeRegion = getActiveRegionKey();
-  const dateKey = selectedDateKey.value;
-  if (!activeRegion || !dateKey) return;
-  try {
-    await upsertRegionalHolidayApi({
-      region: activeRegion,
-      date: dateKey,
-      holiday_name: $t('page.leave.calendarView.holidayNames.newYear'),
-    });
-    await loadSystemSettings();
-  } catch {
-    // handled in component
-  }
-}
-
-async function removeHoliday() {
-  const activeRegion = getActiveRegionKey();
-  const holiday = regionalHolidays.value.find(
-    (h: any) => h.region === activeRegion && h.date === selectedDateKey.value,
-  );
-  if (!holiday) return;
-  try {
-    await deleteRegionalHolidayApi({
-      region: activeRegion,
-      date: selectedDateKey.value,
-    });
-    await loadSystemSettings();
-  } catch {
-    // handled in component
-  }
-}
-
-async function fetchCalendar() {
-  loading.value = true;
-  try {
-    const params: Record<string, string> = { year: String(currentYear.value) };
-    if (searchForm.team && searchForm.team !== 'all')
-      params.team = searchForm.team;
-    if (searchForm.region && searchForm.region !== 'all')
-      params.region = searchForm.region;
-    if (searchForm.employee_keyword)
-      params.employee_keyword = searchForm.employee_keyword;
-    if (searchForm.approval_status && searchForm.approval_status !== 'all')
-      params.approval_status = searchForm.approval_status;
-
-    const data = await getLeaveCalendarApi(currentYear.value, params);
-    calendarRecords.value = (data.items || []).filter(
-      (item: any) => item.approval_status !== 'withdrawn',
-    );
-  } catch {
-    calendarRecords.value = [];
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function loadAnnualLeaveSummary() {
-  try {
-    const data = await getAnnualLeaveSummaryApi(currentYear.value);
-    annualLeaveSummary.value = data;
-  } catch {
-    annualLeaveSummary.value = null;
-  }
-}
-
-async function loadSystemSettings() {
-  try {
-    const meta = await getLeaveCalendarMetaApi();
-    regions.value = meta.regions || [];
-    regionalHolidays.value = meta.regional_holidays || [];
-  } catch {
-    regions.value = [];
-    regionalHolidays.value = [];
-  }
-}
-
-async function loadEmployees() {
-  try {
-    const data = await getEmployeesApi();
-    const ungroupedLabel = $t('page.leave.calendarView.ungrouped');
-    const unsetRegionLabel = $t('page.leave.calendarView.unsetRegion');
-    employeesDirectory.value = data
-      .map((item: any) => ({
-        id: item.id,
-        username: item.username,
-        name: item.full_name || item.username,
-        team: item.department || ungroupedLabel,
-        region: item.region || unsetRegionLabel,
-        isActive: item.is_active !== false,
-      }))
-      .filter((item: any) => item.isActive);
-
-    const teamSet = new Set(
-      employeesDirectory.value.map((item: any) => item.team).filter(Boolean),
-    );
-    teams.value = [...teamSet].toSorted((a: string, b: string) =>
-      a.localeCompare(b, 'zh-CN'),
-    );
-  } catch {
-    employeesDirectory.value = [];
-    teams.value = [];
-  }
-}
-
-onMounted(() => {
-  startLiveClock();
-  Promise.all([
-    fetchCalendar(),
-    loadSystemSettings(),
-    loadEmployees(),
-    loadAnnualLeaveSummary(),
-    loadLeaveTypeLabels(),
-  ]);
-});
-
-onUnmounted(() => {
-  if (timer) clearInterval(timer);
-});
-
-// ─── 调休额度管理（管理员） ────────────────────────────────────────────────
-const lieuTargetEmployeeId = ref('');
-const lieuQueryYear = ref(new Date().getFullYear());
-const lieuQueryResult = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
-const lieuGrantDays = ref(1);
-const lieuLoading = ref(false);
-
-async function queryLieuSummary() {
-  if (!lieuTargetEmployeeId.value) {
-    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
-    return;
-  }
-  lieuLoading.value = true;
-  try {
-    console.warn(
-      '[lieuAdmin] 調用 getLieuLeaveSummaryApi：employeeId=',
-      lieuTargetEmployeeId.value,
-      'year=',
-      lieuQueryYear.value,
-    );
-    const data = await getLieuLeaveSummaryApi(
-      lieuTargetEmployeeId.value,
-      lieuQueryYear.value,
-    );
-    console.warn('[lieuAdmin] getLieuLeaveSummaryApi 返回：', data);
-    lieuQueryResult.value = data;
-  } catch (error) {
-    console.error(
-      '[lieuAdmin] getLieuLeaveSummaryApi 失敗：',
-      error,
-      'employeeId=',
-      lieuTargetEmployeeId.value,
-      'year=',
-      lieuQueryYear.value,
-    );
-    lieuQueryResult.value = null;
-    ElMessage.error($t('page.leave.calendarView.lieuAdmin.queryFailed'));
-  } finally {
-    lieuLoading.value = false;
-  }
-}
-
-async function grantLieu() {
-  if (!lieuTargetEmployeeId.value) {
-    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
-    return;
-  }
-  if (!lieuGrantDays.value || lieuGrantDays.value <= 0) {
-    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.daysPositive'));
-    return;
-  }
-  lieuLoading.value = true;
-  try {
-    const params = {
-      employee_id: lieuTargetEmployeeId.value,
-      year: lieuQueryYear.value,
-      days: lieuGrantDays.value,
-    };
-    console.warn('[lieuAdmin] 調用 addLieuLeaveGrantApi：params=', params);
-    const data = await addLieuLeaveGrantApi(params);
-    console.warn('[lieuAdmin] addLieuLeaveGrantApi 返回：', data);
-    lieuQueryResult.value = data;
-    ElMessage.success(
-      $t('page.leave.calendarView.lieuAdmin.grantSuccess', {
-        days: lieuGrantDays.value,
-      }),
-    );
-  } catch (error) {
-    console.error(
-      '[lieuAdmin] addLieuLeaveGrantApi 失敗：',
-      error,
-      'employeeId=',
-      lieuTargetEmployeeId.value,
-      'year=',
-      lieuQueryYear.value,
-      'days=',
-      lieuGrantDays.value,
-    );
-    ElMessage.error($t('page.leave.calendarView.lieuAdmin.grantFailed'));
-  } finally {
-    lieuLoading.value = false;
-  }
-}
+// ─── 数据层（日历记录 / 员工目录 / 区域假日 / 统计与筛选 / 假日增删） ────────────
+const {
+  annualLeaveSummary,
+  currentYear,
+  dayMap,
+  employeesDirectory,
+  onPanelChange,
+  onSelectDate,
+  regionalHolidays,
+  regions,
+  removeHoliday,
+  resetFilters,
+  searchForm,
+  selectedDateKey,
+  setHoliday,
+  stats,
+  teams,
+  updateSearchForm,
+} = useCalendarData();
 </script>
 
 <template>
   <Page>
     <!-- 调休额度管理（管理员） -->
-    <ElCard style="margin-bottom: 12px">
-      <template #header>
-        <span>{{ $t('page.leave.calendarView.lieuAdmin.title') }}</span>
-      </template>
-      <div
-        style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center"
-      >
-        <ElSelect
-          v-model="lieuTargetEmployeeId"
-          filterable
-          :placeholder="$t('page.leave.calendarView.lieuAdmin.selectEmployee')"
-          style="width: 240px"
-        >
-          <ElOption
-            v-for="emp in employeesDirectory"
-            :key="emp.id"
-            :label="`${emp.name}（${emp.username}）`"
-            :value="emp.id"
-          />
-        </ElSelect>
-        <ElInputNumber
-          v-model="lieuQueryYear"
-          :min="2000"
-          :max="2100"
-          :step="1"
-          style="width: 140px"
-        />
-        <ElButton
-          type="primary"
-          :loading="lieuLoading"
-          @click="queryLieuSummary"
-        >
-          {{ $t('page.leave.calendarView.lieuAdmin.query') }}
-        </ElButton>
-        <ElInputNumber
-          v-model="lieuGrantDays"
-          :min="0.5"
-          :step="0.5"
-          :precision="1"
-          style="width: 140px"
-        />
-        <ElButton type="success" :loading="lieuLoading" @click="grantLieu">
-          {{ $t('page.leave.calendarView.lieuAdmin.grant') }}
-        </ElButton>
-      </div>
-      <div
-        v-if="lieuQueryResult"
-        style="
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-          margin-top: 16px;
-        "
-      >
-        <div
-          style="
-            padding: 12px 16px;
-            background: hsl(var(--muted));
-            border-radius: 10px;
-          "
-        >
-          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.calendarView.lieuAdmin.granted') }}
-          </div>
-          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.lieu_granted_days }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 12px 16px;
-            background: hsl(var(--muted));
-            border-radius: 10px;
-          "
-        >
-          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.calendarView.lieuAdmin.used') }}
-          </div>
-          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.lieu_used_days }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 12px 16px;
-            background: hsl(var(--muted));
-            border-radius: 10px;
-          "
-        >
-          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.calendarView.lieuAdmin.available') }}
-          </div>
-          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.lieu_available_days }}
-          </div>
-        </div>
-        <div
-          style="
-            padding: 12px 16px;
-            background: hsl(var(--muted));
-            border-radius: 10px;
-          "
-        >
-          <div style="font-size: 12px; color: hsl(var(--muted-foreground))">
-            {{ $t('page.leave.calendarView.lieuAdmin.capped') }}
-          </div>
-          <div style="margin-top: 6px; font-size: 20px; font-weight: 700">
-            {{ lieuQueryResult.lieu_capped ? '✓' : '—' }}
-          </div>
-        </div>
-      </div>
-    </ElCard>
+    <LieuAdminPanel class="mb-3" :employees="employeesDirectory" />
 
     <ElCard>
       <template #header>
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span>{{ currentTime }}</span>
-          <div class="flex flex-wrap items-center gap-3">
-            <span
-              v-for="cfg in leaveTypeLegendItems"
-              :key="cfg.key"
-              class="inline-flex items-center gap-1 text-xs text-muted-foreground"
-            >
-              <span
-                :style="{ background: cfg.color }"
-                class="inline-block size-2.5 rounded-full"
-              ></span>
-              {{ cfg.label }}
-            </span>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <ElSelect
-              v-model="searchForm.region"
-              @change="searchForm.region = $event"
-            >
-              <ElOption
-                :label="$t('page.leave.calendarView.allRegions')"
-                value=""
-              />
-              <ElOption
-                :label="$t('page.leave.calendarView.unsetRegion')"
-                value="__unset__"
-              />
-              <ElOption v-for="r in regions" :key="r" :label="r" :value="r" />
-            </ElSelect>
-          </div>
-          <ElSegmented
-            v-model="activeTab"
-            :options="segmentedOptions"
-            style="margin-bottom: 12px"
-          />
-        </div>
+        <CalendarToolbar
+          v-model:active-tab="activeTab"
+          v-model:region="searchForm.region"
+          :current-time="currentTime"
+          :regions="regions"
+        />
       </template>
 
+      <!-- 概览：统计卡片 + 筛选面板 -->
       <div v-show="activeTab === 'overview'">
         <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
 
@@ -592,6 +68,7 @@ async function grantLieu() {
         />
       </div>
 
+      <!-- 年历：月历格子 + 选中日详情 -->
       <div v-show="activeTab === 'calendar'">
         <CalendarPanel
           :day-map="dayMap"
