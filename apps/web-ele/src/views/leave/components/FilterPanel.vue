@@ -11,8 +11,6 @@ import {
 
 import { $t } from '#/locales';
 
-import { leaveTypeLegendItems } from '../shared/leave-types';
-
 interface SearchForm {
   team: string;
   region: string;
@@ -47,7 +45,7 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
       </h3>
     </template>
 
-    <ElForm :model="props.searchForm" label-width="100px" inline>
+    <ElForm :model="props.searchForm" label-width="auto" inline>
       <ElFormItem :label="$t('page.leave.calendarView.filter.team')">
         <ElSelect
           :model-value="props.searchForm.team"
@@ -128,120 +126,5 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
         </ElButton>
       </ElFormItem>
     </ElForm>
-
-    <div
-      style="
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        padding-top: 16px;
-        margin-top: 16px;
-        border-top: 1px solid #e2e8f0;
-      "
-    >
-      <div
-        v-for="cfg in leaveTypeLegendItems"
-        :key="cfg.key"
-        style="
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        "
-      >
-        <span
-          style="
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-          "
-          :style="{ background: cfg.color }"
-        ></span>
-        {{ cfg.label }}
-      </div>
-      <div
-        style="
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        "
-      >
-        <span
-          style="
-            display: inline-block;
-            width: 16px;
-            height: 12px;
-            background: #f1f5f9;
-            border-radius: 4px;
-          "
-        ></span>
-        {{ $t('page.leave.calendarView.filter.legendWeekend') }}
-      </div>
-      <div
-        style="
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        "
-      >
-        <span
-          style="
-            display: inline-block;
-            width: 16px;
-            height: 12px;
-            background: rgb(96 165 250 / 50%);
-            border-radius: 4px;
-          "
-        ></span>
-        {{ $t('page.leave.calendarView.filter.legendPending') }}
-      </div>
-      <div
-        style="
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        "
-      >
-        <span
-          style="
-            display: inline-block;
-            width: 16px;
-            height: 12px;
-            background: #ede9fe;
-            border-radius: 4px;
-          "
-        ></span>
-        {{ $t('page.leave.calendarView.filter.legendRegionalHoliday') }}
-      </div>
-      <div
-        style="
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        "
-      >
-        <span
-          style="
-            display: inline-block;
-            width: 16px;
-            height: 12px;
-            background: #fff;
-            border: 2px solid #ef4444;
-            border-radius: 4px;
-          "
-        ></span>
-        {{ $t('page.leave.calendarView.filter.legendRiskReached') }}
-      </div>
-    </div>
   </ElCard>
 </template>
