@@ -6,6 +6,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import { computed, onMounted, ref } from 'vue';
 
 import { ProfileBaseSetting } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
 import { ElMessage } from 'element-plus';
 
@@ -24,21 +25,21 @@ const regions = ref<string[]>([]);
 
 const departmentOptions = computed<BasicOption[]>(() => {
   return [
-    { label: '请选择', value: '' },
+    { label: $t('profile.pleaseSelect'), value: '' },
     ...departments.value.map((d) => ({ label: d, value: d })),
   ];
 });
 
 const positionOptions = computed<BasicOption[]>(() => {
   return [
-    { label: '请选择', value: '' },
+    { label: $t('profile.pleaseSelect'), value: '' },
     ...positions.value.map((p) => ({ label: p, value: p })),
   ];
 });
 
 const regionOptions = computed<BasicOption[]>(() => {
   return [
-    { label: '请选择', value: '' },
+    { label: $t('profile.pleaseSelect'), value: '' },
     ...regions.value.map((r) => ({ label: r, value: r })),
   ];
 });
@@ -48,7 +49,7 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'realName',
       component: 'Input',
-      label: '姓名',
+      label: $t('profile.realName'),
       componentProps: {
         disabled: true,
       },
@@ -56,7 +57,7 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'username',
       component: 'Input',
-      label: '用户名',
+      label: $t('profile.username'),
       componentProps: {
         disabled: true,
       },
@@ -64,7 +65,7 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'department',
       component: 'Select',
-      label: '部门',
+      label: $t('profile.department'),
       componentProps: {
         options: departmentOptions.value,
       },
@@ -72,7 +73,7 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'position',
       component: 'Select',
-      label: '岗位',
+      label: $t('profile.position'),
       componentProps: {
         options: positionOptions.value,
       },
@@ -80,7 +81,7 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'region',
       component: 'Select',
-      label: '地区',
+      label: $t('profile.region'),
       componentProps: {
         options: regionOptions.value,
       },
@@ -88,64 +89,64 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       fieldName: 'hire_date',
       component: 'DatePicker',
-      label: '本单位入职日期',
+      label: $t('profile.hireDate'),
       componentProps: {
         type: 'date',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
     {
       fieldName: 'work_start_date',
       component: 'DatePicker',
-      label: '累计工龄起始日期',
+      label: $t('profile.workStartDate'),
       componentProps: {
         type: 'date',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
     {
       fieldName: 'birth_date',
       component: 'DatePicker',
-      label: '出生日期',
+      label: $t('profile.birthDate'),
       componentProps: {
         type: 'date',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
     {
       fieldName: 'hkid_number',
       component: 'Input',
-      label: '香港身份证号',
+      label: $t('profile.hkidNumber'),
       componentProps: {
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
     {
       fieldName: 'english_address',
       component: 'Textarea',
-      label: '英文住址',
+      label: $t('profile.englishAddress'),
       componentProps: {
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
         rows: 3,
       },
     },
     {
       fieldName: 'emergency_contact_name',
       component: 'Input',
-      label: '紧急联系人',
+      label: $t('profile.emergencyContactName'),
       componentProps: {
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
     {
       fieldName: 'emergency_contact_phone',
       component: 'Input',
-      label: '紧急联系人电话',
+      label: $t('profile.emergencyContactPhone'),
       componentProps: {
-        placeholder: '选填',
+        placeholder: $t('profile.optional'),
       },
     },
   ];
@@ -204,9 +205,9 @@ async function handleSubmit(values: Record<string, any>) {
     };
 
     await updateMyProfileApi(profilePayload);
-    ElMessage.success('保存成功');
+    ElMessage.success($t('profile.savedSuccess'));
   } catch {
-    ElMessage.error('保存失败');
+    ElMessage.error($t('profile.savedFailed'));
   }
 }
 
