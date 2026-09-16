@@ -10,6 +10,7 @@ import { useAccessStore } from '@vben/stores';
 
 import { ElMessage } from 'element-plus';
 
+import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
@@ -67,6 +68,13 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
 
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
+      const status = error?.response?.status;
+      // 权限不足：后端统一返回 403（detail 为英文），这里转成中文「权限不足」提示，
+      // 避免直接暴露后端英文文案，也便于用户理解是 HR 权限等问题。
+      if (status === 403) {
+        ElMessage.error($t('common.permissionDenied'));
+        return;
+      }
       const responseData = error?.response?.data ?? {};
       // 优先使用 error / message 字段
       let errorMessage = responseData?.error ?? responseData?.message ?? '';
