@@ -152,7 +152,7 @@ defineExpose({ open });
 
 <template>
   <CreateDrawer class="w-[600px]">
-    <ElForm :model="createForm" label-width="100px">
+    <ElForm :model="createForm" label-width="auto">
       <ElFormItem :label="`${t('page.employees.createDrawer.username')} *`">
         <ElInput
           v-model="createForm.username"
