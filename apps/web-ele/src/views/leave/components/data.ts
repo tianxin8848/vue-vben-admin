@@ -107,6 +107,15 @@ export function getLeaveTypeColor(type: string, status?: string) {
   return `rgba(${r}, ${g}, ${b}, 0.55)`;
 }
 
+/** 类型色的浅色底（约 12% 透明度），用于月视图请假条目的 chip 背景 */
+export function getLeaveTypeTint(type: string, status?: string): string {
+  const base = getLeaveTypeColor(type, status);
+  const nums = base.match(/[\d.]+/g);
+  if (!nums || nums.length < 3) return 'rgba(148, 163, 184, 0.12)';
+  const [r, g, b] = nums.map(Number);
+  return `rgba(${r}, ${g}, ${b}, 0.12)`;
+}
+
 export function isWeekend(dateKey: string): boolean {
   if (!dateKey) return false;
   const d = new Date(`${dateKey}T00:00:00`);

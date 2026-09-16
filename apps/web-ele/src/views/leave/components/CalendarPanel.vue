@@ -10,6 +10,7 @@ import { $t, $tm } from '#/locales';
 import {
   generateMonthCells,
   getLeaveTypeColor,
+  getLeaveTypeTint,
   getMoreCount,
   getUniqueLeaveTypes,
   getVisibleEntries,
@@ -288,7 +289,15 @@ function goCurrentYear() {
                       ),
                     }"
                   ></span>
-                  <span class="leave-name">{{ entry.employee_name }}</span>
+                  <span
+                    class="leave-item-chip"
+                    :style="{
+                      background: getLeaveTypeTint(
+                        entry.leave_type,
+                        entry.approval_status,
+                      ),
+                    }"
+                    >{{ entry.employee_name }}</span>
                 </div>
                 <div
                   v-if="getMoreCount(getEntriesForDate(cell.date)) > 0"
@@ -296,19 +305,6 @@ function goCurrentYear() {
                 >
                   +{{ getMoreCount(getEntriesForDate(cell.date)) }}
                 </div>
-              </div>
-              <div
-                v-if="getEntriesForDate(cell.date).length > 0"
-                class="day-bars"
-              >
-                <span
-                  v-for="type in getUniqueLeaveTypes(
-                    getEntriesForDate(cell.date),
-                  )"
-                  :key="type"
-                  class="day-bar"
-                  :style="{ background: getLeaveTypeColor(type, 'approved') }"
-                ></span>
               </div>
             </template>
           </div>
