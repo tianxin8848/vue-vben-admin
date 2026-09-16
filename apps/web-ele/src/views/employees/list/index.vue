@@ -420,7 +420,7 @@ onMounted(async () => {
           </ElButton>
           <ElButton
             size="small"
-            :type="isManager(row.module_permissions) ? 'danger' : 'primary'"
+            type="primary"
             @click="openPermissionModal(row)"
           >
             {{ t('page.employees.action.permissions') }}
