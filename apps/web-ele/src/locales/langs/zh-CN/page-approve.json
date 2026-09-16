@@ -66,6 +66,7 @@
           "leaveType": "类型",
           "session": "时段",
           "timeRange": "时间范围",
+          "totalDays": "天数",
           "reason": "原因",
           "status": "状态",
           "action": "操作"
