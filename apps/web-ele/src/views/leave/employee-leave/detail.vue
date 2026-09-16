@@ -10,11 +10,11 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElTag,
 } from 'element-plus';
 
 import { getLeaveRequestApi, reviewLeaveRequestApi } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 import {
   loadLeaveTypeLabels,
@@ -52,12 +52,12 @@ async function handleApprove() {
       approval_status: 'approved',
       review_comment: reviewComment.value,
     });
-    ElMessage.success('审批成功');
+    toastSuccess('审批成功');
     showReviewModal.value = false;
     reviewComment.value = '';
     fetchDetail();
-  } catch {
-    ElMessage.error('审批失败');
+  } catch (error) {
+    handleActionError('leave/employee-leave/detail', error, '审批失败');
   }
 }
 
@@ -67,12 +67,12 @@ async function handleReject() {
       approval_status: 'rejected',
       review_comment: reviewComment.value,
     });
-    ElMessage.success('已拒绝');
+    toastSuccess('已拒绝');
     showReviewModal.value = false;
     reviewComment.value = '';
     fetchDetail();
-  } catch {
-    ElMessage.error('操作失败');
+  } catch (error) {
+    handleActionError('leave/employee-leave/detail', error, '操作失败');
   }
 }
 

@@ -9,9 +9,10 @@ import {
   ElCheckboxGroup,
   ElDialog,
   ElEmpty,
-  ElMessage,
   ElTag,
 } from 'element-plus';
+
+import { toastWarning } from '#/utils/message';
 
 interface ModuleOption {
   module_code: string;
@@ -82,7 +83,7 @@ function handleSubmit() {
     }));
 
   if (module_permissions.length === 0) {
-    ElMessage.warning('请至少授予一个模块权限，或直接关闭弹窗取消');
+    toastWarning('请至少授予一个模块权限，或直接关闭弹窗取消');
     return;
   }
   emit('submit', { module_permissions });

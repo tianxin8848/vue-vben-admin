@@ -8,11 +8,11 @@ import {
   ElDialog,
   ElEmpty,
   ElInput,
-  ElMessage,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
 
+import { toastWarning } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 interface ReasonRow {
@@ -54,11 +54,11 @@ function syncToParent(list: ReasonRow[]) {
 function handleAdd() {
   const name = newReason.value.trim();
   if (!name) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.reasonRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.reasonRequired`));
     return;
   }
   if (reasons.value.some((r) => r.reason === name)) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.reasonDuplicate`));
+    toastWarning(t(`${i18nPrefix}.validation.reasonDuplicate`));
     return;
   }
   syncToParent([...reasons.value, { reason: name }]);
@@ -74,14 +74,14 @@ function openEdit(idx: number) {
 function submitEdit() {
   const value = inputValue.value.trim();
   if (!value) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.reasonRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.reasonRequired`));
     return;
   }
   const current = reasons.value[editingIdx.value]?.reason;
   const isDuplicate =
     reasons.value.some((r) => r.reason === value) && current !== value;
   if (isDuplicate) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.reasonDuplicate`));
+    toastWarning(t(`${i18nPrefix}.validation.reasonDuplicate`));
     return;
   }
   const next = [...reasons.value];

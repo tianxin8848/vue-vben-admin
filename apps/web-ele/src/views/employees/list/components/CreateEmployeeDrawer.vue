@@ -12,12 +12,12 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
 } from 'element-plus';
 
 import { createEmployeeApi } from '#/api';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 interface SelectOption {
   label: string;
@@ -114,7 +114,7 @@ async function submitCreate() {
     !createForm.full_name ||
     !createForm.department
   ) {
-    ElMessage.warning(t('page.employees.createDrawer.requiredFields'));
+    toastWarning(t('page.employees.createDrawer.requiredFields'));
     return;
   }
   const payload: EmployeeApi.EmployeeCreate = {
@@ -131,12 +131,15 @@ async function submitCreate() {
   createDrawerApi.lock(true);
   try {
     await createEmployeeApi(payload);
-    ElMessage.success(t('page.employees.createDrawer.createSuccess'));
+    toastSuccess(t('page.employees.createDrawer.createSuccess'));
     createDrawerApi.close();
     emit('success');
   } catch (error: any) {
-    console.error('创建员工失败:', error);
-    ElMessage.error(t('page.employees.createDrawer.createFailed'));
+    handleActionError(
+      'employees/list/CreateEmployeeDrawer',
+      error,
+      t('page.employees.createDrawer.createFailed'),
+    );
   } finally {
     createDrawerApi.lock(false);
   }

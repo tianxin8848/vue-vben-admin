@@ -14,7 +14,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElSelect,
 } from 'element-plus';
 
@@ -25,6 +24,7 @@ import {
   updateEmployeeBasicInfoApi,
   updateEmployeeProfileApi,
 } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 const route = useRoute();
 const router = useRouter();
@@ -109,22 +109,28 @@ async function fetchData() {
 async function handleUpdateBasicInfo() {
   try {
     await updateEmployeeBasicInfoApi(employeeId, basicInfoForm);
-    ElMessage.success(t('page.employees.profileDetail.basicInfoUpdateSuccess'));
+    toastSuccess(t('page.employees.profileDetail.basicInfoUpdateSuccess'));
     fetchData();
-  } catch {
-    ElMessage.error(t('page.employees.profileDetail.updateFailed'));
+  } catch (error) {
+    handleActionError(
+      'employees/profile',
+      error,
+      t('page.employees.profileDetail.updateFailed'),
+    );
   }
 }
 
 async function handleUpdateProfile() {
   try {
     await updateEmployeeProfileApi(employeeId, profileForm);
-    ElMessage.success(
-      t('page.employees.profileDetail.profileInfoUpdateSuccess'),
-    );
+    toastSuccess(t('page.employees.profileDetail.profileInfoUpdateSuccess'));
     fetchData();
-  } catch {
-    ElMessage.error(t('page.employees.profileDetail.updateFailed'));
+  } catch (error) {
+    handleActionError(
+      'employees/profile',
+      error,
+      t('page.employees.profileDetail.updateFailed'),
+    );
   }
 }
 

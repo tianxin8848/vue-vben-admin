@@ -11,11 +11,11 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
 } from 'element-plus';
 
 import { reviewClaimApi } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   current: ClaimApi.ClaimResponse | null;
@@ -39,7 +39,7 @@ function reset() {
 async function submit(action: 'approved' | 'rejected') {
   if (!props.current) return;
   if (action === 'rejected' && !form.reviewComment.trim()) {
-    ElMessage.warning($t('page.approve.claimReview.rejectRequired'));
+    toastWarning($t('page.approve.claimReview.rejectRequired'));
     return;
   }
   submitting.value = true;
@@ -52,7 +52,7 @@ async function submit(action: 'approved' | 'rejected') {
           : undefined,
       review_comment: form.reviewComment.trim() || null,
     });
-    ElMessage.success(
+    toastSuccess(
       action === 'approved'
         ? $t('page.approve.claimReview.approved')
         : $t('page.approve.claimReview.rejected'),
@@ -60,8 +60,12 @@ async function submit(action: 'approved' | 'rejected') {
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
-  } catch {
-    ElMessage.error($t('page.approve.claimReview.operateFailed'));
+  } catch (error) {
+    handleActionError(
+      'approve/ClaimReviewDialog',
+      error,
+      $t('page.approve.claimReview.operateFailed'),
+    );
   } finally {
     submitting.value = false;
   }
@@ -190,10 +194,8 @@ async function submit(action: 'approved' | 'rejected') {
     </div>
     <template #footer>
       <ElButton @click="emit('update:modelValue', false)">
-{{
-        $t('page.approve.claimReview.cancel')
-      }}
-</ElButton>
+        {{ $t('page.approve.claimReview.cancel') }}
+      </ElButton>
       <ElButton type="danger" :loading="submitting" @click="submit('rejected')">
         {{ $t('page.approve.claimReview.reject') }}
       </ElButton>

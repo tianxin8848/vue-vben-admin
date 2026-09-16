@@ -4,8 +4,6 @@ import { ref } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElMessage } from 'element-plus';
-
 import {
   deleteClaimDraftApi,
   exportMyClaimsApi,
@@ -14,6 +12,12 @@ import {
   withdrawClaimApi,
 } from '#/api';
 import { buildTimestampedFileName, saveBlob } from '#/utils/download';
+import {
+  handleActionError,
+  toastError,
+  toastSuccess,
+  toastWarning,
+} from '#/utils/message';
 import { confirmAction, confirmDelete, promptText } from '#/utils/modal';
 
 export function useClaimActions() {
@@ -39,10 +43,14 @@ export function useClaimActions() {
     loading.value = true;
     try {
       await withdrawClaimApi(item.id, withdrawComment || null);
-      ElMessage.success(t('page.claim.messages.withdrawSuccess'));
+      toastSuccess(t('page.claim.messages.withdrawSuccess'));
       return true;
-    } catch {
-      ElMessage.error(t('page.claim.messages.withdrawFailed'));
+    } catch (error) {
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.withdrawFailed'),
+      );
       return false;
     } finally {
       loading.value = false;
@@ -60,10 +68,14 @@ export function useClaimActions() {
     loading.value = true;
     try {
       await submitClaimSingleApi(item.id);
-      ElMessage.success(t('page.claim.messages.submitSuccess'));
+      toastSuccess(t('page.claim.messages.submitSuccess'));
       return true;
-    } catch {
-      ElMessage.error(t('page.claim.messages.submitFailed'));
+    } catch (error) {
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.submitFailed'),
+      );
       return false;
     } finally {
       loading.value = false;
@@ -73,7 +85,7 @@ export function useClaimActions() {
   /** 批量提交草稿（多条 draft 聚合为一条 pending） */
   async function handleSubmitBatch(itemIds: string[]) {
     if (itemIds.length === 0) {
-      ElMessage.warning(t('page.claim.messages.selectDraftFirst'));
+      toastWarning(t('page.claim.messages.selectDraftFirst'));
       return false;
     }
     const confirmed = await confirmAction({
@@ -87,10 +99,14 @@ export function useClaimActions() {
     loading.value = true;
     try {
       await submitClaimBatchApi(itemIds);
-      ElMessage.success(t('page.claim.messages.batchSubmitSuccess'));
+      toastSuccess(t('page.claim.messages.batchSubmitSuccess'));
       return true;
-    } catch {
-      ElMessage.error(t('page.claim.messages.submitFailed'));
+    } catch (error) {
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.submitFailed'),
+      );
       return false;
     } finally {
       loading.value = false;
@@ -108,10 +124,14 @@ export function useClaimActions() {
     loading.value = true;
     try {
       await deleteClaimDraftApi(item.id);
-      ElMessage.success(t('page.claim.messages.deleteSuccess'));
+      toastSuccess(t('page.claim.messages.deleteSuccess'));
       return true;
-    } catch {
-      ElMessage.error(t('page.claim.messages.deleteFailed'));
+    } catch (error) {
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.deleteFailed'),
+      );
       return false;
     } finally {
       loading.value = false;
@@ -149,22 +169,19 @@ export function useClaimActions() {
         } catch {
           /* ignore parse error */
         }
-        ElMessage.error(msg);
+        toastError(msg);
         return false;
       }
       saveBlob(blob, buildTimestampedFileName('claims', 'xlsx'));
-      ElMessage.success(t('page.claim.messages.exportSuccess'));
+      toastSuccess(t('page.claim.messages.exportSuccess'));
       return true;
-    } catch (error: any) {
-      // 优先使用后端返回的错误详情
-      const detail = error?.response?.data?.detail || error?.message;
-      let msg = t('page.claim.messages.exportFailed');
-      if (typeof detail === 'string') {
-        msg = detail;
-      } else if (Array.isArray(detail) && detail.length > 0) {
-        msg = detail.map((e: any) => e.msg || String(e)).join('; ');
-      }
-      ElMessage.error(msg);
+    } catch (error) {
+      // 请求类错误由响应拦截器统一提示（responseType 为 blob，此处再解析 detail 也拿不到内容）
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.exportFailed'),
+      );
       return false;
     } finally {
       loading.value = false;

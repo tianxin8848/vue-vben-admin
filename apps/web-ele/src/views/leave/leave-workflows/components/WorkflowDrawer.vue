@@ -11,12 +11,12 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
 } from 'element-plus';
 
 import { createLeaveWorkflowApi, updateLeaveWorkflowApi } from '#/api';
+import { handleActionError, toastError, toastSuccess } from '#/utils/message';
 
 import {
   createDefaultApproverLevels,
@@ -101,7 +101,7 @@ function validateApprovers() {
     .map((level) => level[0])
     .filter((id): id is string => !!id);
   if (selectedIds.length === 0) {
-    ElMessage.error(
+    toastError(
       t('page.leave.workflowMaintenance.drawer.validation.atLeastOneApprover'),
     );
     return false;
@@ -113,7 +113,7 @@ function validateApprovers() {
     return false;
   });
   if (duplicates.length > 0) {
-    ElMessage.error(
+    toastError(
       t('page.leave.workflowMaintenance.drawer.validation.noDuplicate'),
     );
     return false;
@@ -123,7 +123,7 @@ function validateApprovers() {
 
 async function saveWorkflow() {
   if (!workflowForm.name.trim()) {
-    ElMessage.error(
+    toastError(
       t('page.leave.workflowMaintenance.drawer.validation.nameRequired'),
     );
     return;
@@ -148,19 +148,17 @@ async function saveWorkflow() {
   try {
     if (editingId.value) {
       await updateLeaveWorkflowApi(editingId.value, payload);
-      ElMessage.success(
-        t('page.leave.workflowMaintenance.drawer.message.updated'),
-      );
+      toastSuccess(t('page.leave.workflowMaintenance.drawer.message.updated'));
     } else {
       await createLeaveWorkflowApi(payload);
-      ElMessage.success(
-        t('page.leave.workflowMaintenance.drawer.message.created'),
-      );
+      toastSuccess(t('page.leave.workflowMaintenance.drawer.message.created'));
     }
     drawerApi.close();
     emit('success');
-  } catch {
-    ElMessage.error(
+  } catch (error) {
+    handleActionError(
+      'leave/leave-workflows/WorkflowDrawer',
+      error,
       t('page.leave.workflowMaintenance.drawer.message.saveFailed'),
     );
   } finally {

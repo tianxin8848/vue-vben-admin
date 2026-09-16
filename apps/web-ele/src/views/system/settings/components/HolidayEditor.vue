@@ -10,13 +10,14 @@ import {
   ElButton,
   ElDatePicker,
   ElEmpty,
-  ElMessage,
   ElOption,
   ElSelect,
   ElTable,
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+
+import { toastWarning } from '#/utils/message';
 
 interface HolidayPreviewRow {
   _key: string;
@@ -146,9 +147,7 @@ function handleSave() {
     !holidayForm.startDate ||
     !holidayForm.holidayName
   ) {
-    ElMessage.warning(
-      t('page.system.settingsDetail.holidayEditor.formIncomplete'),
-    );
+    toastWarning(t('page.system.settingsDetail.holidayEditor.formIncomplete'));
     return;
   }
   emit('save', {

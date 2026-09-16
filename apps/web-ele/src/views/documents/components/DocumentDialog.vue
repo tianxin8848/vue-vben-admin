@@ -11,13 +11,13 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
   ElUpload,
 } from 'element-plus';
 
 import { createDocumentApi, updateDocumentApi } from '#/api';
+import { toastSuccess, toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   /** 编辑对象（mode = edit 时必填） */
@@ -84,17 +84,17 @@ function handleFileChange(uploadFile: { raw?: File }) {
 function validateFile(): boolean {
   const file = form.file;
   if (!file) {
-    ElMessage.warning(t('page.documents.fileRequired'));
+    toastWarning(t('page.documents.fileRequired'));
     return false;
   }
   const ext = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
   const allowed = props.meta.allowed_extensions ?? [];
   if (allowed.length > 0 && !allowed.includes(ext)) {
-    ElMessage.warning(t('page.documents.extNotAllowed'));
+    toastWarning(t('page.documents.extNotAllowed'));
     return false;
   }
   if (file.size > props.meta.max_size) {
-    ElMessage.warning(
+    toastWarning(
       t('page.documents.fileTooLarge', {
         size: (props.meta.max_size / 1024 / 1024).toFixed(0),
       }),
@@ -108,7 +108,7 @@ async function handleSubmit() {
   if (isCreate.value) {
     if (!validateFile()) return;
   } else if (!form.title.trim()) {
-    ElMessage.warning(t('page.documents.titleRequired'));
+    toastWarning(t('page.documents.titleRequired'));
     return;
   }
 
@@ -124,13 +124,13 @@ async function handleSubmit() {
         fd.append('viewer_departments', dept);
       }
       await createDocumentApi(fd);
-      ElMessage.success(t('page.documents.createSuccess'));
+      toastSuccess(t('page.documents.createSuccess'));
     } else if (props.doc) {
       await updateDocumentApi(props.doc.id, {
         title: form.title.trim(),
         viewer_departments: form.departments,
       });
-      ElMessage.success(t('page.documents.updateSuccess'));
+      toastSuccess(t('page.documents.updateSuccess'));
     }
     visible.value = false;
     emit('success');

@@ -3,17 +3,11 @@ import type { LeaveRequestApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-} from 'element-plus';
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 
 import { reviewLeaveRequestApi } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 import { resolveLeaveTypeLabel, sessionLabelMap } from '../constants';
 
@@ -37,7 +31,7 @@ function reset() {
 async function submit(action: 'approved' | 'rejected') {
   if (!props.current) return;
   if (action === 'rejected' && !form.reviewComment.trim()) {
-    ElMessage.warning($t('page.approve.leaveReview.rejectRequired'));
+    toastWarning($t('page.approve.leaveReview.rejectRequired'));
     return;
   }
   submitting.value = true;
@@ -46,7 +40,7 @@ async function submit(action: 'approved' | 'rejected') {
       approval_status: action,
       review_comment: form.reviewComment.trim() || null,
     });
-    ElMessage.success(
+    toastSuccess(
       action === 'approved'
         ? $t('page.approve.leaveReview.approved')
         : $t('page.approve.leaveReview.rejected'),
@@ -54,8 +48,12 @@ async function submit(action: 'approved' | 'rejected') {
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
-  } catch {
-    ElMessage.error($t('page.approve.leaveReview.operateFailed'));
+  } catch (error) {
+    handleActionError(
+      'approve/LeaveReviewDialog',
+      error,
+      $t('page.approve.leaveReview.operateFailed'),
+    );
   } finally {
     submitting.value = false;
   }

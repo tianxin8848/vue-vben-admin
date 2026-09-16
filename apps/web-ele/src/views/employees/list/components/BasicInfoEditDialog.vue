@@ -9,12 +9,12 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
 } from 'element-plus';
 
 import { $t } from '#/locales';
+import { toastWarning } from '#/utils/message';
 
 interface SelectOption {
   label: string;
@@ -77,7 +77,7 @@ watch(
 
 function handleSubmit() {
   if (!form.username || !form.email || !form.full_name) {
-    ElMessage.warning($t('page.employees.basicInfoEdit.requiredFields'));
+    toastWarning($t('page.employees.basicInfoEdit.requiredFields'));
     return;
   }
   emit('submit', { ...form });

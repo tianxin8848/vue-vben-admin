@@ -8,11 +8,10 @@ import { VbenButton } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 import { useUserStore } from '@vben/stores';
 
-import { ElMessage } from 'element-plus';
-
 import { useVbenForm, z } from '#/adapter/form';
 import { changePasswordApi } from '#/api';
 import { useAuthStore } from '#/store';
+import { toastSuccess } from '#/utils/message';
 
 defineOptions({ name: 'ChangeInitialPassword' });
 
@@ -93,7 +92,7 @@ async function handleSubmit() {
       current_password: values.current_password,
       new_password: values.new_password,
     });
-    ElMessage.success($t('authentication.passwordChangeSuccess'));
+    toastSuccess($t('authentication.passwordChangeSuccess'));
     // 刷新用户信息，清除 is_initial_password 标记
     await authStore.fetchUserInfo();
     const homePath = userStore.userInfo?.homePath || '/employee';

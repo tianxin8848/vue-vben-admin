@@ -10,7 +10,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
   ElTag,
@@ -24,6 +23,7 @@ import {
 } from '#/api';
 import { $t } from '#/locales';
 import { saveBlob } from '#/utils/download';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 import { confirmAction } from '#/utils/modal';
 
 const loading = ref(false);
@@ -68,9 +68,13 @@ async function handleExport() {
       exportForm.scope === 'exclude_runtime' ? 'session' : undefined;
     const blob = await exportDataApi(exportForm.source, exclude);
     saveBlob(blob, `data-migration-${exportForm.source}-${Date.now()}.ndjson`);
-    ElMessage.success($t('page.system.dataMigrationDetail.exportSuccess'));
-  } catch {
-    ElMessage.error($t('page.system.dataMigrationDetail.exportFailed'));
+    toastSuccess($t('page.system.dataMigrationDetail.exportSuccess'));
+  } catch (error) {
+    handleActionError(
+      'system/data-migration',
+      error,
+      $t('page.system.dataMigrationDetail.exportFailed'),
+    );
   } finally {
     exportLoading.value = false;
   }
@@ -112,7 +116,7 @@ function handleFileChange(_: string, event?: Event) {
 
 async function handleImport() {
   if (!importFile.value) {
-    ElMessage.warning($t('page.system.dataMigrationDetail.selectFileFirst'));
+    toastWarning($t('page.system.dataMigrationDetail.selectFileFirst'));
     return;
   }
   const confirmText =

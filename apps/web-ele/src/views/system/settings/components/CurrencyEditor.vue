@@ -11,12 +11,12 @@ import {
   ElFormItem,
   ElInput,
   ElInputNumber,
-  ElMessage,
   ElTable,
   ElTableColumn,
   ElTag,
 } from 'element-plus';
 
+import { toastWarning } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 interface CurrencyRow {
@@ -79,15 +79,15 @@ function handleAdd() {
   const code = newCode.value.trim().toUpperCase();
   const rate = newRate.value;
   if (!code) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.codeRequired`));
     return;
   }
   if (!rate || !Number.isFinite(rate) || rate <= 0) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.rateInvalid`));
+    toastWarning(t(`${i18nPrefix}.validation.rateInvalid`));
     return;
   }
   if (currencies.value.some((c) => c.currency_code === code)) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.duplicate`, { code }));
+    toastWarning(t(`${i18nPrefix}.validation.duplicate`, { code }));
     return;
   }
   syncToParent([
@@ -111,18 +111,18 @@ function submitEdit() {
   const code = editingCode.value.trim().toUpperCase();
   const rate = editingRate.value;
   if (!code) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.codeRequired`));
     return;
   }
   if (!rate || !Number.isFinite(rate) || rate <= 0) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.rateInvalid`));
+    toastWarning(t(`${i18nPrefix}.validation.rateInvalid`));
     return;
   }
   const isDuplicate =
     currencies.value.some((c) => c.currency_code === code) &&
     currencies.value[editingIdx.value]?.currency_code !== code;
   if (isDuplicate) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.duplicate`, { code }));
+    toastWarning(t(`${i18nPrefix}.validation.duplicate`, { code }));
     return;
   }
   const next = currencies.value.map((c, i) =>

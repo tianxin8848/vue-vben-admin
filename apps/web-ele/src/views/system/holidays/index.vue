@@ -12,7 +12,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElSelect,
   ElTable,
   ElTableColumn,
@@ -23,6 +22,7 @@ import {
   getSystemSettingsApi,
   upsertRegionalHolidayApi,
 } from '#/api';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 const loading = ref(false);
 const holidays = ref<SystemSettingsApi.RegionalHolidayItem[]>([]);
@@ -54,29 +54,29 @@ async function fetchHolidays() {
 
 async function handleCreate() {
   if (!holidayForm.holiday_name || !holidayForm.date || !holidayForm.region) {
-    ElMessage.warning('请填写完整信息');
+    toastWarning('请填写完整信息');
     return;
   }
   try {
     await upsertRegionalHolidayApi(holidayForm);
-    ElMessage.success('创建成功');
+    toastSuccess('创建成功');
     showCreateModal.value = false;
     holidayForm.holiday_name = '';
     holidayForm.date = '';
     holidayForm.region = '';
     fetchHolidays();
-  } catch {
-    ElMessage.error('创建失败');
+  } catch (error) {
+    handleActionError('system/holidays', error, '创建失败');
   }
 }
 
 async function handleDelete(row: SystemSettingsApi.RegionalHolidayItem) {
   try {
     await deleteRegionalHolidayApi({ region: row.region, date: row.date });
-    ElMessage.success('删除成功');
+    toastSuccess('删除成功');
     fetchHolidays();
-  } catch {
-    ElMessage.error('删除失败');
+  } catch (error) {
+    handleActionError('system/holidays', error, '删除失败');
   }
 }
 

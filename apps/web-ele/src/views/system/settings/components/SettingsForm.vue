@@ -6,17 +6,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-} from 'element-plus';
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ALL_MODULE_CATALOG, getSystemSettingsApi } from '#/api';
+import { toastWarning } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 interface ListItem {
@@ -114,7 +108,7 @@ function createListOps(
   function submit() {
     const value = inputValue.value.trim();
     if (!value) {
-      ElMessage.warning(t(validationKey));
+      toastWarning(t(validationKey));
       return;
     }
 

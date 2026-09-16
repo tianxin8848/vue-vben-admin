@@ -9,13 +9,13 @@ import {
   ElButton,
   ElCard,
   ElInputNumber,
-  ElMessage,
   ElOption,
   ElSelect,
 } from 'element-plus';
 
 import { addLieuLeaveGrantApi, getLieuLeaveSummaryApi } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   /** 员工目录，供下拉选择调休额度归属人 */
@@ -57,7 +57,7 @@ const statsTiles = computed(() => {
 });
 
 function warnSelectEmployee() {
-  ElMessage.warning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
+  toastWarning($t('page.leave.calendarView.lieuAdmin.selectEmployee'));
 }
 
 async function querySummary() {
@@ -80,16 +80,12 @@ async function querySummary() {
     console.warn('[lieuAdmin] getLieuLeaveSummaryApi 返回：', data);
     queryResult.value = data;
   } catch (error) {
-    console.error(
-      '[lieuAdmin] getLieuLeaveSummaryApi 失敗：',
-      error,
-      'employeeId=',
-      targetEmployeeId.value,
-      'year=',
-      queryYear.value,
-    );
     queryResult.value = null;
-    ElMessage.error($t('page.leave.calendarView.lieuAdmin.queryFailed'));
+    handleActionError(
+      'leave/leave-calendar/LieuAdminPanel',
+      error,
+      $t('page.leave.calendarView.lieuAdmin.queryFailed'),
+    );
   } finally {
     loading.value = false;
   }
@@ -101,7 +97,7 @@ async function grant() {
     return;
   }
   if (!grantDays.value || grantDays.value <= 0) {
-    ElMessage.warning($t('page.leave.calendarView.lieuAdmin.daysPositive'));
+    toastWarning($t('page.leave.calendarView.lieuAdmin.daysPositive'));
     return;
   }
   loading.value = true;
@@ -115,23 +111,17 @@ async function grant() {
     const data = await addLieuLeaveGrantApi(params);
     console.warn('[lieuAdmin] addLieuLeaveGrantApi 返回：', data);
     queryResult.value = data;
-    ElMessage.success(
+    toastSuccess(
       $t('page.leave.calendarView.lieuAdmin.grantSuccess', {
         days: grantDays.value,
       }),
     );
   } catch (error) {
-    console.error(
-      '[lieuAdmin] addLieuLeaveGrantApi 失敗：',
+    handleActionError(
+      'leave/leave-calendar/LieuAdminPanel',
       error,
-      'employeeId=',
-      targetEmployeeId.value,
-      'year=',
-      queryYear.value,
-      'days=',
-      grantDays.value,
+      $t('page.leave.calendarView.lieuAdmin.grantFailed'),
     );
-    ElMessage.error($t('page.leave.calendarView.lieuAdmin.grantFailed'));
   } finally {
     loading.value = false;
   }

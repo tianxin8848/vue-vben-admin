@@ -7,11 +7,12 @@ import {
   ElAlert,
   ElButton,
   ElInput,
-  ElMessage,
   ElOption,
   ElSelect,
   ElTag,
 } from 'element-plus';
+
+import { toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   holidayCatalogs: SystemSettingsApi.RegionalHolidayCatalogItem[];
@@ -76,11 +77,11 @@ watch(
 function handleAddName() {
   const name = catalogForm.newHolidayName.trim();
   if (!name) {
-    ElMessage.warning('请输入假期名称');
+    toastWarning('请输入假期名称');
     return;
   }
   if (holidayNameList.value.includes(name)) {
-    ElMessage.warning('该假期名称已存在');
+    toastWarning('该假期名称已存在');
     return;
   }
   holidayNameList.value.push(name);
@@ -93,11 +94,11 @@ function handleRemoveName(idx: number) {
 
 function handleSave() {
   if (!catalogForm.region) {
-    ElMessage.warning('请选择地区');
+    toastWarning('请选择地区');
     return;
   }
   if (holidayNameList.value.length === 0) {
-    ElMessage.warning('请至少保留一个假期名称');
+    toastWarning('请至少保留一个假期名称');
     return;
   }
   emit('save', {

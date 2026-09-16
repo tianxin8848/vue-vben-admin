@@ -15,12 +15,12 @@ import {
   ElDescriptionsItem,
   ElEmpty,
   ElLink,
-  ElMessage,
   ElTag,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteCustomerApi, getCustomersApi } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 import CustomerDrawer from './components/CustomerDrawer.vue';
@@ -168,15 +168,14 @@ async function handleDelete(row: CustomerApi.CustomerResponse) {
   if (!confirmed) return;
   try {
     await deleteCustomerApi(row.id);
-    ElMessage.success(t('page.fuximap.deleteSuccess'));
+    toastSuccess(t('page.fuximap.deleteSuccess'));
     if (selectedCustomer.value?.id === row.id) {
       selectedCustomer.value = null;
     }
     invalidateCustomers();
     await tableApi.reload();
   } catch (error: any) {
-    console.error(t('page.fuximap.deleteFailed'), error);
-    ElMessage.error(t('page.fuximap.deleteFailed'));
+    handleActionError('fuximap', error, t('page.fuximap.deleteFailed'));
   }
 }
 

@@ -6,10 +6,11 @@ import { computed, reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElInput, ElInputNumber, ElMessage, ElTag } from 'element-plus';
+import { ElInput, ElInputNumber, ElTag } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
 import { updateClaimDraftApi } from '#/api';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 const emit = defineEmits<{
   success: [];
@@ -114,11 +115,11 @@ async function submitEdit() {
   const item = currentDraft.value;
   if (!item) return;
   if (editForm.amount <= 0) {
-    ElMessage.warning(t('page.claim.messages.amountPositive'));
+    toastWarning(t('page.claim.messages.amountPositive'));
     return;
   }
   if (editForm.description.length > 500) {
-    ElMessage.warning(t('page.claim.messages.withdrawCommentTooLong'));
+    toastWarning(t('page.claim.messages.withdrawCommentTooLong'));
     return;
   }
 
@@ -128,11 +129,15 @@ async function submitEdit() {
       amount: editForm.amount,
       description: editForm.description.trim() || null,
     });
-    ElMessage.success(t('page.claim.messages.editSuccess'));
+    toastSuccess(t('page.claim.messages.editSuccess'));
     editDrawerApi.close();
     emit('success');
-  } catch {
-    ElMessage.error(t('page.claim.messages.editFailed'));
+  } catch (error) {
+    handleActionError(
+      'claim/EditClaimDrawer',
+      error,
+      t('page.claim.messages.editFailed'),
+    );
   } finally {
     editDrawerApi.lock(false);
   }

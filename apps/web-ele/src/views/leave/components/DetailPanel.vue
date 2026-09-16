@@ -5,13 +5,13 @@ import {
   ElButton,
   ElCard,
   ElDivider,
-  ElMessage,
   ElOption,
   ElSelect,
   ElTag,
 } from 'element-plus';
 
 import { $t } from '#/locales';
+import { toastWarning } from '#/utils/message';
 
 import {
   getLeaveTypeColor,
@@ -174,7 +174,7 @@ async function setHoliday() {
   const dateKey = props.selectedDateKey;
   const holidayLabel = selectedHolidayLabel.value;
   if (!activeRegion || !dateKey || !holidayLabel) {
-    ElMessage.warning(
+    toastWarning(
       $t('page.leave.calendarView.detail.selectRegionAndDateFirst') as string,
     );
     return;

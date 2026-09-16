@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import { ProfilePasswordSetting, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { ElMessage } from 'element-plus';
+import { toastSuccess } from '#/utils/message';
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -59,7 +59,7 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 function handleSubmit() {
-  ElMessage.success($t('profile.passwordChanged'));
+  toastSuccess($t('profile.passwordChanged'));
 }
 </script>
 <template>

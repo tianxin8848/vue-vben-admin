@@ -4,14 +4,13 @@ import { ref } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElMessage } from 'element-plus';
-
 import {
   createFolderApi,
   deleteDocumentApi,
   deleteFolderApi,
   updateFolderApi,
 } from '#/api';
+import { toastSuccess } from '#/utils/message';
 import { confirmDelete, promptText } from '#/utils/modal';
 
 export function useDocumentsActions() {
@@ -37,7 +36,7 @@ export function useDocumentsActions() {
     loading.value = true;
     try {
       await createFolderApi({ name, parent_id: parentId });
-      ElMessage.success(t('page.documents.folderCreateSuccess'));
+      toastSuccess(t('page.documents.folderCreateSuccess'));
       return true;
     } catch (error) {
       console.error('[documents] create folder failed', error);
@@ -54,7 +53,7 @@ export function useDocumentsActions() {
     loading.value = true;
     try {
       await updateFolderApi(folder.id, { name });
-      ElMessage.success(t('page.documents.folderRenameSuccess'));
+      toastSuccess(t('page.documents.folderRenameSuccess'));
       return true;
     } catch (error) {
       console.error('[documents] rename folder failed', error);
@@ -74,7 +73,7 @@ export function useDocumentsActions() {
     loading.value = true;
     try {
       await deleteDocumentApi(row.id);
-      ElMessage.success(t('page.documents.deleteSuccess'));
+      toastSuccess(t('page.documents.deleteSuccess'));
       return true;
     } catch (error) {
       console.error('[documents] delete failed', error);
@@ -94,7 +93,7 @@ export function useDocumentsActions() {
     loading.value = true;
     try {
       await deleteFolderApi(folder.id);
-      ElMessage.success(t('page.documents.deleteFolderSuccess'));
+      toastSuccess(t('page.documents.deleteFolderSuccess'));
       return true;
     } catch (error) {
       console.error('[documents] delete folder failed', error);

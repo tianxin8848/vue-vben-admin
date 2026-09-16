@@ -13,7 +13,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
@@ -23,6 +22,7 @@ import {
   updateEmployeeAccessControlV2Api,
 } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 const router = useRouter();
 const loading = ref(false);
@@ -90,11 +90,15 @@ async function handleSaveAccessControl() {
     await updateEmployeeAccessControlV2Api(editEmployeeId.value, {
       access_control_id: editForm.accessControlId,
     });
-    ElMessage.success($t('page.system.accessControlDetail.updateSuccess'));
+    toastSuccess($t('page.system.accessControlDetail.updateSuccess'));
     closeEditModal();
     fetchEmployees();
-  } catch {
-    ElMessage.error($t('page.system.accessControlDetail.updateFailed'));
+  } catch (error) {
+    handleActionError(
+      'system/access-control',
+      error,
+      $t('page.system.accessControlDetail.updateFailed'),
+    );
   }
 }
 

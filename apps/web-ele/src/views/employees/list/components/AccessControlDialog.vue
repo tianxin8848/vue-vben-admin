@@ -3,7 +3,9 @@ import type { EmployeeApi } from '#/api';
 
 import { computed, ref, watch } from 'vue';
 
-import { ElButton, ElDialog, ElInput, ElMessage } from 'element-plus';
+import { ElButton, ElDialog, ElInput } from 'element-plus';
+
+import { toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   employee: EmployeeApi.EmployeeResponse | null;
@@ -40,7 +42,7 @@ watch(
 
 function handleSubmit() {
   if (!accessControlId.value.trim()) {
-    ElMessage.warning('门禁 ID 不能为空（如需清空请到门禁模块处理）');
+    toastWarning('门禁 ID 不能为空（如需清空请到门禁模块处理）');
     return;
   }
   emit('submit', { access_control_id: accessControlId.value.trim() });

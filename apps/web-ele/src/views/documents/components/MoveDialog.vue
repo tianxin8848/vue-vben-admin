@@ -12,7 +12,6 @@ import {
   ElDialog,
   ElForm,
   ElFormItem,
-  ElMessage,
   ElOption,
   ElSelect,
 } from 'element-plus';
@@ -22,6 +21,7 @@ import {
   updateDocumentApi,
   updateFolderApi,
 } from '#/api';
+import { toastSuccess } from '#/utils/message';
 
 const props = defineProps<{
   /** 移动对象上下文；null 时不加载目标列表 */
@@ -64,7 +64,7 @@ async function handleConfirm() {
     await (ctx.kind === 'folder'
       ? updateFolderApi(ctx.id, { parent_id: target })
       : updateDocumentApi(ctx.id, { folder_id: target }));
-    ElMessage.success(t('page.documents.moveSuccess'));
+    toastSuccess(t('page.documents.moveSuccess'));
     visible.value = false;
     emit('success');
   } catch (error) {

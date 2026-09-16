@@ -3,17 +3,11 @@ import type { LeaveRequestApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-} from 'element-plus';
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 
 import { withdrawLeaveRequestApi } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 import { resolveLeaveTypeLabel, sessionLabelMap } from '../constants';
 
@@ -41,12 +35,16 @@ async function submit() {
     await withdrawLeaveRequestApi(props.current.id, {
       withdraw_comment: form.withdrawComment.trim() || null,
     });
-    ElMessage.success('已撤回');
+    toastSuccess('已撤回');
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
-  } catch {
-    ElMessage.error('撤回失败（需本人或拥有请假模块权限）');
+  } catch (error) {
+    handleActionError(
+      'approve/LeaveWithdrawDialog',
+      error,
+      '撤回失败（需本人或拥有请假模块权限）',
+    );
   } finally {
     submitting.value = false;
   }

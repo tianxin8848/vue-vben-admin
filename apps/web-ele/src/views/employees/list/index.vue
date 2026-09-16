@@ -9,7 +9,7 @@ import { useRouter } from 'vue-router';
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElMessage, ElSwitch, ElTag } from 'element-plus';
+import { ElButton, ElSwitch, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -21,6 +21,7 @@ import {
   updateEmployeePermissionsApi,
   updateEmployeeStatusApi,
 } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 import AccessControlDialog from './components/AccessControlDialog.vue';
@@ -184,11 +185,15 @@ function viewProfile(id: string) {
 async function handleStatusChange(id: string, isActive: boolean) {
   try {
     await updateEmployeeStatusApi(id, { is_active: isActive });
-    ElMessage.success(t('page.employees.message.statusUpdateSuccess'));
+    toastSuccess(t('page.employees.message.statusUpdateSuccess'));
     invalidateEmployees();
     await tableApi.reload();
-  } catch {
-    ElMessage.error(t('page.employees.message.statusUpdateFailed'));
+  } catch (error) {
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.statusUpdateFailed'),
+    );
   }
 }
 
@@ -210,14 +215,17 @@ async function handlePermissionUpdate(
   permissionLoading.value = true;
   try {
     await updateEmployeePermissionsApi(target.id, payload);
-    ElMessage.success(t('page.employees.message.permissionUpdateSuccess'));
+    toastSuccess(t('page.employees.message.permissionUpdateSuccess'));
     showPermissionModal.value = false;
     permissionTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
-    console.error('权限更新失败:', error);
-    ElMessage.error(t('page.employees.message.permissionUpdateFailed'));
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.permissionUpdateFailed'),
+    );
   } finally {
     permissionLoading.value = false;
   }
@@ -241,14 +249,17 @@ async function handleBasicInfoUpdate(
   basicInfoLoading.value = true;
   try {
     await updateEmployeeBasicInfoApi(target.id, payload);
-    ElMessage.success(t('page.employees.message.basicInfoUpdateSuccess'));
+    toastSuccess(t('page.employees.message.basicInfoUpdateSuccess'));
     showBasicInfoModal.value = false;
     basicInfoTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
-    console.error('基础信息更新失败:', error);
-    ElMessage.error(t('page.employees.message.basicInfoUpdateFailed'));
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.basicInfoUpdateFailed'),
+    );
   } finally {
     basicInfoLoading.value = false;
   }
@@ -272,14 +283,17 @@ async function handleAccessControlUpdate(
   accessControlLoading.value = true;
   try {
     await updateEmployeeAccessControlApi(target.id, payload);
-    ElMessage.success(t('page.employees.message.accessControlUpdateSuccess'));
+    toastSuccess(t('page.employees.message.accessControlUpdateSuccess'));
     showAccessControlModal.value = false;
     accessControlTarget.value = null;
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
-    console.error('门禁 ID 更新失败:', error);
-    ElMessage.error(t('page.employees.message.accessControlUpdateFailed'));
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.accessControlUpdateFailed'),
+    );
   } finally {
     accessControlLoading.value = false;
   }
@@ -295,12 +309,15 @@ async function handleDelete(row: EmployeeApi.EmployeeResponse) {
   if (!confirmed) return;
   try {
     await deleteEmployeeApi(row.id);
-    ElMessage.success(t('page.employees.message.deleteSuccess'));
+    toastSuccess(t('page.employees.message.deleteSuccess'));
     invalidateEmployees();
     await tableApi.reload();
   } catch (error: any) {
-    console.error('删除员工失败:', error);
-    ElMessage.error(t('page.employees.message.deleteFailed'));
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.deleteFailed'),
+    );
   }
 }
 
@@ -309,13 +326,17 @@ async function handleResetPassword() {
   try {
     const res = await resetEmployeePasswordApi(resetEmployeeId.value);
     resetResult.value = res;
-    ElMessage.success(
+    toastSuccess(
       t('page.employees.message.resetPasswordSuccess', {
         password: res.temporary_password,
       }),
     );
-  } catch {
-    ElMessage.error(t('page.employees.message.resetPasswordFailed'));
+  } catch (error) {
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.resetPasswordFailed'),
+    );
   }
 }
 

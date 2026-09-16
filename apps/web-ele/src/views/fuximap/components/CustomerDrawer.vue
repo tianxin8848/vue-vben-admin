@@ -10,7 +10,6 @@ import {
   ElButton,
   ElDrawer,
   ElInput,
-  ElMessage,
   ElTable,
   ElTableColumn,
   ElTooltip,
@@ -18,6 +17,7 @@ import {
 
 import { useVbenForm } from '#/adapter/form';
 import { createCustomerApi, updateCustomerApi } from '#/api';
+import { toastSuccess } from '#/utils/message';
 
 import { buildCustomerFormSchema } from '../data';
 
@@ -154,10 +154,10 @@ async function handleSubmit() {
 
     if (isEdit.value && props.editing) {
       await updateCustomerApi(props.editing.id, payload);
-      ElMessage.success(t('page.fuximap.updateSuccess'));
+      toastSuccess(t('page.fuximap.updateSuccess'));
     } else {
       await createCustomerApi(payload);
-      ElMessage.success(t('page.fuximap.createSuccess'));
+      toastSuccess(t('page.fuximap.createSuccess'));
     }
     emit('success');
     closeDrawer();

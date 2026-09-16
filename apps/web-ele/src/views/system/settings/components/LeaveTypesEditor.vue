@@ -10,11 +10,11 @@ import {
   ElDialog,
   ElEmpty,
   ElInput,
-  ElMessage,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
 
+import { toastWarning } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 const props = defineProps<{
@@ -49,15 +49,15 @@ function handleAdd() {
   const code = newCode.value.trim();
   const label = newLabel.value.trim();
   if (!code) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.codeRequired`));
     return;
   }
   if (!label) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.labelRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.labelRequired`));
     return;
   }
   if (list.value.some((r) => r.code === code)) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeDuplicate`));
+    toastWarning(t(`${i18nPrefix}.validation.codeDuplicate`));
     return;
   }
   syncToParent([...list.value, { code, label }]);
@@ -76,16 +76,16 @@ function submitEdit() {
   const code = editCode.value.trim();
   const label = editLabel.value.trim();
   if (!code) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.codeRequired`));
     return;
   }
   if (!label) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.labelRequired`));
+    toastWarning(t(`${i18nPrefix}.validation.labelRequired`));
     return;
   }
   const current = list.value[editingIdx.value]?.code;
   if (list.value.some((r) => r.code === code) && current !== code) {
-    ElMessage.warning(t(`${i18nPrefix}.validation.codeDuplicate`));
+    toastWarning(t(`${i18nPrefix}.validation.codeDuplicate`));
     return;
   }
   const next = [...list.value];

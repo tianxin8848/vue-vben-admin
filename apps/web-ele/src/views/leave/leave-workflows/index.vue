@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { ElButton, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -14,6 +14,7 @@ import {
   updateLeaveWorkflowApi,
 } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess } from '#/utils/message';
 import { confirmDelete } from '#/utils/modal';
 
 import WorkflowDrawer from './components/WorkflowDrawer.vue';
@@ -112,13 +113,17 @@ async function toggleWorkflowStatus(workflow: any) {
       is_active: !workflow.is_active,
     });
     await fetchWorkflows();
-    ElMessage.success(
+    toastSuccess(
       workflow.is_active
         ? $t('page.leave.workflowMaintenance.toggleDisabled')
         : $t('page.leave.workflowMaintenance.toggleEnabled'),
     );
-  } catch {
-    ElMessage.error($t('page.leave.workflowMaintenance.operationFailed'));
+  } catch (error) {
+    handleActionError(
+      'leave/leave-workflows',
+      error,
+      $t('page.leave.workflowMaintenance.operationFailed'),
+    );
   } finally {
     loading.value = false;
   }
@@ -136,9 +141,13 @@ async function deleteWorkflow(workflow: any) {
   try {
     await deleteLeaveWorkflowApi(workflow.id);
     await fetchWorkflows();
-    ElMessage.success($t('page.leave.workflowMaintenance.deleteSuccess'));
-  } catch {
-    ElMessage.error($t('page.leave.workflowMaintenance.deleteFailed'));
+    toastSuccess($t('page.leave.workflowMaintenance.deleteSuccess'));
+  } catch (error) {
+    handleActionError(
+      'leave/leave-workflows',
+      error,
+      $t('page.leave.workflowMaintenance.deleteFailed'),
+    );
   } finally {
     loading.value = false;
   }

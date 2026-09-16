@@ -11,7 +11,6 @@ import {
   ElDatePicker,
   ElInput,
   ElInputNumber,
-  ElMessage,
   ElOption,
   ElSelect,
   ElUpload,
@@ -19,6 +18,7 @@ import {
 
 import { useVbenForm } from '#/adapter/form';
 import { createClaimApi } from '#/api';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 const props = defineProps<{
   currencyOptions: ClaimApi.ClaimCurrencyOption[];
@@ -146,19 +146,19 @@ function handleFileChange(uploadFile: any) {
 
 async function submitCreate() {
   if (!createForm.reason_code) {
-    ElMessage.warning(t('page.claim.messages.selectReason'));
+    toastWarning(t('page.claim.messages.selectReason'));
     return;
   }
   if (createForm.amount <= 0) {
-    ElMessage.warning(t('page.claim.messages.amountPositive'));
+    toastWarning(t('page.claim.messages.amountPositive'));
     return;
   }
   if (!createForm.invoice_date) {
-    ElMessage.warning(t('page.claim.messages.invoiceDateRequired'));
+    toastWarning(t('page.claim.messages.invoiceDateRequired'));
     return;
   }
   if (!createForm.attachmentFile) {
-    ElMessage.warning(t('page.claim.messages.uploadAttachment'));
+    toastWarning(t('page.claim.messages.uploadAttachment'));
     return;
   }
 
@@ -177,11 +177,15 @@ async function submitCreate() {
     }
     fd.append('attachment', createForm.attachmentFile);
     await createClaimApi(fd);
-    ElMessage.success(t('page.claim.messages.draftCreated'));
+    toastSuccess(t('page.claim.messages.draftCreated'));
     createDrawerApi.close();
     emit('success');
-  } catch {
-    ElMessage.error(t('page.claim.messages.submitFailed'));
+  } catch (error) {
+    handleActionError(
+      'claim/CreateClaimDrawer',
+      error,
+      t('page.claim.messages.submitFailed'),
+    );
   } finally {
     createDrawerApi.lock(false);
   }

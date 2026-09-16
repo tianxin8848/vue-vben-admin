@@ -14,7 +14,6 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElMessage,
   ElOption,
   ElRow,
   ElSegmented,
@@ -33,6 +32,7 @@ import {
   withdrawLeaveRequestApi,
 } from '#/api';
 import { $t } from '#/locales';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 import CalendarPanel from '../components/CalendarPanel.vue';
 import {
@@ -263,24 +263,22 @@ function handleMedicalCertificateRemove() {
 // 提交请假申请
 async function handleSubmit() {
   if (!form.start_date || !form.end_date) {
-    ElMessage.warning($t('page.leave.employeeLeave.validation.completeDates'));
+    toastWarning($t('page.leave.employeeLeave.validation.completeDates'));
     return;
   }
 
   if (form.start_date > form.end_date) {
-    ElMessage.warning($t('page.leave.employeeLeave.validation.startAfterEnd'));
+    toastWarning($t('page.leave.employeeLeave.validation.startAfterEnd'));
     return;
   }
 
   if (form.session !== 'full_day' && form.start_date !== form.end_date) {
-    ElMessage.warning(
-      $t('page.leave.employeeLeave.validation.sessionSingleDay'),
-    );
+    toastWarning($t('page.leave.employeeLeave.validation.sessionSingleDay'));
     return;
   }
 
   if (isSickLeave.value && !medicalCertificate.value) {
-    ElMessage.warning(
+    toastWarning(
       $t('page.leave.employeeLeave.validation.medicalCertificateRequired'),
     );
     return;
@@ -300,12 +298,16 @@ async function handleSubmit() {
       medicalCertificate.value,
     );
 
-    ElMessage.success($t('page.leave.employeeLeave.message.submitSuccess'));
+    toastSuccess($t('page.leave.employeeLeave.message.submitSuccess'));
     resetForm();
     modalApi.close();
     await fetchData();
-  } catch {
-    ElMessage.error($t('page.leave.employeeLeave.message.submitFailed'));
+  } catch (error) {
+    handleActionError(
+      'leave/employee-leave',
+      error,
+      $t('page.leave.employeeLeave.message.submitFailed'),
+    );
   } finally {
     modalApi.setState({ confirmLoading: false });
   }
@@ -347,11 +349,14 @@ async function handleWithdraw(id: string) {
   try {
     const result = await withdrawLeaveRequestApi(id);
     console.warn('[withdraw] response =>', result);
-    ElMessage.success($t('page.leave.employeeLeave.message.withdrawSuccess'));
+    toastSuccess($t('page.leave.employeeLeave.message.withdrawSuccess'));
     await fetchData();
   } catch (error) {
-    console.error('[withdraw] failed =>', error);
-    ElMessage.error($t('page.leave.employeeLeave.message.withdrawFailed'));
+    handleActionError(
+      'leave/employee-leave',
+      error,
+      $t('page.leave.employeeLeave.message.withdrawFailed'),
+    );
   }
 }
 
@@ -725,7 +730,7 @@ onMounted(() => {
             :on-exceed="
               () =>
                 medicalCertificate &&
-                ElMessage.warning(
+                toastWarning(
                   $t(
                     'page.leave.employeeLeave.validation.medicalCertificateSingle',
                   ),

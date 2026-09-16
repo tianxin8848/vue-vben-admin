@@ -8,14 +8,13 @@ import { computed, onMounted, ref } from 'vue';
 import { ProfileBaseSetting } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { ElMessage } from 'element-plus';
-
 import {
   getMyProfileApi,
   getSystemSettingsApi,
   getUserInfoApi,
   updateMyProfileApi,
 } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 const profileBaseSettingRef = ref();
 
@@ -205,9 +204,13 @@ async function handleSubmit(values: Record<string, any>) {
     };
 
     await updateMyProfileApi(profilePayload);
-    ElMessage.success($t('profile.savedSuccess'));
-  } catch {
-    ElMessage.error($t('profile.savedFailed'));
+    toastSuccess($t('profile.savedSuccess'));
+  } catch (error) {
+    handleActionError(
+      '_core/profile/base-setting',
+      error,
+      $t('profile.savedFailed'),
+    );
   }
 }
 

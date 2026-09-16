@@ -12,7 +12,6 @@ import {
   ElDescriptions,
   ElDescriptionsItem,
   ElEmpty,
-  ElMessage,
   ElSpace,
   ElTag,
   ElUpload,
@@ -26,6 +25,7 @@ import {
   updateMyBasicInfoApi,
   updateMyProfileApi,
 } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 import {
   buildBasicSchema,
@@ -125,20 +125,28 @@ async function fetchData() {
 async function handleUpdateBasicInfo(values: Record<string, any>) {
   try {
     await updateMyBasicInfoApi(buildBasicUpdatePayload(values));
-    ElMessage.success(t('page.workspace.profilePage.basicUpdateSuccess'));
+    toastSuccess(t('page.workspace.profilePage.basicUpdateSuccess'));
     await fetchData();
-  } catch {
-    ElMessage.error(t('page.workspace.profilePage.updateFailed'));
+  } catch (error) {
+    handleActionError(
+      'workspace',
+      error,
+      t('page.workspace.profilePage.updateFailed'),
+    );
   }
 }
 
 async function handleUpdateProfile(values: Record<string, any>) {
   try {
     await updateMyProfileApi(buildProfileUpdatePayload(values));
-    ElMessage.success(t('page.workspace.profilePage.profileUpdateSuccess'));
+    toastSuccess(t('page.workspace.profilePage.profileUpdateSuccess'));
     await fetchData();
-  } catch {
-    ElMessage.error(t('page.workspace.profilePage.updateFailed'));
+  } catch (error) {
+    handleActionError(
+      'workspace',
+      error,
+      t('page.workspace.profilePage.updateFailed'),
+    );
   }
 }
 
@@ -148,11 +156,15 @@ function handleAvatarChange(uploadFile: any) {
   if (!file) return;
   updateMyAvatarApi(file as File)
     .then(() => {
-      ElMessage.success(t('page.workspace.profilePage.avatarUpdateSuccess'));
+      toastSuccess(t('page.workspace.profilePage.avatarUpdateSuccess'));
       fetchData();
     })
-    .catch(() => {
-      ElMessage.error(t('page.workspace.profilePage.avatarUpdateFailed'));
+    .catch((error) => {
+      handleActionError(
+        'workspace',
+        error,
+        t('page.workspace.profilePage.avatarUpdateFailed'),
+      );
     });
 }
 

@@ -3,16 +3,10 @@ import type { ClaimApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-} from 'element-plus';
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 
 import { withdrawClaimApi } from '#/api';
+import { handleActionError, toastSuccess } from '#/utils/message';
 
 const props = defineProps<{
   current: ClaimApi.ClaimResponse | null;
@@ -39,12 +33,16 @@ async function submit() {
       props.current.id,
       form.withdrawComment.trim() || null,
     );
-    ElMessage.success('已撤回');
+    toastSuccess('已撤回');
     emit('update:modelValue', false);
     emit('confirmed');
     reset();
-  } catch {
-    ElMessage.error('撤回失败（需本人或拥有报销模块权限）');
+  } catch (error) {
+    handleActionError(
+      'approve/ClaimWithdrawDialog',
+      error,
+      '撤回失败（需本人或拥有报销模块权限）',
+    );
   } finally {
     submitting.value = false;
   }
