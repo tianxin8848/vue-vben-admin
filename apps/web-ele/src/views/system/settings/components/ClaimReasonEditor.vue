@@ -9,10 +9,11 @@ import {
   ElEmpty,
   ElInput,
   ElMessage,
-  ElMessageBox,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
+
+import { confirmDelete } from '#/utils/modal';
 
 interface ReasonRow {
   reason: string;
@@ -94,22 +95,14 @@ function submitEdit() {
 async function handleRemove(idx: number) {
   const row = reasons.value[idx];
   if (!row) return;
-  try {
-    await ElMessageBox.confirm(
-      t(`${i18nPrefix}.deleteConfirm`, { name: row.reason }),
-      t(`${i18nPrefix}.deleteConfirmTitle`),
-      {
-        confirmButtonText: t(`${i18nPrefix}.confirm`),
-        cancelButtonText: t(`${i18nPrefix}.cancel`),
-        type: 'warning',
-      },
-    );
-    const next = [...reasons.value];
-    next.splice(idx, 1);
-    syncToParent(next);
-  } catch {
-    // 用户取消删除
-  }
+  const confirmed = await confirmDelete({
+    message: t(`${i18nPrefix}.deleteConfirm`, { name: row.reason }),
+    title: t(`${i18nPrefix}.deleteConfirmTitle`),
+  });
+  if (!confirmed) return;
+  const next = [...reasons.value];
+  next.splice(idx, 1);
+  syncToParent(next);
 }
 </script>
 

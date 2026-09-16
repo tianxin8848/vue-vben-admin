@@ -4,7 +4,7 @@ import { ref } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 import {
   deleteClaimDraftApi,
@@ -13,6 +13,8 @@ import {
   submitClaimSingleApi,
   withdrawClaimApi,
 } from '#/api';
+import { buildTimestampedFileName, saveBlob } from '#/utils/download';
+import { confirmAction, confirmDelete, promptText } from '#/utils/modal';
 
 export function useClaimActions() {
   const { t } = useI18n();
@@ -21,29 +23,18 @@ export function useClaimActions() {
 
   /** 撤回报销（可选填备注） */
   async function handleWithdraw(item: ClaimApi.ClaimResponse) {
-    let withdrawComment: string;
-    try {
-      const { value } = await ElMessageBox.prompt(
-        t('page.claim.messages.withdrawPrompt'),
-        t('page.claim.buttons.withdraw'),
-        {
-          type: 'warning',
-          confirmButtonText: t('common.confirm'),
-          cancelButtonText: t('common.cancel'),
-          inputType: 'textarea',
-          inputPlaceholder: t('page.claim.form.withdrawCommentPlaceholder'),
-          inputValidator: (val: string) => {
-            if (val && val.length > 500) {
-              return t('page.claim.messages.withdrawCommentTooLong');
-            }
-            return true;
-          },
-        },
-      );
-      withdrawComment = (value || '').trim();
-    } catch {
-      return;
-    }
+    const withdrawComment = await promptText({
+      inputType: 'textarea',
+      message: t('page.claim.messages.withdrawPrompt'),
+      placeholder: t('page.claim.form.withdrawCommentPlaceholder'),
+      title: t('page.claim.buttons.withdraw'),
+      type: 'warning',
+      validate: (val: string) =>
+        !val || val.length <= 500
+          ? true
+          : t('page.claim.messages.withdrawCommentTooLong'),
+    });
+    if (withdrawComment === null) return;
 
     loading.value = true;
     try {
@@ -60,19 +51,11 @@ export function useClaimActions() {
 
   /** 提交单条草稿（draft → pending） */
   async function handleSubmitSingle(item: ClaimApi.ClaimResponse) {
-    try {
-      await ElMessageBox.confirm(
-        t('page.claim.messages.submitSingleConfirm'),
-        t('page.claim.buttons.submit'),
-        {
-          type: 'warning',
-          confirmButtonText: t('common.confirm'),
-          cancelButtonText: t('common.cancel'),
-        },
-      );
-    } catch {
-      return;
-    }
+    const confirmed = await confirmAction({
+      message: t('page.claim.messages.submitSingleConfirm'),
+      title: t('page.claim.buttons.submit'),
+    });
+    if (!confirmed) return;
 
     loading.value = true;
     try {
@@ -93,19 +76,13 @@ export function useClaimActions() {
       ElMessage.warning(t('page.claim.messages.selectDraftFirst'));
       return false;
     }
-    try {
-      await ElMessageBox.confirm(
-        t('page.claim.messages.submitBatchConfirm', { count: itemIds.length }),
-        t('page.claim.buttons.batchSubmit'),
-        {
-          type: 'warning',
-          confirmButtonText: t('common.confirm'),
-          cancelButtonText: t('common.cancel'),
-        },
-      );
-    } catch {
-      return;
-    }
+    const confirmed = await confirmAction({
+      message: t('page.claim.messages.submitBatchConfirm', {
+        count: itemIds.length,
+      }),
+      title: t('page.claim.buttons.batchSubmit'),
+    });
+    if (!confirmed) return false;
 
     loading.value = true;
     try {
@@ -122,19 +99,11 @@ export function useClaimActions() {
 
   /** 删除草稿（仅 draft 状态） */
   async function handleDeleteDraft(item: ClaimApi.ClaimResponse) {
-    try {
-      await ElMessageBox.confirm(
-        t('page.claim.messages.deleteDraftConfirm'),
-        t('page.claim.buttons.delete'),
-        {
-          type: 'error',
-          confirmButtonText: t('common.confirm'),
-          cancelButtonText: t('common.cancel'),
-        },
-      );
-    } catch {
-      return;
-    }
+    const confirmed = await confirmDelete({
+      message: t('page.claim.messages.deleteDraftConfirm'),
+      title: t('page.claim.buttons.delete'),
+    });
+    if (!confirmed) return false;
 
     loading.value = true;
     try {
@@ -183,16 +152,7 @@ export function useClaimActions() {
         ElMessage.error(msg);
         return false;
       }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const now = new Date();
-      const ymd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      a.download = `claims_${ymd}.xlsx`;
-      document.body.append(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      saveBlob(blob, buildTimestampedFileName('claims', 'xlsx'));
       ElMessage.success(t('page.claim.messages.exportSuccess'));
       return true;
     } catch (error: any) {

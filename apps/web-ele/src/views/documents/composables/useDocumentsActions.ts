@@ -4,7 +4,7 @@ import { ref } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 import {
   createFolderApi,
@@ -12,6 +12,7 @@ import {
   deleteFolderApi,
   updateFolderApi,
 } from '#/api';
+import { confirmDelete, promptText } from '#/utils/modal';
 
 export function useDocumentsActions() {
   const { t } = useI18n();
@@ -20,22 +21,13 @@ export function useDocumentsActions() {
 
   /** 弹出输入框获取文件夹名；取消返回 null */
   async function promptFolderName(initial = ''): Promise<null | string> {
-    try {
-      const res = await ElMessageBox.prompt(
-        t('page.documents.folderNameLabel'),
-        {
-          confirmButtonText: t('page.documents.confirm'),
-          cancelButtonText: t('page.documents.cancel'),
-          inputValue: initial,
-          inputPlaceholder: t('page.documents.folderNamePlaceholder'),
-          inputValidator: (value: string) =>
-            value.trim().length > 0 || t('page.documents.folderNameRequired'),
-        },
-      );
-      return (res.value ?? '').trim();
-    } catch {
-      return null;
-    }
+    return promptText({
+      initialValue: initial,
+      message: t('page.documents.folderNameLabel'),
+      placeholder: t('page.documents.folderNamePlaceholder'),
+      validate: (value: string) =>
+        value.trim().length > 0 || t('page.documents.folderNameRequired'),
+    });
   }
 
   /** 新建文件夹（parentId = null 表示根目录）；成功返回 true */
@@ -74,20 +66,11 @@ export function useDocumentsActions() {
 
   /** 删除文件（二次确认）；成功返回 true */
   async function handleDeleteDoc(row: DocumentApi.DocumentResponse) {
-    try {
-      await ElMessageBox.confirm(
-        t('page.documents.confirmDelete', { name: row.title }),
-        t('page.documents.deleteTitle'),
-        {
-          confirmButtonText: t('page.documents.confirmDeleteBtn'),
-          cancelButtonText: t('page.documents.cancel'),
-          type: 'warning',
-          confirmButtonClass: 'el-button--danger',
-        },
-      );
-    } catch {
-      return false;
-    }
+    const confirmed = await confirmDelete({
+      message: t('page.documents.confirmDelete', { name: row.title }),
+      title: t('page.documents.deleteTitle'),
+    });
+    if (!confirmed) return false;
     loading.value = true;
     try {
       await deleteDocumentApi(row.id);
@@ -103,20 +86,11 @@ export function useDocumentsActions() {
 
   /** 删除空文件夹（二次确认）；成功返回 true */
   async function handleDeleteFolder(folder: DocumentApi.FolderResponse) {
-    try {
-      await ElMessageBox.confirm(
-        t('page.documents.confirmDeleteFolder', { name: folder.name }),
-        t('page.documents.deleteFolderTitle'),
-        {
-          confirmButtonText: t('page.documents.confirmDeleteBtn'),
-          cancelButtonText: t('page.documents.cancel'),
-          type: 'warning',
-          confirmButtonClass: 'el-button--danger',
-        },
-      );
-    } catch {
-      return false;
-    }
+    const confirmed = await confirmDelete({
+      message: t('page.documents.confirmDeleteFolder', { name: folder.name }),
+      title: t('page.documents.deleteFolderTitle'),
+    });
+    if (!confirmed) return false;
     loading.value = true;
     try {
       await deleteFolderApi(folder.id);

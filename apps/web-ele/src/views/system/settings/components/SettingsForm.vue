@@ -13,11 +13,11 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElMessageBox,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ALL_MODULE_CATALOG, getSystemSettingsApi } from '#/api';
+import { confirmDelete } from '#/utils/modal';
 
 interface ListItem {
   id: string;
@@ -137,28 +137,18 @@ function createListOps(
   }
 
   async function remove(row: ListItem) {
-    try {
-      await ElMessageBox.confirm(
-        t('page.system.settingsDetail.form.dialog.deleteConfirm', {
-          name: row.name,
-        }),
-        t('page.system.settingsDetail.form.dialog.deleteConfirmTitle'),
-        {
-          confirmButtonText: t(
-            'page.system.settingsDetail.form.dialog.confirm',
-          ),
-          cancelButtonText: t('page.system.settingsDetail.form.dialog.cancel'),
-          type: 'warning',
-        },
-      );
-      listRef.value = listRef.value.filter((i) => i.id !== row.id);
-      localStrRef.value = listToStr(listRef.value);
-      emit(emitName, localStrRef.value);
-      tableApiRef.setGridOptions({ data: listRef.value });
-      emit('save');
-    } catch {
-      // 用户取消删除
-    }
+    const confirmed = await confirmDelete({
+      message: t('page.system.settingsDetail.form.dialog.deleteConfirm', {
+        name: row.name,
+      }),
+      title: t('page.system.settingsDetail.form.dialog.deleteConfirmTitle'),
+    });
+    if (!confirmed) return;
+    listRef.value = listRef.value.filter((i) => i.id !== row.id);
+    localStrRef.value = listToStr(listRef.value);
+    emit(emitName, localStrRef.value);
+    tableApiRef.setGridOptions({ data: listRef.value });
+    emit('save');
   }
 
   return {

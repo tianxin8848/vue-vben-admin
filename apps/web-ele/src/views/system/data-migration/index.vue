@@ -11,7 +11,6 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
-  ElMessageBox,
   ElOption,
   ElSelect,
   ElTag,
@@ -24,6 +23,8 @@ import {
   importDataApi,
 } from '#/api';
 import { $t } from '#/locales';
+import { saveBlob } from '#/utils/download';
+import { confirmAction } from '#/utils/modal';
 
 const loading = ref(false);
 
@@ -66,14 +67,7 @@ async function handleExport() {
     const exclude =
       exportForm.scope === 'exclude_runtime' ? 'session' : undefined;
     const blob = await exportDataApi(exportForm.source, exclude);
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `data-migration-${exportForm.source}-${Date.now()}.ndjson`;
-    document.body.append(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    saveBlob(blob, `data-migration-${exportForm.source}-${Date.now()}.ndjson`);
     ElMessage.success($t('page.system.dataMigrationDetail.exportSuccess'));
   } catch {
     ElMessage.error($t('page.system.dataMigrationDetail.exportFailed'));
@@ -86,19 +80,11 @@ async function handleBackup() {
   const confirmText = $t('page.system.dataMigrationDetail.backupConfirm', {
     source: exportForm.source,
   });
-  try {
-    await ElMessageBox.confirm(
-      confirmText,
-      $t('page.system.dataMigrationDetail.backupConfirmTitle'),
-      {
-        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
-        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
-        type: 'warning',
-      },
-    );
-  } catch {
-    return;
-  }
+  const confirmed = await confirmAction({
+    message: confirmText,
+    title: $t('page.system.dataMigrationDetail.backupConfirmTitle'),
+  });
+  if (!confirmed) return;
   backupLoading.value = true;
   clearMessage();
   try {
@@ -137,19 +123,11 @@ async function handleImport() {
       : $t('page.system.dataMigrationDetail.upsertImportConfirm', {
           target: importForm.target,
         });
-  try {
-    await ElMessageBox.confirm(
-      confirmText,
-      $t('page.system.dataMigrationDetail.importConfirmTitle'),
-      {
-        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
-        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
-        type: 'warning',
-      },
-    );
-  } catch {
-    return;
-  }
+  const confirmed = await confirmAction({
+    message: confirmText,
+    title: $t('page.system.dataMigrationDetail.importConfirmTitle'),
+  });
+  if (!confirmed) return;
   importLoading.value = true;
   clearMessage();
   try {

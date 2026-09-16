@@ -12,6 +12,7 @@ dist.war
 *-dist.war
 coverage
 *.local
+*.profraw
 **/.vitepress/cache
 .cache
 .turbo

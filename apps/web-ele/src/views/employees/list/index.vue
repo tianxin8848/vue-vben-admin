@@ -9,13 +9,7 @@ import { useRouter } from 'vue-router';
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import {
-  ElButton,
-  ElMessage,
-  ElMessageBox,
-  ElSwitch,
-  ElTag,
-} from 'element-plus';
+import { ElButton, ElMessage, ElSwitch, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -27,6 +21,7 @@ import {
   updateEmployeePermissionsApi,
   updateEmployeeStatusApi,
 } from '#/api';
+import { confirmDelete } from '#/utils/modal';
 
 import AccessControlDialog from './components/AccessControlDialog.vue';
 import BasicInfoEditDialog from './components/BasicInfoEditDialog.vue';
@@ -293,20 +288,11 @@ async function handleAccessControlUpdate(
 // ─── 删除员工 ────────────────────────────────────────────────────────────────
 async function handleDelete(row: EmployeeApi.EmployeeResponse) {
   const label = row.full_name || row.username;
-  try {
-    await ElMessageBox.confirm(
-      t('page.employees.deleteConfirm.message', { name: label }),
-      t('page.employees.deleteConfirm.title'),
-      {
-        confirmButtonText: t('page.employees.deleteConfirm.confirmButtonText'),
-        cancelButtonText: t('page.employees.deleteConfirm.cancelButtonText'),
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger',
-      },
-    );
-  } catch {
-    return; // 用户取消
-  }
+  const confirmed = await confirmDelete({
+    message: t('page.employees.deleteConfirm.message', { name: label }),
+    title: t('page.employees.deleteConfirm.title'),
+  });
+  if (!confirmed) return;
   try {
     await deleteEmployeeApi(row.id);
     ElMessage.success(t('page.employees.message.deleteSuccess'));

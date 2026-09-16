@@ -16,12 +16,12 @@ import {
   ElEmpty,
   ElLink,
   ElMessage,
-  ElMessageBox,
   ElTag,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteCustomerApi, getCustomersApi } from '#/api';
+import { confirmDelete } from '#/utils/modal';
 
 import CustomerDrawer from './components/CustomerDrawer.vue';
 import {
@@ -161,20 +161,11 @@ async function handleDrawerSuccess() {
 
 // ─── 删除 ───────────────────────────────────────────────────────────────────
 async function handleDelete(row: CustomerApi.CustomerResponse) {
-  try {
-    await ElMessageBox.confirm(
-      t('page.fuximap.confirmDelete', { name: row.name }),
-      t('page.fuximap.deleteTitle'),
-      {
-        confirmButtonText: t('page.fuximap.confirmDeleteBtn'),
-        cancelButtonText: t('page.fuximap.cancel'),
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger',
-      },
-    );
-  } catch {
-    return;
-  }
+  const confirmed = await confirmDelete({
+    message: t('page.fuximap.confirmDelete', { name: row.name }),
+    title: t('page.fuximap.deleteTitle'),
+  });
+  if (!confirmed) return;
   try {
     await deleteCustomerApi(row.id);
     ElMessage.success(t('page.fuximap.deleteSuccess'));

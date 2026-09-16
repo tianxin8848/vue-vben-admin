@@ -10,13 +10,13 @@ import {
   ElButton,
   ElCard,
   ElEmpty,
-  ElMessageBox,
   ElOption,
   ElSelect,
   ElTag,
 } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { confirmDelete } from '#/utils/modal';
 
 interface SummaryRow {
   items: { code?: string; name: string; rate?: number }[];
@@ -182,18 +182,15 @@ async function handleDeleteHoliday(row: HolidayRow) {
     row.start_date === row.end_date
       ? row.start_date
       : `${row.start_date}/${row.end_date}`;
-  try {
-    await ElMessageBox.confirm(
-      t(`${i18nPrefix}.deleteConfirm`, { region: row.region, date: label }),
-      t(`${i18nPrefix}.deleteConfirmTitle`),
-      {
-        confirmButtonText: t(`${i18nPrefix}.confirm`),
-        cancelButtonText: t(`${i18nPrefix}.cancel`),
-        type: 'warning',
-      },
-    );
-    emit('deleteHoliday', row.start_date, row.end_date, row.region);
-  } catch {}
+  const confirmed = await confirmDelete({
+    message: t(`${i18nPrefix}.deleteConfirm`, {
+      region: row.region,
+      date: label,
+    }),
+    title: t(`${i18nPrefix}.deleteConfirmTitle`),
+  });
+  if (!confirmed) return;
+  emit('deleteHoliday', row.start_date, row.end_date, row.region);
 }
 
 const summaryGridOptions = computed<VxeGridProps<SummaryRow>>(() => ({

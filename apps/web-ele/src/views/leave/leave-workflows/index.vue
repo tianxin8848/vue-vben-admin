@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus';
+import { ElButton, ElMessage, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -14,6 +14,7 @@ import {
   updateLeaveWorkflowApi,
 } from '#/api';
 import { $t } from '#/locales';
+import { confirmDelete } from '#/utils/modal';
 
 import WorkflowDrawer from './components/WorkflowDrawer.vue';
 import { createGridOptions } from './data';
@@ -124,21 +125,13 @@ async function toggleWorkflowStatus(workflow: any) {
 }
 
 async function deleteWorkflow(workflow: any) {
-  try {
-    await ElMessageBox.confirm(
-      $t('page.leave.workflowMaintenance.confirmDelete', {
-        name: workflow.name,
-      }),
-      $t('page.leave.workflowMaintenance.confirmDeleteTitle'),
-      {
-        confirmButtonText: $t('page.leave.workflowMaintenance.confirm'),
-        cancelButtonText: $t('page.leave.workflowMaintenance.cancel'),
-        type: 'warning',
-      },
-    );
-  } catch {
-    return;
-  }
+  const confirmed = await confirmDelete({
+    message: $t('page.leave.workflowMaintenance.confirmDelete', {
+      name: workflow.name,
+    }),
+    title: $t('page.leave.workflowMaintenance.confirmDeleteTitle'),
+  });
+  if (!confirmed) return;
   loading.value = true;
   try {
     await deleteLeaveWorkflowApi(workflow.id);

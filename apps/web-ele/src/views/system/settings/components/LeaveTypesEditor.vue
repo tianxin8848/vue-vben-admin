@@ -11,10 +11,11 @@ import {
   ElEmpty,
   ElInput,
   ElMessage,
-  ElMessageBox,
   ElTable,
   ElTableColumn,
 } from 'element-plus';
+
+import { confirmDelete } from '#/utils/modal';
 
 const props = defineProps<{
   modelValue: SystemSettingsApi.LeaveTypeItem[];
@@ -96,22 +97,14 @@ function submitEdit() {
 async function handleRemove(idx: number) {
   const row = list.value[idx];
   if (!row) return;
-  try {
-    await ElMessageBox.confirm(
-      t(`${i18nPrefix}.deleteConfirm`, { name: row.label || row.code }),
-      t(`${i18nPrefix}.deleteConfirmTitle`),
-      {
-        confirmButtonText: t(`${i18nPrefix}.confirm`),
-        cancelButtonText: t(`${i18nPrefix}.cancel`),
-        type: 'warning',
-      },
-    );
-    const next = [...list.value];
-    next.splice(idx, 1);
-    syncToParent(next);
-  } catch {
-    // 用户取消删除
-  }
+  const confirmed = await confirmDelete({
+    message: t(`${i18nPrefix}.deleteConfirm`, { name: row.label || row.code }),
+    title: t(`${i18nPrefix}.deleteConfirmTitle`),
+  });
+  if (!confirmed) return;
+  const next = [...list.value];
+  next.splice(idx, 1);
+  syncToParent(next);
 }
 </script>
 

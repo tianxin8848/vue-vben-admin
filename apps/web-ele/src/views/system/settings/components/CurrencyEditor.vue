@@ -12,11 +12,12 @@ import {
   ElInput,
   ElInputNumber,
   ElMessage,
-  ElMessageBox,
   ElTable,
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+
+import { confirmDelete } from '#/utils/modal';
 
 interface CurrencyRow {
   currency_code: string;
@@ -137,22 +138,14 @@ function submitEdit() {
 async function handleRemove(idx: number) {
   const row = currencies.value[idx];
   if (!row) return;
-  try {
-    await ElMessageBox.confirm(
-      t(`${i18nPrefix}.deleteConfirm`, { code: row.currency_code }),
-      t(`${i18nPrefix}.deleteConfirmTitle`),
-      {
-        confirmButtonText: t(`${i18nPrefix}.confirm`),
-        cancelButtonText: t(`${i18nPrefix}.cancel`),
-        type: 'warning',
-      },
-    );
-    const next = [...currencies.value];
-    next.splice(idx, 1);
-    syncToParent(next);
-  } catch {
-    // 用户取消删除
-  }
+  const confirmed = await confirmDelete({
+    message: t(`${i18nPrefix}.deleteConfirm`, { code: row.currency_code }),
+    title: t(`${i18nPrefix}.deleteConfirmTitle`),
+  });
+  if (!confirmed) return;
+  const next = [...currencies.value];
+  next.splice(idx, 1);
+  syncToParent(next);
 }
 
 function handleRateChange(idx: number, val: null | number | undefined) {
