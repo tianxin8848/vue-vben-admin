@@ -100,7 +100,11 @@ export namespace EmployeeApi {
     phone?: null | string;
     position?: null | string;
     region?: null | string;
-    username: string;
+    /**
+     * 登录名。后端已将登录账号锁定为邮箱：不传时由 email 派生，
+     * 传了也会被后端归一为小写邮箱。前端创建抽屉不再收集该字段。
+     */
+    username?: string;
   }
 
   /** 更新基本信息请求参数（PATCH /me/basic-info 与 /employees/{id}/basic-info 共用） */

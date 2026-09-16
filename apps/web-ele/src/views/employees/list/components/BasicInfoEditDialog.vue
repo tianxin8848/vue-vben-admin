@@ -76,11 +76,15 @@ watch(
 );
 
 function handleSubmit() {
-  if (!form.username || !form.email || !form.full_name) {
+  // 登录账号（username）已由邮箱锁定，后端在 PATCH 时忽略该字段，
+  // 这里不再要求、也不再提交 username。
+  if (!form.email || !form.full_name) {
     toastWarning($t('page.employees.basicInfoEdit.requiredFields'));
     return;
   }
-  emit('submit', { ...form });
+  const payload: EmployeeApi.EmployeeBasicInfoUpdate = { ...form };
+  delete payload.username;
+  emit('submit', payload);
 }
 
 function handleClose() {
@@ -100,6 +104,7 @@ function handleClose() {
         <ElFormItem :label="$t('page.employees.basicInfoEdit.username')">
           <ElInput
             v-model="form.username"
+            :disabled="true"
             :placeholder="
               $t('page.employees.basicInfoEdit.usernamePlaceholder')
             "

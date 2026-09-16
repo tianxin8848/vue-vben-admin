@@ -50,7 +50,6 @@ const createForm = reactive({
   phone: '',
   position: '',
   region: '',
-  username: '',
 });
 
 const selectedModuleCodes = ref<string[]>([]);
@@ -89,7 +88,6 @@ function buildModulePermissions(): EmployeeApi.ModulePermission[] {
 }
 
 function resetForm() {
-  createForm.username = '';
   createForm.email = '';
   createForm.full_name = '';
   createForm.department = '';
@@ -108,12 +106,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
 });
 
 async function submitCreate() {
-  if (
-    !createForm.username ||
-    !createForm.email ||
-    !createForm.full_name ||
-    !createForm.department
-  ) {
+  if (!createForm.email || !createForm.full_name || !createForm.department) {
     toastWarning(t('page.employees.createDrawer.requiredFields'));
     return;
   }
@@ -126,7 +119,6 @@ async function submitCreate() {
     phone: createForm.phone || undefined,
     position: createForm.position || undefined,
     region: createForm.region || undefined,
-    username: createForm.username,
   };
   createDrawerApi.lock(true);
   try {
@@ -156,13 +148,6 @@ defineExpose({ open });
 <template>
   <CreateDrawer class="w-[600px]">
     <ElForm :model="createForm" label-width="auto">
-      <ElFormItem :label="`${t('page.employees.createDrawer.username')} *`">
-        <ElInput
-          v-model="createForm.username"
-          :placeholder="t('page.employees.createDrawer.usernamePlaceholder')"
-          class="w-full"
-        />
-      </ElFormItem>
       <ElFormItem :label="`${t('page.employees.createDrawer.email')} *`">
         <ElInput
           v-model="createForm.email"
