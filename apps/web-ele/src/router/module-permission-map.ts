@@ -1,7 +1,5 @@
 import type { RouteRecordStringComponent } from '@vben/types';
 
-import { $t } from '#/locales';
-
 /**
  * Deep clone route objects to prevent mutation of template constants
  * when convertRoutes changes component from string to function.
@@ -64,7 +62,7 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
     meta: {
       icon: 'lucide:home',
       order: 0,
-      title: $t('page.workspace.title'),
+      title: 'page.workspace.title',
     },
     children: [
       {
@@ -74,7 +72,7 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
         meta: {
           affixTab: true,
           icon: 'lucide:home',
-          title: $t('page.workspace.home'),
+          title: 'page.workspace.home',
         },
       },
     ],
@@ -87,7 +85,7 @@ const ALWAYS_VISIBLE_ROUTES: RouteRecordStringComponent[] = [
       hideInMenu: true,
       icon: 'lucide:user',
       order: 99,
-      title: $t('page.workspace.profile'),
+      title: 'page.workspace.profile',
     },
   },
 ];
@@ -110,7 +108,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:calendar',
-          title: $t('page.workspace.myLeave'),
+          title: 'page.workspace.myLeave',
         },
       },
       {
@@ -120,7 +118,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           hideInMenu: true,
           icon: 'lucide:file-text',
-          title: $t('page.leave.detail'),
+          title: 'page.leave.detail',
         },
       },
     ],
@@ -135,7 +133,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:receipt',
-          title: $t('page.claim.title'),
+          title: 'page.claim.title',
         },
       },
     ],
@@ -150,7 +148,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:clipboard-check',
-          title: $t('page.workspace.myApprovals'),
+          title: 'page.workspace.myApprovals',
         },
       },
     ],
@@ -165,7 +163,7 @@ const WORKSPACE_PERMISSION_CHILDREN: Record<
         meta: {
           affixTab: false,
           icon: 'lucide:layout-dashboard',
-          title: $t('page.workspace.dashboard'),
+          title: 'page.workspace.dashboard',
         },
       },
     ],
@@ -184,7 +182,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:clipboard-list',
-      title: $t('page.system.approvalManagement'),
+      title: 'page.system.approvalManagement',
     },
   },
   access_control: {
@@ -194,7 +192,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:key',
-      title: $t('page.system.accessControl'),
+      title: 'page.system.accessControl',
     },
   },
   data_migration: {
@@ -205,7 +203,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
       affixTab: false,
       hideInMenu: true,
       icon: 'lucide:database',
-      title: $t('page.system.dataMigration'),
+      title: 'page.system.dataMigration',
     },
   },
   leave_calendar: {
@@ -215,7 +213,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:calendar-check',
-      title: $t('page.leave.adminList'),
+      title: 'page.leave.adminList',
     },
   },
   leave_workflows: {
@@ -225,7 +223,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:git-branch',
-      title: $t('page.leave.workflowCenter'),
+      title: 'page.leave.workflowCenter',
     },
   },
   system_settings: {
@@ -237,7 +235,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
       fullPathKey: false,
       hideInMenu: true,
       icon: 'lucide:cog',
-      title: $t('page.system.settings'),
+      title: 'page.system.settings',
     },
   },
   user_management: {
@@ -247,7 +245,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:list',
-      title: $t('page.employees.list'),
+      title: 'page.employees.list',
     },
   },
   user_management_profile: {
@@ -257,7 +255,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       hideInMenu: true,
       icon: 'lucide:user',
-      title: $t('page.employees.profile'),
+      title: 'page.employees.profile',
     },
   },
   customer_map: {
@@ -267,7 +265,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:map-pinned',
-      title: $t('page.fuximap.customerDistribution'),
+      title: 'page.fuximap.customerDistribution',
     },
   },
   document_library: {
@@ -277,7 +275,7 @@ const MANAGEMENT_ROUTE_TEMPLATES: Record<string, RouteRecordStringComponent> = {
     meta: {
       affixTab: false,
       icon: 'lucide:file-text',
-      title: $t('page.documents.library'),
+      title: 'page.documents.library',
     },
   },
 };
@@ -379,7 +377,7 @@ export function buildRoutesFromPermissions(
       meta: {
         icon: 'lucide:users',
         order: 1,
-        title: $t('page.employees.title'),
+        title: 'page.employees.title',
       },
       children: managementChildren,
     });
@@ -398,7 +396,7 @@ export function buildRoutesFromPermissions(
         meta: {
           icon: 'lucide:map',
           order: 2,
-          title: $t('page.fuximap.title'),
+          title: 'page.fuximap.title',
         },
         children: [child],
       });
@@ -423,7 +421,7 @@ export function buildRoutesFromPermissions(
         meta: {
           icon: 'lucide:folder-open',
           order: 3,
-          title: $t('page.documents.title'),
+          title: 'page.documents.title',
         },
         children: [child],
       });
