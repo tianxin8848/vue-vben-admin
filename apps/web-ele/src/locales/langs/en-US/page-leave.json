@@ -254,7 +254,17 @@
           "granted": "Granted",
           "used": "Used",
           "available": "Available",
-          "capped": "Capped"
+          "capped": "Capped",
+          "workDate": "Overtime Date",
+          "workDatePlaceholder": "Select overtime date",
+          "workDateRequired": "Please select the overtime date",
+          "remarksPlaceholder": "Remarks (optional, up to 500 chars)",
+          "grantsTitle": "Compensation leave grants",
+          "grantsLoadFailed": "Failed to load grants",
+          "colWorkDate": "Overtime date",
+          "colDays": "Days",
+          "colRemarks": "Remarks",
+          "colExpiresOn": "Expires on"
         },
         "weekdays": {
           "sun": "Sunday",

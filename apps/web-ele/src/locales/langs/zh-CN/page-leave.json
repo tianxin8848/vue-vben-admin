@@ -254,7 +254,17 @@
           "granted": "已授天数",
           "used": "已用天数",
           "available": "可用天数",
-          "capped": "是否触顶"
+          "capped": "是否触顶",
+          "workDate": "加班日",
+          "workDatePlaceholder": "请选择加班日",
+          "workDateRequired": "请选择加班日",
+          "remarksPlaceholder": "备注（可选，最长 500 字）",
+          "grantsTitle": "调休发放明细",
+          "grantsLoadFailed": "发放明细加载失败",
+          "colWorkDate": "加班日",
+          "colDays": "天数",
+          "colRemarks": "备注",
+          "colExpiresOn": "有效期至"
         },
         "weekdays": {
           "sun": "星期日",

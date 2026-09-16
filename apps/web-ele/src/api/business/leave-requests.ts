@@ -181,11 +181,30 @@ export namespace LeaveRequestApi {
     year: number;
   }
 
-  /** 增加调休额度请求体 */
-  export interface AddLieuLeaveGrantParams {
+  /** 单条调休发放明细（GET /leave-requests/lieu-leave/grants） */
+  export interface LieuLeaveGrantResponse {
+    created_at: null | string;
     days: number;
     employee_id: string;
-    year: number;
+    expires_on: null | string;
+    granted_by_id: null | string;
+    id: string;
+    remarks: null | string;
+    updated_at: null | string;
+    work_date: null | string;
+  }
+
+  /** 增加调休额度请求体 */
+  export interface AddLieuLeaveGrantParams {
+    /** 员工 ID */
+    employee_id: string;
+    /** 加班日（调休来源日），格式 YYYY-MM-DD，必填 */
+    work_date: string;
+    days: number;
+    /** 可选备注，最长 500 字符；后端会规整空串为 null */
+    remarks?: null | string;
+    /** 年份，后端实际按 work_date.year 落库，此字段仅作兼容保留（可选） */
+    year?: null | number;
   }
 }
 
@@ -355,5 +374,13 @@ export async function addLieuLeaveGrantApi(
   return requestClient.post<LeaveRequestApi.LieuLeaveSummary>(
     '/leave-requests/lieu-leave/grants',
     data,
+  );
+}
+
+/** 列出指定员工、年份的调休发放明细（含加班日与备注，需 leave_calendar 权限） */
+export async function listLieuLeaveGrantsApi(employeeId: string, year: number) {
+  return requestClient.get<LeaveRequestApi.LieuLeaveGrantResponse[]>(
+    '/leave-requests/lieu-leave/grants',
+    { params: { employee_id: employeeId, year } },
   );
 }
