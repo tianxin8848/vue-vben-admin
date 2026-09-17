@@ -139,6 +139,28 @@ function parseClaimCurrencies(
     );
 }
 
+/**
+ * 模块全量目录：以本地目录为基底，用后端返回的名称覆盖同名项，并补上目录里
+ * 没有的后端模块。
+ *
+ * 表单展示（传给 SettingsForm）与保存（handleSaveSettings）取同一份，
+ * 避免两处各合并一次而出现「界面上看到的」和「保存下去的」不一致。
+ */
+const allModules = computed<SystemSettingsApi.SystemModuleItem[]>(() => {
+  const backendModules = settings.value?.modules || [];
+  const merged = ALL_MODULE_CATALOG.map((m) => {
+    const backend = backendModules.find((b) => b.module_code === m.module_code);
+    return { ...m, module_name: backend?.module_name ?? m.module_name };
+  });
+  const codes = new Set(merged.map((m) => m.module_code));
+  for (const b of backendModules) {
+    if (!codes.has(b.module_code)) {
+      merged.push({ ...b });
+    }
+  }
+  return merged;
+});
+
 async function fetchSettings() {
   loading.value = true;
   try {
@@ -170,20 +192,11 @@ async function fetchSettings() {
 
 async function handleSaveSettings() {
   try {
-    // 以全量目录为基础，合并后端可能存在的额外模块，确保新勾选的模块也能正确保存
-    const fullCatalog = [...ALL_MODULE_CATALOG];
-    const catalogCodes = new Set(fullCatalog.map((m) => m.module_code));
-    for (const m of settings.value?.modules || []) {
-      if (catalogCodes.has(m.module_code)) {
-        continue;
-      }
-      fullCatalog.push(m);
-    }
     const data: SystemSettingsApi.SystemSettingsUpdate = {
       departments: parseLineList(deptStr.value),
       positions: parseLineList(posStr.value),
       regions: parseLineList(regionStr.value),
-      modules: fullCatalog
+      modules: allModules.value
         .filter((m) => selectedModules.value.includes(m.module_code))
         .map((m) => ({
           module_code: m.module_code,
@@ -324,6 +337,7 @@ onMounted(() => {
             v-model:pos-str="posStr"
             v-model:region-str="regionStr"
             v-model:selected-modules="selectedModules"
+            :modules="allModules"
             @save="handleSaveSettings"
           />
 
