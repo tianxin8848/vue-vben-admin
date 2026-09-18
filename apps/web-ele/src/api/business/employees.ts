@@ -72,6 +72,11 @@ export namespace EmployeeApi {
     bank_account_number: null | string;
     bank_name: null | string;
     birth_date: null | string;
+    /**
+     * 中文姓名（后端等于 employee.full_name）。
+     * 可编辑性由自助可编辑清单中的 `full_name` 决定，不是 `chinese_full_name`。
+     */
+    chinese_full_name: null | string;
     created_at: null | string;
     employee_id: string;
     emergency_contact_name: null | string;
@@ -125,6 +130,8 @@ export namespace EmployeeApi {
     bank_account_number?: null | string;
     bank_name?: null | string;
     birth_date?: null | string;
+    /** 中文姓名（2–50 字）。后端写入 employee.full_name。 */
+    chinese_full_name?: null | string;
     emergency_contact_name?: null | string;
     emergency_contact_phone?: null | string;
     emergency_contact_relationship?: null | string;

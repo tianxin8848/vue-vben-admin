@@ -110,6 +110,18 @@ export function buildProfileSchema(
   return [
     {
       component: 'Input',
+      componentProps: {
+        // 后端按自助清单里的 `full_name` 判定中文姓名可否编辑（不是 chinese_full_name）
+        disabled: !editable('full_name'),
+        maxlength: 50,
+      },
+      fieldName: 'chinese_full_name',
+      label: t('page.workspace.profilePage.chineseFullName'),
+      // 后端要求非空；不可编辑时不参与校验
+      rules: editable('full_name') ? 'required' : null,
+    },
+    {
+      component: 'Input',
       componentProps: { disabled: !editable('english_name') },
       fieldName: 'english_name',
       label: t('page.workspace.profilePage.englishName'),
@@ -266,6 +278,7 @@ export function buildProfileValues(
     bank_account_number: profileRes.bank_account_number || '',
     bank_name: profileRes.bank_name || '',
     birth_date: profileRes.birth_date || '',
+    chinese_full_name: profileRes.chinese_full_name || '',
     emergency_contact_name: profileRes.emergency_contact_name || '',
     emergency_contact_phone: profileRes.emergency_contact_phone || '',
     emergency_contact_relationship:
@@ -297,11 +310,17 @@ export function buildBasicUpdatePayload(
   };
 }
 
-/** 构建 PATCH /me/profile 请求 payload（空串转 null） */
+/**
+ * 构建 PATCH /me/profile 请求 payload（空串转 null）。
+ *
+ * 中文姓名（chinese_full_name）只在后端允许自助编辑时才提交：
+ * 后端按自助清单里的 `full_name` 判定，若不在清单内还提交该字段会直接 400。
+ */
 export function buildProfileUpdatePayload(
   values: Record<string, any>,
+  meta?: EmployeeApi.ProfileMetaResponse | null,
 ): Partial<EmployeeApi.EmployeeProfileUpdate> {
-  return {
+  const payload: Partial<EmployeeApi.EmployeeProfileUpdate> = {
     bank_account_name: values.bank_account_name || null,
     bank_account_number: values.bank_account_number || null,
     bank_name: values.bank_name || null,
@@ -320,4 +339,8 @@ export function buildProfileUpdatePayload(
     personal_email: values.personal_email || null,
     work_start_date: values.work_start_date || null,
   };
+  if (isFieldEditable(meta, 'full_name')) {
+    payload.chinese_full_name = values.chinese_full_name || null;
+  }
+  return payload;
 }

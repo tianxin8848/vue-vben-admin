@@ -138,7 +138,9 @@ async function handleUpdateBasicInfo(values: Record<string, any>) {
 
 async function handleUpdateProfile(values: Record<string, any>) {
   try {
-    await updateMyProfileApi(buildProfileUpdatePayload(values));
+    await updateMyProfileApi(
+      buildProfileUpdatePayload(values, profileMeta.value),
+    );
     toastSuccess(t('page.workspace.profilePage.profileUpdateSuccess'));
     await fetchData();
   } catch (error) {

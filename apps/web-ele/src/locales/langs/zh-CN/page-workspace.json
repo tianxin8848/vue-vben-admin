@@ -44,6 +44,7 @@
         "positionPlaceholder": "请选择职位",
         "region": "区域",
         "regionPlaceholder": "请选择区域",
+        "chineseFullName": "中文姓名",
         "englishName": "英文名",
         "gender": "性别",
         "genderPlaceholder": "请选择性别",

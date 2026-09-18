@@ -44,6 +44,7 @@
         "positionPlaceholder": "Select position",
         "region": "Region",
         "regionPlaceholder": "Select region",
+        "chineseFullName": "Chinese Full Name",
         "englishName": "English Full Name",
         "gender": "Gender",
         "genderPlaceholder": "Select gender",
