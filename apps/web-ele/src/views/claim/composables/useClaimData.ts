@@ -2,50 +2,17 @@ import type { TabKey } from '../data';
 
 import type { ClaimApi } from '#/api';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
-import {
-  getClaimExportEmployeesApi,
-  getClaimOptionsApi,
-  getMyClaimsApi,
-  getUserInfoApi,
-} from '#/api';
+import { getClaimOptionsApi, getMyClaimsApi } from '#/api';
 
 import { HISTORY_STATUSES, MY_ACTIVE_STATUSES } from '../data';
 
 export function useClaimData() {
   const loading = ref(false);
 
-  const userInfo = ref<null | {
-    full_name: string;
-    username: string;
-  }>(null);
-
-  // ─── 组织级导出权限（对齐后端 can_export_org_claims） ────────────────────────
-  const isAdmin = ref(false);
-  const modulePermissions = ref<
-    Array<{ can_view: boolean; module_code: string }>
-  >([]);
-
-  /**
-   * 是否可导出组织级报销（GET /claims/export）：
-   * 内置 admin 被后端拒绝；需具备 claim_management 或 claim_org_export 的查看权限。
-   */
-  const canOrgExport = computed(() => {
-    if (isAdmin.value) return false;
-    return modulePermissions.value.some(
-      (perm) =>
-        (perm.module_code === 'claim_management' ||
-          perm.module_code === 'claim_org_export') &&
-        perm.can_view !== false,
-    );
-  });
-
   const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
   const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
-
-  // ─── 组织级导出：可选员工（仅出现在已通过报销里的员工） ──────────────────────
-  const exportEmployees = ref<ClaimApi.ClaimExportEmployee[]>([]);
 
   const activeTab = ref<TabKey>('my');
 
@@ -61,35 +28,6 @@ export function useClaimData() {
     } catch {
       reasonOptions.value = [];
       currencyOptions.value = [];
-    }
-  }
-
-  async function loadUserInfo() {
-    try {
-      const user = await getUserInfoApi();
-      userInfo.value = { username: user.username, full_name: user.realName };
-      isAdmin.value = (user.roles ?? []).includes('admin');
-      modulePermissions.value = (user.module_permissions ?? []).map((p) => ({
-        module_code: p.module_code,
-        can_view: p.can_view,
-      }));
-    } catch {
-      userInfo.value = null;
-      isAdmin.value = false;
-      modulePermissions.value = [];
-    }
-  }
-
-  /** 组织级导出下拉：可选员工（需先拿到权限判定，无权限则不请求） */
-  async function loadExportEmployees() {
-    if (!canOrgExport.value) {
-      exportEmployees.value = [];
-      return;
-    }
-    try {
-      exportEmployees.value = await getClaimExportEmployeesApi();
-    } catch {
-      exportEmployees.value = [];
     }
   }
 
@@ -115,13 +53,7 @@ export function useClaimData() {
   async function fetchAll() {
     loading.value = true;
     try {
-      // 权限判定（canOrgExport）依赖 loadUserInfo，员工下拉必须在其之后
-      await Promise.all([loadOptions(), loadUserInfo()]);
-      await Promise.all([
-        loadMyClaims(),
-        loadMyHistory(),
-        loadExportEmployees(),
-      ]);
+      await Promise.all([loadOptions(), loadMyClaims(), loadMyHistory()]);
     } catch (error) {
       console.error('Fetch all error:', error);
     } finally {
@@ -164,9 +96,6 @@ export function useClaimData() {
   return {
     // state
     loading,
-    userInfo,
-    canOrgExport,
-    exportEmployees,
     reasonOptions,
     currencyOptions,
     activeTab,
@@ -181,6 +110,5 @@ export function useClaimData() {
     // child loaders (for success callbacks)
     loadMyClaims,
     loadMyHistory,
-    loadExportEmployees,
   };
 }

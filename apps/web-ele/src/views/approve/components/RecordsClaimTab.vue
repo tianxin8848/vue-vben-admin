@@ -8,10 +8,11 @@ import { computed, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import { ElTag } from 'element-plus';
+import { ElButton, ElOption, ElSelect, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
+import { useOrgExport } from '../../claim/composables/useOrgExport';
 import {
   actionLabelMap,
   actionTypeMap,
@@ -25,6 +26,16 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+
+// ─── 组织级报销导出（全员，支持按员工 / 分组方式筛选） ──────────────────────────
+const {
+  loading: orgExportLoading,
+  canOrgExport,
+  orgExportEmployeeOptions,
+  orgExportGroup,
+  orgExportEmployee,
+  onOrgExport,
+} = useOrgExport();
 
 /** Records Claim 只显示已通过（approved）和已拒绝（rejected），排除 pending/withdrawn */
 const RECORDS_CLAIM_ALLOWED_STATUSES = new Set(['approved', 'rejected']);
@@ -163,6 +174,44 @@ watch(tableColumns, () => {
       t('page.approve.recordsClaimTab.listTitle', { count: data.length })
     "
   >
+    <template #toolbar-tools>
+      <template v-if="canOrgExport">
+        <span
+          class="text-sm text-muted-foreground"
+          :title="t('page.claim.exportEmployee.hint')"
+        >
+          {{ t('page.claim.exportEmployee.label') }}
+        </span>
+        <ElSelect v-model="orgExportEmployee" style="width: 200px" filterable>
+          <ElOption
+            v-for="opt in orgExportEmployeeOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </ElSelect>
+        <span
+          class="text-sm text-muted-foreground"
+          :title="t('page.claim.exportGroup.hint')"
+        >
+          {{ t('page.claim.exportGroup.label') }}
+        </span>
+        <ElSelect v-model="orgExportGroup" style="width: 150px">
+          <ElOption :label="t('page.claim.exportGroup.month')" value="month" />
+          <ElOption
+            :label="t('page.claim.exportGroup.personMonth')"
+            value="person_month"
+          />
+        </ElSelect>
+        <ElButton
+          type="success"
+          :loading="orgExportLoading"
+          @click="onOrgExport"
+        >
+          {{ t('page.claim.buttons.exportAll') }}
+        </ElButton>
+      </template>
+    </template>
     <template #amount="{ row }">
       <div>{{ row.amount.toFixed(2) }} {{ row.currency }}</div>
       <div v-if="row.amount_hkd" class="text-xs text-muted-foreground">
