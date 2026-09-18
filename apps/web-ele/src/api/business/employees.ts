@@ -69,25 +69,35 @@ export namespace EmployeeApi {
   /** 员工详细档案响应 */
   export interface EmployeeProfileResponse {
     bank_account_name: null | string;
+    /** GET 永远返回掩码（含 `*`），完整账号需走 bank-reveal 端点 */
     bank_account_number: null | string;
     bank_name: null | string;
     birth_date: null | string;
+    /** 当前登录者是否可以写入/查看完整银行账号（本人或有 bank_data 模块权限） */
+    can_reveal_bank_account: boolean;
     /**
      * 中文姓名（后端等于 employee.full_name）。
      * 可编辑性由自助可编辑清单中的 `full_name` 决定，不是 `chinese_full_name`。
      */
     chinese_full_name: null | string;
     created_at: null | string;
-    employee_id: string;
     emergency_contact_name: null | string;
     emergency_contact_phone: null | string;
     emergency_contact_relationship: null | string;
+    employee_id: string;
     english_address: null | string;
     english_name: null | string;
     gender: null | string;
     hire_date: null | string;
+    /** 后端把 national_id 与 hkid_number 互为镜像返回 */
     hkid_number: null | string;
+    /** 证件类型：`hkid`（香港身份证）/ `prc_id`（内地居民身份证） */
+    id_kind: null | string;
+    last_employment_date: null | string;
+    /** 已填写即为「已离职」，PATCH 时不可清空，须走復職通道 */
+    last_working_date: null | string;
     marital_status: null | string;
+    national_id: null | string;
     passport_number: null | string;
     personal_email: null | string;
     updated_at: null | string;
@@ -127,6 +137,7 @@ export namespace EmployeeApi {
   /** 更新档案请求参数 */
   export interface EmployeeProfileUpdate {
     bank_account_name?: null | string;
+    /** 含 `*` 的掩码值会被后端忽略（不会覆盖真实账号） */
     bank_account_number?: null | string;
     bank_name?: null | string;
     birth_date?: null | string;
@@ -140,10 +151,23 @@ export namespace EmployeeApi {
     gender?: null | string;
     hire_date?: null | string;
     hkid_number?: null | string;
+    /** `hkid` | `prc_id`；与 hkid_number/national_id 一起决定证件号码的校验规则 */
+    id_kind?: null | string;
+    last_employment_date?: null | string;
+    /** 填写即自动停用该员工账号；已填写时不可通过本接口清空 */
+    last_working_date?: null | string;
     marital_status?: null | string;
+    national_id?: null | string;
     passport_number?: null | string;
     personal_email?: null | string;
     work_start_date?: null | string;
+  }
+
+  /** 员工银行账号明文响应（POST /employees/{id}/profile/bank-reveal） */
+  export interface EmployeeBankRevealResponse {
+    bank_account_name: null | string;
+    bank_account_number: null | string;
+    bank_name: null | string;
   }
 
   /** 更新状态请求参数 */
@@ -312,6 +336,13 @@ export async function updateMyBasicInfoApi(
   });
 }
 
+/** 获取员工基本信息（比拉全量 /employees 再 find 更轻） */
+export async function getEmployeeBasicInfoApi(employeeId: string) {
+  return requestClient.get<EmployeeApi.EmployeeResponse>(
+    `/employees/${employeeId}/basic-info`,
+  );
+}
+
 /** 更新员工基本信息 */
 export async function updateEmployeeBasicInfoApi(
   employeeId: string,
@@ -347,6 +378,18 @@ export async function getEmployeeProfileApi(employeeId: string) {
   );
 }
 
+/**
+ * 获取指定员工的档案元数据（部门/岗位/地区下拉）。
+ *
+ * 需要 user_management —— 比 /system-settings（需要 system_settings 模块）更贴合
+ * 员工档案页的权限边界，HR 没有 system_settings 也能拿到下拉选项。
+ */
+export async function getEmployeeProfileMetaApi(employeeId: string) {
+  return requestClient.get<EmployeeApi.ProfileMetaResponse>(
+    `/employees/${employeeId}/profile-meta`,
+  );
+}
+
 /** 更新员工详细档案 */
 export async function updateEmployeeProfileApi(
   employeeId: string,
@@ -355,5 +398,16 @@ export async function updateEmployeeProfileApi(
   return requestClient.request<EmployeeApi.EmployeeProfileResponse>(
     `/employees/${employeeId}/profile`,
     { method: 'PATCH', data },
+  );
+}
+
+/**
+ * 查看员工银行账号明文（会写 bank_data 审计日志）。
+ *
+ * 需要本人或有 `bank_data` 模块权限，否则 403。
+ */
+export async function revealEmployeeBankApi(employeeId: string) {
+  return requestClient.post<EmployeeApi.EmployeeBankRevealResponse>(
+    `/employees/${employeeId}/profile/bank-reveal`,
   );
 }
