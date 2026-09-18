@@ -302,6 +302,8 @@
         "selectYearMonth": "Select year and month",
         "yearView": "Year View",
         "monthView": "Month View",
+        "prevMonth": "Previous Month",
+        "nextMonth": "Next Month",
         "prevYear": "Previous Year",
         "nextYear": "Next Year",
         "backToCurrentYear": "Back to Current Year",

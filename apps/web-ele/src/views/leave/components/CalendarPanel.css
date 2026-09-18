@@ -35,6 +35,19 @@
   border-radius: 6px;
 }
 
+/* 月视图导航徽标：展示当前年份 - 月份 */
+.month-badge {
+  display: inline-block;
+  min-width: 90px;
+  padding: 4px 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: hsl(var(--primary));
+  text-align: center;
+  background: hsl(var(--accent));
+  border-radius: 6px;
+}
+
 /* ===== 月视图 ===== */
 .month-view-grid {
   overflow: hidden;

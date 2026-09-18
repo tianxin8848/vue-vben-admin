@@ -302,6 +302,8 @@
         "selectYearMonth": "选择年月",
         "yearView": "年视图",
         "monthView": "月视图",
+        "prevMonth": "上个月",
+        "nextMonth": "下个月",
         "prevYear": "上一年",
         "nextYear": "下一年",
         "backToCurrentYear": "回到今年",

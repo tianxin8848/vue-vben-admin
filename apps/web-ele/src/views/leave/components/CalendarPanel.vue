@@ -66,6 +66,12 @@ const MONTH_NAMES = computed(() => {
   return Array.isArray(names) ? names : [];
 });
 
+// 当前所选年月对应的月份名称，用于月视图导航徽标
+const currentMonthName = computed(() => {
+  const idx = selectedMonth.value - 1;
+  return MONTH_NAMES.value[idx] || String(selectedMonth.value);
+});
+
 // 默认以系统当前年月初始化；用户在日期选择器更改后由 onYearMonthChange 覆盖
 const now = new Date();
 const selectedYear = ref(now.getFullYear());
@@ -182,6 +188,33 @@ function goCurrentYear() {
   yearMonthValue.value = `${selectedYear.value}-${String(selectedMonth.value).padStart(2, '0')}`;
   emit('panelChange', now);
 }
+
+// 月视图：上一个月 / 下一个月，跨年自动进位（1 月 → 上一年 12 月，12 月 → 下一年 1 月）
+function goPrevMonth() {
+  let y = selectedYear.value;
+  let m = selectedMonth.value - 1;
+  if (m < 1) {
+    m = 12;
+    y -= 1;
+  }
+  selectedYear.value = y;
+  selectedMonth.value = m;
+  yearMonthValue.value = `${y}-${String(m).padStart(2, '0')}`;
+  emit('panelChange', new Date(y, m - 1, 1));
+}
+
+function goNextMonth() {
+  let y = selectedYear.value;
+  let m = selectedMonth.value + 1;
+  if (m > 12) {
+    m = 1;
+    y += 1;
+  }
+  selectedYear.value = y;
+  selectedMonth.value = m;
+  yearMonthValue.value = `${y}-${String(m).padStart(2, '0')}`;
+  emit('panelChange', new Date(y, m - 1, 1));
+}
 </script>
 
 <template>
@@ -216,6 +249,15 @@ function goCurrentYear() {
         </ElButton>
         <ElButton size="small" type="primary" @click="goCurrentYear">
           {{ $t('page.leave.calendarView.backToCurrentYear') }}
+        </ElButton>
+      </div>
+      <div v-else class="calendar-header-right">
+        <ElButton size="small" @click="goPrevMonth">
+          {{ $t('page.leave.calendarView.prevMonth') }}
+        </ElButton>
+        <span class="month-badge">{{ selectedYear }} - {{ currentMonthName }}</span>
+        <ElButton size="small" @click="goNextMonth">
+          {{ $t('page.leave.calendarView.nextMonth') }}
         </ElButton>
       </div>
     </div>
