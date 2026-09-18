@@ -6,6 +6,7 @@ import { useI18n } from '@vben/locales';
 
 import {
   deleteClaimDraftApi,
+  exportClaimsApi,
   exportMyClaimsApi,
   submitClaimBatchApi,
   submitClaimSingleApi,
@@ -19,6 +20,29 @@ import {
   toastWarning,
 } from '#/utils/message';
 import { confirmAction, confirmDelete, promptText } from '#/utils/modal';
+
+/** 后端出错时会返回 JSON Blob 而非 xlsx，据此判断并走提示分支 */
+function isJsonBlob(blob: Blob): boolean {
+  return !!blob.type && blob.type.includes('application/json');
+}
+
+/** 从 JSON 错误 Blob 文本中提取可读信息（FastAPI detail / message） */
+function parseBlobErrorMessage(text: string, fallback: string): string {
+  try {
+    const errObj = JSON.parse(text);
+    if (errObj?.detail) {
+      if (typeof errObj.detail === 'string') return errObj.detail;
+      if (Array.isArray(errObj.detail) && errObj.detail.length > 0) {
+        return errObj.detail.map((e: any) => e.msg || String(e)).join('; ');
+      }
+    } else if (errObj?.message) {
+      return errObj.message;
+    }
+  } catch {
+    /* ignore parse error */
+  }
+  return fallback;
+}
 
 export function useClaimActions() {
   const { t } = useI18n();
@@ -147,29 +171,11 @@ export function useClaimActions() {
     try {
       const blob = await exportMyClaimsApi(claimIds);
       // 处理后端返回的错误信息（JSON 格式的错误 Blob）
-      if (blob.type && blob.type.includes('application/json')) {
+      if (isJsonBlob(blob)) {
         const text = await blob.text();
-        let msg = t('page.claim.messages.exportFailed');
-        try {
-          const errObj = JSON.parse(text);
-          if (errObj?.detail) {
-            if (typeof errObj.detail === 'string') {
-              msg = errObj.detail;
-            } else if (
-              Array.isArray(errObj.detail) &&
-              errObj.detail.length > 0
-            ) {
-              msg = errObj.detail
-                .map((e: any) => e.msg || String(e))
-                .join('; ');
-            }
-          } else if (errObj?.message) {
-            msg = errObj.message;
-          }
-        } catch {
-          /* ignore parse error */
-        }
-        toastError(msg);
+        toastError(
+          parseBlobErrorMessage(text, t('page.claim.messages.exportFailed')),
+        );
         return false;
       }
       saveBlob(blob, buildTimestampedFileName('claims', 'xlsx'));
@@ -188,6 +194,39 @@ export function useClaimActions() {
     }
   }
 
+  /**
+   * 导出组织级报销 Excel（跨员工，仅已通过）。
+   * 按提交月份（created_at）分 sheet；需 claim_management / claim_org_export 权限。
+   * @param group 'month' → 每提交月一个 sheet；'person_month' → 每员工+提交月一个 sheet
+   */
+  async function handleOrgExport(group: 'month' | 'person_month') {
+    loading.value = true;
+    try {
+      const blob = await exportClaimsApi(group);
+      if (isJsonBlob(blob)) {
+        const text = await blob.text();
+        toastError(
+          parseBlobErrorMessage(text, t('page.claim.messages.exportFailed')),
+        );
+        return false;
+      }
+      const base =
+        group === 'person_month' ? '报销记录_按人月' : '报销记录_按月';
+      saveBlob(blob, buildTimestampedFileName(base, 'xlsx'));
+      toastSuccess(t('page.claim.messages.exportSuccess'));
+      return true;
+    } catch (error) {
+      handleActionError(
+        'claim/useClaimActions',
+        error,
+        t('page.claim.messages.exportFailed'),
+      );
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     actionLoading: loading,
     handleWithdraw,
@@ -195,5 +234,6 @@ export function useClaimActions() {
     handleSubmitBatch,
     handleDeleteDraft,
     handleExport,
+    handleOrgExport,
   };
 }

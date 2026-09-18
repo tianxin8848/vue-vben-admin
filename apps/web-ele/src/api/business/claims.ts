@@ -272,3 +272,18 @@ export async function exportMyClaimsApi(claimIds?: string[]) {
     timeout: 60_000,
   });
 }
+
+/**
+ * 导出组织级报销记录为 Excel（.xlsx），跨员工、按提交月份（created_at）分 sheet。
+ * 后端仅导出 approval_status = approved 的记录；Date/Start/End 列仍为 invoice_date。
+ * @param group 'month' → 每个提交月份一个 sheet（含 Name 列）；'person_month' → 每个员工 + 提交月份一个 sheet
+ * @permission claim_management 或 claim_org_export（内置 admin 不可用）
+ */
+export async function exportClaimsApi(group: 'month' | 'person_month') {
+  return requestClient.get<Blob>('/claims/export', {
+    params: { group },
+    responseType: 'blob',
+    // 导出 Excel 可能耗时较长，单独放宽至 60s
+    timeout: 60_000,
+  });
+}

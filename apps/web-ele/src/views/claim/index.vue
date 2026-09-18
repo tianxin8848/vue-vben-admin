@@ -6,7 +6,14 @@ import { computed, ref, watch } from 'vue';
 import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElButton, ElDatePicker, ElSegmented, ElTag } from 'element-plus';
+import {
+  ElButton,
+  ElDatePicker,
+  ElOption,
+  ElSegmented,
+  ElSelect,
+  ElTag,
+} from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
@@ -37,6 +44,7 @@ const {
   actionLoading,
   handleDeleteDraft,
   handleExport,
+  handleOrgExport,
   handleSubmitBatch,
   handleSubmitSingle,
   handleWithdraw,
@@ -61,6 +69,9 @@ const editDrawerRef = ref<InstanceType<typeof EditClaimDrawer>>();
 // ─── 批量提交 / 导出：选中的草稿 / 已通过记录 ─────────────────────────────────
 const selectedDraftCount = ref(0);
 const selectedApprovedCount = ref(0);
+
+// ─── 组织级导出分组方式（按提交月 / 按人+提交月） ──────────────────────────────
+const orgExportGroup = ref<'month' | 'person_month'>('month');
 
 // ─── 日期范围筛选（按 invoice_date 客户端过滤） ──────────────────────────────
 const dateRange = ref<[string, string] | null>(null);
@@ -256,6 +267,14 @@ async function onExport() {
   const ids = data.activeTab.value === 'history' ? selectedApprovedIds() : [];
   await handleExport(ids.length > 0 ? ids : undefined);
 }
+
+/**
+ * 组织级导出（跨员工，仅已通过）：GET /claims/export?group=...
+ * 按提交月份（created_at）分 sheet。按钮受 canOrgExport 控制（后端 claim_management / claim_org_export）。
+ */
+async function onOrgExport() {
+  await handleOrgExport(orgExportGroup.value);
+}
 </script>
 
 <template>
@@ -328,6 +347,30 @@ async function onExport() {
               （{{ selectedApprovedCount }}）
             </span>
           </ElButton>
+          <!-- 组织级导出：需 claim_management / claim_org_export（内置 admin 不显示） -->
+          <template
+            v-if="data.activeTab.value === 'history' && data.canOrgExport.value"
+          >
+            <span
+              class="text-sm text-muted-foreground"
+              :title="$t('page.claim.exportGroup.hint')"
+            >
+              {{ $t('page.claim.exportGroup.label') }}
+            </span>
+            <ElSelect v-model="orgExportGroup" style="width: 150px">
+              <ElOption
+                :label="$t('page.claim.exportGroup.month')"
+                value="month"
+              />
+              <ElOption
+                :label="$t('page.claim.exportGroup.personMonth')"
+                value="person_month"
+              />
+            </ElSelect>
+            <ElButton type="success" :loading="isLoading" @click="onOrgExport">
+              {{ $t('page.claim.buttons.exportAll') }}
+            </ElButton>
+          </template>
         </template>
         <template #reason="{ row }">
           <strong>{{ row.reason_label }}</strong>

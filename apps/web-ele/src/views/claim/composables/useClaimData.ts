@@ -2,7 +2,7 @@ import type { TabKey } from '../data';
 
 import type { ClaimApi } from '#/api';
 
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { getClaimOptionsApi, getMyClaimsApi, getUserInfoApi } from '#/api';
 
@@ -15,6 +15,26 @@ export function useClaimData() {
     full_name: string;
     username: string;
   }>(null);
+
+  // ─── 组织级导出权限（对齐后端 can_export_org_claims） ────────────────────────
+  const isAdmin = ref(false);
+  const modulePermissions = ref<
+    Array<{ can_view: boolean; module_code: string }>
+  >([]);
+
+  /**
+   * 是否可导出组织级报销（GET /claims/export）：
+   * 内置 admin 被后端拒绝；需具备 claim_management 或 claim_org_export 的查看权限。
+   */
+  const canOrgExport = computed(() => {
+    if (isAdmin.value) return false;
+    return modulePermissions.value.some(
+      (perm) =>
+        (perm.module_code === 'claim_management' ||
+          perm.module_code === 'claim_org_export') &&
+        perm.can_view !== false,
+    );
+  });
 
   const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
   const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
@@ -40,8 +60,15 @@ export function useClaimData() {
     try {
       const user = await getUserInfoApi();
       userInfo.value = { username: user.username, full_name: user.realName };
+      isAdmin.value = (user.roles ?? []).includes('admin');
+      modulePermissions.value = (user.module_permissions ?? []).map((p) => ({
+        module_code: p.module_code,
+        can_view: p.can_view,
+      }));
     } catch {
       userInfo.value = null;
+      isAdmin.value = false;
+      modulePermissions.value = [];
     }
   }
 
@@ -116,6 +143,7 @@ export function useClaimData() {
     // state
     loading,
     userInfo,
+    canOrgExport,
     reasonOptions,
     currencyOptions,
     activeTab,

@@ -60,8 +60,15 @@
         "noData": "无",
         "none": "无",
         "export": "导出 Excel",
+        "exportAll": "导出全部",
         "edit": "编辑",
         "saveChanges": "保存修改"
+      },
+      "exportGroup": {
+        "label": "分组方式",
+        "month": "按提交月",
+        "personMonth": "按人+提交月",
+        "hint": "导出全部员工的已通过报销，按提交月份分表"
       },
       "form": {
         "reasonLabel": "报销理由",

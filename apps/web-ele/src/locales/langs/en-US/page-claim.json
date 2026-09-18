@@ -60,8 +60,15 @@
         "noData": "None",
         "none": "None",
         "export": "Export Excel",
+        "exportAll": "Export All",
         "edit": "Edit",
         "saveChanges": "Save Changes"
+      },
+      "exportGroup": {
+        "label": "Group by",
+        "month": "Submit month",
+        "personMonth": "Employee + month",
+        "hint": "Export approved claims for all employees, split by submit month"
       },
       "form": {
         "reasonLabel": "Claim Category",
