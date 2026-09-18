@@ -4,7 +4,12 @@ import type { ClaimApi } from '#/api';
 
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { getClaimOptionsApi, getMyClaimsApi, getUserInfoApi } from '#/api';
+import {
+  getClaimExportEmployeesApi,
+  getClaimOptionsApi,
+  getMyClaimsApi,
+  getUserInfoApi,
+} from '#/api';
 
 import { HISTORY_STATUSES, MY_ACTIVE_STATUSES } from '../data';
 
@@ -39,6 +44,9 @@ export function useClaimData() {
   const reasonOptions = ref<ClaimApi.ClaimReasonOption[]>([]);
   const currencyOptions = ref<ClaimApi.ClaimCurrencyOption[]>([]);
 
+  // ─── 组织级导出：可选员工（仅出现在已通过报销里的员工） ──────────────────────
+  const exportEmployees = ref<ClaimApi.ClaimExportEmployee[]>([]);
+
   const activeTab = ref<TabKey>('my');
 
   const myClaims = ref<ClaimApi.ClaimResponse[]>([]);
@@ -72,6 +80,19 @@ export function useClaimData() {
     }
   }
 
+  /** 组织级导出下拉：可选员工（需先拿到权限判定，无权限则不请求） */
+  async function loadExportEmployees() {
+    if (!canOrgExport.value) {
+      exportEmployees.value = [];
+      return;
+    }
+    try {
+      exportEmployees.value = await getClaimExportEmployeesApi();
+    } catch {
+      exportEmployees.value = [];
+    }
+  }
+
   /** 我的报销（进行中：草稿 + 审批中） */
   async function loadMyClaims() {
     try {
@@ -94,11 +115,12 @@ export function useClaimData() {
   async function fetchAll() {
     loading.value = true;
     try {
+      // 权限判定（canOrgExport）依赖 loadUserInfo，员工下拉必须在其之后
+      await Promise.all([loadOptions(), loadUserInfo()]);
       await Promise.all([
-        loadOptions(),
-        loadUserInfo(),
         loadMyClaims(),
         loadMyHistory(),
+        loadExportEmployees(),
       ]);
     } catch (error) {
       console.error('Fetch all error:', error);
@@ -144,6 +166,7 @@ export function useClaimData() {
     loading,
     userInfo,
     canOrgExport,
+    exportEmployees,
     reasonOptions,
     currencyOptions,
     activeTab,
@@ -158,5 +181,6 @@ export function useClaimData() {
     // child loaders (for success callbacks)
     loadMyClaims,
     loadMyHistory,
+    loadExportEmployees,
   };
 }

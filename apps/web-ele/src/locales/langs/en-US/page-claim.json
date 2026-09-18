@@ -68,7 +68,12 @@
         "label": "Group by",
         "month": "Submit month",
         "personMonth": "Employee + month",
-        "hint": "Export approved claims for all employees, split by submit month"
+        "hint": "One sheet per submit month, or one sheet per employee + submit month"
+      },
+      "exportEmployee": {
+        "label": "Employee",
+        "all": "All employees",
+        "hint": "Export approved claims for the selected employee only; defaults to all employees"
       },
       "form": {
         "reasonLabel": "Claim Category",

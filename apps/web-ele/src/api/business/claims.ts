@@ -107,6 +107,13 @@ export namespace ClaimApi {
     is_flowing: boolean;
     created_at: null | string;
   }
+
+  /** 全员导出可选员工（GET /claims/export/employees） */
+  export interface ClaimExportEmployee {
+    id: string;
+    name: string;
+    username: string;
+  }
 }
 
 // ─── 报销选项 ────────────────────────────────────────────────────────────────
@@ -283,14 +290,34 @@ export async function exportMyClaimsApi(claimIds?: string[]) {
 }
 
 /**
+ * 全员导出可选员工列表（出现在已通过报销里的员工）。
+ * 供导出下拉使用；权限同 exportClaimsApi。
+ */
+export async function getClaimExportEmployeesApi() {
+  return requestClient.get<ClaimApi.ClaimExportEmployee[]>(
+    '/claims/export/employees',
+  );
+}
+
+/**
  * 导出组织级报销记录为 Excel（.xlsx），跨员工、按提交月份（created_at）分 sheet。
  * 后端仅导出 approval_status = approved 的记录；Date/Start/End 列仍为 invoice_date。
  * @param group 'month' → 每个提交月份一个 sheet（含 Name 列）；'person_month' → 每个员工 + 提交月份一个 sheet
+ * @param employeeIds 可选，限定员工（可多个）；省略则导出全员
  * @permission claim_management 或 claim_org_export（内置 admin 不可用）
  */
-export async function exportClaimsApi(group: 'month' | 'person_month') {
+export async function exportClaimsApi(
+  group: 'month' | 'person_month',
+  employeeIds?: string[],
+) {
   return requestClient.get<Blob>('/claims/export', {
-    params: { group },
+    params: {
+      group,
+      ...(employeeIds && employeeIds.length > 0
+        ? { employee_id: employeeIds }
+        : {}),
+    },
+    paramsSerializer: 'repeat',
     responseType: 'blob',
     // 导出 Excel 可能耗时较长，单独放宽至 60s
     timeout: 60_000,

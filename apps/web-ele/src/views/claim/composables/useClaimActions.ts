@@ -198,11 +198,15 @@ export function useClaimActions() {
    * 导出组织级报销 Excel（跨员工，仅已通过）。
    * 按提交月份（created_at）分 sheet；需 claim_management / claim_org_export 权限。
    * @param group 'month' → 每提交月一个 sheet；'person_month' → 每员工+提交月一个 sheet
+   * @param employeeIds 可选，限定员工（可多个）；省略则导出全员
    */
-  async function handleOrgExport(group: 'month' | 'person_month') {
+  async function handleOrgExport(
+    group: 'month' | 'person_month',
+    employeeIds?: string[],
+  ) {
     loading.value = true;
     try {
-      const blob = await exportClaimsApi(group);
+      const blob = await exportClaimsApi(group, employeeIds);
       if (isJsonBlob(blob)) {
         const text = await blob.text();
         toastError(

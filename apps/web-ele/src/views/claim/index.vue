@@ -73,6 +73,20 @@ const selectedApprovedCount = ref(0);
 // ─── 组织级导出分组方式（按提交月 / 按人+提交月） ──────────────────────────────
 const orgExportGroup = ref<'month' | 'person_month'>('month');
 
+// ─── 组织级导出限定员工（空串 = 全部员工） ────────────────────────────────────
+const orgExportEmployee = ref('');
+
+const orgExportEmployeeOptions = computed(() => [
+  { label: t('page.claim.exportEmployee.all'), value: '' },
+  ...data.exportEmployees.value.map((person) => ({
+    label:
+      person.username && person.username !== person.name
+        ? `${person.name} / ${person.username}`
+        : person.name,
+    value: person.id,
+  })),
+]);
+
 // ─── 日期范围筛选（按 invoice_date 客户端过滤） ──────────────────────────────
 const dateRange = ref<[string, string] | null>(null);
 const isFilterActive = computed(
@@ -269,11 +283,15 @@ async function onExport() {
 }
 
 /**
- * 组织级导出（跨员工，仅已通过）：GET /claims/export?group=...
+ * 组织级导出（跨员工，仅已通过）：GET /claims/export?group=...&employee_id=...
  * 按提交月份（created_at）分 sheet。按钮受 canOrgExport 控制（后端 claim_management / claim_org_export）。
+ * 未选员工时省略 employee_id（后端默认导出全员）。
  */
 async function onOrgExport() {
-  await handleOrgExport(orgExportGroup.value);
+  await handleOrgExport(
+    orgExportGroup.value,
+    orgExportEmployee.value ? [orgExportEmployee.value] : undefined,
+  );
 }
 </script>
 
@@ -351,6 +369,24 @@ async function onOrgExport() {
           <template
             v-if="data.activeTab.value === 'history' && data.canOrgExport.value"
           >
+            <span
+              class="text-sm text-muted-foreground"
+              :title="$t('page.claim.exportEmployee.hint')"
+            >
+              {{ $t('page.claim.exportEmployee.label') }}
+            </span>
+            <ElSelect
+              v-model="orgExportEmployee"
+              style="width: 200px"
+              filterable
+            >
+              <ElOption
+                v-for="opt in orgExportEmployeeOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </ElSelect>
             <span
               class="text-sm text-muted-foreground"
               :title="$t('page.claim.exportGroup.hint')"
