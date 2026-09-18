@@ -1,3 +1,5 @@
+import { getLeaveTypeColor as getBaseLeaveTypeColor } from '../shared/leave-types';
+
 export interface CalendarCell {
   day: null | number;
   date: string;
@@ -62,14 +64,6 @@ export const WEEK_KEYS = [
   'sun',
 ] as const;
 
-export const leaveTypeColorMap: Record<string, string> = {
-  annual: '#60a5fa',
-  personal: '#fb923c',
-  sick: '#f87171',
-  lieu: '#4ade80',
-  long: '#a78bfa',
-};
-
 export function generateMonthCells(
   year: number,
   month: number,
@@ -98,7 +92,7 @@ export function generateMonthCells(
 }
 
 export function getLeaveTypeColor(type: string, status?: string) {
-  const baseColor = leaveTypeColorMap[type] || '#94a3b8';
+  const baseColor = getBaseLeaveTypeColor(type);
   if (status === 'approved' || !status) return baseColor;
   const hex = baseColor.replace('#', '');
   const r = Number.parseInt(hex.slice(0, 2), 16);
