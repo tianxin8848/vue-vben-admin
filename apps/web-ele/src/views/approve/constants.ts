@@ -14,6 +14,18 @@ export interface SearchForm {
 }
 
 /**
+ * 「老闆」岗位名，对齐后端 `CLAIM_BOSS_POSITION`（注意是繁体「老闆」）。
+ * 岗位为老闆的用户可只读查看全部已通过报销（GET /me/claims/approved），
+ * 但审批/驳回仍仅限当前审批人。
+ */
+export const CLAIM_BOSS_POSITION = '老闆';
+
+/** 判断当前用户是否为老闆（决定审批页是否显示只读 Tab） */
+export function isClaimBossPosition(position?: null | string): boolean {
+  return String(position || '').trim() === CLAIM_BOSS_POSITION;
+}
+
+/**
  * 接口返回的请假类型映射（code → 直接显示文本，非 i18n key）。
  * 由 loadLeaveTypeLabels() 从 /api/v1/system-settings 的 leave_types 加载。
  */

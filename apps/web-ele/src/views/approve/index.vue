@@ -20,6 +20,7 @@ import {
 import { getLeaveApprovalsMetaApi } from '#/api';
 import { $t } from '#/locales';
 
+import BossApprovedClaimTab from './components/BossApprovedClaimTab.vue';
 import ClaimDetailDialog from './components/ClaimDetailDialog.vue';
 import ClaimReviewDialog from './components/ClaimReviewDialog.vue';
 import ClaimWithdrawDialog from './components/ClaimWithdrawDialog.vue';
@@ -38,11 +39,17 @@ const {
   leaveApprovalRecords,
   claimApprovals,
   claimApprovalRecords,
+  approvedClaims,
+  isClaimBoss,
   fetchApprovalData,
 } = useApprovalData();
 
 const activeTab = ref<
-  'pending-claim' | 'pending-leave' | 'records-claim' | 'records-leave'
+  | 'boss-approved'
+  | 'pending-claim'
+  | 'pending-leave'
+  | 'records-claim'
+  | 'records-leave'
 >('pending-leave');
 
 const searchForm = reactive<SearchForm>({
@@ -278,6 +285,21 @@ onMounted(async () => {
               <RecordsClaimTab
                 :data="claimApprovalRecords"
                 :search-form="searchForm"
+              />
+            </div>
+          </ElTabPane>
+
+          <!-- 老闆专属：全部已通过报销（只读，无审批入口） -->
+          <ElTabPane
+            v-if="isClaimBoss"
+            :label="$t('page.approve.bossApproved')"
+            name="boss-approved"
+          >
+            <div class="tab-pane-wrapper">
+              <BossApprovedClaimTab
+                :data="approvedClaims"
+                :search-form="searchForm"
+                @view-detail="onViewClaimDetail"
               />
             </div>
           </ElTabPane>

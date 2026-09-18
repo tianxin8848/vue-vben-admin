@@ -140,6 +140,20 @@
           "processedAt": "处理时间",
           "action": "操作"
         }
+      },
+      "bossApproved": "已通过 · 报销",
+      "bossApprovedTab": {
+        "listTitle": "共 {count} 条已通过（只读）",
+        "view": "查看",
+        "column": {
+          "applicant": "申请人",
+          "reason": "理由",
+          "amount": "金额",
+          "deptRegion": "部门 / 地区",
+          "status": "状态",
+          "submittedAt": "提交时间",
+          "action": "操作"
+        }
       }
     }
   }

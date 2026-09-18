@@ -1,13 +1,17 @@
 import type { ClaimApi, LeaveRequestApi } from '#/api';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import {
   getMyApprovalRecordsApi,
+  getMyApprovedClaimsApi,
   getMyClaimApprovalRecordsApi,
   getMyPendingApprovalsApi,
   getMyPendingClaimApprovalsApi,
+  getUserInfoApi,
 } from '#/api';
+
+import { isClaimBossPosition } from '../constants';
 
 /** Records Claim 审批记录只保留已通过/已拒绝，排除撤回（withdrawn）和流转中间态（pending） */
 const RECORDS_CLAIM_ALLOWED_STATUSES = new Set(['approved', 'rejected']);
@@ -19,10 +23,42 @@ export function useApprovalData() {
   const leaveApprovalRecords = ref<LeaveRequestApi.ApprovalRecord[]>([]);
   const claimApprovals = ref<ClaimApi.ClaimResponse[]>([]);
   const claimApprovalRecords = ref<ClaimApi.ClaimApprovalRecord[]>([]);
+  /** 全部已通过报销（仅老闆可见；非老闆接口返回空数组） */
+  const approvedClaims = ref<ClaimApi.ClaimResponse[]>([]);
+
+  /** 当前用户岗位是否为老闆 —— 决定是否显示「全部已通过报销」只读 Tab */
+  const userPosition = ref<null | string>(null);
+  const isClaimBoss = computed(() => isClaimBossPosition(userPosition.value));
+
+  async function loadCurrentUserPosition() {
+    try {
+      const user = await getUserInfoApi();
+      userPosition.value = user.position ?? null;
+    } catch {
+      userPosition.value = null;
+    }
+  }
+
+  /** 老闆只读列表：非老闆直接跳过请求，避免无意义调用 */
+  async function loadApprovedClaims() {
+    if (!isClaimBoss.value) {
+      approvedClaims.value = [];
+      return;
+    }
+    try {
+      approvedClaims.value = await getMyApprovedClaimsApi();
+    } catch (error) {
+      console.error('[useApprovalData] getMyApprovedClaimsApi 失敗：', error);
+      approvedClaims.value = [];
+    }
+  }
 
   async function fetchApprovalData() {
     loading.value = true;
     try {
+      // 岗位决定是否请求老闆只读列表，必须先拿到
+      await loadCurrentUserPosition();
+
       const [pendingLeave, recordsLeave, pendingClaim, recordsClaim] =
         await Promise.all([
           getMyPendingApprovalsApi().catch((error) => {
@@ -104,6 +140,8 @@ export function useApprovalData() {
       claimApprovalRecords.value = recordsClaim.filter((r) =>
         RECORDS_CLAIM_ALLOWED_STATUSES.has(r.approval_status_after),
       );
+
+      await loadApprovedClaims();
     } finally {
       loading.value = false;
     }
@@ -115,6 +153,9 @@ export function useApprovalData() {
     leaveApprovalRecords,
     claimApprovals,
     claimApprovalRecords,
+    approvedClaims,
+    isClaimBoss,
     fetchApprovalData,
+    loadApprovedClaims,
   };
 }

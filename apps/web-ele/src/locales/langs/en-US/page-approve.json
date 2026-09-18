@@ -140,6 +140,20 @@
           "processedAt": "Processed At",
           "action": "Action"
         }
+      },
+      "bossApproved": "Approved · Claim",
+      "bossApprovedTab": {
+        "listTitle": "{count} approved (read-only)",
+        "view": "View",
+        "column": {
+          "applicant": "Applicant",
+          "reason": "Reason",
+          "amount": "Amount",
+          "deptRegion": "Dept / Region",
+          "status": "Status",
+          "submittedAt": "Submitted At",
+          "action": "Action"
+        }
       }
     }
   }

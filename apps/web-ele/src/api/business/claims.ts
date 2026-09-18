@@ -229,6 +229,15 @@ export async function getMyClaimApprovalRecordsApi() {
   );
 }
 
+/**
+ * 老闆（岗位 = 老闆）只读查看全部员工已通过报销。
+ * 非老闆账号返回空数组（不是 403），所以调用方无需额外权限接口。
+ * 只读：approve/reject 仍仅当前审批人可操作。
+ */
+export async function getMyApprovedClaimsApi() {
+  return requestClient.get<ClaimApi.ClaimResponse[]>('/me/claims/approved');
+}
+
 /** 审批报销申请（application/x-www-form-urlencoded，支持部分驳回 rejected_item_ids） */
 export async function reviewClaimApi(
   claimId: string,
