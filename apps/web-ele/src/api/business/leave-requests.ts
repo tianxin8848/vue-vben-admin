@@ -176,6 +176,8 @@ export namespace LeaveRequestApi {
     employee_id: string;
     lieu_available_days: number;
     lieu_capped: boolean;
+    /** 最早到期日（YYYY-MM-DD）；未触顶或无可到期额度时为 null */
+    lieu_expires_on?: null | string;
     lieu_granted_days: number;
     lieu_used_days: number;
     year: number;
