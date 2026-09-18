@@ -15,6 +15,9 @@ export namespace EmployeeApi {
   /** 员工响应（列表 & 通用） */
   export interface EmployeeResponse {
     access_control_id: null | string;
+    avatar_id: null | string;
+    avatar_name: null | string;
+    avatar_url: null | string;
     created_at: null | string;
     department: null | string;
     email: string;
@@ -351,6 +354,27 @@ export async function updateEmployeeBasicInfoApi(
   return requestClient.request<EmployeeApi.EmployeeResponse>(
     `/employees/${employeeId}/basic-info`,
     { method: 'PATCH', data },
+  );
+}
+
+// ─── 头像 ────────────────────────────────────────────────────────────────────
+
+/**
+ * 更新指定员工的头像（multipart/form-data，字段名 `avatar`）。
+ *
+ * 需要 `user_management`，即 HR 侧专用；自助修改走 `PATCH /me/avatar`。
+ * 后端会校验扩展名（JPG/PNG/WEBP/HEIC）与大小（≤5MB），HEIC 会转成 JPEG 存储。
+ */
+export async function updateEmployeeAvatarApi(employeeId: string, file: File) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  return requestClient.request<EmployeeApi.EmployeeResponse>(
+    `/employees/${employeeId}/avatar`,
+    {
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      method: 'PATCH',
+    },
   );
 }
 

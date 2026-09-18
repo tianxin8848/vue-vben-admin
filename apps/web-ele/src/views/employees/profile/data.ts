@@ -146,6 +146,52 @@ export const EMERGENCY_TEXT_FIELDS: FieldConfig<keyof ProfileForm>[] = [
   },
 ];
 
+// ─── 头像 ────────────────────────────────────────────────────────────────────
+
+/** 后端允许的头像扩展名（app/services/employee_avatar_service.py） */
+export const AVATAR_ALLOWED_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.heic',
+  '.heif',
+];
+
+/** 头像文件大小上限，与后端 MAX_AVATAR_SIZE_BYTES 保持一致 */
+export const AVATAR_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+
+/** 文件选择器 accept：既给 MIME 也给扩展名，兼容 HEIC 这种 MIME 不规范的浏览器 */
+export const AVATAR_ACCEPT =
+  'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif';
+
+/** 头像文件是否合规；返回不合规的原因，合规返回 null（与后端校验口径对齐） */
+export function validateAvatarFile(file: File): 'size' | 'type' | null {
+  const name = (file.name || '').toLowerCase();
+  const dotIndex = name.lastIndexOf('.');
+  const extension = dotIndex === -1 ? '' : name.slice(dotIndex);
+  if (!AVATAR_ALLOWED_EXTENSIONS.includes(extension)) {
+    return 'type';
+  }
+  if (file.size > AVATAR_MAX_SIZE_BYTES) {
+    return 'size';
+  }
+  return null;
+}
+
+/** 无头像时的占位字符：优先姓名首字，其次用户名首字母，最后 '?' */
+export function avatarFallbackText(
+  name?: null | string,
+  username?: null | string,
+): string {
+  const source = (name || username || '').trim();
+  if (!source) {
+    return '?';
+  }
+  // 中文取首字，英文取首字母
+  return source.slice(0, 1).toUpperCase();
+}
+
 /** 银行资料文本项（银行账号单独渲染：要带「显示完整账号」按钮） */
 export const BANK_TEXT_FIELDS: FieldConfig<keyof ProfileForm>[] = [
   {

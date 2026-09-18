@@ -9,6 +9,7 @@ import {
   getEmployeeProfileApi,
   getEmployeeProfileMetaApi,
   revealEmployeeBankApi,
+  updateEmployeeAvatarApi,
   updateEmployeeBasicInfoApi,
   updateEmployeeProfileApi,
 } from '#/api';
@@ -16,6 +17,7 @@ import { $t } from '#/locales';
 import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 import {
+  avatarFallbackText,
   buildBasicInfoPayload,
   buildGenderOptions,
   buildIdKindOptions,
@@ -27,6 +29,7 @@ import {
   idKindForRegion,
   nationalIdLabelKey,
   toOptions,
+  validateAvatarFile,
 } from '../data';
 
 /**
@@ -40,6 +43,7 @@ import {
 export function useEmployeeProfile(employeeId: string) {
   const loading = ref(false);
   const saving = ref(false);
+  const uploadingAvatar = ref(false);
   const employee = ref<EmployeeApi.EmployeeResponse | null>(null);
   const profile = ref<EmployeeApi.EmployeeProfileResponse | null>(null);
 
@@ -56,6 +60,22 @@ export function useEmployeeProfile(employeeId: string) {
   );
   /** 已填写最後工作日 = 已离职，此时不允许通过本表单清空 */
   const isLeaver = computed(() => Boolean(profile.value?.last_working_date));
+
+  /** 头像 URL 固定为 /api/v1/employees/{id}/avatar，用版本号做缓存击穿以便上传后立即刷新 */
+  const avatarVersion = ref(0);
+  const avatarSrc = computed(() => {
+    const url = employee.value?.avatar_url || '';
+    if (!url) {
+      return '';
+    }
+    return `${url}${url.includes('?') ? '&' : '?'}v=${avatarVersion.value}`;
+  });
+  /** 当前头像文件名（用于「更换/上传」按钮文案与提示） */
+  const avatarName = computed(() => employee.value?.avatar_name || '');
+  /** 无头像时 ElAvatar 内的占位字 */
+  const avatarFallback = computed(() =>
+    avatarFallbackText(employee.value?.full_name, employee.value?.username),
+  );
 
   /** 选项里补上当前值，避免历史数据不在组织目录里时被下拉静默清空 */
   function withCurrentValue(
@@ -139,6 +159,46 @@ export function useEmployeeProfile(employeeId: string) {
   }
 
   /**
+   * 上传员工头像（PATCH /employees/{id}/avatar，multipart）。
+   *
+   * 只更新 employee 的头像字段，不整表重拉：避免把用户正在编辑但未保存的表单冲掉。
+   * 成功后 bump 版本号，让 <img> 立刻换新图（同 URL 会被浏览器缓存）。
+   */
+  async function uploadAvatar(file: File) {
+    const invalid = validateAvatarFile(file);
+    if (invalid === 'type') {
+      toastWarning($t('page.employees.profileDetail.avatarTypeInvalid'));
+      return;
+    }
+    if (invalid === 'size') {
+      toastWarning($t('page.employees.profileDetail.avatarTooLarge'));
+      return;
+    }
+    uploadingAvatar.value = true;
+    try {
+      const updated = await updateEmployeeAvatarApi(employeeId, file);
+      if (employee.value) {
+        employee.value = {
+          ...employee.value,
+          avatar_id: updated.avatar_id,
+          avatar_name: updated.avatar_name,
+          avatar_url: updated.avatar_url || employee.value.avatar_url,
+        };
+      }
+      avatarVersion.value = Date.now();
+      toastSuccess($t('page.employees.profileDetail.avatarUpdateSuccess'));
+    } catch (error) {
+      handleActionError(
+        'employees/profile',
+        error,
+        $t('page.employees.profileDetail.avatarUpdateFailed'),
+      );
+    } finally {
+      uploadingAvatar.value = false;
+    }
+  }
+
+  /**
    * 保存。先基础信息、后档案——顺序不能反：
    * 地区在基础信息里，而证件类型的默认值由地区推导。
    */
@@ -202,6 +262,9 @@ export function useEmployeeProfile(employeeId: string) {
   });
 
   return {
+    avatarFallback,
+    avatarName,
+    avatarSrc,
     basicForm,
     canWriteBank,
     employee,
@@ -219,5 +282,7 @@ export function useEmployeeProfile(employeeId: string) {
     save,
     saving,
     selectOptions,
+    uploadAvatar,
+    uploadingAvatar,
   };
 }

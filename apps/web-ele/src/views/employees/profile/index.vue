@@ -1,9 +1,11 @@
 <script lang="ts" setup>
+import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
 import {
+  ElAvatar,
   ElButton,
   ElCard,
   ElDatePicker,
@@ -12,12 +14,14 @@ import {
   ElInput,
   ElOption,
   ElSelect,
+  ElUpload,
 } from 'element-plus';
 
 import { $t } from '#/locales';
 
 import { useEmployeeProfile } from './composables/useEmployeeProfile';
 import {
+  AVATAR_ACCEPT,
   BANK_TEXT_FIELDS,
   BASIC_SELECT_FIELDS,
   BASIC_TEXT_FIELDS,
@@ -31,6 +35,9 @@ const router = useRouter();
 const employeeId = route.params.id as string;
 
 const {
+  avatarFallback,
+  avatarName,
+  avatarSrc,
   basicForm,
   canWriteBank,
   employee,
@@ -48,11 +55,24 @@ const {
   save,
   saving,
   selectOptions,
+  uploadAvatar,
+  uploadingAvatar,
 } = useEmployeeProfile(employeeId);
 
 /** 拼 `page.employees.profileDetail.*` 下的完整 key（字段配置里只存片段） */
 function td(key: string): string {
   return `page.employees.profileDetail.${key}`;
+}
+
+/** 头像上传控件：每次选完文件后清空内部列表，否则连选同一张图不会再触发 change */
+const avatarUploadRef = ref();
+
+function handleAvatarChange(uploadFile: { raw?: File }) {
+  const file = uploadFile?.raw;
+  if (file) {
+    uploadAvatar(file);
+  }
+  avatarUploadRef.value?.clearFiles();
 }
 
 function goBack() {
@@ -86,8 +106,53 @@ function reload() {
     </div>
 
     <ElForm v-loading="loading" label-width="220px">
+      <!-- 员工头像：PATCH /employees/{id}/avatar，选中文件即时上传 -->
+      <ElCard :header="$t('page.employees.profileDetail.avatarInfo')">
+        <div class="avatar-panel">
+          <ElAvatar
+            class="avatar-preview"
+            :size="120"
+            shape="square"
+            :src="avatarSrc"
+          >
+            <span class="avatar-fallback">{{ avatarFallback }}</span>
+          </ElAvatar>
+          <div class="avatar-side">
+            <ElUpload
+              ref="avatarUploadRef"
+              :accept="AVATAR_ACCEPT"
+              :auto-upload="false"
+              :disabled="uploadingAvatar"
+              :show-file-list="false"
+              :on-change="handleAvatarChange"
+            >
+              <ElButton :loading="uploadingAvatar" type="primary">
+                {{
+                  avatarName
+                    ? $t('page.employees.profileDetail.changeAvatar')
+                    : $t('page.employees.profileDetail.uploadAvatar')
+                }}
+              </ElButton>
+            </ElUpload>
+            <p v-if="avatarName" class="avatar-name">
+              {{
+                $t('page.employees.profileDetail.currentAvatar', {
+                  name: avatarName,
+                })
+              }}
+            </p>
+            <p class="section-hint avatar-tip">
+              {{ $t('page.employees.profileDetail.avatarHint') }}
+            </p>
+          </div>
+        </div>
+      </ElCard>
+
       <!-- 基础信息：PATCH /employees/{id}/basic-info -->
-      <ElCard :header="$t('page.employees.profileDetail.basicInfo')">
+      <ElCard
+        class="section-card"
+        :header="$t('page.employees.profileDetail.basicInfo')"
+      >
         <p class="section-hint">
           {{ $t('page.employees.profileDetail.basicInfoHint') }}
         </p>
@@ -348,6 +413,40 @@ function reload() {
   margin: 0 0 12px;
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+.avatar-panel {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.avatar-preview {
+  flex-shrink: 0;
+  background: var(--el-fill-color-light);
+}
+
+.avatar-fallback {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+
+.avatar-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.avatar-name {
+  margin: 0;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.avatar-tip {
+  margin: 0;
 }
 
 .bank-account-row {
