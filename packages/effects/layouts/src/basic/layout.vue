@@ -18,7 +18,7 @@ import { useAccessStore, useTabbarStore, useTimezoneStore } from '@vben/stores';
 import { cloneDeep, mapTree } from '@vben/utils';
 
 import { VbenAdminLayout } from '@vben-core/layout-ui';
-import { VbenBackTop, VbenLogo } from '@vben-core/shadcn-ui';
+import { VbenLogo } from '@vben-core/shadcn-ui';
 
 import { Breadcrumb, CheckUpdates, Preferences } from '../widgets';
 import { LayoutContent, LayoutContentSpinner } from './content';
@@ -471,7 +471,6 @@ const headerSlots = computed(() => {
           @clear-preferences-and-logout="clearPreferencesAndLogout"
         />
       </template>
-      <VbenBackTop />
     </template>
   </VbenAdminLayout>
 </template>
