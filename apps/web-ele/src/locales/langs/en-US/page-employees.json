@@ -50,7 +50,6 @@
         "cancelButtonText": "Cancel"
       },
       "column": {
-        "userId": "User ID",
         "employeeCode": "Employee Code",
         "fullName": "Full Name",
         "username": "Username",

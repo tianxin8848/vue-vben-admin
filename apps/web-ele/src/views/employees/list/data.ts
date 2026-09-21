@@ -17,7 +17,6 @@ export type ColumnVisibility = {
   role: boolean;
   status: boolean;
   temporary_password: boolean;
-  user_id: boolean;
   username: boolean;
 };
 
@@ -31,7 +30,6 @@ export const defaultColumnVisibility: ColumnVisibility = {
   role: true,
   status: true,
   temporary_password: true,
-  user_id: true,
   username: true,
 };
 
@@ -125,14 +123,6 @@ export function buildColumns(
   visibility: ColumnVisibility,
 ): VxeGridProps['columns'] {
   const cols: VxeGridProps['columns'] = [];
-  if (visibility.user_id) {
-    cols.push({
-      field: 'id',
-      sortable: true,
-      title: t('page.employees.column.userId'),
-      width: 100,
-    });
-  }
   if (visibility.employee_code) {
     cols.push({
       field: 'employee_code',

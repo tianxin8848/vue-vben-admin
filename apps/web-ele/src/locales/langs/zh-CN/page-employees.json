@@ -50,7 +50,6 @@
         "cancelButtonText": "取消"
       },
       "column": {
-        "userId": "用户ID",
         "employeeCode": "工号",
         "fullName": "姓名",
         "username": "账号",
