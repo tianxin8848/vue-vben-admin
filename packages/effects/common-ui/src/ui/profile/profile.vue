@@ -26,35 +26,42 @@ const tabsValue = defineModel<string>('modelValue');
 </script>
 <template>
   <Page auto-content-height>
-    <div class="flex size-full">
-      <Card class="w-1/6 flex-none">
-        <div class="mt-4 flex-col-center h-40 gap-4">
+    <!-- 间距收敛：卡片内边距 16 / 元素间距 10 / 分区分隔 12 / 双栏间隙 12
+         去掉原先 Card 默认 gap-6 py-6 与 h-40、my-4、m-4 的多层叠加 -->
+    <div class="flex size-full flex-col gap-3 lg:flex-row">
+      <Card class="w-full flex-none gap-0 py-4 lg:w-60">
+        <div class="flex-col-center gap-2.5 px-4">
           <VbenAvatar
             :src="userInfo?.avatar ?? preferences.app.defaultAvatar"
-            class="size-20"
+            class="size-16"
           />
-          <span class="text-lg font-semibold">
-            {{ userInfo?.realName ?? '' }}
-          </span>
-          <span class="text-sm text-foreground/80">
-            {{ userInfo?.username ?? '' }}
-          </span>
+          <div class="flex-col-center w-full gap-0.5">
+            <span class="text-base leading-tight font-semibold">
+              {{ userInfo?.realName ?? '' }}
+            </span>
+            <span
+              class="max-w-full truncate text-xs text-foreground/70"
+              :title="userInfo?.username ?? ''"
+            >
+              {{ userInfo?.username ?? '' }}
+            </span>
+          </div>
         </div>
-        <Separator class="my-4" />
-        <Tabs v-model="tabsValue" orientation="vertical" class="m-4">
-          <TabsList class="grid w-full grid-cols-1 bg-card">
+        <Separator class="my-3" />
+        <Tabs v-model="tabsValue" orientation="vertical" class="px-3">
+          <TabsList class="grid w-full grid-cols-1 gap-1 bg-transparent p-0">
             <TabsTrigger
               v-for="tab in tabs"
               :key="tab.value"
               :value="tab.value"
-              class="h-12 justify-start data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              class="h-auto min-h-9 justify-start rounded-md px-3 py-2 text-left leading-snug break-words whitespace-normal transition-colors hover:bg-accent hover:text-accent-foreground data-[state=active]:bg-primary data-[state=active]:font-medium data-[state=active]:text-primary-foreground"
             >
               {{ tab.label }}
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </Card>
-      <Card class="ml-4 w-5/6 flex-auto p-8">
+      <Card class="min-w-0 flex-auto p-6">
         <slot name="content"></slot>
       </Card>
     </div>
