@@ -51,7 +51,7 @@
         "male": "男",
         "female": "女",
         "birthDate": "出生日期",
-        "datePlaceholder": "请选择日期",
+        "datePlaceholder": "DD-MMM-YYYY",
         "maritalStatus": "婚姻状况",
         "maritalPlaceholder": "请选择婚姻状况",
         "single": "未婚",

@@ -232,10 +232,13 @@ export function buildRelationshipOptions(t: TFunc): SelectOption[] {
   return [
     { label: t('page.employees.profileDetail.relMother'), value: '母亲' },
     { label: t('page.employees.profileDetail.relFather'), value: '父亲' },
+    { label: t('page.employees.profileDetail.relHusband'), value: '丈夫' },
+    { label: t('page.employees.profileDetail.relWife'), value: '妻子' },
     { label: t('page.employees.profileDetail.relSister'), value: '姐妹' },
     { label: t('page.employees.profileDetail.relBrother'), value: '兄弟' },
     { label: t('page.employees.profileDetail.relCousin'), value: '表亲' },
     { label: t('page.employees.profileDetail.relFriend'), value: '朋友' },
+    { label: t('page.employees.profileDetail.relPartner'), value: '伙伴' },
   ];
 }
 

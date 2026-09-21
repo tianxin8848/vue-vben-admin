@@ -243,8 +243,11 @@ function reload() {
           </ElSelect>
         </ElFormItem>
         <ElFormItem :label="$t(td('birthDate'))">
+          <!-- 与个人中心一致：显示/手打格式 DD-MMM-YYYY，回传后端仍为 ISO -->
           <ElDatePicker
             v-model="profileForm.birth_date"
+            editable
+            format="DD-MMM-YYYY"
             :placeholder="$t(td('datePlaceholder'))"
             type="date"
             value-format="YYYY-MM-DD"
@@ -296,8 +299,11 @@ function reload() {
           :key="field.fieldName"
           :label="$t(td(field.label))"
         >
+          <!-- 任职信息 4 个日期：DD-MMM-YYYY（如 21-Sep-2026），可键盘直接输入 -->
           <ElDatePicker
             v-model="profileForm[field.fieldName]"
+            editable
+            format="DD-MMM-YYYY"
             :placeholder="$t(td('datePlaceholder'))"
             type="date"
             value-format="YYYY-MM-DD"

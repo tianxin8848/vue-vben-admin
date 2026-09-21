@@ -144,6 +144,9 @@ export function buildProfileSchema(
       component: 'DatePicker',
       componentProps: {
         disabled: !editable('birth_date'),
+        // 显示与手打解析均为 DD-MMM-YYYY（如 21-Sep-2026），回传后端仍是 ISO
+        editable: true,
+        format: 'DD-MMM-YYYY',
         placeholder: t('page.workspace.profilePage.datePlaceholder'),
         type: 'date',
         valueFormat: 'YYYY-MM-DD',
@@ -195,6 +198,8 @@ export function buildProfileSchema(
       component: 'DatePicker',
       componentProps: {
         disabled: !editable('hire_date'),
+        editable: true,
+        format: 'DD-MMM-YYYY',
         placeholder: t('page.workspace.profilePage.datePlaceholder'),
         type: 'date',
         valueFormat: 'YYYY-MM-DD',
@@ -206,6 +211,8 @@ export function buildProfileSchema(
       component: 'DatePicker',
       componentProps: {
         disabled: !editable('work_start_date'),
+        editable: true,
+        format: 'DD-MMM-YYYY',
         placeholder: t('page.workspace.profilePage.datePlaceholder'),
         type: 'date',
         valueFormat: 'YYYY-MM-DD',

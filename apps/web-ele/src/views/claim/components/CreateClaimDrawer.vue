@@ -89,6 +89,9 @@ const [CreateForm] = useVbenForm(
         formItemClass: 'col-span-1',
         componentProps: {
           type: 'date',
+          // 显示与手打解析均为 DD-MMM-YYYY（如 21-Sep-2026），回传后端仍是 ISO
+          editable: true,
+          format: 'DD-MMM-YYYY',
           placeholder: t('page.claim.form.invoiceDatePlaceholder'),
           valueFormat: 'YYYY-MM-DD',
           class: 'w-full',
@@ -244,6 +247,8 @@ defineExpose({ open });
       <template #invoice_date>
         <ElDatePicker
           v-model="createForm.invoice_date"
+          editable
+          format="DD-MMM-YYYY"
           type="date"
           :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
           value-format="YYYY-MM-DD"

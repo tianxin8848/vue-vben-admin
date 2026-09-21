@@ -51,7 +51,7 @@
         "male": "Male",
         "female": "Female",
         "birthDate": "Date of Birth",
-        "datePlaceholder": "Select date",
+        "datePlaceholder": "DD-MMM-YYYY",
         "maritalStatus": "Marital Status",
         "maritalPlaceholder": "Select marital status",
         "single": "Single",

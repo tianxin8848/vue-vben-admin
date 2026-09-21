@@ -85,14 +85,20 @@ const formSchema = computed((): VbenFormSchema[] => {
         options: regionOptions.value,
       },
     },
+    // 日期输入统一为 DD-MMM-YYYY（如 21-Sep-2026）：
+    // - format 决定输入框显示与手打解析的格式
+    // - editable: true 允许键盘直接键入
+    // - valueFormat 保持 ISO，提交给后端的数据格式不变
     {
       fieldName: 'hire_date',
       component: 'DatePicker',
       label: $t('profile.hireDate'),
       componentProps: {
         type: 'date',
+        editable: true,
+        format: 'DD-MMM-YYYY',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: $t('profile.optional'),
+        placeholder: $t('profile.datePlaceholder'),
       },
     },
     {
@@ -101,8 +107,10 @@ const formSchema = computed((): VbenFormSchema[] => {
       label: $t('profile.workStartDate'),
       componentProps: {
         type: 'date',
+        editable: true,
+        format: 'DD-MMM-YYYY',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: $t('profile.optional'),
+        placeholder: $t('profile.datePlaceholder'),
       },
     },
     {
@@ -111,8 +119,10 @@ const formSchema = computed((): VbenFormSchema[] => {
       label: $t('profile.birthDate'),
       componentProps: {
         type: 'date',
+        editable: true,
+        format: 'DD-MMM-YYYY',
         valueFormat: 'YYYY-MM-DD',
-        placeholder: $t('profile.optional'),
+        placeholder: $t('profile.datePlaceholder'),
       },
     },
     {
