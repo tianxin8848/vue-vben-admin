@@ -78,7 +78,7 @@
       },
       "basicInfoEdit": {
         "title": "编辑基础信息 - {name}",
-        "username": "登录账号（邮箱，不可修改）",
+        "username": "登录账号",
         "usernamePlaceholder": "由邮箱派生，不可修改",
         "email": "登录邮箱",
         "emailPlaceholder": "邮箱",

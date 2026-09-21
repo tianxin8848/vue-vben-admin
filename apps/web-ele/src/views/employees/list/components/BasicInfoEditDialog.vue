@@ -99,7 +99,7 @@ function handleClose() {
     width="640px"
     destroy-on-close
   >
-    <ElForm :model="form" label-width="80px">
+    <ElForm :model="form" label-width="auto">
       <div class="grid grid-cols-2 gap-x-4">
         <ElFormItem :label="$t('page.employees.basicInfoEdit.username')">
           <ElInput
