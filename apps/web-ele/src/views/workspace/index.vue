@@ -191,22 +191,25 @@ onMounted(() => {
             ref="basicFormRef"
             :form-schema="basicSchema"
             @submit="handleUpdateBasicInfo"
-          />
-          <ElUpload
-            :on-change="handleAvatarChange"
-            :show-file-list="false"
-            :auto-upload="false"
-            accept="image/*"
-            class="mt-4"
           >
-            <ElTag type="primary">
-              {{
-                basicInfo?.avatar_name
-                  ? t('page.workspace.profilePage.changeAvatar')
-                  : t('page.workspace.profilePage.uploadAvatar')
-              }}
-            </ElTag>
-          </ElUpload>
+            <!-- 更换头像：次要动作与提交按钮同排（头像居左、保存居右） -->
+            <template #footer-extra>
+              <ElUpload
+                :on-change="handleAvatarChange"
+                :show-file-list="false"
+                :auto-upload="false"
+                accept="image/*"
+              >
+                <ElTag type="primary" class="cursor-pointer">
+                  {{
+                    basicInfo?.avatar_name
+                      ? t('page.workspace.profilePage.changeAvatar')
+                      : t('page.workspace.profilePage.uploadAvatar')
+                  }}
+                </ElTag>
+              </ElUpload>
+            </template>
+          </ProfileBaseSetting>
         </div>
 
         <!-- 详细档案：PATCH /me/profile -->

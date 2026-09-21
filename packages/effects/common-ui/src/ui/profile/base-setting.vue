@@ -56,8 +56,14 @@ defineExpose({
 <template>
   <div @keydown.enter.prevent="handleSubmit">
     <Form />
-    <VbenButton type="submit" class="mt-4" @click="handleSubmit">
-      {{ $t('profile.updateBasicProfile') }}
-    </VbenButton>
+    <div class="mt-4 flex items-center justify-end gap-3">
+      <!-- 次要动作区（如更换头像），留空时不影响提交按钮靠右 -->
+      <div v-if="$slots['footer-extra']" class="mr-auto">
+        <slot name="footer-extra"></slot>
+      </div>
+      <VbenButton type="submit" @click="handleSubmit">
+        {{ $t('profile.updateBasicProfile') }}
+      </VbenButton>
+    </div>
   </div>
 </template>
