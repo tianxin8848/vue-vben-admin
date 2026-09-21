@@ -12,13 +12,13 @@ import { ElMessageBox } from 'element-plus';
  *
  * @example
  * ```ts
- * async function handleDelete(row: Employee) {
+ * async function handleDelete(row: Customer) {
  *   const ok = await confirmDelete({
- *     message: t('page.employees.confirmDelete', { name: row.full_name }),
+ *     message: t('page.fuximap.confirmDelete', { name: row.name }),
  *   });
  *   if (!ok) return;
- *   await deleteEmployeeApi(row.id);
- *   toastSuccess(t('page.employees.message.deleteSuccess'));
+ *   await deleteCustomerApi(row.id);
+ *   toastSuccess(t('page.fuximap.deleteSuccess'));
  * }
  * ```
  */
