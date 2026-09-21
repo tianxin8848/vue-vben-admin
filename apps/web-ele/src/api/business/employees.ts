@@ -178,11 +178,6 @@ export namespace EmployeeApi {
     is_active: boolean;
   }
 
-  /** 更新权限请求参数 */
-  export interface EmployeePermissionUpdate {
-    module_permissions: ModulePermission[];
-  }
-
   /** 更新门禁ID请求参数 */
   export interface EmployeeAccessControlUpdate {
     access_control_id: string;
@@ -226,24 +221,6 @@ export async function createEmployeeApi(data: EmployeeApi.EmployeeCreate) {
   return requestClient.post<EmployeeApi.EmployeeResponse>('/employees', data);
 }
 
-/** 删除员工 */
-export async function deleteEmployeeApi(employeeId: string) {
-  return requestClient.delete(`/employees/${employeeId}`);
-}
-
-// ─── 员工权限 / 状态 / 管理员 ────────────────────────────────────────────────
-
-/** 更新员工权限 */
-export async function updateEmployeePermissionsApi(
-  employeeId: string,
-  data: EmployeeApi.EmployeePermissionUpdate,
-) {
-  return requestClient.request<EmployeeApi.EmployeeResponse>(
-    `/employees/${employeeId}/permissions`,
-    { method: 'PATCH', data },
-  );
-}
-
 /** 重置员工密码（后端自动生成临时密码，无请求体） */
 export async function resetEmployeePasswordApi(employeeId: string) {
   return requestClient.post<EmployeeApi.EmployeePasswordResetResponse>(
@@ -258,17 +235,6 @@ export async function updateEmployeeStatusApi(
 ) {
   return requestClient.request<EmployeeApi.EmployeeResponse>(
     `/employees/${employeeId}/status`,
-    { method: 'PATCH', data },
-  );
-}
-
-/** 更新员工门禁ID */
-export async function updateEmployeeAccessControlApi(
-  employeeId: string,
-  data: EmployeeApi.EmployeeAccessControlUpdate,
-) {
-  return requestClient.request<EmployeeApi.EmployeeResponse>(
-    `/employees/${employeeId}/access-control-id`,
     { method: 'PATCH', data },
   );
 }

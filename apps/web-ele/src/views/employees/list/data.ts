@@ -13,7 +13,6 @@ export type ColumnVisibility = {
   employee_code: boolean;
   full_name: boolean;
   initial_status: boolean;
-  permissions: boolean;
   role: boolean;
   status: boolean;
   temporary_password: boolean;
@@ -26,7 +25,6 @@ export const defaultColumnVisibility: ColumnVisibility = {
   employee_code: true,
   full_name: true,
   initial_status: true,
-  permissions: true,
   role: true,
   status: true,
   temporary_password: true,
@@ -184,13 +182,6 @@ export function buildColumns(
       slots: { default: 'temporary_password' },
       title: t('page.employees.column.initialPassword'),
       width: 180,
-    });
-  }
-  if (visibility.permissions) {
-    cols.push({
-      minWidth: 200,
-      slots: { default: 'permissions' },
-      title: t('page.employees.column.permissions'),
     });
   }
   cols.push({

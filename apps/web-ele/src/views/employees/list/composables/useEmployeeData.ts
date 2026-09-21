@@ -20,7 +20,7 @@ export function useEmployeeData() {
   const regionOptions = ref<{ label: string; value: string }[]>([]);
   const moduleOptions = ref<EmployeeApi.EmployeeManageMeta['modules']>([]);
 
-  // ─── 员工列表缓存（前端筛选 / 分页基于此数据） ───────────────────
+  // ─── 员工列表缓存（前端筛选 / 分页基于此数据） ───────────────────────────
   const allEmployees = ref<EmployeeApi.EmployeeResponse[]>([]);
 
   // ─── 重置密码弹窗 ───────────────────────────────────────────────
@@ -65,20 +65,6 @@ export function useEmployeeData() {
     return isInitial === 1 ? '未修改' : '已修改';
   }
 
-  function getPermissionLabels(permissions: EmployeeApi.ModulePermission[]) {
-    return permissions
-      .filter(
-        (p) =>
-          p.can_view ||
-          p.can_create ||
-          p.can_edit ||
-          p.can_delete ||
-          p.can_approve,
-      )
-      .map((p) => p.module_name)
-      .join(', ');
-  }
-
   /**
    * 判定员工是否具有用户管理权限（用于"身份"列展示）。
    * 后端没有 is_admin 字段，统一通过 user_management 模块的 can_view 来体现。
@@ -95,7 +81,6 @@ export function useEmployeeData() {
     departmentOptions,
     fetchSystemSettings,
     getInitialPasswordStatus,
-    getPermissionLabels,
     invalidateEmployees,
     isManager,
     moduleOptions,

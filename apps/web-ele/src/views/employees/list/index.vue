@@ -13,21 +13,15 @@ import { ElButton, ElSwitch, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  deleteEmployeeApi,
   getEmployeesApi,
   resetEmployeePasswordApi,
-  updateEmployeeAccessControlApi,
   updateEmployeeBasicInfoApi,
-  updateEmployeePermissionsApi,
   updateEmployeeStatusApi,
 } from '#/api';
 import { handleActionError, toastSuccess } from '#/utils/message';
-import { confirmDelete } from '#/utils/modal';
 
-import AccessControlDialog from './components/AccessControlDialog.vue';
 import BasicInfoEditDialog from './components/BasicInfoEditDialog.vue';
 import CreateEmployeeDrawer from './components/CreateEmployeeDrawer.vue';
-import PermissionDialog from './components/PermissionDialog.vue';
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue';
 import { useEmployeeData } from './composables/useEmployeeData';
 import {
@@ -45,7 +39,6 @@ const {
   departmentOptions,
   fetchSystemSettings,
   getInitialPasswordStatus,
-  getPermissionLabels,
   invalidateEmployees,
   isManager,
   moduleOptions,
@@ -197,40 +190,6 @@ async function handleStatusChange(id: string, isActive: boolean) {
   }
 }
 
-// ─── 权限管理 ────────────────────────────────────────────────────────────────
-const showPermissionModal = ref(false);
-const permissionLoading = ref(false);
-const permissionTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
-
-function openPermissionModal(row: EmployeeApi.EmployeeResponse) {
-  permissionTarget.value = row;
-  showPermissionModal.value = true;
-}
-
-async function handlePermissionUpdate(
-  payload: EmployeeApi.EmployeePermissionUpdate,
-) {
-  const target = permissionTarget.value;
-  if (!target) return;
-  permissionLoading.value = true;
-  try {
-    await updateEmployeePermissionsApi(target.id, payload);
-    toastSuccess(t('page.employees.message.permissionUpdateSuccess'));
-    showPermissionModal.value = false;
-    permissionTarget.value = null;
-    invalidateEmployees();
-    await tableApi.reload();
-  } catch (error: any) {
-    handleActionError(
-      'employees/list',
-      error,
-      t('page.employees.message.permissionUpdateFailed'),
-    );
-  } finally {
-    permissionLoading.value = false;
-  }
-}
-
 // ─── 基础信息编辑 ────────────────────────────────────────────────────────────
 const showBasicInfoModal = ref(false);
 const basicInfoLoading = ref(false);
@@ -262,62 +221,6 @@ async function handleBasicInfoUpdate(
     );
   } finally {
     basicInfoLoading.value = false;
-  }
-}
-
-// ─── 门禁 ID 编辑 ────────────────────────────────────────────────────────────
-const showAccessControlModal = ref(false);
-const accessControlLoading = ref(false);
-const accessControlTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
-
-function openAccessControlModal(row: EmployeeApi.EmployeeResponse) {
-  accessControlTarget.value = row;
-  showAccessControlModal.value = true;
-}
-
-async function handleAccessControlUpdate(
-  payload: EmployeeApi.EmployeeAccessControlUpdate,
-) {
-  const target = accessControlTarget.value;
-  if (!target) return;
-  accessControlLoading.value = true;
-  try {
-    await updateEmployeeAccessControlApi(target.id, payload);
-    toastSuccess(t('page.employees.message.accessControlUpdateSuccess'));
-    showAccessControlModal.value = false;
-    accessControlTarget.value = null;
-    invalidateEmployees();
-    await tableApi.reload();
-  } catch (error: any) {
-    handleActionError(
-      'employees/list',
-      error,
-      t('page.employees.message.accessControlUpdateFailed'),
-    );
-  } finally {
-    accessControlLoading.value = false;
-  }
-}
-
-// ─── 删除员工 ────────────────────────────────────────────────────────────────
-async function handleDelete(row: EmployeeApi.EmployeeResponse) {
-  const label = row.full_name || row.username;
-  const confirmed = await confirmDelete({
-    message: t('page.employees.deleteConfirm.message', { name: label }),
-    title: t('page.employees.deleteConfirm.title'),
-  });
-  if (!confirmed) return;
-  try {
-    await deleteEmployeeApi(row.id);
-    toastSuccess(t('page.employees.message.deleteSuccess'));
-    invalidateEmployees();
-    await tableApi.reload();
-  } catch (error: any) {
-    handleActionError(
-      'employees/list',
-      error,
-      t('page.employees.message.deleteFailed'),
-    );
   }
 }
 
@@ -402,38 +305,15 @@ onMounted(async () => {
           <span v-else class="text-muted-foreground">-</span>
         </template>
 
-        <template #permissions="{ row }">
-          <span class="text-sm">
-            {{ getPermissionLabels(row.module_permissions) || '-' }}
-          </span>
-        </template>
-
         <template #action="{ row }">
           <ElButton size="small" @click="viewProfile(row.id)">
             {{ t('page.employees.action.profile') }}
           </ElButton>
-          <ElButton
-            size="small"
-            type="primary"
-            @click="openBasicInfoModal(row)"
-          >
+          <ElButton size="small" @click="openBasicInfoModal(row)">
             {{ t('page.employees.action.edit') }}
-          </ElButton>
-          <ElButton size="small" @click="openAccessControlModal(row)">
-            {{ t('page.employees.action.accessControl') }}
           </ElButton>
           <ElButton size="small" type="warning" @click="openResetModal(row.id)">
             {{ t('page.employees.action.resetPassword') }}
-          </ElButton>
-          <ElButton
-            size="small"
-            type="primary"
-            @click="openPermissionModal(row)"
-          >
-            {{ t('page.employees.action.permissions') }}
-          </ElButton>
-          <ElButton size="small" type="danger" @click="handleDelete(row)">
-            {{ t('page.employees.action.delete') }}
           </ElButton>
         </template>
       </BasicTable>
@@ -456,15 +336,6 @@ onMounted(async () => {
       @success="handleCreateSuccess"
     />
 
-    <!-- 权限管理弹窗 -->
-    <PermissionDialog
-      v-model:visible="showPermissionModal"
-      :employee="permissionTarget"
-      :loading="permissionLoading"
-      :module-options="moduleOptions"
-      @submit="handlePermissionUpdate"
-    />
-
     <!-- 基础信息编辑弹窗 -->
     <BasicInfoEditDialog
       v-model:visible="showBasicInfoModal"
@@ -474,14 +345,6 @@ onMounted(async () => {
       :region-options="regionOptions"
       :loading="basicInfoLoading"
       @submit="handleBasicInfoUpdate"
-    />
-
-    <!-- 门禁 ID 编辑弹窗 -->
-    <AccessControlDialog
-      v-model:visible="showAccessControlModal"
-      :employee="accessControlTarget"
-      :loading="accessControlLoading"
-      @submit="handleAccessControlUpdate"
     />
   </Page>
 </template>

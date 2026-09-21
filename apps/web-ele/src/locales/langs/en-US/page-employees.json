@@ -9,8 +9,6 @@
       "basicInfo": "Basic Info",
       "status": "Status",
       "admin": "Admin",
-      "permissions": "Permissions",
-      "resetPassword": "Reset Password",
       "buttons": {
         "createShort": "Create"
       },
@@ -24,30 +22,15 @@
       "action": {
         "profile": "Profile",
         "edit": "Edit",
-        "accessControl": "Access",
-        "resetPassword": "Reset Password",
-        "permissions": "Permissions",
-        "delete": "Delete"
+        "resetPassword": "Reset Password"
       },
       "message": {
         "statusUpdateSuccess": "Status updated successfully",
         "statusUpdateFailed": "Failed to update status",
-        "permissionUpdateSuccess": "Permissions updated successfully",
-        "permissionUpdateFailed": "Failed to update permissions",
         "basicInfoUpdateSuccess": "Basic info updated successfully",
         "basicInfoUpdateFailed": "Failed to update basic info",
-        "accessControlUpdateSuccess": "Access control ID updated successfully",
-        "accessControlUpdateFailed": "Failed to update access control ID",
-        "deleteSuccess": "Employee deleted",
-        "deleteFailed": "Failed to delete employee",
         "resetPasswordSuccess": "Password has been reset. Temporary password: {password}",
         "resetPasswordFailed": "Failed to reset password"
-      },
-      "deleteConfirm": {
-        "message": "Are you sure to delete employee \"{name}\"? This action is irreversible and will remove the account and permissions.",
-        "title": "Delete Employee",
-        "confirmButtonText": "Confirm Delete",
-        "cancelButtonText": "Cancel"
       },
       "column": {
         "employeeCode": "Employee Code",
@@ -58,7 +41,6 @@
         "status": "Status",
         "initialPasswordStatus": "Initial Password Status",
         "initialPassword": "Initial Password",
-        "permissions": "Permissions",
         "action": "Action"
       },
       "search": {
@@ -109,7 +91,7 @@
         "employeeCodePlaceholder": "Leave blank to auto-generate EMP+number",
         "department": "Department",
         "departmentPlaceholder": "Select department",
-        "phone": "Phone",
+        "phone": "Contact Phone Number",
         "phonePlaceholder": "Enter phone number",
         "region": "Region",
         "regionPlaceholder": "Select region",
@@ -155,7 +137,7 @@
         "position": "Position",
         "region": "Region",
         "selectPlaceholder": "Please select",
-        "datePlaceholder": "Please select a date",
+        "datePlaceholder": "DD-MMM-YYYY",
         "identityInfo": "Identity & Documents",
         "identityHint": "Marital status, identity documents and address are stored in a separate profile record used by annual leave calculations.",
         "englishName": "English Name",
@@ -197,10 +179,14 @@
         "optionalPlaceholder": "Optional",
         "relMother": "Mother",
         "relFather": "Father",
+        "relHusband": "Husband",
+        "relWife": "Wife",
         "relSister": "Sister",
         "relBrother": "Brother",
         "relCousin": "Cousin",
         "relFriend": "Friend",
+        "relPartner": "Partner",
+
         "bankInfo": "Auto-Transfer Details (Payroll)",
         "bankHint": "The account number is masked by default. Click Reveal to view the full number (an audit log entry is written).",
         "bankLocked": "Your account has no bank_data permission, so bank details cannot be viewed or edited.",
