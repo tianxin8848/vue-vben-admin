@@ -51,7 +51,7 @@
         "male": "男",
         "female": "女",
         "birthDate": "出生日期",
-        "datePlaceholder": "DD-MMM-YYYY",
+        "datePlaceholder": "DD-MM-YYYY",
         "maritalStatus": "婚姻状况",
         "maritalPlaceholder": "请选择婚姻状况",
         "single": "未婚",
@@ -70,8 +70,6 @@
         "bankName": "银行名称",
         "bankAccountName": "银行户名",
         "bankAccountNumber": "银行账号",
-        "changeAvatar": "更换头像",
-        "uploadAvatar": "上传头像",
         "permView": "查看",
         "permCreate": "创建",
         "permEdit": "编辑",
@@ -80,8 +78,6 @@
         "noPermissions": "暂无模块权限",
         "basicUpdateSuccess": "基本信息更新成功",
         "profileUpdateSuccess": "档案信息更新成功",
-        "avatarUpdateSuccess": "头像更新成功",
-        "avatarUpdateFailed": "头像更新失败",
         "updateFailed": "更新失败"
       }
     }

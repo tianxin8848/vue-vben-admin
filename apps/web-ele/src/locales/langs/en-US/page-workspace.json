@@ -51,7 +51,7 @@
         "male": "Male",
         "female": "Female",
         "birthDate": "Date of Birth",
-        "datePlaceholder": "DD-MMM-YYYY",
+        "datePlaceholder": "DD-MM-YYYY",
         "maritalStatus": "Marital Status",
         "maritalPlaceholder": "Select marital status",
         "single": "Single",
@@ -70,8 +70,6 @@
         "bankName": "Bank Name",
         "bankAccountName": "Bank Account Name",
         "bankAccountNumber": "Bank Account No.",
-        "changeAvatar": "Change Avatar",
-        "uploadAvatar": "Upload Avatar",
         "permView": "View",
         "permCreate": "Create",
         "permEdit": "Edit",
@@ -80,8 +78,6 @@
         "noPermissions": "No module permissions",
         "basicUpdateSuccess": "Basic info updated successfully",
         "profileUpdateSuccess": "Profile info updated successfully",
-        "avatarUpdateSuccess": "Avatar updated successfully",
-        "avatarUpdateFailed": "Failed to update avatar",
         "updateFailed": "Update failed"
       }
     }

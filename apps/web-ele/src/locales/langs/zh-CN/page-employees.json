@@ -21,16 +21,17 @@
       },
       "action": {
         "profile": "档案",
-        "edit": "编辑",
-        "resetPassword": "重置密码"
+        "resetPassword": "重置密码",
+        "share": "分享"
       },
       "message": {
         "statusUpdateSuccess": "状态更新成功",
         "statusUpdateFailed": "状态更新失败",
-        "basicInfoUpdateSuccess": "基础信息更新成功",
-        "basicInfoUpdateFailed": "基础信息更新失败",
         "resetPasswordSuccess": "密码已重置，临时密码：{password}",
-        "resetPasswordFailed": "密码重置失败"
+        "resetPasswordFailed": "密码重置失败",
+        "credentialsCopied": "登录凭据已复制到剪贴板",
+        "noInitialPassword": "该员工无可分享的初始密码",
+        "copyFailed": "复制到剪贴板失败"
       },
       "column": {
         "employeeCode": "工号",
@@ -137,7 +138,7 @@
         "position": "岗位",
         "region": "地区",
         "selectPlaceholder": "请选择",
-        "datePlaceholder": "DD-MMM-YYYY",
+        "datePlaceholder": "DD-MM-YYYY",
         "identityInfo": "证件与身份信息",
         "identityHint": "婚姻状况、证件资料和住址保存在独立档案表里，供年假等模块计算。",
         "englishName": "英文姓名",

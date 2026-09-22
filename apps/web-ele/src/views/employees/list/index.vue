@@ -15,18 +15,17 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getEmployeesApi,
   resetEmployeePasswordApi,
-  updateEmployeeBasicInfoApi,
   updateEmployeeStatusApi,
 } from '#/api';
-import { handleActionError, toastSuccess } from '#/utils/message';
+import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
-import BasicInfoEditDialog from './components/BasicInfoEditDialog.vue';
 import CreateEmployeeDrawer from './components/CreateEmployeeDrawer.vue';
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue';
 import { useEmployeeData } from './composables/useEmployeeData';
 import {
   buildColumns,
   buildFormSchema,
+  compareEmployees,
   createSharedToolbarConfig,
 } from './data';
 
@@ -90,8 +89,16 @@ const gridOptions = computed<VxeGridProps<EmployeeApi.EmployeeResponse>>(
       pageSizes: [10, 20, 50, 100],
     },
     proxyConfig: {
+      // 让 vxe 把「排序变更」接到查询上（否则点表头不会重新取数）
+      sort: true,
       ajax: {
-        query: async ({ page }, formValues: any = {}) => {
+        query: async (
+          {
+            page,
+            sort,
+          }: { page: any; sort?: { field?: string; order?: string } },
+          formValues: any = {},
+        ) => {
           if (allEmployees.value.length === 0) {
             allEmployees.value = await getEmployeesApi();
           }
@@ -124,6 +131,13 @@ const gridOptions = computed<VxeGridProps<EmployeeApi.EmployeeResponse>>(
           if (formValues.region) {
             list = list.filter((e) => e.region === formValues.region);
           }
+          // 点击表头排序：数据在前端，按当前排序字段比较
+          const sortField = sort?.field;
+          if (sortField) {
+            const compare = compareEmployees(sortField, isManager);
+            const direction = sort?.order === 'desc' ? -1 : 1;
+            list.sort((a, b) => compare(a, b) * direction);
+          }
           const total = list.length;
           const start = (page.currentPage - 1) * page.pageSize;
           const items = list.slice(start, start + page.pageSize);
@@ -134,6 +148,14 @@ const gridOptions = computed<VxeGridProps<EmployeeApi.EmployeeResponse>>(
     rowConfig: {
       isHover: true,
       keyField: 'id',
+    },
+    // 表头标题不折行（超长省略），保证表头行高与数据行高一致
+    showHeaderOverflow: true,
+    // 点击表头单元格即可排序，支持升序 → 降序 → 取消
+    sortConfig: {
+      allowClear: true,
+      remote: true,
+      trigger: 'cell',
     },
     toolbarConfig: createSharedToolbarConfig(t),
   }),
@@ -190,40 +212,6 @@ async function handleStatusChange(id: string, isActive: boolean) {
   }
 }
 
-// ─── 基础信息编辑 ────────────────────────────────────────────────────────────
-const showBasicInfoModal = ref(false);
-const basicInfoLoading = ref(false);
-const basicInfoTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
-
-function openBasicInfoModal(row: EmployeeApi.EmployeeResponse) {
-  basicInfoTarget.value = row;
-  showBasicInfoModal.value = true;
-}
-
-async function handleBasicInfoUpdate(
-  payload: EmployeeApi.EmployeeBasicInfoUpdate,
-) {
-  const target = basicInfoTarget.value;
-  if (!target) return;
-  basicInfoLoading.value = true;
-  try {
-    await updateEmployeeBasicInfoApi(target.id, payload);
-    toastSuccess(t('page.employees.message.basicInfoUpdateSuccess'));
-    showBasicInfoModal.value = false;
-    basicInfoTarget.value = null;
-    invalidateEmployees();
-    await tableApi.reload();
-  } catch (error: any) {
-    handleActionError(
-      'employees/list',
-      error,
-      t('page.employees.message.basicInfoUpdateFailed'),
-    );
-  } finally {
-    basicInfoLoading.value = false;
-  }
-}
-
 // ─── 重置密码 ────────────────────────────────────────────────────────────────
 async function handleResetPassword() {
   try {
@@ -240,6 +228,53 @@ async function handleResetPassword() {
       error,
       t('page.employees.message.resetPasswordFailed'),
     );
+  }
+}
+
+// ─── 分享登录凭据 ─────────────────────────────────────────────────────────────
+// 部署为 HTTP（非安全上下文），navigator.clipboard 可能不可用，故带 execCommand 兜底
+const LOGIN_URL = 'http://10.254.253.187/';
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // 落到 execCommand 兜底
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    ta.style.opacity = '0';
+    document.body.append(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+async function handleShare(row: EmployeeApi.EmployeeResponse) {
+  if (!row.temporary_password) {
+    toastWarning(t('page.employees.message.noInitialPassword'));
+    return;
+  }
+  const text =
+    `Login URL: ${LOGIN_URL}\n` +
+    `Username: ${row.username}\n` +
+    `Initial Password: ${row.temporary_password}`;
+  const ok = await copyToClipboard(text);
+  if (ok) {
+    toastSuccess(t('page.employees.message.credentialsCopied'));
+  } else {
+    toastWarning(t('page.employees.message.copyFailed'));
   }
 }
 
@@ -309,11 +344,11 @@ onMounted(async () => {
           <ElButton size="small" @click="viewProfile(row.id)">
             {{ t('page.employees.action.profile') }}
           </ElButton>
-          <ElButton size="small" @click="openBasicInfoModal(row)">
-            {{ t('page.employees.action.edit') }}
-          </ElButton>
           <ElButton size="small" type="warning" @click="openResetModal(row.id)">
             {{ t('page.employees.action.resetPassword') }}
+          </ElButton>
+          <ElButton size="small" type="primary" plain @click="handleShare(row)">
+            {{ t('page.employees.action.share') }}
           </ElButton>
         </template>
       </BasicTable>
@@ -334,17 +369,6 @@ onMounted(async () => {
       :position-options="positionOptions"
       :region-options="regionOptions"
       @success="handleCreateSuccess"
-    />
-
-    <!-- 基础信息编辑弹窗 -->
-    <BasicInfoEditDialog
-      v-model:visible="showBasicInfoModal"
-      :employee="basicInfoTarget"
-      :department-options="departmentOptions"
-      :position-options="positionOptions"
-      :region-options="regionOptions"
-      :loading="basicInfoLoading"
-      @submit="handleBasicInfoUpdate"
     />
   </Page>
 </template>

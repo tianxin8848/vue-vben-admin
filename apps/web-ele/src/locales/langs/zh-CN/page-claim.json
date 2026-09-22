@@ -81,7 +81,7 @@
         "currencyLabel": "币种",
         "invoiceDateLabel": "开票时间",
         "invoiceNoLabel": "票号",
-        "invoiceDatePlaceholder": "DD-MMM-YYYY",
+        "invoiceDatePlaceholder": "DD-MM-YYYY",
         "invoiceNoPlaceholder": "请输入票号",
         "descriptionLabel": "说明",
         "attachmentLabel": "附件",

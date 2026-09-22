@@ -81,7 +81,7 @@
         "currencyLabel": "Currency",
         "invoiceDateLabel": "Invoice Date",
         "invoiceNoLabel": "Invoice No.",
-        "invoiceDatePlaceholder": "DD-MMM-YYYY",
+        "invoiceDatePlaceholder": "DD-MM-YYYY",
         "invoiceNoPlaceholder": "Enter invoice no.",
         "descriptionLabel": "Claim reason",
         "attachmentLabel": "Attachment",

@@ -21,16 +21,17 @@
       },
       "action": {
         "profile": "Profile",
-        "edit": "Edit",
-        "resetPassword": "Reset Password"
+        "resetPassword": "Reset Password",
+        "share": "Share"
       },
       "message": {
         "statusUpdateSuccess": "Status updated successfully",
         "statusUpdateFailed": "Failed to update status",
-        "basicInfoUpdateSuccess": "Basic info updated successfully",
-        "basicInfoUpdateFailed": "Failed to update basic info",
         "resetPasswordSuccess": "Password has been reset. Temporary password: {password}",
-        "resetPasswordFailed": "Failed to reset password"
+        "resetPasswordFailed": "Failed to reset password",
+        "credentialsCopied": "Login credentials copied to clipboard",
+        "noInitialPassword": "No initial password available to share",
+        "copyFailed": "Failed to copy to clipboard"
       },
       "column": {
         "employeeCode": "Employee Code",
@@ -91,7 +92,7 @@
         "employeeCodePlaceholder": "Leave blank to auto-generate EMP+number",
         "department": "Department",
         "departmentPlaceholder": "Select department",
-        "phone": "Contact Phone Number",
+        "phone": "Contact Personal Number",
         "phonePlaceholder": "Enter phone number",
         "region": "Region",
         "regionPlaceholder": "Select region",
@@ -137,7 +138,7 @@
         "position": "Position",
         "region": "Region",
         "selectPlaceholder": "Please select",
-        "datePlaceholder": "DD-MMM-YYYY",
+        "datePlaceholder": "DD-MM-YYYY",
         "identityInfo": "Identity & Documents",
         "identityHint": "Marital status, identity documents and address are stored in a separate profile record used by annual leave calculations.",
         "englishName": "English Name",

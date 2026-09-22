@@ -14,7 +14,7 @@
   "hireDate": "Hire Date",
   "workStartDate": "Work Start Date",
   "birthDate": "Date of Birth",
-  "datePlaceholder": "DD-MMM-YYYY",
+  "datePlaceholder": "DD-MM-YYYY",
   "hkidNumber": "HKID Number",
   "englishAddress": "English Address",
   "emergencyContactName": "Emergency Contact",
