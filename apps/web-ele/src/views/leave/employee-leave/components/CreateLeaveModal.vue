@@ -16,7 +16,7 @@ import {
   ElUpload,
 } from 'element-plus';
 
-import { createLeaveRequestApi } from '#/api';
+import { createLeaveRequestApi, getMyLeaveHandoverOptionsApi } from '#/api';
 import { $t } from '#/locales';
 import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
@@ -60,6 +60,50 @@ watch(
 const medicalCertificate = ref<File | null>(null);
 const isSickLeave = computed(() => form.leave_type === 'sick');
 
+// ─── 工作交接人 ──────────────────────────────────────────────────────────────
+// 选项来自后端 /me/leave-requests/handover-options：**全部用户**（不限同部门），
+// 且包含已停用员工与系统管理员，故停用者需标注。
+
+const handoverOptions = ref<LeaveRequestApi.LeaveHandoverOption[]>([]);
+
+/** 交接人下拉的值：后端 handover_to 是文本字段，取「姓名 || 账号」 */
+function handoverOptionValue(item: LeaveRequestApi.LeaveHandoverOption) {
+  return (item.full_name || item.username || '').trim();
+}
+
+/** 交接人下拉的文案：姓名（部门 · 账号 · 停用），账号与姓名相同时不重复展示 */
+function handoverOptionLabel(item: LeaveRequestApi.LeaveHandoverOption) {
+  const name = handoverOptionValue(item);
+  const extras: string[] = [];
+  if (item.department) {
+    extras.push(item.department);
+  }
+  if (item.username && item.full_name && item.username !== item.full_name) {
+    extras.push(item.username);
+  }
+  if (item.is_active === false) {
+    extras.push($t('page.leave.employeeLeave.form.handoverInactive') as string);
+  }
+  return extras.length > 0 ? `${name}（${extras.join(' · ')}）` : name;
+}
+
+/** 空值统一收敛为 null，便于提交时交给后端判空 */
+const handoverValue = computed({
+  get: () => form.handover_to ?? '',
+  set: (value: string) => {
+    form.handover_to = value || null;
+  },
+});
+
+async function loadHandoverOptions() {
+  try {
+    handoverOptions.value = await getMyLeaveHandoverOptionsApi();
+  } catch {
+    // 加载失败时保持为空，交接人按「选填」处理，不阻断请假提交
+    handoverOptions.value = [];
+  }
+}
+
 // 请假类型映射：直接用接口 system-settings.leave_types（code → 显示文本）
 const leaveTypeOptions = leaveTypeLabelOverride;
 const sessionOptions = computed(() => createSessionOptions($t));
@@ -72,7 +116,9 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.close();
   },
   onOpenChange(isOpen: boolean) {
-    if (!isOpen) {
+    if (isOpen) {
+      loadHandoverOptions();
+    } else {
       resetForm();
     }
   },
@@ -214,13 +260,22 @@ defineExpose({ open });
       </ElFormItem>
 
       <ElFormItem :label="$t('page.leave.employeeLeave.form.handoverTo')">
-        <ElInput
-          v-model="form.handover_to"
+        <ElSelect
+          v-model="handoverValue"
           :placeholder="
             $t('page.leave.employeeLeave.form.handoverToPlaceholder')
           "
+          class="w-full"
           clearable
-        />
+          filterable
+        >
+          <ElOption
+            v-for="item in handoverOptions"
+            :key="item.id"
+            :label="handoverOptionLabel(item)"
+            :value="handoverOptionValue(item)"
+          />
+        </ElSelect>
       </ElFormItem>
 
       <ElFormItem :label="$t('page.leave.employeeLeave.form.reason')">

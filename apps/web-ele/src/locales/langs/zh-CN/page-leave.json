@@ -76,6 +76,7 @@
           "session": "请假时段",
           "handoverTo": "工作交接人",
           "handoverToPlaceholder": "选填",
+          "handoverInactive": "停用",
           "reason": "请假说明",
           "reasonPlaceholder": "请填写请假原因",
           "medicalCertificate": "病假证明",

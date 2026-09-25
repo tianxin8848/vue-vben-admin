@@ -76,6 +76,7 @@
           "session": "Session",
           "handoverTo": "Handover To",
           "handoverToPlaceholder": "Optional",
+          "handoverInactive": "Inactive",
           "reason": "Reason",
           "reasonPlaceholder": "Please fill in the reason",
           "medicalCertificate": "Medical Certificate",

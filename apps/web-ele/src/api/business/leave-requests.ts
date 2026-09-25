@@ -171,6 +171,23 @@ export namespace LeaveRequestApi {
     label: string;
   }
 
+  /**
+   * 请假交接人选项（/me/leave-requests/handover-options）。
+   *
+   * 后端返回**全部用户**（不止同部门），且包含已停用员工与系统管理员，
+   * 因此 `is_active === false` 需要在选项文案上标注「停用」以示区分。
+   */
+  export interface LeaveHandoverOption {
+    department: null | string;
+    employee_code: null | string;
+    full_name: null | string;
+    id: string;
+    is_active: boolean;
+    position: null | string;
+    region: null | string;
+    username: string;
+  }
+
   /** 调休汇总（granted/used/available，capped 表示是否触顶） */
   export interface LieuLeaveSummary {
     employee_id: string;
@@ -335,6 +352,18 @@ export async function withdrawLeaveRequestApi(
 export async function getMyLeaveTypesApi() {
   return requestClient.get<LeaveRequestApi.LeaveTypeOption[]>(
     '/me/leave-requests/leave-types',
+  );
+}
+
+/**
+ * 请假交接人选项（全部用户，含停用与系统管理员）。
+ *
+ * 后端按 `full_name → username` 排序；提交时 `handover_to` 传的是
+ * `full_name || username` 的文本（后端字段为字符串，不是 ID）。
+ */
+export async function getMyLeaveHandoverOptionsApi() {
+  return requestClient.get<LeaveRequestApi.LeaveHandoverOption[]>(
+    '/me/leave-requests/handover-options',
   );
 }
 
