@@ -1,18 +1,18 @@
 <script lang="ts" setup>
 import type { EmployeeApi } from '#/api';
 
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
 import {
-  ElButton,
-  ElCheckbox,
   ElForm,
   ElFormItem,
   ElInput,
   ElOption,
+  ElRadio,
+  ElRadioGroup,
   ElSelect,
 } from 'element-plus';
 
@@ -24,14 +24,9 @@ interface SelectOption {
   value: string;
 }
 
-interface ModuleOption {
-  module_code: string;
-  module_name: string;
-}
-
-const props = defineProps<{
+defineProps<{
   departmentOptions: SelectOption[];
-  moduleOptions: ModuleOption[];
+  permissionRoleOptions: EmployeeApi.PermissionRoleOption[];
   positionOptions: SelectOption[];
   regionOptions: SelectOption[];
 }>();
@@ -47,44 +42,40 @@ const createForm = reactive({
   email: '',
   employee_code: '',
   full_name: '',
+  permission_role: 'employee' as EmployeeApi.PermissionRole,
   phone: '',
   position: '',
   region: '',
 });
 
-const selectedModuleCodes = ref<string[]>([]);
+/**
+ * 权限角色只决定「创建时开通哪些模块」，属于快捷模板。
+ * 角色与模块的对应关系由后端下发（`permission_roles[].module_codes`），
+ * 前端不硬编码；细项权限如需调整，走后台的权限管理入口。
+ */
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  administrator: 'page.employees.createDrawer.permissionRole.administrator',
+  employee: 'page.employees.createDrawer.permissionRole.employee',
+};
 
-function toggleModule(moduleCode: string) {
-  if (selectedModuleCodes.value.includes(moduleCode)) {
-    selectedModuleCodes.value = selectedModuleCodes.value.filter(
-      (c) => c !== moduleCode,
-    );
-  } else {
-    selectedModuleCodes.value.push(moduleCode);
-  }
+const ROLE_HINT_KEYS: Record<string, string> = {
+  administrator: 'page.employees.createDrawer.permissionRole.administratorHint',
+  employee: 'page.employees.createDrawer.permissionRole.employeeHint',
+};
+
+/** 角色名称：优先取 i18n，翻译缺失（返回原 key）时回退后端中文 label */
+function permissionRoleLabel(role: EmployeeApi.PermissionRoleOption) {
+  const key = ROLE_LABEL_KEYS[role.code];
+  if (!key) return role.label;
+  const text = t(key);
+  return text === key ? role.label : text;
 }
 
-function selectAllModules() {
-  selectedModuleCodes.value = props.moduleOptions.map((m) => m.module_code);
-}
-
-function clearModules() {
-  selectedModuleCodes.value = [];
-}
-
-function buildModulePermissions(): EmployeeApi.ModulePermission[] {
-  const selectedSet = new Set(selectedModuleCodes.value);
-  return props.moduleOptions
-    .filter((m) => selectedSet.has(m.module_code))
-    .map((m) => ({
-      can_approve: false,
-      can_create: false,
-      can_delete: false,
-      can_edit: false,
-      can_view: true,
-      module_code: m.module_code,
-      module_name: m.module_name,
-    }));
+function permissionRoleHint(code: string) {
+  const key = ROLE_HINT_KEYS[code];
+  if (!key) return '';
+  const text = t(key);
+  return text === key ? '' : text;
 }
 
 function resetForm() {
@@ -95,7 +86,7 @@ function resetForm() {
   createForm.position = '';
   createForm.region = '';
   createForm.employee_code = '';
-  selectedModuleCodes.value = [];
+  createForm.permission_role = 'employee';
 }
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
@@ -115,7 +106,7 @@ async function submitCreate() {
     email: createForm.email,
     employee_code: createForm.employee_code || undefined,
     full_name: createForm.full_name,
-    module_permissions: buildModulePermissions(),
+    permission_role: createForm.permission_role,
     phone: createForm.phone || undefined,
     position: createForm.position || undefined,
     region: createForm.region || undefined,
@@ -223,42 +214,28 @@ defineExpose({ open });
           />
         </ElSelect>
       </ElFormItem>
-      <ElFormItem :label="t('page.employees.createDrawer.modulePermissions')">
-        <div v-if="moduleOptions.length" class="w-full">
-          <div class="mb-2 flex items-center gap-2">
-            <ElButton size="small" type="default" @click="selectAllModules">
-              {{ t('page.employees.createDrawer.selectAll') }}
-            </ElButton>
-            <ElButton size="small" type="default" @click="clearModules">
-              {{ t('page.employees.createDrawer.clearAll') }}
-            </ElButton>
-            <span class="text-sm text-muted-foreground">
-              {{
-                t('page.employees.createDrawer.selectedCount', {
-                  count: selectedModuleCodes.length,
-                })
-              }}
-            </span>
-          </div>
-          <div class="flex flex-wrap gap-4">
-            <ElCheckbox
-              v-for="mod in moduleOptions"
-              :key="mod.module_code"
-              :model-value="selectedModuleCodes.includes(mod.module_code)"
-              @change="toggleModule(mod.module_code)"
+      <ElFormItem
+        :label="t('page.employees.createDrawer.permissionRole.label')"
+      >
+        <div class="w-full">
+          <ElRadioGroup v-model="createForm.permission_role">
+            <ElRadio
+              v-for="role in permissionRoleOptions"
+              :key="role.code"
+              :value="role.code"
             >
-              <strong>{{ mod.module_name }}</strong>
-              <span class="ml-1 text-xs text-muted-foreground">
-                {{ mod.module_code }}
+              <strong>{{ permissionRoleLabel(role) }}</strong>
+              <span
+                v-if="permissionRoleHint(role.code)"
+                class="ml-1 text-xs text-muted-foreground"
+              >
+                {{ permissionRoleHint(role.code) }}
               </span>
-            </ElCheckbox>
-          </div>
+            </ElRadio>
+          </ElRadioGroup>
           <p class="mt-2 text-xs text-muted-foreground">
-            {{ t('page.employees.createDrawer.moduleTip') }}
+            {{ t('page.employees.createDrawer.permissionRole.tip') }}
           </p>
-        </div>
-        <div v-else class="text-sm text-muted-foreground">
-          {{ t('page.employees.createDrawer.noModules') }}
         </div>
       </ElFormItem>
     </ElForm>

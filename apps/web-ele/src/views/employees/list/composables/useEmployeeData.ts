@@ -14,11 +14,13 @@ export function useEmployeeData() {
     ...defaultColumnVisibility,
   });
 
-  // ─── 选项数据（部门 / 岗位 / 地区 / 模块） ───────────────────────
+  // ─── 选项数据（部门 / 岗位 / 地区 / 权限角色） ───────────────────
   const departmentOptions = ref<{ label: string; value: string }[]>([]);
   const positionOptions = ref<{ label: string; value: string }[]>([]);
   const regionOptions = ref<{ label: string; value: string }[]>([]);
-  const moduleOptions = ref<EmployeeApi.EmployeeManageMeta['modules']>([]);
+  const permissionRoleOptions = ref<
+    EmployeeApi.EmployeeManageMeta['permission_roles']
+  >([]);
 
   // ─── 员工列表缓存（前端筛选 / 分页基于此数据） ───────────────────────────
   const allEmployees = ref<EmployeeApi.EmployeeResponse[]>([]);
@@ -55,7 +57,7 @@ export function useEmployeeData() {
         label: r,
         value: r,
       }));
-      moduleOptions.value = meta.modules || [];
+      permissionRoleOptions.value = meta.permission_roles || [];
     } catch {
       // 获取系统设置失败时保持空选项
     }
@@ -83,8 +85,8 @@ export function useEmployeeData() {
     getInitialPasswordStatus,
     invalidateEmployees,
     isManager,
-    moduleOptions,
     openResetModal,
+    permissionRoleOptions,
     positionOptions,
     regionOptions,
     resetEmployeeId,

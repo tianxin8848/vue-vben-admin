@@ -98,12 +98,14 @@
         "regionPlaceholder": "Select region",
         "position": "Position",
         "positionPlaceholder": "Select position",
-        "modulePermissions": "Module Permissions",
-        "selectAll": "Select All",
-        "clearAll": "Clear Selection",
-        "selectedCount": "{count} module(s) selected",
-        "moduleTip": "Selecting a module grants view access by default",
-        "noModules": "No modules available. Please configure in System Settings first.",
+        "permissionRole": {
+          "label": "Permission Role",
+          "employee": "Employee",
+          "employeeHint": "Leave / claims, etc.",
+          "administrator": "Administrator",
+          "administratorHint": "Can approve, and submit their own requests",
+          "tip": "Modules are granted by role on creation: employees can submit leave/claims; administrators additionally get approval and leave management."
+        },
         "requiredFields": "Please fill in required fields (login account is derived from email)",
         "createSuccess": "Created successfully",
         "createFailed": "Failed to create employee"

@@ -12,6 +12,23 @@ export namespace EmployeeApi {
     module_name: string;
   }
 
+  /**
+   * 权限角色（创建员工 / 改权限时的快捷模板）。
+   *
+   * 角色与模块的对应关系由后端下发（`module_codes` 已按当前系统模块清单过滤），
+   * 前端不要硬编码，避免两边清单漂移。
+   */
+  export interface PermissionRoleOption {
+    /** `employee`（普通员工）| `administrator`（管理员） */
+    code: string;
+    /** 后端中文标签，仅作为 i18n 缺失时的兜底 */
+    label: string;
+    module_codes: string[];
+  }
+
+  /** 权限角色 code，对齐后端 `Literal["employee", "administrator"]` */
+  export type PermissionRole = 'administrator' | 'employee';
+
   /** 员工响应（列表 & 通用） */
   export interface EmployeeResponse {
     access_control_id: null | string;
@@ -119,6 +136,11 @@ export namespace EmployeeApi {
     position?: null | string;
     region?: null | string;
     /**
+     * 权限角色快捷模板。传了就按角色的模块清单开通（忽略 module_permissions）；
+     * 不传且 module_permissions 也为空时，后端默认按 `employee` 角色开通。
+     */
+    permission_role?: null | PermissionRole;
+    /**
      * 登录名。后端已将登录账号锁定为邮箱：不传时由 email 派生，
      * 传了也会被后端归一为小写邮箱。前端创建抽屉不再收集该字段。
      */
@@ -193,10 +215,12 @@ export namespace EmployeeApi {
     username: string;
   }
 
-  /** 员工管理页筛选下拉数据（地区/部门/岗位/模块清单） */
+  /** 员工管理页筛选下拉数据（地区/部门/岗位/模块清单/权限角色） */
   export interface EmployeeManageMeta {
     departments: string[];
     modules: { module_code: string; module_name: string }[];
+    /** 权限角色模板目录：创建员工时按角色一键开通模块 */
+    permission_roles: PermissionRoleOption[];
     positions: string[];
     regions: string[];
   }

@@ -40,8 +40,8 @@ const {
   getInitialPasswordStatus,
   invalidateEmployees,
   isManager,
-  moduleOptions,
   openResetModal,
+  permissionRoleOptions,
   positionOptions,
   regionOptions,
   resetEmployeeId,
@@ -365,7 +365,7 @@ onMounted(async () => {
     <CreateEmployeeDrawer
       ref="createDrawerRef"
       :department-options="departmentOptions"
-      :module-options="moduleOptions"
+      :permission-role-options="permissionRoleOptions"
       :position-options="positionOptions"
       :region-options="regionOptions"
       @success="handleCreateSuccess"

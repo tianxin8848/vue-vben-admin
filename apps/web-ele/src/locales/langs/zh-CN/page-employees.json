@@ -98,12 +98,14 @@
         "regionPlaceholder": "请选择地区",
         "position": "岗位",
         "positionPlaceholder": "请选择岗位",
-        "modulePermissions": "模块权限",
-        "selectAll": "全选模块",
-        "clearAll": "清空选择",
-        "selectedCount": "已选择 {count} 个模块",
-        "moduleTip": "勾选后默认开通该模块的查看权限",
-        "noModules": "暂无可选模块，请先到\"系统参数管理维护\"中配置",
+        "permissionRole": {
+          "label": "权限角色",
+          "employee": "普通员工",
+          "employeeHint": "请假 / 报销等",
+          "administrator": "管理员",
+          "administratorHint": "可审批，也可自己提交",
+          "tip": "创建时按角色自动开通模块权限：普通员工可提交请假/报销；管理员另含审批与请假管理。"
+        },
         "requiredFields": "请填写必填项（登录账号由邮箱派生）",
         "createSuccess": "创建成功",
         "createFailed": "创建员工失败"
