@@ -15,11 +15,13 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getEmployeesApi,
   resetEmployeePasswordApi,
+  updateEmployeePermissionsApi,
   updateEmployeeStatusApi,
 } from '#/api';
 import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
 import CreateEmployeeDrawer from './components/CreateEmployeeDrawer.vue';
+import PermissionDialog from './components/PermissionDialog.vue';
 import ResetPasswordDialog from './components/ResetPasswordDialog.vue';
 import { useEmployeeData } from './composables/useEmployeeData';
 import {
@@ -40,12 +42,17 @@ const {
   getInitialPasswordStatus,
   invalidateEmployees,
   isManager,
+  moduleOptions,
+  openPermissionModal,
   openResetModal,
+  permissionLoading,
   permissionRoleOptions,
+  permissionTarget,
   positionOptions,
   regionOptions,
   resetEmployeeId,
   resetResult,
+  showPermissionModal,
   showResetModal,
 } = useEmployeeData();
 
@@ -212,6 +219,30 @@ async function handleStatusChange(id: string, isActive: boolean) {
   }
 }
 
+// ─── 编辑模块权限 ────────────────────────────────────────────────────────────
+async function handlePermissionUpdate(
+  payload: EmployeeApi.EmployeePermissionUpdate,
+) {
+  const target = permissionTarget.value;
+  if (!target) return;
+  permissionLoading.value = true;
+  try {
+    await updateEmployeePermissionsApi(target.id, payload);
+    toastSuccess(t('page.employees.message.permissionUpdateSuccess'));
+    showPermissionModal.value = false;
+    invalidateEmployees();
+    await tableApi.reload();
+  } catch (error) {
+    handleActionError(
+      'employees/list',
+      error,
+      t('page.employees.message.permissionUpdateFailed'),
+    );
+  } finally {
+    permissionLoading.value = false;
+  }
+}
+
 // ─── 重置密码 ────────────────────────────────────────────────────────────────
 async function handleResetPassword() {
   try {
@@ -347,12 +378,29 @@ onMounted(async () => {
           <ElButton size="small" type="warning" @click="openResetModal(row.id)">
             {{ t('page.employees.action.resetPassword') }}
           </ElButton>
+          <ElButton
+            size="small"
+            type="primary"
+            @click="openPermissionModal(row)"
+          >
+            {{ t('page.employees.action.permissions') }}
+          </ElButton>
           <ElButton size="small" type="primary" plain @click="handleShare(row)">
             {{ t('page.employees.action.share') }}
           </ElButton>
         </template>
       </BasicTable>
     </div>
+
+    <!-- 编辑模块权限弹窗 -->
+    <PermissionDialog
+      v-model:visible="showPermissionModal"
+      :employee="permissionTarget"
+      :loading="permissionLoading"
+      :module-options="moduleOptions"
+      :role-options="permissionRoleOptions"
+      @submit="handlePermissionUpdate"
+    />
 
     <!-- 重置密码弹窗 -->
     <ResetPasswordDialog

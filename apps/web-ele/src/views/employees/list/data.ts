@@ -125,7 +125,10 @@ export function buildFormSchema(
  * - 右侧不会留出空白（不会出现「数据表比表头短」）。
  */
 const COLUMN_WIDTH = {
-  action: 340,
+  // 操作列 4 个按钮（档案 / 重置密码 / 编辑权限 / 分享）。
+  // 宽度由英文文案决定，最宽的是 `Edit Permissions`；给窄了会被全局
+  // showOverflow 裁成省略号。
+  action: 430,
   deptPosRegion: 190,
   employeeCode: 120,
   fullName: 110,

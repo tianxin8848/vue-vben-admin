@@ -22,11 +22,14 @@
       "action": {
         "profile": "档案",
         "resetPassword": "重置密码",
+        "permissions": "编辑权限",
         "share": "分享"
       },
       "message": {
         "statusUpdateSuccess": "状态更新成功",
         "statusUpdateFailed": "状态更新失败",
+        "permissionUpdateSuccess": "员工权限更新成功",
+        "permissionUpdateFailed": "更新权限失败",
         "resetPasswordSuccess": "密码已重置，临时密码：{password}",
         "resetPasswordFailed": "密码重置失败",
         "credentialsCopied": "登录凭据已复制到剪贴板",
@@ -80,6 +83,18 @@
         "requiredFields": "邮箱 / 姓名不能为空（登录账号由邮箱锁定，不可修改）",
         "cancel": "取消",
         "save": "保存"
+      },
+      "permissionDialog": {
+        "title": "编辑模块权限 - {name}",
+        "hint": "请选择该员工可使用的系统模块，保存后将覆盖当前模块权限。",
+        "selectedCount": "已选择 {count} / {total} 个模块",
+        "selectAll": "全选模块",
+        "clearAll": "清空选择",
+        "tip": "勾选即授予该模块权限（后端默认只开通查看权限）；未勾选的模块将被移除。",
+        "noModules": "暂无可分配的模块，请先在「系统参数管理」中配置模块清单。",
+        "emptyWarning": "请至少保留一个模块权限；保存会以本次勾选全量覆盖，清空将导致该员工失去全部系统入口。",
+        "cancel": "取消",
+        "save": "保存权限"
       },
       "createDrawer": {
         "username": "用户名",

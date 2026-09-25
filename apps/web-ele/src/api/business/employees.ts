@@ -200,6 +200,20 @@ export namespace EmployeeApi {
     is_active: boolean;
   }
 
+  /** 更新模块权限请求参数（PATCH /employees/{id}/permissions） */
+  export interface EmployeePermissionUpdate {
+    /**
+     * 权限角色快捷模板。**传了以后端角色清单为准，module_permissions 会被忽略**；
+     * 只做「按角色一键开通」时才传，逐项勾选请只传 module_permissions。
+     */
+    permission_role?: null | PermissionRole;
+    /**
+     * 完整覆盖该员工的模块权限（后端不做增量合并）。
+     * 传空数组 = 撤销全部模块权限。
+     */
+    module_permissions?: ModulePermission[];
+  }
+
   /** 更新门禁ID请求参数 */
   export interface EmployeeAccessControlUpdate {
     access_control_id: string;
@@ -259,6 +273,22 @@ export async function updateEmployeeStatusApi(
 ) {
   return requestClient.request<EmployeeApi.EmployeeResponse>(
     `/employees/${employeeId}/status`,
+    { method: 'PATCH', data },
+  );
+}
+
+/**
+ * 更新员工模块权限。
+ *
+ * 需要 `user_management`（HR 侧）。全量覆盖语义：请求体里的 module_permissions
+ * 会替换该员工现有权限，未勾选的模块将被移除。
+ */
+export async function updateEmployeePermissionsApi(
+  employeeId: string,
+  data: EmployeeApi.EmployeePermissionUpdate,
+) {
+  return requestClient.request<EmployeeApi.EmployeeResponse>(
+    `/employees/${employeeId}/permissions`,
     { method: 'PATCH', data },
   );
 }

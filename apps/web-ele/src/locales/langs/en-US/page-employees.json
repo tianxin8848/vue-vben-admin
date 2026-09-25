@@ -22,11 +22,14 @@
       "action": {
         "profile": "Profile",
         "resetPassword": "Reset Password",
+        "permissions": "Edit Permissions",
         "share": "Share"
       },
       "message": {
         "statusUpdateSuccess": "Status updated successfully",
         "statusUpdateFailed": "Failed to update status",
+        "permissionUpdateSuccess": "Employee permissions updated successfully",
+        "permissionUpdateFailed": "Failed to update permissions",
         "resetPasswordSuccess": "Password has been reset. Temporary password: {password}",
         "resetPasswordFailed": "Failed to reset password",
         "credentialsCopied": "Login credentials copied to clipboard",
@@ -80,6 +83,18 @@
         "requiredFields": "Email and Full Name are required (the login account is derived from the email)",
         "cancel": "Cancel",
         "save": "Save"
+      },
+      "permissionDialog": {
+        "title": "Edit Module Permissions - {name}",
+        "hint": "Select the modules this employee may use. Saving overwrites the current module permissions.",
+        "selectedCount": "{count} / {total} modules selected",
+        "selectAll": "Select All",
+        "clearAll": "Clear",
+        "tip": "Checking a module grants access to it (view-only by default); unchecked modules will be removed.",
+        "noModules": "No assignable modules. Please configure the module list in System Settings first.",
+        "emptyWarning": "Keep at least one module permission. Saving overwrites the full list, so clearing it would lock the employee out of every module.",
+        "cancel": "Cancel",
+        "save": "Save Permissions"
       },
       "createDrawer": {
         "username": "Username",

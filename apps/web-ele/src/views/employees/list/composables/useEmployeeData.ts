@@ -14,16 +14,28 @@ export function useEmployeeData() {
     ...defaultColumnVisibility,
   });
 
-  // ─── 选项数据（部门 / 岗位 / 地区 / 权限角色） ───────────────────
+  // ─── 选项数据（部门 / 岗位 / 地区 / 权限角色 / 模块） ───────────
   const departmentOptions = ref<{ label: string; value: string }[]>([]);
   const positionOptions = ref<{ label: string; value: string }[]>([]);
   const regionOptions = ref<{ label: string; value: string }[]>([]);
   const permissionRoleOptions = ref<
     EmployeeApi.EmployeeManageMeta['permission_roles']
   >([]);
+  /** 可分配的模块清单（权限弹窗的勾选来源） */
+  const moduleOptions = ref<EmployeeApi.EmployeeManageMeta['modules']>([]);
 
   // ─── 员工列表缓存（前端筛选 / 分页基于此数据） ───────────────────────────
   const allEmployees = ref<EmployeeApi.EmployeeResponse[]>([]);
+
+  // ─── 权限弹窗 ───────────────────────────────────────────────────
+  const showPermissionModal = ref(false);
+  const permissionTarget = ref<EmployeeApi.EmployeeResponse | null>(null);
+  const permissionLoading = ref(false);
+
+  function openPermissionModal(employee: EmployeeApi.EmployeeResponse) {
+    permissionTarget.value = employee;
+    showPermissionModal.value = true;
+  }
 
   // ─── 重置密码弹窗 ───────────────────────────────────────────────
   const showResetModal = ref(false);
@@ -58,6 +70,7 @@ export function useEmployeeData() {
         value: r,
       }));
       permissionRoleOptions.value = meta.permission_roles || [];
+      moduleOptions.value = meta.modules || [];
     } catch {
       // 获取系统设置失败时保持空选项
     }
@@ -85,12 +98,17 @@ export function useEmployeeData() {
     getInitialPasswordStatus,
     invalidateEmployees,
     isManager,
+    moduleOptions,
+    openPermissionModal,
     openResetModal,
+    permissionLoading,
     permissionRoleOptions,
+    permissionTarget,
     positionOptions,
     regionOptions,
     resetEmployeeId,
     resetResult,
+    showPermissionModal,
     showResetModal,
   };
 }
