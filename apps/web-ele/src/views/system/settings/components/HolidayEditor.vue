@@ -18,6 +18,7 @@ import {
 } from 'element-plus';
 
 import { toastWarning } from '#/utils/message';
+import { normalizeRegionKey, regionsMatch } from '#/utils/regions';
 
 interface HolidayPreviewRow {
   _key: string;
@@ -51,16 +52,12 @@ const holidayForm = reactive({
 
 const previewRows = computed<HolidayPreviewRow[]>(() => {
   const year = String(holidayForm.year);
-  const region = String(holidayForm.region || '')
-    .trim()
-    .toLowerCase();
+  // 地区宽松匹配：「香港」=「HK」=「Hong Kong」，与后端模板口径一致
   return (props.holidays || [])
     .filter((item) => {
       return (
         String(item.date || '').startsWith(`${year}-`) &&
-        String(item.region || '')
-          .trim()
-          .toLowerCase() === region
+        regionsMatch(item.region, holidayForm.region)
       );
     })
     .toSorted((a, b) =>
@@ -87,17 +84,10 @@ watch(
 function findHolidayCatalogByRegion(
   region: string,
 ): null | SystemSettingsApi.RegionalHolidayCatalogItem {
-  const regionKey = String(region || '')
-    .trim()
-    .toLowerCase();
-  if (!regionKey) return null;
+  if (!normalizeRegionKey(region)) return null;
   return (
-    props.holidayCatalogs.find(
-      (item) =>
-        String(item.region || '')
-          .trim()
-          .toLowerCase() === regionKey,
-    ) || null
+    props.holidayCatalogs.find((item) => regionsMatch(item.region, region)) ??
+    null
   );
 }
 

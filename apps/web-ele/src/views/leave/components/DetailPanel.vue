@@ -12,6 +12,7 @@ import {
 
 import { $t } from '#/locales';
 import { toastWarning } from '#/utils/message';
+import { regionsMatch } from '#/utils/regions';
 
 import {
   getLeaveTypeColor,
@@ -89,10 +90,11 @@ const selectedHolidayLabel = computed(() =>
   getHolidayLabel(selectedHolidayKey.value),
 );
 
+// 地区名是自由文本（「香港 / HK / Hong Kong」），用宽松匹配避免漏配
 function getHolidayForDate(dateKey: string, region: string) {
   if (!region || !dateKey) return null;
   return props.regionalHolidays.find(
-    (h) => h.region === region && h.date === dateKey,
+    (h) => regionsMatch(h.region, region) && h.date === dateKey,
   );
 }
 
@@ -139,7 +141,9 @@ const calendarDetail = computed<CalendarDetail>(() => {
     props.region && props.region !== 'all' ? props.region : '';
   const holiday = activeRegion
     ? (props.regionalHolidays.find(
-        (h) => h.region === activeRegion && h.date === props.selectedDateKey,
+        (h) =>
+          regionsMatch(h.region, activeRegion) &&
+          h.date === props.selectedDateKey,
       ) ?? null)
     : null;
 

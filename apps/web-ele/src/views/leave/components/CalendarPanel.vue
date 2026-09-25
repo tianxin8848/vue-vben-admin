@@ -6,6 +6,7 @@ import { computed, ref, watch } from 'vue';
 import { ElButton, ElDatePicker } from 'element-plus';
 
 import { $t, $tm } from '#/locales';
+import { regionsMatch } from '#/utils/regions';
 
 import {
   generateMonthCells,
@@ -31,6 +32,7 @@ function getEntriesForDate(dateKey: string) {
 
 // 区域假日：按当前筛选地区过滤，未指定地区时展示全部
 // 入口处强制归一化，避免 bootstrap 阶段 prop 短暂为 undefined 导致 forEach 崩溃
+// 地区用宽松匹配（「香港」=「HK」=「Hong Kong」），与后端模板口径一致
 const holidayMap = computed(() => {
   const map: Record<string, RegionalHoliday[]> = {};
   const region = props.searchForm.region;
@@ -40,7 +42,7 @@ const holidayMap = computed(() => {
     ? props.regionalHolidays
     : [];
   holidays.forEach((h) => {
-    if (filterRegion && h.region !== filterRegion) return;
+    if (filterRegion && !regionsMatch(h.region, filterRegion)) return;
     const list = map[h.date] ?? (map[h.date] = []);
     list.push(h);
   });

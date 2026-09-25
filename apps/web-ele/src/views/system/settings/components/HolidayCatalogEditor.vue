@@ -13,6 +13,7 @@ import {
 } from 'element-plus';
 
 import { toastWarning } from '#/utils/message';
+import { normalizeRegionKey, regionsMatch } from '#/utils/regions';
 
 const props = defineProps<{
   holidayCatalogs: SystemSettingsApi.RegionalHolidayCatalogItem[];
@@ -48,17 +49,10 @@ watch(
 function findHolidayCatalogByRegion(
   region: string,
 ): null | SystemSettingsApi.RegionalHolidayCatalogItem {
-  const regionKey = String(region || '')
-    .trim()
-    .toLowerCase();
-  if (!regionKey) return null;
+  if (!normalizeRegionKey(region)) return null;
   return (
-    props.holidayCatalogs.find(
-      (item) =>
-        String(item.region || '')
-          .trim()
-          .toLowerCase() === regionKey,
-    ) || null
+    props.holidayCatalogs.find((item) => regionsMatch(item.region, region)) ??
+    null
   );
 }
 

@@ -11,6 +11,7 @@ import {
   upsertRegionalHolidayApi,
 } from '#/api';
 import { $t } from '#/locales';
+import { regionsMatch } from '#/utils/regions';
 
 import { loadLeaveTypeLabels } from '../../shared/leave-types';
 
@@ -117,12 +118,14 @@ export function useCalendarData() {
         searchForm.team === '' ||
         searchForm.team === 'all' ||
         employee.team === searchForm.team;
+      // 「未设置地区」需精确匹配（它本身就是一个特殊分组）
+      // 其余地区用宽松匹配：「香港」=「HK」=「Hong Kong」
       const matchesRegion =
         searchForm.region === '' ||
         searchForm.region === 'all' ||
         (searchForm.region === '__unset__'
           ? employee.region === unsetRegionLabel
-          : employee.region === searchForm.region);
+          : regionsMatch(employee.region, searchForm.region));
       const matchesKeyword =
         !keyword ||
         employee.name.includes(keyword) ||
@@ -283,7 +286,9 @@ export function useCalendarData() {
   function findSelectedHoliday() {
     const activeRegion = getActiveRegionKey();
     return regionalHolidays.value.find(
-      (h) => h.region === activeRegion && h.date === selectedDateKey.value,
+      (h) =>
+        regionsMatch(h.region, activeRegion) &&
+        h.date === selectedDateKey.value,
     );
   }
 
