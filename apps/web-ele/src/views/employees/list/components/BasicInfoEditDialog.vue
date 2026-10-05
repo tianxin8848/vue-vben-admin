@@ -24,6 +24,8 @@ interface SelectOption {
 const props = defineProps<{
   departmentOptions: SelectOption[];
   employee: EmployeeApi.EmployeeResponse | null;
+  employmentTypeOptions: SelectOption[];
+  lineManagerOptions: SelectOption[];
   loading?: boolean;
   positionOptions: SelectOption[];
   regionOptions: SelectOption[];
@@ -36,20 +38,31 @@ const emit = defineEmits<{
 const visible = defineModel<boolean>('visible', { default: false });
 
 const form = reactive<EmployeeApi.EmployeeBasicInfoUpdate>({
+  chinese_name: null,
   department: null,
   email: null,
   employee_code: null,
+  employment_type: null,
   full_name: null,
+  line_manager_id: null,
   phone: null,
   position: null,
   region: null,
   username: null,
 });
 
+/** 直属上司不能是自己（后端会直接 400），这里先把本人从候选里摘掉 */
+const lineManagerChoices = computed(() =>
+  props.lineManagerOptions.filter((opt) => opt.value !== props.employee?.id),
+);
+
 const employeeLabel = computed(() => {
   if (!props.employee) return '';
-  const { full_name, username, employee_code } = props.employee;
-  return [full_name || username, employee_code ? `(${employee_code})` : '']
+  const { chinese_name, full_name, username, employee_code } = props.employee;
+  return [
+    chinese_name || full_name || username,
+    employee_code ? `(${employee_code})` : '',
+  ]
     .filter(Boolean)
     .join(' ');
 });
@@ -60,11 +73,14 @@ function syncForm() {
   form.username = e.username;
   form.email = e.email;
   form.full_name = e.full_name;
+  form.chinese_name = e.chinese_name;
   form.phone = e.phone;
   form.department = e.department;
   form.position = e.position;
   form.region = e.region;
   form.employee_code = e.employee_code;
+  form.employment_type = e.employment_type;
+  form.line_manager_id = e.line_manager_id;
 }
 
 watch(
@@ -121,6 +137,15 @@ function handleClose() {
             v-model="form.full_name"
             :placeholder="
               $t('page.employees.basicInfoEdit.fullNamePlaceholder')
+            "
+          />
+        </ElFormItem>
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.chineseName')">
+          <ElInput
+            v-model="form.chinese_name"
+            :maxlength="50"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.chineseNamePlaceholder')
             "
           />
         </ElFormItem>
@@ -185,6 +210,40 @@ function handleClose() {
           >
             <ElOption
               v-for="opt in regionOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.employmentType')">
+          <ElSelect
+            v-model="form.employment_type"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.employmentTypePlaceholder')
+            "
+            style="width: 100%"
+          >
+            <ElOption
+              v-for="opt in employmentTypeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem :label="$t('page.employees.basicInfoEdit.lineManager')">
+          <ElSelect
+            v-model="form.line_manager_id"
+            :placeholder="
+              $t('page.employees.basicInfoEdit.lineManagerPlaceholder')
+            "
+            clearable
+            filterable
+            style="width: 100%"
+          >
+            <ElOption
+              v-for="opt in lineManagerChoices"
               :key="opt.value"
               :label="opt.label"
               :value="opt.value"

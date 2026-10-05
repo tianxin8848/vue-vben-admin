@@ -26,6 +26,24 @@ export namespace ClaimApi {
     claim_reasons: ClaimReasonOption[];
   }
 
+  /**
+   * 单笔报销的附件项。
+   *
+   * 后端新口径「一单一笔费用、同一笔可带最多 20 个附件」，
+   * 因此 `ClaimResponse.attachments` 才是完整附件列表；
+   * 旧的 `attachment_url` / `attachment_name` 只镜像第一个（主）附件，保留兼容。
+   */
+  export interface ClaimAttachmentOut {
+    attachment_id: null | string;
+    /** `invoice`（发票）| `supporting`（支持文件） */
+    attachment_kind: string;
+    attachment_name: null | string;
+    attachment_url: null | string;
+  }
+
+  /** 报销附件类型 code，对齐后端 `claim_config_service.CLAIM_ATTACHMENT_KINDS` */
+  export type ClaimAttachmentKind = 'invoice' | 'supporting';
+
   /** 报销明细项（line item） */
   export interface ClaimLineItem {
     item_id: null | string;
@@ -56,20 +74,30 @@ export namespace ClaimApi {
     reason_label: string;
     description: null | string;
     amount: number;
+    /** 原币金额（与 `amount` 同值，后端为后续改单留的字段） */
+    original_amount: null | number;
     currency: string;
     exchange_rate_to_hkd: null | number;
     amount_hkd: null | number;
+    /** 最终入账金额（与 `amount_hkd` 同值） */
+    final_amount: null | number;
     approval_status: ClaimApprovalStatus;
     approval_chain: Record<string, unknown>[];
     current_approver_id: null | string;
     approval_history: Record<string, unknown>[];
     attachment_url: null | string;
     attachment_name: null | string;
+    /** 主附件类型：`invoice` | `supporting` */
+    attachment_kind: null | string;
+    /** 完整附件列表（一单一笔可带多个附件） */
+    attachments: ClaimAttachmentOut[];
     /** 开票日期（后端兼容字段，新流程通常为 null，旧数据可能有值） */
     invoice_date: null | string;
     /** 票号（后端兼容字段，新流程通常为 null，旧数据可能有值） */
     invoice_no: null | string;
     items: ClaimLineItem[];
+    /** 是否为代老闆提交（true 时所有权归老闆，审批链走会计 → HR） */
+    filed_on_behalf: boolean;
     created_by_id: string;
     created_by_name: string;
     review_comment: null | string;
@@ -133,9 +161,23 @@ export async function getMyClaimsApi(status?: ClaimApi.ClaimApprovalStatus[]) {
   });
 }
 
-/** 创建报销草稿（FormData: reason_code, description, amount, currency, attachment） */
+/**
+ * 创建报销草稿。
+ *
+ * FormData 仍为「并行 Form 列表」协议：`reason_code` / `invoice_date` / `amount` /
+ * `currency`（必填，等长）与 `invoice_no` / `description`（可选，整列不传或每行都传）
+ * 按行重复 append；`attachment` 为按序文件列表。
+ *
+ * 口径已改为**一单一笔费用**：
+ * - 一个文件算一个附件（**不再把多页 PDF 拆成多笔**）；
+ * - 只传 1 行金额时，所有附件都挂在这一笔上（`attachment_kind` 逐个标注 invoice/supporting）；
+ * - 传 N 行金额时，须同时给 N 个文件（一行一个文件），否则 400；
+ * - 单笔最多 20 个附件。
+ *
+ * @param formData 已按上述协议组装好的 FormData（含可选 `attachment_kind` 列）
+ */
 export async function createClaimApi(formData: FormData) {
-  return requestClient.post<ClaimApi.ClaimResponse>('/me/claims', formData, {
+  return requestClient.post<ClaimApi.ClaimResponse[]>('/me/claims', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 }
@@ -165,6 +207,9 @@ export async function deleteClaimDraftApi(claimId: string) {
  * 更新报销草稿（仅 draft 状态可更新）
  * 使用 multipart/form-data，所有字段均可选：省略则保留原值；
  * 空 description / invoice_no 会清空对应字段；不传文件则保留原附件。
+ *
+ * `attachment` 是**主附件（invoice）替换**语义：新文件取代主附件，
+ * 其余 `attachments` 里的支持文件保留。后端已不再限制「多页 PDF 必须拆开」。
  */
 export async function updateClaimDraftApi(
   claimId: string,

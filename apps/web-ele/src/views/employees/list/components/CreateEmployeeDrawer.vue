@@ -24,8 +24,10 @@ interface SelectOption {
   value: string;
 }
 
-defineProps<{
+const props = defineProps<{
   departmentOptions: SelectOption[];
+  employmentTypeOptions: SelectOption[];
+  lineManagerOptions: SelectOption[];
   permissionRoleOptions: EmployeeApi.PermissionRoleOption[];
   positionOptions: SelectOption[];
   regionOptions: SelectOption[];
@@ -38,10 +40,15 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const createForm = reactive({
+  chinese_name: '',
   department: '',
   email: '',
   employee_code: '',
+  /** 用工类型：不传时后端按 full_time 处理 */
+  employment_type: '' as '' | EmployeeApi.EmploymentType,
   full_name: '',
+  /** 直属上司的员工 ID；决定请假/报销审批链的第一环 */
+  line_manager_id: '',
   permission_role: 'employee' as EmployeeApi.PermissionRole,
   phone: '',
   position: '',
@@ -81,11 +88,15 @@ function permissionRoleHint(code: string) {
 function resetForm() {
   createForm.email = '';
   createForm.full_name = '';
+  createForm.chinese_name = '';
   createForm.department = '';
   createForm.phone = '';
   createForm.position = '';
   createForm.region = '';
   createForm.employee_code = '';
+  createForm.employment_type =
+    (props.employmentTypeOptions[0]?.value as EmployeeApi.EmploymentType) ?? '';
+  createForm.line_manager_id = '';
   createForm.permission_role = 'employee';
 }
 
@@ -102,10 +113,13 @@ async function submitCreate() {
     return;
   }
   const payload: EmployeeApi.EmployeeCreate = {
+    chinese_name: createForm.chinese_name || undefined,
     department: createForm.department,
     email: createForm.email,
     employee_code: createForm.employee_code || undefined,
+    employment_type: createForm.employment_type || undefined,
     full_name: createForm.full_name,
+    line_manager_id: createForm.line_manager_id || undefined,
     permission_role: createForm.permission_role,
     phone: createForm.phone || undefined,
     position: createForm.position || undefined,
@@ -150,6 +164,14 @@ defineExpose({ open });
         <ElInput
           v-model="createForm.full_name"
           :placeholder="t('page.employees.createDrawer.fullNamePlaceholder')"
+          class="w-full"
+        />
+      </ElFormItem>
+      <ElFormItem :label="t('page.employees.createDrawer.chineseName')">
+        <ElInput
+          v-model="createForm.chinese_name"
+          :maxlength="50"
+          :placeholder="t('page.employees.createDrawer.chineseNamePlaceholder')"
           class="w-full"
         />
       </ElFormItem>
@@ -208,6 +230,38 @@ defineExpose({ open });
         >
           <ElOption
             v-for="opt in positionOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </ElSelect>
+      </ElFormItem>
+      <ElFormItem :label="t('page.employees.createDrawer.employmentType')">
+        <ElSelect
+          v-model="createForm.employment_type"
+          :placeholder="
+            t('page.employees.createDrawer.employmentTypePlaceholder')
+          "
+          class="w-full"
+        >
+          <ElOption
+            v-for="opt in employmentTypeOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </ElSelect>
+      </ElFormItem>
+      <ElFormItem :label="t('page.employees.createDrawer.lineManager')">
+        <ElSelect
+          v-model="createForm.line_manager_id"
+          :placeholder="t('page.employees.createDrawer.lineManagerPlaceholder')"
+          class="w-full"
+          clearable
+          filterable
+        >
+          <ElOption
+            v-for="opt in lineManagerOptions"
             :key="opt.value"
             :label="opt.label"
             :value="opt.value"

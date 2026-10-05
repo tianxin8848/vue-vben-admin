@@ -38,10 +38,12 @@ const {
   allEmployees,
   columnVisibility,
   departmentOptions,
+  employmentTypeCodes,
   fetchSystemSettings,
   getInitialPasswordStatus,
   invalidateEmployees,
   isManager,
+  loadEmployees,
   moduleOptions,
   openPermissionModal,
   openResetModal,
@@ -55,6 +57,31 @@ const {
   showPermissionModal,
   showResetModal,
 } = useEmployeeData();
+
+/** 用工类型下拉：code 由后端 meta 下发，展示名走 i18n（缺 key 时回退 code 本身） */
+const employmentTypeOptions = computed(() =>
+  employmentTypeCodes.value.map((code) => {
+    const key = `page.employees.employmentType.${code}`;
+    const text = t(key);
+    return { label: text === key ? code : text, value: code };
+  }),
+);
+
+/** 直属上司候选：在职员工的 id →「中文名/姓名（工号）」，按名称排序 */
+const lineManagerOptions = computed(() =>
+  allEmployees.value
+    .filter((e) => e.is_active)
+    .map((e) => ({
+      label: [
+        e.chinese_name || e.full_name || e.username,
+        e.employee_code ? `(${e.employee_code})` : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
+      value: e.id,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+);
 
 // ─── 筛选表单配置（Search / Reset / Collapse 由 BasicTable 内置） ────────────
 const formOptions: VbenFormProps = {
@@ -190,7 +217,9 @@ async function refreshEmployees() {
 // ─── 新增员工 ────────────────────────────────────────────────────────────────
 const createDrawerRef = ref<InstanceType<typeof CreateEmployeeDrawer>>();
 
-function openCreateDrawer() {
+/** 打开前先保证员工列表已缓存，「直属上司」下拉才有候选 */
+async function openCreateDrawer() {
+  await loadEmployees();
   createDrawerRef.value?.open();
 }
 
@@ -413,6 +442,8 @@ onMounted(async () => {
     <CreateEmployeeDrawer
       ref="createDrawerRef"
       :department-options="departmentOptions"
+      :employment-type-options="employmentTypeOptions"
+      :line-manager-options="lineManagerOptions"
       :permission-role-options="permissionRoleOptions"
       :position-options="positionOptions"
       :region-options="regionOptions"

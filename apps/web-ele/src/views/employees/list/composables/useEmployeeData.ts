@@ -4,7 +4,7 @@ import type { EmployeeApi } from '#/api';
 
 import { reactive, ref } from 'vue';
 
-import { getEmployeeManageMetaApi } from '#/api';
+import { getEmployeeManageMetaApi, getEmployeesApi } from '#/api';
 
 import { defaultColumnVisibility } from '../data';
 
@@ -23,6 +23,8 @@ export function useEmployeeData() {
   >([]);
   /** 可分配的模块清单（权限弹窗的勾选来源） */
   const moduleOptions = ref<EmployeeApi.EmployeeManageMeta['modules']>([]);
+  /** 可选用工类型 code 清单（后端 EMPLOYMENT_TYPES），展示名由 i18n 映射 */
+  const employmentTypeCodes = ref<string[]>([]);
 
   // ─── 员工列表缓存（前端筛选 / 分页基于此数据） ───────────────────────────
   const allEmployees = ref<EmployeeApi.EmployeeResponse[]>([]);
@@ -48,6 +50,17 @@ export function useEmployeeData() {
     allEmployees.value = [];
   }
 
+  /**
+   * 确保员工列表已缓存，并返回它。
+   * 「直属上司」下拉需要 id → 姓名 的映射，而创建/编辑入口可能在列表首次取数之前打开。
+   */
+  async function loadEmployees() {
+    if (allEmployees.value.length === 0) {
+      allEmployees.value = await getEmployeesApi();
+    }
+    return allEmployees.value;
+  }
+
   function openResetModal(id: string) {
     resetEmployeeId.value = id;
     resetResult.value = null;
@@ -71,6 +84,7 @@ export function useEmployeeData() {
       }));
       permissionRoleOptions.value = meta.permission_roles || [];
       moduleOptions.value = meta.modules || [];
+      employmentTypeCodes.value = meta.employment_types || [];
     } catch {
       // 获取系统设置失败时保持空选项
     }
@@ -94,10 +108,12 @@ export function useEmployeeData() {
     allEmployees,
     columnVisibility,
     departmentOptions,
+    employmentTypeCodes,
     fetchSystemSettings,
     getInitialPasswordStatus,
     invalidateEmployees,
     isManager,
+    loadEmployees,
     moduleOptions,
     openPermissionModal,
     openResetModal,

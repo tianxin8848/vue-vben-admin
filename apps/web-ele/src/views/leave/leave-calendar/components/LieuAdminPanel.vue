@@ -172,13 +172,12 @@ async function grant(daysToAdd: number) {
   try {
     const trimmed = remarks.value.trim();
     const params: LeaveRequestApi.AddLieuLeaveGrantParams = {
-      employee_id: employeeId.value,
       work_date: workDate.value,
       days: daysToAdd,
       year,
     };
     if (trimmed) params.remarks = trimmed;
-    const data = await addLieuLeaveGrantApi(params);
+    const data = await addLieuLeaveGrantApi(employeeId.value, params);
     summary.value = data;
     remarks.value = '';
     await refreshGrants();

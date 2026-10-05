@@ -76,8 +76,15 @@ export namespace LeaveRequestApi {
     year?: null | number;
   }
 
-  /** 年假汇总响应 */
+  /**
+   * 年假汇总响应（GET /me/leave-balance/annual）。
+   *
+   * `usable_from` 改为可空：后端新口径下并非所有用工类型/地区都有「起算日」。
+   * `annual_accrual_days` 为当年按天累计（accrual）出的年假天数，用于解释
+   * 「应享 entitlement」与「已可申请 available」之间的差额。
+   */
   export interface AnnualLeaveSummary {
+    annual_accrual_days: number;
     annual_available_days: number;
     annual_available_raw: number;
     annual_entitlement_days: number;
@@ -88,12 +95,12 @@ export namespace LeaveRequestApi {
     carry_over_projected_days: number;
     entitlement_days: number;
     region: null | string;
-    usable_from: string;
+    usable_from: null | string;
     used_days: number;
     year: number;
   }
 
-  /** 结转假期汇总响应（/me/leave-requests/bought-forward/summary） */
+  /** 结转假期汇总响应（GET /me/leave-balance/bought-forward） */
   export interface BoughtForwardSummary {
     carry_over_available_days: number;
     carry_over_granted_days: number;
@@ -165,14 +172,14 @@ export namespace LeaveRequestApi {
     regions: string[];
   }
 
-  /** 请假类型目录项（/me/leave-requests/leave-types） */
+  /** 请假类型目录项（GET /leave-types） */
   export interface LeaveTypeOption {
     code: string;
     label: string;
   }
 
   /**
-   * 请假交接人选项（/me/leave-requests/handover-options）。
+   * 请假交接人选项（GET /me/leave-handover-options）。
    *
    * 后端返回**全部用户**（不止同部门），且包含已停用员工与系统管理员，
    * 因此 `is_active === false` 需要在选项文案上标注「停用」以示区分。
@@ -200,7 +207,7 @@ export namespace LeaveRequestApi {
     year: number;
   }
 
-  /** 单条调休发放明细（GET /leave-requests/lieu-leave/grants） */
+  /** 单条调休发放明细（GET /employees/{id}/leave-balance/lieu/grants） */
   export interface LieuLeaveGrantResponse {
     created_at: null | string;
     days: number;
@@ -213,10 +220,12 @@ export namespace LeaveRequestApi {
     work_date: null | string;
   }
 
-  /** 增加调休额度请求体 */
+  /**
+   * 增加调休额度请求体（POST /employees/{employee_id}/leave-balance/lieu/grants）。
+   *
+   * 员工 ID 已改由**路径参数**承载，请求体里不再有 `employee_id`。
+   */
   export interface AddLieuLeaveGrantParams {
-    /** 员工 ID */
-    employee_id: string;
     /** 加班日（调休来源日），格式 YYYY-MM-DD，必填 */
     work_date: string;
     days: number;
@@ -257,23 +266,22 @@ export async function getMyApprovalRecordsApi() {
   );
 }
 
-/** 获取年假汇总（year 必填） */
+/** 获取年假汇总（year 必填；GET /me/leave-balance/annual） */
 export async function getAnnualLeaveSummaryApi(year: number) {
   return requestClient.get<LeaveRequestApi.AnnualLeaveSummary>(
-    '/me/leave-requests/annual-leave/summary',
+    '/me/leave-balance/annual',
     { params: { year } },
   );
 }
 
-/** 获取请假日历（year 必填） */
+/** 获取请假日历（year 必填；GET /leave-calendar） */
 export async function getLeaveCalendarApi(
   year: number,
   params?: Omit<LeaveRequestApi.ListParams, 'year'>,
 ) {
-  return requestClient.get<LeaveRequestApi.LeaveCalendar>(
-    '/leave-requests/calendar',
-    { params: { year, ...params } },
-  );
+  return requestClient.get<LeaveRequestApi.LeaveCalendar>('/leave-calendar', {
+    params: { year, ...params },
+  });
 }
 
 /** 创建请假申请（病假时通过 FormData 上传病假证明） */
@@ -310,10 +318,10 @@ export async function getLeaveRequestApi(id: string) {
   );
 }
 
-/** 获取请假日历页筛选下拉数据（地区/部门/岗位/员工） */
+/** 获取请假日历页筛选下拉数据（地区/部门/岗位/员工；GET /leave-calendar/meta） */
 export async function getLeaveCalendarMetaApi() {
   return requestClient.get<LeaveRequestApi.LeaveRequestMeta>(
-    '/leave-requests/calendar/meta',
+    '/leave-calendar/meta',
   );
 }
 
@@ -346,24 +354,22 @@ export async function withdrawLeaveRequestApi(
   );
 }
 
-// ─── 今日后端新增接口 ────────────────────────────────────────────────────────
+// ─── 请假类型 / 交接人 / 调休额度 ─────────────────────────────────────────────
 
-/** 当前用户可用请假类型目录 */
+/** 当前用户可用请假类型目录（GET /leave-types） */
 export async function getMyLeaveTypesApi() {
-  return requestClient.get<LeaveRequestApi.LeaveTypeOption[]>(
-    '/me/leave-requests/leave-types',
-  );
+  return requestClient.get<LeaveRequestApi.LeaveTypeOption[]>('/leave-types');
 }
 
 /**
- * 请假交接人选项（全部用户，含停用与系统管理员）。
+ * 请假交接人选项（GET /me/leave-handover-options，全部用户，含停用与系统管理员）。
  *
  * 后端按 `full_name → username` 排序；提交时 `handover_to` 传的是
  * `full_name || username` 的文本（后端字段为字符串，不是 ID）。
  */
 export async function getMyLeaveHandoverOptionsApi() {
   return requestClient.get<LeaveRequestApi.LeaveHandoverOption[]>(
-    '/me/leave-requests/handover-options',
+    '/me/leave-handover-options',
   );
 }
 
@@ -374,44 +380,49 @@ export async function getMyDepartmentLeaveRequestsApi() {
   );
 }
 
-/** 当前用户指定年份的调休汇总 */
+/** 当前用户指定年份的调休汇总（GET /me/leave-balance/lieu） */
 export async function getMyLieuLeaveSummaryApi(year: number) {
   return requestClient.get<LeaveRequestApi.LieuLeaveSummary>(
-    '/me/leave-requests/lieu-leave/summary',
+    '/me/leave-balance/lieu',
     { params: { year } },
   );
 }
 
-/** 当前用户指定年份的结转假期汇总（carry_over） */
+/** 当前用户指定年份的结转假期汇总（carry_over；GET /me/leave-balance/bought-forward） */
 export async function getBoughtForwardSummaryApi(year: number) {
   return requestClient.get<LeaveRequestApi.BoughtForwardSummary>(
-    '/me/leave-requests/bought-forward/summary',
+    '/me/leave-balance/bought-forward',
     { params: { year } },
   );
 }
 
-/** 指定员工、年份的调休汇总（需 leave_calendar 权限） */
+/** 指定员工、年份的调休汇总（GET /employees/{id}/leave-balance/lieu，需 leave_calendar 权限） */
 export async function getLieuLeaveSummaryApi(employeeId: string, year: number) {
   return requestClient.get<LeaveRequestApi.LieuLeaveSummary>(
-    '/leave-requests/lieu-leave/summary',
-    { params: { employee_id: employeeId, year } },
+    `/employees/${employeeId}/leave-balance/lieu`,
+    { params: { year } },
   );
 }
 
-/** 为指定员工、年份增加调休天数（需 leave_calendar 权限） */
+/**
+ * 为指定员工、年份增加调休天数（POST /employees/{id}/leave-balance/lieu/grants）。
+ *
+ * 员工 ID 走路径参数，请求体只带 work_date / days / remarks。
+ */
 export async function addLieuLeaveGrantApi(
+  employeeId: string,
   data: LeaveRequestApi.AddLieuLeaveGrantParams,
 ) {
   return requestClient.post<LeaveRequestApi.LieuLeaveSummary>(
-    '/leave-requests/lieu-leave/grants',
+    `/employees/${employeeId}/leave-balance/lieu/grants`,
     data,
   );
 }
 
-/** 列出指定员工、年份的调休发放明细（含加班日与备注，需 leave_calendar 权限） */
+/** 列出指定员工、年份的调休发放明细（GET /employees/{id}/leave-balance/lieu/grants，需 leave_calendar 权限） */
 export async function listLieuLeaveGrantsApi(employeeId: string, year: number) {
   return requestClient.get<LeaveRequestApi.LieuLeaveGrantResponse[]>(
-    '/leave-requests/lieu-leave/grants',
-    { params: { employee_id: employeeId, year } },
+    `/employees/${employeeId}/leave-balance/lieu/grants`,
+    { params: { year } },
   );
 }

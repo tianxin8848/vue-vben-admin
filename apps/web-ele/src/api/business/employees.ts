@@ -29,21 +29,45 @@ export namespace EmployeeApi {
   /** 权限角色 code，对齐后端 `Literal["employee", "administrator"]` */
   export type PermissionRole = 'administrator' | 'employee';
 
+  /**
+   * 用工类型。对齐后端 `app/core/employment.py::EmploymentType`，
+   * 未填写时后端按 `full_time` 归一；只有 `full_time` 可申请年假，
+   * `full_time` / `probation` 计入年假额度。
+   */
+  export type EmploymentType =
+    | 'full_time'
+    | 'intern'
+    | 'part_time'
+    | 'probation';
+
+  /**
+   * 证件类型。后端 `app/core/national_id.py` 的应用层枚举，
+   * 写成 `Annotated[Literal[...], BeforeValidator]`：服务端额外接受
+   * `HKID` / `PRC ID` 等别名，传其它值一律 422。
+   */
+  export type IdKind = 'hkid' | 'prc_id';
+
   /** 员工响应（列表 & 通用） */
   export interface EmployeeResponse {
     access_control_id: null | string;
     avatar_id: null | string;
     avatar_name: null | string;
     avatar_url: null | string;
+    /** 中文姓名（可选，非中文员工为空） */
+    chinese_name: null | string;
     created_at: null | string;
     department: null | string;
     email: string;
     employee_code: null | string;
+    /** 用工类型；后端未存值时归一为 `full_time` */
+    employment_type: EmploymentType;
     full_name: null | string;
     hire_date: null | string;
     id: string;
     is_active: boolean;
     is_initial_password: number;
+    /** 直属上司的**员工 ID**（非姓名）；创建/更新时后端会校验该用户存在且非内置 admin */
+    line_manager_id: null | string;
     module_permissions: ModulePermission[];
     phone: null | string;
     position: null | string;
@@ -60,6 +84,8 @@ export namespace EmployeeApi {
     access_control_id: null | string;
     avatar_name: null | string;
     avatar_url: null | string;
+    /** 中文姓名（可选，非中文员工为空） */
+    chinese_name: null | string;
     department: null | string;
     email: string;
     employee_code: null | string;
@@ -95,11 +121,6 @@ export namespace EmployeeApi {
     birth_date: null | string;
     /** 当前登录者是否可以写入/查看完整银行账号（本人或有 bank_data 模块权限） */
     can_reveal_bank_account: boolean;
-    /**
-     * 中文姓名（后端等于 employee.full_name）。
-     * 可编辑性由自助可编辑清单中的 `full_name` 决定，不是 `chinese_full_name`。
-     */
-    chinese_full_name: null | string;
     created_at: null | string;
     emergency_contact_name: null | string;
     emergency_contact_phone: null | string;
@@ -109,14 +130,17 @@ export namespace EmployeeApi {
     english_name: null | string;
     gender: null | string;
     hire_date: null | string;
-    /** 后端把 national_id 与 hkid_number 互为镜像返回 */
+    /**
+     * @deprecated 后端已弃用，读写都请用 `national_id`（服务端仍会把两者互为镜像返回）。
+     */
     hkid_number: null | string;
     /** 证件类型：`hkid`（香港身份证）/ `prc_id`（内地居民身份证） */
-    id_kind: null | string;
+    id_kind: IdKind | null;
     last_employment_date: null | string;
     /** 已填写即为「已离职」，PATCH 时不可清空，须走復職通道 */
     last_working_date: null | string;
     marital_status: null | string;
+    /** 证件号码（规范字段）；后端会把 `hkid_number` 与本字段互为镜像 */
     national_id: null | string;
     passport_number: null | string;
     personal_email: null | string;
@@ -126,11 +150,17 @@ export namespace EmployeeApi {
 
   /** 创建员工请求参数 */
   export interface EmployeeCreate {
+    /** 中文姓名（≤50 字，可选；后端对非中文员工允许留空） */
+    chinese_name?: null | string;
     department: string;
     email: string;
     employee_code?: null | string;
+    /** 用工类型；不传按 `full_time` 处理 */
+    employment_type?: EmploymentType | null;
     full_name: string;
     is_active?: boolean;
+    /** 直属上司的员工 ID；不能是自己，也不能是内置 admin */
+    line_manager_id?: null | string;
     module_permissions?: ModulePermission[];
     phone?: null | string;
     position?: null | string;
@@ -149,10 +179,25 @@ export namespace EmployeeApi {
 
   /** 更新基本信息请求参数（PATCH /me/basic-info 与 /employees/{id}/basic-info 共用） */
   export interface EmployeeBasicInfoUpdate {
+    /**
+     * 中文姓名（≤50 字）。传空串即清空。
+     *
+     * 与 `full_name`（姓名/法定姓名）是两个字段：外籍员工可只填 `full_name`。
+     * 自助修改走 `/me/basic-info` 时受 `employee_self_editable_fields` 门控，
+     * 该 code 默认**未开通**，未开通还提交会 400。
+     */
+    chinese_name?: null | string;
     department?: null | string;
     email?: null | string;
     employee_code?: null | string;
+    /**
+     * 用工类型。与 `line_manager_id` 一样属于 **HR 专属字段**：
+     * 出现在 `HR_ONLY_SELF_EDIT_FIELDS` 里，自助 `/me/basic-info` 提交会被 403。
+     */
+    employment_type?: EmploymentType | null;
     full_name?: null | string;
+    /** 直属上司的员工 ID（非姓名）；不能是自己或内置 admin */
+    line_manager_id?: null | string;
     phone?: null | string;
     position?: null | string;
     region?: null | string;
@@ -166,8 +211,6 @@ export namespace EmployeeApi {
     bank_account_number?: null | string;
     bank_name?: null | string;
     birth_date?: null | string;
-    /** 中文姓名（2–50 字）。后端写入 employee.full_name。 */
-    chinese_full_name?: null | string;
     emergency_contact_name?: null | string;
     emergency_contact_phone?: null | string;
     emergency_contact_relationship?: null | string;
@@ -175,13 +218,17 @@ export namespace EmployeeApi {
     english_name?: null | string;
     gender?: null | string;
     hire_date?: null | string;
+    /**
+     * @deprecated 后端已弃用（仍接受并原样回显）。请改传 `national_id`。
+     */
     hkid_number?: null | string;
-    /** `hkid` | `prc_id`；与 hkid_number/national_id 一起决定证件号码的校验规则 */
-    id_kind?: null | string;
+    /** `hkid` | `prc_id`；与 national_id 一起决定证件号码的校验规则，传别的值 422 */
+    id_kind?: IdKind | null;
     last_employment_date?: null | string;
     /** 填写即自动停用该员工账号；已填写时不可通过本接口清空 */
     last_working_date?: null | string;
     marital_status?: null | string;
+    /** 证件号码（规范字段）。已设 `id_kind` 时后端会做 HKID / GB 11643 校验位校验 */
     national_id?: null | string;
     passport_number?: null | string;
     personal_email?: null | string;
@@ -229,9 +276,11 @@ export namespace EmployeeApi {
     username: string;
   }
 
-  /** 员工管理页筛选下拉数据（地区/部门/岗位/模块清单/权限角色） */
+  /** 员工管理页筛选下拉数据（地区/部门/岗位/模块清单/权限角色/用工类型） */
   export interface EmployeeManageMeta {
     departments: string[];
+    /** 可选用工类型 code 清单（后端 `EMPLOYMENT_TYPES`），展示名由前端 i18n 映射 */
+    employment_types: string[];
     modules: { module_code: string; module_name: string }[];
     /** 权限角色模板目录：创建员工时按角色一键开通模块 */
     permission_roles: PermissionRoleOption[];

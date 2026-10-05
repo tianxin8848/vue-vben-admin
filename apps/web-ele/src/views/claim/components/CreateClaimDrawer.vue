@@ -20,6 +20,12 @@ import { useVbenForm } from '#/adapter/form';
 import { createClaimApi } from '#/api';
 import { handleActionError, toastSuccess, toastWarning } from '#/utils/message';
 
+import {
+  CLAIM_ATTACHMENT_ACCEPT,
+  MAX_CLAIM_ATTACHMENTS,
+  useClaimAttachments,
+} from '../composables/useClaimAttachments';
+
 const props = defineProps<{
   currencyOptions: ClaimApi.ClaimCurrencyOption[];
   reasonOptions: ClaimApi.ClaimReasonOption[];
@@ -33,7 +39,6 @@ const { t } = useI18n();
 
 const createForm = reactive({
   amount: 0,
-  attachmentFile: null as File | null,
   currency: 'HKD',
   description: '',
   invoice_date: '' as string,
@@ -41,7 +46,14 @@ const createForm = reactive({
   reason_code: '',
 });
 
-const uploadRef = ref<any>(null);
+/**
+ * 附件：一单一笔费用，同一笔可带多个附件（最多 20 个）。
+ * 每个附件单独标注是「发票」还是「支持文件」，选择顺序即提交顺序。
+ */
+const { addFile, count, items, removeItem, reset, toPayload } =
+  useClaimAttachments();
+
+const uploadRef = ref<InstanceType<typeof ElUpload>>();
 
 const selectedCurrencyRate = computed(() => {
   const found = props.currencyOptions.find(
@@ -50,16 +62,20 @@ const selectedCurrencyRate = computed(() => {
   return found?.to_hkd_rate ?? 1;
 });
 
-const estimatedHkd = computed(() => {
-  return Math.round(createForm.amount * selectedCurrencyRate.value * 100) / 100;
-});
+/** 非 HKD 时展示折算金额（后端会按同日汇率重算） */
+const estimatedHkd = computed(
+  () =>
+    Math.round(
+      Number(createForm.amount || 0) * selectedCurrencyRate.value * 100,
+    ) / 100,
+);
 
 const [CreateForm] = useVbenForm(
   reactive({
     layout: 'vertical',
     showDefaultActions: false,
     wrapperClass: 'grid-cols-2 gap-x-4',
-    schema: computed(() => [
+    schema: [
       {
         component: 'Input',
         fieldName: 'reason_code',
@@ -121,7 +137,7 @@ const [CreateForm] = useVbenForm(
         rules: 'required',
         formItemClass: 'col-span-2',
       },
-    ]),
+    ],
   }),
 );
 
@@ -134,17 +150,30 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
 
 function resetCreateForm() {
   createForm.amount = 0;
-  createForm.attachmentFile = null;
   createForm.currency = props.currencyOptions[0]?.currency_code || 'HKD';
   createForm.description = '';
   createForm.invoice_date = '';
   createForm.invoice_no = '';
   createForm.reason_code = '';
+  reset();
   uploadRef.value?.clearFiles();
 }
 
-function handleFileChange(uploadFile: any) {
-  createForm.attachmentFile = uploadFile.raw || null;
+/**
+ * ElUpload 只负责「选文件」，文件列表由本组件渲染（要逐个选附件类型）。
+ * 因此 `show-file-list` 关闭，删除也走自定义按钮，不会触发 remove 事件。
+ */
+function handleSelect(uploadFile: { raw?: File }) {
+  const raw = uploadFile?.raw;
+  if (raw instanceof File) {
+    addFile(raw);
+  }
+}
+
+/** 无缩略图时的占位文字：取扩展名（PDF / OFD / XML …） */
+function attachmentBadge(fileName: string) {
+  const index = fileName.lastIndexOf('.');
+  return index === -1 ? 'FILE' : fileName.slice(index + 1).toUpperCase();
 }
 
 async function submitCreate() {
@@ -152,33 +181,39 @@ async function submitCreate() {
     toastWarning(t('page.claim.messages.selectReason'));
     return;
   }
-  if (createForm.amount <= 0) {
-    toastWarning(t('page.claim.messages.amountPositive'));
-    return;
-  }
   if (!createForm.invoice_date) {
     toastWarning(t('page.claim.messages.invoiceDateRequired'));
     return;
   }
-  if (!createForm.attachmentFile) {
+  if (count.value === 0) {
     toastWarning(t('page.claim.messages.uploadAttachment'));
+    return;
+  }
+  if (Number(createForm.amount) <= 0) {
+    toastWarning(t('page.claim.messages.amountPositive'));
     return;
   }
 
   createDrawerApi.lock(true);
   try {
     const fd = new FormData();
+    // 单行金额 + 多个附件：后端把全部附件都挂在这一笔上
     fd.append('reason_code', createForm.reason_code);
-    fd.append('amount', String(createForm.amount));
-    fd.append('currency', createForm.currency);
     fd.append('invoice_date', createForm.invoice_date);
+    fd.append('amount', String(Number(createForm.amount) || 0));
+    fd.append('currency', createForm.currency);
+    // 可选字段不传即由后端补 null，不要 append 空串
     if (createForm.description) {
       fd.append('description', createForm.description);
     }
     if (createForm.invoice_no) {
       fd.append('invoice_no', createForm.invoice_no);
     }
-    fd.append('attachment', createForm.attachmentFile);
+    // 附件按选择顺序 append，attachment_kind 必须与文件数一一对应
+    for (const { file, kind } of toPayload()) {
+      fd.append('attachment', file);
+      fd.append('attachment_kind', kind);
+    }
     await createClaimApi(fd);
     toastSuccess(t('page.claim.messages.draftCreated'));
     createDrawerApi.close();
@@ -226,6 +261,18 @@ defineExpose({ open });
           :precision="2"
           :step="1"
           class="w-full"
+          :placeholder="$t('page.claim.form.amountPlaceholder')"
+        />
+      </template>
+      <template #invoice_date>
+        <ElDatePicker
+          v-model="createForm.invoice_date"
+          editable
+          format="DD-MM-YYYY"
+          type="date"
+          :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
+          value-format="YYYY-MM-DD"
+          style="width: 100%"
         />
       </template>
       <template #currency>
@@ -244,17 +291,6 @@ defineExpose({ open });
           ≈ HKD {{ estimatedHkd.toFixed(2) }}
         </span>
       </template>
-      <template #invoice_date>
-        <ElDatePicker
-          v-model="createForm.invoice_date"
-          editable
-          format="DD-MM-YYYY"
-          type="date"
-          :placeholder="$t('page.claim.form.invoiceDatePlaceholder')"
-          value-format="YYYY-MM-DD"
-          style="width: 100%"
-        />
-      </template>
       <template #invoice_no>
         <ElInput
           v-model="createForm.invoice_no"
@@ -272,20 +308,76 @@ defineExpose({ open });
         />
       </template>
       <template #attachment>
-        <ElUpload
-          ref="uploadRef"
-          :auto-upload="false"
-          :limit="1"
-          accept="image/*,.pdf"
-          @change="handleFileChange"
-        >
-          <ElButton>{{ $t('page.claim.buttons.selectFile') }}</ElButton>
-          <template #tip>
-            <span class="block text-xs text-muted-foreground">
-              {{ $t('page.claim.form.attachmentTip') }}
+        <div class="flex w-full flex-col gap-2">
+          <div class="flex items-center gap-3">
+            <ElUpload
+              ref="uploadRef"
+              :accept="CLAIM_ATTACHMENT_ACCEPT"
+              :auto-upload="false"
+              :show-file-list="false"
+              multiple
+              @change="handleSelect"
+            >
+              <ElButton>{{ $t('page.claim.buttons.selectFile') }}</ElButton>
+            </ElUpload>
+            <span class="text-xs text-muted-foreground">
+              {{
+                $t('page.claim.form.attachmentCount', {
+                  count,
+                  max: MAX_CLAIM_ATTACHMENTS,
+                })
+              }}
             </span>
-          </template>
-        </ElUpload>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            {{ $t('page.claim.form.attachmentTip') }}
+          </p>
+
+          <div v-if="items.length" class="flex flex-col gap-2">
+            <div
+              v-for="item in items"
+              :key="item.key"
+              class="flex items-center gap-3 rounded border border-solid border-[var(--el-border-color)] p-2"
+            >
+              <img
+                v-if="item.previewUrl"
+                :src="item.previewUrl"
+                alt=""
+                class="h-10 w-10 shrink-0 rounded object-cover"
+              />
+              <span
+                v-else
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[var(--el-fill-color-light)] text-[10px] leading-none text-muted-foreground"
+              >
+                {{ attachmentBadge(item.file.name) }}
+              </span>
+              <span
+                class="min-w-0 flex-1 truncate text-sm"
+                :title="item.file.name"
+              >
+                {{ item.file.name }}
+              </span>
+              <ElSelect v-model="item.kind" class="w-[110px]" size="small">
+                <ElOption
+                  :label="$t('page.claim.form.attachmentKind.invoice')"
+                  value="invoice"
+                />
+                <ElOption
+                  :label="$t('page.claim.form.attachmentKind.supporting')"
+                  value="supporting"
+                />
+              </ElSelect>
+              <ElButton
+                link
+                size="small"
+                type="danger"
+                @click="removeItem(item.key)"
+              >
+                {{ $t('page.claim.buttons.delete') }}
+              </ElButton>
+            </div>
+          </div>
+        </div>
       </template>
     </CreateForm>
   </CreateDrawer>

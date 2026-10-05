@@ -91,7 +91,17 @@
         "itemsRejectTip": "驳回时勾选需部分驳回的明细项（不勾选则全部驳回）",
         "withdrawCommentPlaceholder": "可选，填写撤回备注（最长 500 字符）",
         "optionalDescription": "可选，补充说明报销用途",
-        "attachmentTip": "支持图片或 PDF，用于报销凭证",
+        "attachmentTip": "可一次选多份单据（最多 20 个附件）。一个文件算一个附件，多页 PDF 不再按页拆分；请为每个附件标注「发票」或「支持文件」，单个附件不超过 10MB。",
+        "attachmentCount": "已选 {count}/{max} 个附件",
+        "attachmentTooMany": "同一笔费用最多上传 {count} 个附件",
+        "attachmentKind": {
+          "invoice": "发票",
+          "supporting": "支持文件"
+        },
+        "attachmentInvalidFormat": "仅支持 PDF、图片、OFD 或 XML 格式的附件",
+        "attachmentTooLarge": "单个附件不能超过 10MB",
+        "attachmentEmpty": "附件内容为空，请重新选择",
+        "amountPlaceholder": "请输入金额",
         "reasonPlaceholder": "请选择",
         "reviewCommentPlaceholder": "通过可不填；驳回必须填写原因"
       },

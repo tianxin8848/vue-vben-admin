@@ -61,7 +61,7 @@ const medicalCertificate = ref<File | null>(null);
 const isSickLeave = computed(() => form.leave_type === 'sick');
 
 // ─── 工作交接人 ──────────────────────────────────────────────────────────────
-// 选项来自后端 /me/leave-requests/handover-options：**全部用户**（不限同部门），
+// 选项来自后端 /me/leave-handover-options：**全部用户**（不限同部门），
 // 且包含已停用员工与系统管理员，故停用者需标注。
 
 const handoverOptions = ref<LeaveRequestApi.LeaveHandoverOption[]>([]);

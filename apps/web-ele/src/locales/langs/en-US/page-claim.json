@@ -1,7 +1,7 @@
 {
   "page": {
     "claim": {
-      "title": "Claim Management",
+      "title": "Claim Applications",
       "description": "Submit claims, track approval progress and view history",
       "tabs": {
         "my": "My Claims",
@@ -91,7 +91,17 @@
         "itemsRejectTip": "When rejecting, check items to partially reject (leave unchecked to reject all)",
         "withdrawCommentPlaceholder": "Optional, add a withdraw note (max 500 chars)",
         "optionalDescription": "Optional, add supporting details",
-        "attachmentTip": "Upload an image or PDF as proof of claim",
+        "attachmentTip": "Select one or more receipts (up to 20 attachments). One file counts as one attachment and a multi-page PDF is no longer split by page; tag each file as Invoice or Supporting, and keep each file under 10MB.",
+        "attachmentCount": "{count}/{max} attachments selected",
+        "attachmentTooMany": "A single claim allows at most {count} attachments",
+        "attachmentKind": {
+          "invoice": "Invoice",
+          "supporting": "Supporting"
+        },
+        "attachmentInvalidFormat": "Only PDF, image, OFD or XML attachments are supported",
+        "attachmentTooLarge": "Each attachment must not exceed 10MB",
+        "attachmentEmpty": "The attachment is empty, please select again",
+        "amountPlaceholder": "Amount",
         "reasonPlaceholder": "Please select",
         "reviewCommentPlaceholder": "Optional for approval; required for rejection"
       },
