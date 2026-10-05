@@ -98,7 +98,7 @@ function reload() {
         {{
           $t('page.employees.profileDetail.subtitle', {
             department: employee.department || '-',
-            name: employee.full_name || '-',
+            name: employee.chinese_name || employee.full_name || '-',
             username: employee.username,
           })
         }}
@@ -268,8 +268,9 @@ function reload() {
           </ElSelect>
         </ElFormItem>
         <ElFormItem :label="nationalIdLabel">
+          <!-- 规范字段是 national_id；hkid_number 后端已弃用（仅镜像回显） -->
           <ElInput
-            v-model="profileForm.hkid_number"
+            v-model="profileForm.national_id"
             clearable
             maxlength="50"
             :placeholder="$t(td('nationalIdPlaceholder'))"

@@ -8,7 +8,7 @@ export interface SelectOption {
 }
 
 /** 证件类型：香港身份证 / 内地居民身份证（与后端 app/core/national_id.py 一致） */
-export type IdKind = 'hkid' | 'prc_id';
+export type IdKind = EmployeeApi.IdKind;
 
 /**
  * 基础信息表单状态（PATCH /employees/{id}/basic-info）。
@@ -18,6 +18,7 @@ export type IdKind = 'hkid' | 'prc_id';
  * 换来一堆无意义的类型断言。
  */
 export interface BasicInfoForm {
+  chinese_name: null | string;
   department: null | string;
   email: null | string;
   employee_code: null | string;
@@ -41,11 +42,11 @@ export interface ProfileForm {
   english_name: null | string;
   gender: null | string;
   hire_date: null | string;
-  hkid_number: null | string;
   id_kind: IdKind | null;
   last_employment_date: null | string;
   last_working_date: null | string;
   marital_status: null | string;
+  national_id: null | string;
   passport_number: null | string;
   personal_email: null | string;
   work_start_date: null | string;
@@ -82,6 +83,12 @@ export const BASIC_TEXT_FIELDS: FieldConfig<keyof BasicInfoForm>[] = [
   },
   {
     fieldName: 'full_name',
+    label: 'fullName',
+    maxlength: 50,
+    placeholder: 'fullNamePlaceholder',
+  },
+  {
+    fieldName: 'chinese_name',
     label: 'chineseName',
     maxlength: 50,
     placeholder: 'chineseNamePlaceholder',
@@ -297,6 +304,7 @@ export function createBasicInfoForm(
   employee?: EmployeeApi.EmployeeResponse | null,
 ): BasicInfoForm {
   return {
+    chinese_name: text(employee?.chinese_name),
     department: text(employee?.department),
     email: text(employee?.email),
     employee_code: text(employee?.employee_code),
@@ -327,12 +335,12 @@ export function createProfileForm(
     gender: text(profile?.gender),
     hire_date: text(profile?.hire_date),
     // 后端把 national_id 与 hkid_number 互为镜像，取任一即可
-    hkid_number: text(profile?.national_id || profile?.hkid_number),
     id_kind:
       (profile?.id_kind as IdKind) || idKindForRegion(employee?.region) || null,
     last_employment_date: text(profile?.last_employment_date),
     last_working_date: text(profile?.last_working_date),
     marital_status: text(profile?.marital_status),
+    national_id: text(profile?.national_id || profile?.hkid_number),
     passport_number: text(profile?.passport_number),
     personal_email: text(profile?.personal_email),
     work_start_date: text(profile?.work_start_date),
@@ -351,12 +359,14 @@ function toText(value?: null | string): null | string {
  * - 提交 `email` 会连带把登录账号（username）改成同一个邮箱，所以这里不发 username；
  * - `employee_code` / `email` / `full_name` 后端要求非空，空着提交会 400，
  *   因此留空时干脆不带这个 key，避免「只改了电话却因为工号为空而整单失败」；
+ * - `chinese_name` 允许空串（后端空串写 None = 清空），是唯一能清空的字段；
  * - 部门/岗位/地区必须命中组织目录，否则 400。
  */
 export function buildBasicInfoPayload(
   form: BasicInfoForm,
 ): EmployeeApi.EmployeeBasicInfoUpdate {
   const payload: EmployeeApi.EmployeeBasicInfoUpdate = {
+    chinese_name: toText(form.chinese_name),
     department: toText(form.department),
     phone: toText(form.phone),
     position: toText(form.position),
@@ -388,8 +398,7 @@ export interface ProfilePayloadContext {
  * 构建 PATCH /employees/{id}/profile 的 payload。
  *
  * 注意点：
- * - 不发 `chinese_full_name`：中文姓名走 basic-info 的 `full_name`（写的是同一个
- *   employee.full_name），而 /profile 的 `chinese_full_name` 传空会直接 400。
+ * - 证件号码发 `national_id`（规范字段）；`hkid_number` 已弃用，不再发。
  * - 银行字段在无权限时一律不发，否则 403；账号里带 `*`（GET 返回的掩码）也不能回传。
  * - `last_working_date` 已存在时后端拒绝清空（要求走復職），所以留空则跳过该 key。
  */
@@ -406,9 +415,9 @@ export function buildProfilePayload(
     english_name: toText(form.english_name),
     gender: toText(form.gender),
     hire_date: toText(form.hire_date),
-    hkid_number: toText(form.hkid_number),
     last_employment_date: toText(form.last_employment_date),
     marital_status: toText(form.marital_status),
+    national_id: toText(form.national_id),
     passport_number: toText(form.passport_number),
     personal_email: toText(form.personal_email),
     work_start_date: toText(form.work_start_date),

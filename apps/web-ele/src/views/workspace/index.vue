@@ -55,7 +55,7 @@ const tabs = computed(() => buildProfileTabs(t));
 
 const headerUserInfo = computed(() => ({
   avatar: basicInfo.value?.avatar_url || '',
-  realName: basicInfo.value?.full_name || '',
+  realName: basicInfo.value?.chinese_name || basicInfo.value?.full_name || '',
   userId: basicInfo.value?.user_id?.toString() || basicInfo.value?.id || '',
   username: basicInfo.value?.username || '',
 }));
@@ -122,7 +122,9 @@ async function fetchData() {
 
 async function handleUpdateBasicInfo(values: Record<string, any>) {
   try {
-    await updateMyBasicInfoApi(buildBasicUpdatePayload(values));
+    await updateMyBasicInfoApi(
+      buildBasicUpdatePayload(values, profileMeta.value),
+    );
     toastSuccess(t('page.workspace.profilePage.basicUpdateSuccess'));
     await fetchData();
   } catch (error) {
