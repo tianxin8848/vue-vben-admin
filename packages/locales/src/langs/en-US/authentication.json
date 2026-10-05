@@ -60,7 +60,7 @@
   "currentPassword": "Current Password",
   "currentPasswordTip": "Please enter current password",
   "newPassword": "New Password",
-  "newPasswordTip": "Please enter new password (at least 6 characters)",
+  "newPasswordTip": "Please enter new password (at least 12 characters)",
   "changeInitialPassword": "Change Initial Password",
   "changeInitialPasswordSubtitle": "An initial password is detected. For account security, please change your password before continuing.",
   "confirmChange": "Confirm Change",

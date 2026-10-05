@@ -1,14 +1,21 @@
 <script setup lang="ts">
+import type { PasswordRequirement } from './types';
+
 import { ref, useSlots } from 'vue';
 
 import { Eye, EyeOff } from '@vben-core/icons';
 import { cn } from '@vben-core/shared/utils';
 
 import { Input } from '../../ui';
+import PasswordRequirements from './password-requirements.vue';
 import PasswordStrength from './password-strength.vue';
 
 interface Props {
   class?: any;
+  /**
+   * 密码要求清单，输入时逐条判断并实时提示（满足变绿打勾）
+   */
+  passwordRequirements?: PasswordRequirement[];
   /**
    * 是否显示密码强度
    */
@@ -42,6 +49,10 @@ const show = ref(false);
         <slot name="strengthText"> </slot>
       </p>
     </template>
+    <PasswordRequirements
+      :password="modelValue"
+      :requirements="passwordRequirements"
+    />
     <div
       :class="{
         'top-3': !!passwordStrength,

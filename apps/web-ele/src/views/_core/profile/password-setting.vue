@@ -7,8 +7,15 @@ import { ProfilePasswordSetting, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { toastSuccess } from '#/utils/message';
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_PATTERNS,
+  passwordMessages,
+  passwordRequirements,
+} from '#/utils/password-policy';
 
 const formSchema = computed((): VbenFormSchema[] => {
+  const messages = passwordMessages();
   return [
     {
       fieldName: 'oldPassword',
@@ -25,14 +32,15 @@ const formSchema = computed((): VbenFormSchema[] => {
       description: $t('profile.passwordHint'),
       componentProps: {
         passwordStrength: true,
+        passwordRequirements: passwordRequirements(),
         placeholder: $t('profile.enterNewPassword'),
       },
       rules: z
-        .string({ required_error: $t('profile.passwordRequired') })
-        .min(8, { message: $t('profile.passwordTooShort') })
-        .regex(/[a-z]/, { message: $t('profile.passwordNeedLowercase') })
-        .regex(/[A-Z]/, { message: $t('profile.passwordNeedUppercase') })
-        .regex(/[^A-Za-z0-9]/, { message: $t('profile.passwordNeedSpecial') }),
+        .string({ required_error: messages.required })
+        .min(PASSWORD_MIN_LENGTH, { message: messages.tooShort })
+        .regex(PASSWORD_PATTERNS.lowercase, { message: messages.lowercase })
+        .regex(PASSWORD_PATTERNS.uppercase, { message: messages.uppercase })
+        .regex(PASSWORD_PATTERNS.special, { message: messages.special }),
     },
     {
       fieldName: 'confirmPassword',

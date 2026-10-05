@@ -12,6 +12,12 @@ import { useVbenForm, z } from '#/adapter/form';
 import { changePasswordApi } from '#/api';
 import { useAuthStore } from '#/store';
 import { toastSuccess } from '#/utils/message';
+import {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_PATTERNS,
+  passwordMessages,
+  passwordRequirements,
+} from '#/utils/password-policy';
 
 defineOptions({ name: 'ChangeInitialPassword' });
 
@@ -21,6 +27,7 @@ const userStore = useUserStore();
 const loading = ref(false);
 
 const formSchema = computed((): VbenFormSchema[] => {
+  const messages = passwordMessages();
   return [
     {
       component: 'VbenInputPassword',
@@ -37,13 +44,17 @@ const formSchema = computed((): VbenFormSchema[] => {
       component: 'VbenInputPassword',
       componentProps: {
         passwordStrength: true,
+        passwordRequirements: passwordRequirements(),
         placeholder: $t('authentication.newPasswordTip'),
       },
       fieldName: 'new_password',
       label: $t('authentication.newPassword'),
       rules: z
-        .string()
-        .min(6, { message: $t('authentication.newPasswordTip') }),
+        .string({ required_error: messages.required })
+        .min(PASSWORD_MIN_LENGTH, { message: messages.tooShort })
+        .regex(PASSWORD_PATTERNS.lowercase, { message: messages.lowercase })
+        .regex(PASSWORD_PATTERNS.uppercase, { message: messages.uppercase })
+        .regex(PASSWORD_PATTERNS.special, { message: messages.special }),
     },
     {
       component: 'VbenInputPassword',

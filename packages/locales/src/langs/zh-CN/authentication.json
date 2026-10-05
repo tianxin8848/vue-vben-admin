@@ -60,7 +60,7 @@
   "currentPassword": "当前密码",
   "currentPasswordTip": "请输入当前密码",
   "newPassword": "新密码",
-  "newPasswordTip": "请输入新密码（至少6位）",
+  "newPasswordTip": "请输入新密码（至少12位）",
   "changeInitialPassword": "修改初始密码",
   "changeInitialPasswordSubtitle": "检测到您正在使用初始密码，为了账户安全，请先修改密码后再继续使用系统。",
   "confirmChange": "确认修改",
