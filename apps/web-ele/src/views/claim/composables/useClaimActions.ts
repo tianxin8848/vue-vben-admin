@@ -105,15 +105,15 @@ export function useClaimActions() {
     }
   }
 
-  /** 批量提交草稿（多条 draft 聚合为一条 pending） */
-  async function handleSubmitBatch(itemIds: string[]) {
-    if (itemIds.length === 0) {
+  /** 批量提交草稿（多条 draft 聚合为一条 pending）；draftIds 为草稿报销 id */
+  async function handleSubmitBatch(draftIds: string[]) {
+    if (draftIds.length === 0) {
       toastWarning(t('page.claim.messages.selectDraftFirst'));
       return false;
     }
     const confirmed = await confirmAction({
       message: t('page.claim.messages.submitBatchConfirm', {
-        count: itemIds.length,
+        count: draftIds.length,
       }),
       title: t('page.claim.buttons.batchSubmit'),
     });
@@ -121,7 +121,7 @@ export function useClaimActions() {
 
     loading.value = true;
     try {
-      await submitClaimBatchApi(itemIds);
+      await submitClaimBatchApi(draftIds);
       toastSuccess(t('page.claim.messages.batchSubmitSuccess'));
       return true;
     } catch (error) {

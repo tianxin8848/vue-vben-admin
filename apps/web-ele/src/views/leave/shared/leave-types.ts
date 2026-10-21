@@ -11,6 +11,14 @@ import { getSystemSettingsApi } from '#/api';
 export const leaveTypeLabelOverride = ref<Record<string, string>>({});
 
 /**
+ * 结转年假的后端规范 code。后端 10-05 把 `bought_forward` 更名为 `brought_forward`
+ * （目录 normalize 会改写，但**历史单据不迁库**，仍带旧 code）。
+ * 目录接口只返回新 code，故这里补一条旧 code 别名，避免历史记录显示裸 code。
+ */
+const BROUGHT_FORWARD_CODE = 'brought_forward';
+const LEGACY_BROUGHT_FORWARD_CODE = 'bought_forward';
+
+/**
  * 请假类型下拉选项（{label, value}，label 为接口返回的直接显示文本）。
  */
 export const leaveTypeOptionList = ref<Array<{ label: string; value: string }>>(
@@ -53,6 +61,10 @@ export async function loadLeaveTypeLabels() {
       map[item.code] = item.label;
       options.push({ label: item.label, value: item.code });
     });
+    // 历史单据仍是 bought_forward：补别名，使其与 brought_forward 显示同一文案
+    if (map[BROUGHT_FORWARD_CODE]) {
+      map[LEGACY_BROUGHT_FORWARD_CODE] = map[BROUGHT_FORWARD_CODE];
+    }
     leaveTypeLabelOverride.value = map;
     leaveTypeOptionList.value = options;
   } catch {
@@ -70,8 +82,11 @@ export function resolveLeaveTypeLabel(code: string): string {
  * 优先使用接口加载时按序预分配的索引；未预分配（如接口尚未加载）时按首次出现顺序补齐，
  * 超出调色板数量再回退到 hash 取色，保证任意情况下同类同色。
  */
-export function getLeaveTypeColor(code: string): string {
-  if (!code) return '#64748b';
+export function getLeaveTypeColor(rawCode: string): string {
+  if (!rawCode) return '#64748b';
+  // 旧 code 归一到新 code，保证同一类型的历史记录与新记录同色
+  const code =
+    rawCode === LEGACY_BROUGHT_FORWARD_CODE ? BROUGHT_FORWARD_CODE : rawCode;
   const assigned = leaveTypeColorIndexMap.get(code);
   if (assigned !== undefined) return LEAVE_TYPE_PALETTE[assigned] ?? '#64748b';
 

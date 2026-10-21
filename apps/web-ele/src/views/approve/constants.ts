@@ -32,6 +32,13 @@ export function isClaimBossPosition(position?: null | string): boolean {
 export const leaveTypeLabelOverride = ref<Record<string, string>>({});
 
 /**
+ * 结转年假的后端规范 code（10-05 由 `bought_forward` 更名）。
+ * 目录接口只返回新 code，但历史单据不迁库，仍需旧 code 别名兜底。
+ */
+const BROUGHT_FORWARD_CODE = 'brought_forward';
+const LEGACY_BROUGHT_FORWARD_CODE = 'bought_forward';
+
+/**
  * 接口返回的请假类型下拉选项（{label, value}，label 为直接显示文本）。
  * 由 loadLeaveTypeLabels() 加载，供搜索栏下拉使用。
  */
@@ -51,6 +58,10 @@ export async function loadLeaveTypeLabels() {
       map[item.code] = item.label;
       options.push({ label: item.label, value: item.code });
     });
+    // 历史单据仍是 bought_forward：补别名，避免审批列表显示裸 code
+    if (map[BROUGHT_FORWARD_CODE]) {
+      map[LEGACY_BROUGHT_FORWARD_CODE] = map[BROUGHT_FORWARD_CODE];
+    }
     leaveTypeLabelOverride.value = map;
     leaveTypeOptionList.value = options;
   } catch {

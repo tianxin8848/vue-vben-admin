@@ -4,7 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import {
   getAnnualLeaveSummaryApi,
-  getBoughtForwardSummaryApi,
+  getBroughtForwardSummaryApi,
   getMyLeaveRequestsApi,
   getMyLieuLeaveSummaryApi,
   withdrawLeaveRequestApi,
@@ -27,9 +27,8 @@ export function useLeaveData() {
   const leaveRequests = ref<LeaveRequestApi.LeaveRequest[]>([]);
   const annualSummary = ref<LeaveRequestApi.AnnualLeaveSummary | null>(null);
   const lieuSummary = ref<LeaveRequestApi.LieuLeaveSummary | null>(null);
-  const boughtForwardSummary = ref<LeaveRequestApi.BoughtForwardSummary | null>(
-    null,
-  );
+  const broughtForwardSummary =
+    ref<LeaveRequestApi.BroughtForwardSummary | null>(null);
   const hideWithdrawnOrRejected = ref(false);
 
   // 年历基准年份
@@ -96,10 +95,10 @@ export function useLeaveData() {
       // 调休已用：data2.lieu_used_days
       lieuUsed: lieuSummary.value?.lieu_used_days ?? '-',
       // 结转已用：data3.carry_over_used_days
-      carryForward: boughtForwardSummary.value?.carry_over_used_days ?? '-',
+      carryForward: broughtForwardSummary.value?.carry_over_used_days ?? '-',
       // 结转可用：data3.carry_over_available_days
       broughtForward:
-        boughtForwardSummary.value?.carry_over_available_days ?? '-',
+        broughtForwardSummary.value?.carry_over_available_days ?? '-',
     };
   });
 
@@ -109,7 +108,7 @@ export function useLeaveData() {
   async function fetchData() {
     loading.value = true;
     try {
-      const [requests, summary, lieu, boughtForward] = await Promise.all([
+      const [requests, summary, lieu, broughtForward] = await Promise.all([
         getMyLeaveRequestsApi().catch((error) => {
           console.error('[employee-leave] getMyLeaveRequestsApi 失敗：', error);
           return [];
@@ -128,9 +127,9 @@ export function useLeaveData() {
           );
           return null;
         }),
-        getBoughtForwardSummaryApi(currentYear.value).catch((error) => {
+        getBroughtForwardSummaryApi(currentYear.value).catch((error) => {
           console.error(
-            '[employee-leave] getBoughtForwardSummaryApi 失敗：',
+            '[employee-leave] getBroughtForwardSummaryApi 失敗：',
             error,
           );
           return null;
@@ -147,7 +146,7 @@ export function useLeaveData() {
       );
       console.warn('[employee-leave] annualSummary：', summary);
       console.warn('[employee-leave] lieuSummary：', lieu);
-      console.warn('[employee-leave] boughtForwardSummary：', boughtForward);
+      console.warn('[employee-leave] broughtForwardSummary：', broughtForward);
 
       if (requests && requests.length > 0) {
         const first = requests[0] ?? {};
@@ -162,13 +161,13 @@ export function useLeaveData() {
       leaveRequests.value = requests || [];
       annualSummary.value = summary;
       lieuSummary.value = lieu;
-      boughtForwardSummary.value = boughtForward;
+      broughtForwardSummary.value = broughtForward;
     } catch (error) {
       console.error('[employee-leave] fetchData 整體失敗：', error);
       leaveRequests.value = [];
       annualSummary.value = null;
       lieuSummary.value = null;
-      boughtForwardSummary.value = null;
+      broughtForwardSummary.value = null;
     } finally {
       loading.value = false;
     }

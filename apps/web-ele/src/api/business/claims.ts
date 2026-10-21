@@ -182,11 +182,16 @@ export async function createClaimApi(formData: FormData) {
   });
 }
 
-/** 批量提交报销草稿（多条草稿聚合为一条 pending） */
-export async function submitClaimBatchApi(itemIds: string[]) {
-  return requestClient.post<ClaimApi.ClaimResponse>(
-    '/me/claims/submit',
-    { item_ids: itemIds },
+/**
+ * 批量提交报销草稿（多条草稿聚合为一条 pending）。
+ *
+ * body 的 `draft_ids` 是**草稿报销 id**（claim request id），不是明细 `item_id`。
+ * 后端 `POST /me/claims/submit` 是旧别名（隐藏），规范路径为 `/bulk-submit`。
+ */
+export async function submitClaimBatchApi(draftIds: string[]) {
+  return requestClient.post<ClaimApi.ClaimResponse[]>(
+    '/me/claims/bulk-submit',
+    { draft_ids: draftIds },
     { headers: { 'Content-Type': 'application/json' } },
   );
 }
@@ -269,9 +274,11 @@ export async function withdrawClaimApi(
 
 // ─── 报销审批 ────────────────────────────────────────────────────────────────
 
-/** 获取我待审批的报销申请 */
+/** 获取待我审批的报销申请（我是 current_approver；GET /me/claims/pending-reviews） */
 export async function getMyPendingClaimApprovalsApi() {
-  return requestClient.get<ClaimApi.ClaimResponse[]>('/me/claims/approvals');
+  return requestClient.get<ClaimApi.ClaimResponse[]>(
+    '/me/claims/pending-reviews',
+  );
 }
 
 /** 获取我的报销审批记录 */

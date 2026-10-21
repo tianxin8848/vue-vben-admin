@@ -100,8 +100,8 @@ export namespace LeaveRequestApi {
     year: number;
   }
 
-  /** 结转假期汇总响应（GET /me/leave-balance/bought-forward） */
-  export interface BoughtForwardSummary {
+  /** 结转假期汇总响应（GET /me/leave-balance/brought-forward） */
+  export interface BroughtForwardSummary {
     carry_over_available_days: number;
     carry_over_granted_days: number;
     carry_over_used_days: number;
@@ -388,10 +388,10 @@ export async function getMyLieuLeaveSummaryApi(year: number) {
   );
 }
 
-/** 当前用户指定年份的结转假期汇总（carry_over；GET /me/leave-balance/bought-forward） */
-export async function getBoughtForwardSummaryApi(year: number) {
-  return requestClient.get<LeaveRequestApi.BoughtForwardSummary>(
-    '/me/leave-balance/bought-forward',
+/** 当前用户指定年份的结转假期汇总（carry_over；GET /me/leave-balance/brought-forward） */
+export async function getBroughtForwardSummaryApi(year: number) {
+  return requestClient.get<LeaveRequestApi.BroughtForwardSummary>(
+    '/me/leave-balance/brought-forward',
     { params: { year } },
   );
 }
