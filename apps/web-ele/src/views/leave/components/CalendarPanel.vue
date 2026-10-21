@@ -8,12 +8,17 @@ import { ElButton, ElDatePicker } from 'element-plus';
 import { $t, $tm } from '#/locales';
 import { regionsMatch } from '#/utils/regions';
 
+import { resolveLeaveTypeLabel } from '../shared/leave-types';
+import {
+  buildPersonColorMap,
+  getPersonColor,
+  getReadableTextColor,
+} from '../shared/person-colors';
 import {
   generateMonthCells,
   getLeaveTypeColor,
   getLeaveTypeTint,
   getMoreCount,
-  getUniqueLeaveTypes,
   getVisibleEntries,
   isRestDay,
   WEEK_KEYS,
@@ -133,11 +138,11 @@ const calendarRows = computed(() => {
 
 const yearCalendarData = computed(() => {
   const year = selectedYear.value;
-  // 年视图从当前所选月份开始渲染到12月；默认（未选择）跟随系统当月
-  const startMonth = selectedMonth.value;
+  // 年视图固定渲染 1–12 月（4 列 × 3 行），作为「全年排期表」阅读；
+  // 月份导航只在月视图里生效，避免年视图从中间月份开始导致上半年看不到。
   const months: MonthData[] = [];
 
-  for (let m = startMonth; m <= 12; m++) {
+  for (let m = 1; m <= 12; m++) {
     const cells = generateMonthCells(year, m);
     const rows: CalendarCell[][] = [];
     for (let i = 0; i < cells.length; i += 7) {
@@ -155,6 +160,92 @@ const yearCalendarData = computed(() => {
 
   return months;
 });
+
+// ─── 年视图：按人着色 ────────────────────────────────────────────────────────
+
+/** 全年出现过的人员姓名（去重），作为稳定配色的输入 */
+const employeeNamesInYear = computed(() => {
+  const names = new Set<string>();
+  Object.values(props.dayMap || {}).forEach((entries) => {
+    (entries || []).forEach((entry) => {
+      if (entry?.employee_name) names.add(entry.employee_name);
+    });
+  });
+  return [...names];
+});
+
+/** 姓名 → 颜色（同一份数据下稳定） */
+const personColorMap = computed(() =>
+  buildPersonColorMap(employeeNamesInYear.value),
+);
+
+/** 右侧图例：与配色分配同一排序，颜色顺序自上而下即调色板顺序 */
+const personLegend = computed(() =>
+  [...employeeNamesInYear.value]
+    .toSorted((left, right) => left.localeCompare(right, 'zh-CN'))
+    .map((name) => ({
+      name,
+      color: getPersonColor(personColorMap.value, name),
+    })),
+);
+
+function hasLeave(dateKey: string): boolean {
+  return getEntriesForDate(dateKey).length > 0;
+}
+
+/** 当天是否只有「待审批」的申请（用于把整块底色做半透明处理） */
+function isPendingOnly(dateKey: string): boolean {
+  const entries = getEntriesForDate(dateKey);
+  return (
+    entries.length > 0 &&
+    entries.every((entry) => entry.approval_status === 'pending')
+  );
+}
+
+/**
+ * 格子底色：一人一种颜色，整块铺满；
+ * 同一天多人时按纵向等分拼接渐变条（最多 3 段，超出部分在提示与详情面板里体现），
+ * 相邻日期同色相邻铺排即形成「连续请假条」的视觉效果。
+ */
+function getCellFillStyle(dateKey: string): Record<string, string> {
+  const entries = getEntriesForDate(dateKey);
+  if (entries.length === 0) return {};
+  const colors = entries
+    .slice(0, 3)
+    .map((entry) => getPersonColor(personColorMap.value, entry.employee_name));
+  if (colors.length === 1) return { background: colors[0] as string };
+
+  const step = 100 / colors.length;
+  const stops = colors
+    .map((color, index) => `${color} ${index * step}% ${(index + 1) * step}%`)
+    .join(', ');
+  return { background: `linear-gradient(to bottom, ${stops})` };
+}
+
+/** 日期数字颜色：跟随当天第一段底色，保证彩色块上可读 */
+function getCellTextColor(dateKey: string): string {
+  const [first] = getEntriesForDate(dateKey);
+  if (!first) return '';
+  return getReadableTextColor(
+    getPersonColor(personColorMap.value, first.employee_name),
+  );
+}
+
+/** 年视图格子提示：假日 + 人名 · 类型（待审批标注） */
+function getCellTooltip(dateKey: string): string {
+  const lines: string[] = [];
+  const holidays = getHolidaysForDate(dateKey);
+  if (holidays.length > 0) lines.push(getHolidayLabel(holidays));
+  getEntriesForDate(dateKey).forEach((entry) => {
+    const typeLabel = resolveLeaveTypeLabel(entry.leave_type);
+    const statusLabel =
+      entry.approval_status === 'pending'
+        ? ` · ${$t('page.leave.approvalStatus.pending')}`
+        : '';
+    lines.push(`${entry.employee_name} · ${typeLabel}${statusLabel}`);
+  });
+  return lines.join('\n');
+}
 
 function isRiskDay(dateKey: string): boolean {
   const entries = getEntriesForDate(dateKey);
@@ -356,16 +447,17 @@ function goNextMonth() {
       </div>
     </div>
 
-    <!-- 年视图 -->
-    <div v-else>
-      <div class="year-grid">
+    <!-- 年视图：全年 12 个月排期表，按人着色 + 右侧人员图例 -->
+    <div v-else class="year-view">
+      <div class="year-months">
         <div
           v-for="monthData in yearCalendarData"
           :key="monthData.month"
           class="month-card"
-          @click="selectMonth(monthData.month)"
         >
-          <div class="month-title">{{ monthData.monthName }}</div>
+          <div class="month-title" @click="selectMonth(monthData.month)">
+            {{ monthData.monthName }}
+          </div>
           <div class="mini-calendar">
             <div class="mini-week-header">
               <div
@@ -388,47 +480,35 @@ function goNextMonth() {
                   class="mini-cell"
                   :class="{
                     'is-empty': !cell.day,
-                    'is-workday':
-                      cell.day &&
-                      !isRestDay(cell.date, getHolidaysForDate(cell.date)),
                     'is-rest':
                       cell.day &&
                       isRestDay(cell.date, getHolidaysForDate(cell.date)),
                     'is-selected': cell.day && isSelected(cell.date),
-                    'has-leave':
-                      cell.day && getEntriesForDate(cell.date).length > 0,
                     'is-risk': cell.day && isRiskDay(cell.date),
+                    'has-leave': cell.day && hasLeave(cell.date),
                   }"
-                  :title="
-                    cell.day && getHolidaysForDate(cell.date).length > 0
-                      ? getHolidayLabel(getHolidaysForDate(cell.date))
-                      : ''
-                  "
+                  :title="cell.day ? getCellTooltip(cell.date) : ''"
                   @click.stop="onCellClick(cell)"
                 >
                   <template v-if="cell.day">
-                    <span class="mini-day-number">{{ cell.day }}</span>
                     <span
-                      v-if="getEntriesForDate(cell.date).length > 0"
-                      class="mini-badge"
+                      v-if="hasLeave(cell.date)"
+                      class="cell-fill"
+                      :class="{ 'is-pending': isPendingOnly(cell.date) }"
+                      :style="getCellFillStyle(cell.date)"
+                    ></span>
+                    <span
+                      class="mini-day-number"
+                      :style="{ color: getCellTextColor(cell.date) }"
                     >
-                      {{ getEntriesForDate(cell.date).length }}
+                      {{ cell.day }}
                     </span>
-                    <div
-                      v-if="getEntriesForDate(cell.date).length > 0"
-                      class="mini-dots"
+                    <span
+                      v-if="getEntriesForDate(cell.date).length > 3"
+                      class="cell-more"
                     >
-                      <span
-                        v-for="type in getUniqueLeaveTypes(
-                          getEntriesForDate(cell.date),
-                        )"
-                        :key="type"
-                        class="mini-dot"
-                        :style="{
-                          background: getLeaveTypeColor(type, 'approved'),
-                        }"
-                      ></span>
-                    </div>
+                      +
+                    </span>
                   </template>
                 </div>
               </div>
@@ -436,6 +516,29 @@ function goNextMonth() {
           </div>
         </div>
       </div>
+
+      <aside v-if="personLegend.length > 0" class="year-legend">
+        <div class="legend-title">
+          {{ $t('page.leave.calendarView.personLegend') }}
+        </div>
+        <div class="legend-list">
+          <div
+            v-for="person in personLegend"
+            :key="person.name"
+            class="legend-item"
+            :title="person.name"
+          >
+            <span
+              class="legend-swatch"
+              :style="{ background: person.color }"
+            ></span>
+            <span class="legend-name">{{ person.name }}</span>
+          </div>
+        </div>
+        <div class="legend-hint">
+          {{ $t('page.leave.calendarView.personLegendHint') }}
+        </div>
+      </aside>
     </div>
   </div>
 </template>

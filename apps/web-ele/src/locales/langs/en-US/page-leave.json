@@ -311,6 +311,8 @@
         "prevYear": "Previous Year",
         "nextYear": "Next Year",
         "backToCurrentYear": "Back to Current Year",
+        "personLegend": "Colour by employee",
+        "personLegendHint": "One colour per person all year. Split cells mean several people on the same day; semi-transparent means pending approval.",
         "summary": {
           "leaveRecords": "Leave Records",
           "coveredDays": "Covered Days",

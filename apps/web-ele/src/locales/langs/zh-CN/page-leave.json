@@ -311,6 +311,8 @@
         "prevYear": "上一年",
         "nextYear": "下一年",
         "backToCurrentYear": "回到今年",
+        "personLegend": "人员配色",
+        "personLegendHint": "同一人全年同色；一格上下分色表示同日多人请假，半透明为待审批。",
         "summary": {
           "leaveRecords": "请假记录",
           "coveredDays": "覆盖天数",

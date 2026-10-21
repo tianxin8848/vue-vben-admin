@@ -133,7 +133,6 @@
 
 /* 有请假：通过条目 chip 与右上角数量徽标表达，不再单独着色/描边 */
 
-
 .cell-top {
   display: flex;
   align-items: center;
@@ -256,32 +255,42 @@
   color: hsl(var(--muted-foreground));
 }
 
-.year-grid {
+/* 年视图整体：左侧 12 个月排期表 + 右侧人员图例 */
+.year-view {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.year-months {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
 }
 
 .month-card {
-  padding: 8px;
+  padding: 6px 6px 4px;
   cursor: pointer;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
-  transition: all 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .month-card:hover {
-  border-color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / 55%);
   box-shadow: 0 2px 8px hsl(var(--primary) / 12%);
 }
 
 .month-title {
-  margin-bottom: 6px;
+  padding: 0 2px 4px;
   font-size: 13px;
   font-weight: 700;
   color: hsl(var(--foreground));
-  text-align: center;
 }
 
 .mini-calendar {
@@ -296,8 +305,8 @@
 }
 
 .mini-week-day {
-  padding: 1px 0;
   font-size: 10px;
+  line-height: 1.6;
   color: hsl(var(--muted-foreground));
   text-align: center;
 }
@@ -312,38 +321,38 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
+/* 格子横向长方形、不设间距与圆角：相邻同色日期拼成连续色带（对齐排期表习惯） */
 .mini-cell {
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1;
-  padding: 1px;
+  min-height: 17px;
   font-size: 10px;
   cursor: pointer;
-  border-radius: 3px;
-  transition: background 0.1s;
+  border-radius: 0;
 }
 
 .mini-cell.is-empty {
   cursor: default;
 }
 
-/* 工作日：不着色 */
-.mini-cell.is-workday {
+/* 休息日（周末 / 法定假日）：仅在无请假时显示极浅红底，请假色块优先 */
+.mini-cell.is-rest:not(.has-leave) {
+  background: rgb(254 242 242);
+}
+
+.dark .mini-cell.is-rest:not(.has-leave) {
   background: transparent;
 }
 
-/* 休息日：红底 */
-.mini-cell.is-rest {
-  background: rgb(254 226 226);
+.dark .mini-cell.is-rest:not(.has-leave) .mini-day-number {
+  color: hsl(var(--primary));
 }
 
 .mini-cell.is-selected {
   outline: 1.5px solid hsl(var(--primary));
-  outline-offset: -1px;
-  background: hsl(var(--accent));
+  outline-offset: -1.5px;
 }
 
 .mini-cell.is-risk {
@@ -351,42 +360,128 @@
   outline-offset: -1.5px;
 }
 
+/* hover 只描边，不覆盖人员底色 */
 .mini-cell:hover:not(.is-empty) {
-  background: hsl(var(--accent));
+  box-shadow: inset 0 0 0 1.5px hsl(var(--primary) / 45%);
+}
+
+/* 人员底色块：整格铺满，多人纵向等分（渐变由内联 style 给出） */
+.cell-fill {
+  position: absolute;
+  inset: 0;
+}
+
+/* 仅待审批：整块半透明，与图例说明一致 */
+.cell-fill.is-pending {
+  opacity: 0.5;
 }
 
 .mini-day-number {
+  position: relative;
+  z-index: 1;
   font-size: 10px;
+  font-weight: 600;
   line-height: 1;
   color: hsl(var(--foreground));
 }
 
-.mini-badge {
+/* 当天超过 3 人请假时的角标（其余人名在提示与详情面板中查看） */
+.cell-more {
   position: absolute;
   top: 0;
   right: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 10px;
-  height: 11px;
-  padding: 0 2px;
-  font-size: 8px;
+  z-index: 1;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1;
-  color: #fff;
-  background: hsl(var(--primary));
-  border-radius: 6px;
+  color: hsl(var(--foreground));
 }
 
-.mini-dots {
+/* 右侧人员图例 */
+.year-legend {
+  position: sticky;
+  top: 12px;
+  flex: 0 0 136px;
+  padding: 10px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+}
+
+.legend-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.legend-list {
   display: flex;
-  gap: 1px;
-  margin-top: 1px;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.mini-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
+.legend-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.legend-swatch {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legend-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+}
+
+.legend-hint {
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  border-top: 1px dashed hsl(var(--border));
+}
+
+/* 响应式：窄屏逐级降列，图例移到下方并横向铺开 */
+@media (max-width: 1500px) {
+  .year-months {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .year-view {
+    flex-direction: column;
+  }
+
+  .year-months {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .year-legend {
+    position: static;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .legend-list {
+    flex-flow: row wrap;
+    gap: 4px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .year-months {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
