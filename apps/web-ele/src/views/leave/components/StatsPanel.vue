@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { ElCard, ElTag } from 'element-plus';
+import { computed } from 'vue';
 
-import { $t } from '#/locales';
+import { useI18n } from '@vben/locales';
 
 interface Stats {
   visibleEmployeeCount: number;
@@ -17,147 +17,76 @@ interface AnnualLeaveSummary {
   year: number;
 }
 
-interface Props {
-  stats: Stats;
-  annualLeaveSummary?: AnnualLeaveSummary | null;
+interface StatTile {
+  /** 仅「风险日期」为真时用危险色强调，其余保持常规前景色 */
+  danger?: boolean;
+  key: string;
+  label: string;
+  value: number | string;
 }
 
-defineProps<Props>();
+const props = defineProps<{
+  annualLeaveSummary?: AnnualLeaveSummary | null;
+  stats: Stats;
+}>();
+
+const { t } = useI18n();
+
+/**
+ * 概览指标：与系统参数管理页的分区卡片同一套语言——描边 + muted 底色 + 无阴影，
+ * 指标卡不再嵌套 ElCard，避免在一张卡内出现两层阴影叠加。
+ */
+const tiles = computed<StatTile[]>(() => [
+  {
+    key: 'members',
+    label: t('page.leave.calendarView.stats.visibleMembers'),
+    value: props.stats.visibleEmployeeCount,
+  },
+  {
+    key: 'records',
+    label: t('page.leave.calendarView.stats.annualLeaveRecords'),
+    value: props.stats.leaveRecordCount,
+  },
+  {
+    key: 'risk',
+    label: t('page.leave.calendarView.stats.riskDayCount'),
+    value: props.stats.riskDayCount,
+    danger: props.stats.riskDayCount > 0,
+  },
+  {
+    key: 'peak',
+    label: t('page.leave.calendarView.stats.peakDate'),
+    value: props.stats.peakDayText,
+  },
+  {
+    key: 'total',
+    label: t('page.leave.calendarView.stats.annualLeaveTotal'),
+    value: props.annualLeaveSummary?.entitlement_days ?? '-',
+  },
+  {
+    key: 'available',
+    label: t('page.leave.calendarView.stats.annualLeaveAvailable'),
+    value: props.annualLeaveSummary?.available_days ?? '-',
+  },
+]);
 </script>
 
 <template>
-  <div
-    style="
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-    "
-  >
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <div
+      v-for="tile in tiles"
+      :key="tile.key"
+      class="rounded-lg border border-border bg-muted/40 px-4 py-3"
+    >
+      <p class="truncate text-xs text-muted-foreground" :title="tile.label">
+        {{ tile.label }}
+      </p>
+      <p
+        :class="tile.danger ? 'text-destructive' : 'text-foreground'"
+        class="mt-1.5 text-2xl font-semibold tabular-nums"
       >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.visibleMembers') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ stats.visibleEmployeeCount }}
-          </div>
-        </div>
-        <ElTag type="primary" size="large" effect="dark">
-          {{ stats.visibleEmployeeCount }}
-        </ElTag>
-      </div>
-    </ElCard>
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.annualLeaveRecords') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ stats.leaveRecordCount }}
-          </div>
-        </div>
-        <ElTag type="success" size="large" effect="dark">
-          {{ stats.leaveRecordCount }}
-        </ElTag>
-      </div>
-    </ElCard>
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.riskDayCount') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ stats.riskDayCount }}
-          </div>
-        </div>
-        <ElTag type="danger" size="large" effect="dark">
-          {{ stats.riskDayCount }}
-        </ElTag>
-      </div>
-    </ElCard>
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.peakDate') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ stats.peakDayText }}
-          </div>
-        </div>
-        <ElTag type="warning" size="large" effect="dark">
-          {{ stats.peakDayText.split(' · ')[0] }}
-        </ElTag>
-      </div>
-    </ElCard>
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.annualLeaveTotal') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ annualLeaveSummary?.entitlement_days ?? '-' }}
-          </div>
-        </div>
-        <ElTag type="info" size="large" effect="dark">
-          {{ annualLeaveSummary?.entitlement_days ?? '-' }}
-        </ElTag>
-      </div>
-    </ElCard>
-    <ElCard shadow="hover">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
-      >
-        <div>
-          <div style="font-size: 13px; color: #64748b">
-            {{ $t('page.leave.calendarView.stats.annualLeaveAvailable') }}
-          </div>
-          <div style="margin-top: 8px; font-size: 28px; font-weight: 700">
-            {{ annualLeaveSummary?.available_days ?? '-' }}
-          </div>
-        </div>
-        <ElTag type="success" size="large" effect="dark">
-          {{ annualLeaveSummary?.available_days ?? '-' }}
-        </ElTag>
-      </div>
-    </ElCard>
+        {{ tile.value }}
+      </p>
+    </div>
   </div>
 </template>

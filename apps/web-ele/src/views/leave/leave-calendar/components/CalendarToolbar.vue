@@ -28,26 +28,35 @@ const segmentedOptions = computed(() => [
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <span>{{ props.currentTime }}</span>
+  <!-- 工具栏分两行：上行时间 + 假期类型图例，下行视图切换 + 地区筛选，
+       窄屏自然换行，不再挤成一行把切换器顶出卡片外 -->
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <span class="text-sm text-muted-foreground">{{ props.currentTime }}</span>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <span
-        v-for="cfg in leaveTypeLegendItems"
-        :key="cfg.key"
-        class="inline-flex items-center gap-1 text-xs text-muted-foreground"
-      >
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <span
-          :style="{ background: cfg.color }"
-          class="inline-block size-2.5 rounded-full"
-        ></span>
-        {{ cfg.label }}
-      </span>
+          v-for="cfg in leaveTypeLegendItems"
+          :key="cfg.key"
+          class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+        >
+          <span
+            :style="{ backgroundColor: cfg.color }"
+            class="inline-block size-2.5 rounded-full"
+          ></span>
+          {{ cfg.label }}
+        </span>
+      </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <ElSelect v-model="region">
-        <ElOption :label="$t('page.leave.calendarView.allRegions')" value="" />
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
+
+      <ElSelect v-model="region" style="width: 176px">
+        <ElOption
+          :label="$t('page.leave.calendarView.allRegions')"
+          value="all"
+        />
         <ElOption
           :label="$t('page.leave.calendarView.unsetRegion')"
           value="__unset__"
@@ -55,11 +64,5 @@ const segmentedOptions = computed(() => [
         <ElOption v-for="r in props.regions" :key="r" :label="r" :value="r" />
       </ElSelect>
     </div>
-
-    <ElSegmented
-      v-model="activeTab"
-      :options="segmentedOptions"
-      style="margin-bottom: 12px"
-    />
   </div>
 </template>

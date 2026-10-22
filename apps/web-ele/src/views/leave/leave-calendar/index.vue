@@ -43,52 +43,58 @@ const {
 
 <template>
   <Page>
-    <!-- 调休额度管理（管理员） -->
-    <LieuAdminPanel class="mb-3" :employees="employeesDirectory" />
+    <div class="flex h-full flex-col gap-4">
+      <!-- 调休额度管理（管理员） -->
+      <LieuAdminPanel :employees="employeesDirectory" />
 
-    <ElCard>
-      <template #header>
-        <CalendarToolbar
-          v-model:active-tab="activeTab"
-          v-model:region="searchForm.region"
-          :current-time="currentTime"
-          :regions="regions"
-        />
-      </template>
+      <ElCard shadow="never">
+        <!-- 工具栏放到卡片内容区顶部：横跨整宽，切换器与地区筛选不再被表头挤到卡片外 -->
+        <div class="mb-4 border-b border-border pb-4">
+          <CalendarToolbar
+            v-model:active-tab="activeTab"
+            v-model:region="searchForm.region"
+            :current-time="currentTime"
+            :regions="regions"
+          />
+        </div>
 
-      <!-- 概览：统计卡片 + 筛选面板 -->
-      <div v-show="activeTab === 'overview'">
-        <StatsPanel :stats="stats" :annual-leave-summary="annualLeaveSummary" />
+        <!-- 概览：统计卡片 + 筛选面板 -->
+        <div v-show="activeTab === 'overview'">
+          <StatsPanel
+            :annual-leave-summary="annualLeaveSummary"
+            :stats="stats"
+          />
 
-        <FilterPanel
-          :search-form="searchForm"
-          :teams="teams"
-          @update:search-form="updateSearchForm"
-          @reset-filters="resetFilters"
-        />
-      </div>
+          <FilterPanel
+            :search-form="searchForm"
+            :teams="teams"
+            @reset-filters="resetFilters"
+            @update:search-form="updateSearchForm"
+          />
+        </div>
 
-      <!-- 年历：月历格子 + 选中日详情 -->
-      <div v-show="activeTab === 'calendar'">
-        <CalendarPanel
-          :day-map="dayMap"
-          :selected-date-key="selectedDateKey"
-          :current-year="currentYear"
-          :search-form="searchForm"
-          :regional-holidays="regionalHolidays"
-          @select-date="onSelectDate"
-          @panel-change="onPanelChange"
-        />
+        <!-- 年历：月历格子 + 选中日详情 -->
+        <div v-show="activeTab === 'calendar'">
+          <CalendarPanel
+            :current-year="currentYear"
+            :day-map="dayMap"
+            :regional-holidays="regionalHolidays"
+            :search-form="searchForm"
+            :selected-date-key="selectedDateKey"
+            @panel-change="onPanelChange"
+            @select-date="onSelectDate"
+          />
 
-        <DetailPanel
-          :day-map="dayMap"
-          :selected-date-key="selectedDateKey"
-          :region="searchForm.region"
-          :regional-holidays="regionalHolidays"
-          @set-holiday="setHoliday"
-          @remove-holiday="removeHoliday"
-        />
-      </div>
-    </ElCard>
+          <DetailPanel
+            :day-map="dayMap"
+            :region="searchForm.region"
+            :regional-holidays="regionalHolidays"
+            :selected-date-key="selectedDateKey"
+            @remove-holiday="removeHoliday"
+            @set-holiday="setHoliday"
+          />
+        </div>
+      </ElCard>
+    </div>
   </Page>
 </template>

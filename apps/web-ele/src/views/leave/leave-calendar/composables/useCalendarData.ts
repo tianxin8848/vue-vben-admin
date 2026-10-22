@@ -61,7 +61,9 @@ export function useCalendarData() {
 
   const searchForm = reactive<CalendarSearchForm>({
     team: '',
-    region: '',
+    // 'all' 而非空串：空串会被 ElSelect 当成「未选择」而显示 placeholder，
+    // 下方筛选逻辑（getActiveRegionKey / fetchCalendar）本来就认 'all'
+    region: 'all',
     employee_keyword: '',
     approval_status: '',
     risk_threshold: 5,
@@ -263,7 +265,7 @@ export function useCalendarData() {
 
   function resetFilters() {
     searchForm.team = '';
-    searchForm.region = '';
+    searchForm.region = 'all';
     searchForm.employee_keyword = '';
     searchForm.approval_status = '';
     searchForm.risk_threshold = 5;

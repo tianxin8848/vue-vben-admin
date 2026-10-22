@@ -1,15 +1,11 @@
 <script lang="ts" setup>
 import {
   ElButton,
-  ElCard,
-  ElForm,
-  ElFormItem,
   ElInput,
+  ElInputNumber,
   ElOption,
   ElSelect,
 } from 'element-plus';
-
-import { $t } from '#/locales';
 
 interface SearchForm {
   team: string;
@@ -28,8 +24,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'update:searchForm', value: SearchForm): void;
   (e: 'resetFilters'): void;
+  (e: 'update:searchForm', value: SearchForm): void;
 }>();
 
 function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
@@ -38,21 +34,30 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
 </script>
 
 <template>
-  <ElCard>
-    <template #header>
-      <h3 style="margin: 0">
+  <!-- 筛选区：无独立卡片，用分隔线接在指标卡下方，避免卡片套卡片 -->
+  <section class="mt-6 border-t border-border pt-4">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-semibold">
         {{ $t('page.leave.calendarView.filter.title') }}
       </h3>
-    </template>
+      <ElButton @click="emit('resetFilters')">
+        {{ $t('page.leave.calendarView.filter.reset') }}
+      </ElButton>
+    </div>
 
-    <ElForm :model="props.searchForm" label-width="auto" inline>
-      <ElFormItem :label="$t('page.leave.calendarView.filter.team')">
+    <div
+      class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+    >
+      <div>
+        <div class="mb-1 text-sm text-muted-foreground">
+          {{ $t('page.leave.calendarView.filter.team') }}
+        </div>
         <ElSelect
           :model-value="props.searchForm.team"
           :placeholder="$t('page.leave.calendarView.filter.allMembers')"
           clearable
-          @change="updateField('team', $event)"
-          style="width: 160px"
+          style="width: 100%"
+          @change="updateField('team', $event ?? '')"
         >
           <ElOption
             :label="$t('page.leave.calendarView.filter.allMembers')"
@@ -60,33 +65,42 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
           />
           <ElOption v-for="t in teams" :key="t" :label="t" :value="t" />
         </ElSelect>
-      </ElFormItem>
+      </div>
 
-      <ElFormItem :label="$t('page.leave.calendarView.filter.employeeSearch')">
+      <div>
+        <div class="mb-1 text-sm text-muted-foreground">
+          {{ $t('page.leave.calendarView.filter.employeeSearch') }}
+        </div>
         <ElInput
           :model-value="props.searchForm.employee_keyword"
           :placeholder="$t('page.leave.calendarView.filter.searchPlaceholder')"
+          clearable
           @input="updateField('employee_keyword', $event)"
-          style="width: 160px"
         />
-      </ElFormItem>
+      </div>
 
-      <ElFormItem :label="$t('page.leave.calendarView.filter.riskThreshold')">
-        <ElInput
+      <div>
+        <div class="mb-1 text-sm text-muted-foreground">
+          {{ $t('page.leave.calendarView.filter.riskThreshold') }}
+        </div>
+        <ElInputNumber
           :model-value="props.searchForm.risk_threshold"
-          type="number"
           :min="1"
           :max="20"
-          @input="updateField('risk_threshold', Number($event))"
-          style="width: 100px"
+          controls-position="right"
+          style="width: 100%"
+          @change="updateField('risk_threshold', Number($event ?? 1))"
         />
-      </ElFormItem>
+      </div>
 
-      <ElFormItem :label="$t('page.leave.calendarView.filter.viewMode')">
+      <div>
+        <div class="mb-1 text-sm text-muted-foreground">
+          {{ $t('page.leave.calendarView.filter.viewMode') }}
+        </div>
         <ElSelect
           :model-value="props.searchForm.view_mode"
+          style="width: 100%"
           @change="updateField('view_mode', $event)"
-          style="width: 120px"
         >
           <ElOption
             :label="$t('page.leave.calendarView.filter.standard')"
@@ -97,13 +111,16 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
             value="detail"
           />
         </ElSelect>
-      </ElFormItem>
+      </div>
 
-      <ElFormItem :label="$t('page.leave.calendarView.filter.approvalStatus')">
+      <div>
+        <div class="mb-1 text-sm text-muted-foreground">
+          {{ $t('page.leave.calendarView.filter.approvalStatus') }}
+        </div>
         <ElSelect
           :model-value="props.searchForm.approval_status"
-          @change="updateField('approval_status', $event)"
-          style="width: 120px"
+          style="width: 100%"
+          @change="updateField('approval_status', $event ?? '')"
         >
           <ElOption
             :label="$t('page.leave.calendarView.filter.allStatus')"
@@ -118,13 +135,7 @@ function updateField<K extends keyof SearchForm>(key: K, value: SearchForm[K]) {
             value="pending"
           />
         </ElSelect>
-      </ElFormItem>
-
-      <ElFormItem>
-        <ElButton @click="emit('resetFilters')">
-          {{ $t('page.leave.calendarView.filter.reset') }}
-        </ElButton>
-      </ElFormItem>
-    </ElForm>
-  </ElCard>
+      </div>
+    </div>
+  </section>
 </template>
