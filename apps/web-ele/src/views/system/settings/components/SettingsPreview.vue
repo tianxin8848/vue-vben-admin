@@ -6,17 +6,12 @@ import { computed, ref, watch } from 'vue';
 
 import { useI18n } from '@vben/locales';
 
-import {
-  ElButton,
-  ElCard,
-  ElEmpty,
-  ElOption,
-  ElSelect,
-  ElTag,
-} from 'element-plus';
+import { ElButton, ElEmpty, ElOption, ElSelect, ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { confirmDelete } from '#/utils/modal';
+
+import SettingsCard from './SettingsCard.vue';
 
 interface SummaryRow {
   items: { code?: string; name: string; rate?: number }[];
@@ -305,7 +300,7 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
 </script>
 
 <template>
-  <ElCard :header="t(`${i18nPrefix}.cardTitle`)">
+  <SettingsCard :title="t(`${i18nPrefix}.cardTitle`)">
     <p class="mb-4 text-sm text-muted-foreground">
       {{ t(`${i18nPrefix}.hint`) }}
     </p>
@@ -398,5 +393,5 @@ const yearOptions = Array.from({ length: 61 }, (_, i) => 2000 + i);
         </CatalogTable>
       </div>
     </div>
-  </ElCard>
+  </SettingsCard>
 </template>
