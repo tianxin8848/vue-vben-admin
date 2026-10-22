@@ -264,15 +264,6 @@
           "holidayCatalogSaved": "地区假期名称清单已保存",
           "holidayDeleted": "地区假期已删除",
           "deleteFailed": "删除失败"
-        },
-        "nav": {
-          "title": "配置分区",
-          "basic": "基础参数",
-          "employeeFields": "员工字段",
-          "claimConfig": "报销配置",
-          "regionalHoliday": "地区假期",
-          "leaveType": "请假类型",
-          "preview": "当前预览"
         }
       }
     }

@@ -1,15 +1,13 @@
 <script lang="ts" setup>
-import type { WorkbenchQuickNavItem } from '@vben/common-ui';
-
 import type { SystemSettingsApi } from '#/api';
 
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Page, WorkbenchQuickNav } from '@vben/common-ui';
+import { Page } from '@vben/common-ui';
 import { useI18n } from '@vben/locales';
 
-import { ElAlert, ElButton } from 'element-plus';
+import { ElAlert, ElButton, ElSegmented } from 'element-plus';
 
 import {
   ALL_MODULE_CATALOG,
@@ -71,54 +69,25 @@ const activeTab = ref<SettingsTab>('basic');
 const route = useRoute();
 const router = useRouter();
 
-// 分区导航卡片：与工作台「系统参数管理配置」快捷导航同一套卡片组件，
-// url 字段复用为分区标识，点击时切换 activeTab 并同步到 route.query.tab。
-const quickNavItems = computed<WorkbenchQuickNavItem[]>(() => [
+// Tab 切换器选项
+const segmentedOptions = computed(() => [
+  { label: t('page.system.settingsDetail.basicConfig'), value: 'basic' },
   {
-    color: '#1fdaca',
-    icon: 'ion:settings-outline',
-    title: t('page.system.settingsDetail.nav.basic'),
-    url: 'basic',
+    label: t('page.system.settingsDetail.employeeEditableFields'),
+    value: 'employee',
   },
-  {
-    color: '#bf0c2c',
-    icon: 'ion:people-outline',
-    title: t('page.system.settingsDetail.nav.employeeFields'),
-    url: 'employee',
-  },
-  {
-    color: '#e18525',
-    icon: 'ion:cash-outline',
-    title: t('page.system.settingsDetail.nav.claimConfig'),
-    url: 'claim',
-  },
-  {
-    color: '#3fb27f',
-    icon: 'ion:calendar-outline',
-    title: t('page.system.settingsDetail.nav.regionalHoliday'),
-    url: 'holiday',
-  },
-  {
-    color: '#7367f0',
-    icon: 'ion:timer-outline',
-    title: t('page.system.settingsDetail.nav.leaveType'),
-    url: 'leave',
-  },
-  {
-    color: '#00d8ff',
-    icon: 'ion:eye-outline',
-    title: t('page.system.settingsDetail.nav.preview'),
-    url: 'preview',
-  },
+  { label: t('page.system.settingsDetail.claimConfig'), value: 'claim' },
+  { label: t('page.system.settingsDetail.regionalHoliday'), value: 'holiday' },
+  { label: t('page.system.settingsDetail.leaveTypeConfig'), value: 'leave' },
+  { label: t('page.system.settingsDetail.previewTab'), value: 'preview' },
 ]);
 
-function handleNavClick(item: WorkbenchQuickNavItem) {
-  const tab = item.url as SettingsTab;
-  if (tab && VALID_TABS.has(tab)) {
-    activeTab.value = tab;
+// 切换分区时同步到 route.query.tab，便于从工作台快捷导航跳转后刷新保持定位
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) {
     router.replace({ query: { ...route.query, tab } });
   }
-}
+});
 
 // 从路由 query 读取分区标识，用于工作台快捷导航跳转后定位分区
 function applyTabFromQuery() {
@@ -358,148 +327,141 @@ onMounted(() => {
 
 <template>
   <Page v-loading="loading">
-    <!-- 分区导航：与工作台使用同一个卡片组件，保证外边距/圆角/阴影一致 -->
-    <WorkbenchQuickNav
-      :active="activeTab"
-      :items="quickNavItems"
-      :title="t('page.system.settingsDetail.nav.title')"
-      class="mb-4"
-      @click="handleNavClick"
-    />
+    <div class="flex h-full flex-col gap-2">
+      <!-- Tab 切换器：与其它业务页保持同一套横向标签条 -->
+      <ElSegmented v-model="activeTab" :options="segmentedOptions" />
 
-    <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
-    <div v-show="activeTab === 'basic'">
-      <SettingsCard
-        :description="t('page.system.settingsDetail.basicConfigHint')"
-        :title="t('page.system.settingsDetail.basicConfig')"
-      >
-        <SettingsForm
-          v-model:dept-str="deptStr"
-          v-model:pos-str="posStr"
-          v-model:region-str="regionStr"
-          v-model:selected-modules="selectedModules"
-          :modules="allModules"
-          @save="handleSaveSettings"
-        />
-
-        <ElAlert
-          v-if="formMessage"
-          :title="formMessage"
-          :type="formMessageType === 'success' ? 'success' : 'error'"
-          show-icon
-          :closable="false"
-          class="mt-4 whitespace-pre-wrap"
-        />
-      </SettingsCard>
-    </div>
-
-    <!-- 员工可自编辑字段 -->
-    <div v-show="activeTab === 'employee'">
-      <SettingsCard
-        :title="t('page.system.settingsDetail.employeeEditableFields')"
-      >
-        <EmployeeEditableFieldsEditor
-          v-model="selectedEditableFields"
-          :catalog="settings?.employee_profile_field_catalog || []"
-        />
-        <div class="mt-4 flex justify-end">
-          <ElButton type="primary" @click="handleSaveSettings">
-            {{ t('page.system.settingsDetail.saveSystemSettings') }}
-          </ElButton>
-        </div>
-
-        <ElAlert
-          v-if="formMessage"
-          :title="formMessage"
-          :type="formMessageType === 'success' ? 'success' : 'error'"
-          show-icon
-          :closable="false"
-          class="mt-4 whitespace-pre-wrap"
-        />
-      </SettingsCard>
-    </div>
-
-    <!-- 报销配置：报销理由 / 币种 -->
-    <div v-show="activeTab === 'claim'">
-      <SettingsCard :title="t('page.system.settingsDetail.claimConfig')">
-        <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
-          <ClaimReasonEditor
-            v-model="claimReasonsStr"
+      <!-- 基础参数：部门 / 岗位 / 地区 / 模块 -->
+      <div v-show="activeTab === 'basic'">
+        <SettingsCard
+          :description="t('page.system.settingsDetail.basicConfigHint')"
+        >
+          <SettingsForm
+            v-model:dept-str="deptStr"
+            v-model:pos-str="posStr"
+            v-model:region-str="regionStr"
+            v-model:selected-modules="selectedModules"
+            :modules="allModules"
             @save="handleSaveSettings"
           />
-          <CurrencyEditor
-            v-model="claimCurrenciesStr"
-            @save="handleSaveSettings"
-          />
-        </div>
-        <div class="mt-6 flex justify-end">
-          <ElButton type="primary" @click="handleSaveSettings">
-            {{ t('page.system.settingsDetail.saveSystemSettings') }}
-          </ElButton>
-        </div>
 
-        <ElAlert
-          v-if="formMessage"
-          :title="formMessage"
-          :type="formMessageType === 'success' ? 'success' : 'error'"
-          show-icon
-          :closable="false"
-          class="mt-4 whitespace-pre-wrap"
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </SettingsCard>
+      </div>
+
+      <!-- 员工可自编辑字段 -->
+      <div v-show="activeTab === 'employee'">
+        <SettingsCard>
+          <EmployeeEditableFieldsEditor
+            v-model="selectedEditableFields"
+            :catalog="settings?.employee_profile_field_catalog || []"
+          />
+          <div class="mt-4 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
+            </ElButton>
+          </div>
+
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </SettingsCard>
+      </div>
+
+      <!-- 报销配置：报销理由 / 币种 -->
+      <div v-show="activeTab === 'claim'">
+        <SettingsCard>
+          <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
+            <ClaimReasonEditor
+              v-model="claimReasonsStr"
+              @save="handleSaveSettings"
+            />
+            <CurrencyEditor
+              v-model="claimCurrenciesStr"
+              @save="handleSaveSettings"
+            />
+          </div>
+          <div class="mt-6 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
+            </ElButton>
+          </div>
+
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
+          />
+        </SettingsCard>
+      </div>
+
+      <!-- 地区假期：假期维护 / 假期名称清单 -->
+      <div v-show="activeTab === 'holiday'">
+        <SettingsCard>
+          <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
+            <HolidayEditor
+              v-model:message="holidayMessage"
+              v-model:message-type="holidayMessageType"
+              :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+              :holidays="settings?.regional_holidays || []"
+              :regions="settings?.regions || []"
+              @save="handleSaveHoliday"
+            />
+
+            <HolidayCatalogEditor
+              v-model:message="catalogMessage"
+              v-model:message-type="catalogMessageType"
+              :holiday-catalogs="settings?.regional_holiday_catalogs || []"
+              :regions="settings?.regions || []"
+              @save="handleSaveCatalog"
+            />
+          </div>
+        </SettingsCard>
+      </div>
+
+      <!-- 当前预览 -->
+      <div v-show="activeTab === 'preview'">
+        <SettingsPreview
+          :settings="settings"
+          @delete-holiday="handleDeleteHoliday"
         />
-      </SettingsCard>
-    </div>
+      </div>
 
-    <!-- 地区假期：假期维护 / 假期名称清单 -->
-    <div v-show="activeTab === 'holiday'">
-      <SettingsCard :title="t('page.system.settingsDetail.regionalHoliday')">
-        <div class="grid grid-cols-2 gap-6 [&>section]:!mt-0">
-          <HolidayEditor
-            v-model:message="holidayMessage"
-            v-model:message-type="holidayMessageType"
-            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-            :holidays="settings?.regional_holidays || []"
-            :regions="settings?.regions || []"
-            @save="handleSaveHoliday"
+      <!-- 请假类型管理 -->
+      <div v-show="activeTab === 'leave'">
+        <SettingsCard>
+          <LeaveTypesEditor v-model="leaveTypes" @save="handleSaveSettings" />
+          <div class="mt-4 flex justify-end">
+            <ElButton type="primary" @click="handleSaveSettings">
+              {{ t('page.system.settingsDetail.saveSystemSettings') }}
+            </ElButton>
+          </div>
+
+          <ElAlert
+            v-if="formMessage"
+            :title="formMessage"
+            :type="formMessageType === 'success' ? 'success' : 'error'"
+            show-icon
+            :closable="false"
+            class="mt-4 whitespace-pre-wrap"
           />
-
-          <HolidayCatalogEditor
-            v-model:message="catalogMessage"
-            v-model:message-type="catalogMessageType"
-            :holiday-catalogs="settings?.regional_holiday_catalogs || []"
-            :regions="settings?.regions || []"
-            @save="handleSaveCatalog"
-          />
-        </div>
-      </SettingsCard>
-    </div>
-
-    <!-- 当前预览 -->
-    <div v-show="activeTab === 'preview'">
-      <SettingsPreview
-        :settings="settings"
-        @delete-holiday="handleDeleteHoliday"
-      />
-    </div>
-
-    <!-- 请假类型管理 -->
-    <div v-show="activeTab === 'leave'">
-      <SettingsCard :title="t('page.system.settingsDetail.leaveTypeConfig')">
-        <LeaveTypesEditor v-model="leaveTypes" @save="handleSaveSettings" />
-        <div class="mt-4 flex justify-end">
-          <ElButton type="primary" @click="handleSaveSettings">
-            {{ t('page.system.settingsDetail.saveSystemSettings') }}
-          </ElButton>
-        </div>
-
-        <ElAlert
-          v-if="formMessage"
-          :title="formMessage"
-          :type="formMessageType === 'success' ? 'success' : 'error'"
-          show-icon
-          :closable="false"
-          class="mt-4 whitespace-pre-wrap"
-        />
-      </SettingsCard>
+        </SettingsCard>
+      </div>
     </div>
   </Page>
 </template>

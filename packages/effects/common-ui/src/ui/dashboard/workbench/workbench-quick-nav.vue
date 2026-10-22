@@ -10,8 +10,6 @@ import {
 } from '@vben-core/shadcn-ui';
 
 interface Props {
-  /** 当前激活项（与 item.url 比对），用于高亮所在分区 */
-  active?: string;
   items?: WorkbenchQuickNavItem[];
   title: string;
 }
@@ -21,7 +19,6 @@ defineOptions({
 });
 
 withDefaults(defineProps<Props>(), {
-  active: undefined,
   items: () => [],
 });
 
@@ -42,7 +39,6 @@ defineEmits(['click']);
             'pb-4': index > 2,
             'rounded-bl-xl': index === items.length - 3,
             'rounded-br-xl': index === items.length - 1,
-            'bg-primary/5': active && item.url === active,
           }"
           class="group flex-col-center w-1/3 cursor-pointer border-t border-r border-border py-8 hover:shadow-xl"
           @click="$emit('click', item)"
@@ -52,10 +48,7 @@ defineEmits(['click']);
             :icon="item.icon"
             class="size-7 transition-all duration-300 group-hover:scale-125"
           />
-          <span
-            :class="{ 'font-medium': active && item.url === active }"
-            class="text-md mt-2 truncate"
-            >{{ item.title }}</span>
+          <span class="text-md mt-2 truncate">{{ item.title }}</span>
         </div>
       </template>
     </CardContent>

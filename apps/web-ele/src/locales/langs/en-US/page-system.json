@@ -264,15 +264,6 @@
           "holidayCatalogSaved": "Regional holiday name list saved",
           "holidayDeleted": "Regional holiday deleted",
           "deleteFailed": "Delete failed"
-        },
-        "nav": {
-          "title": "Configuration Sections",
-          "basic": "Basic Parameters",
-          "employeeFields": "Employee Fields",
-          "claimConfig": "Claim Configuration",
-          "regionalHoliday": "Regional Holidays",
-          "leaveType": "Leave Types",
-          "preview": "Current Preview"
         }
       }
     }
