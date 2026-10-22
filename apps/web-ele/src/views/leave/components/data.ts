@@ -54,14 +54,18 @@ export interface Props {
   regionalHolidays?: RegionalHoliday[];
 }
 
+/**
+ * 星期列顺序：**周日起**（Sun → Sat），与后端模板 / 港式日历习惯一致。
+ * 该顺序同时决定 `generateMonthCells` 的缩进量与表头文案，两者必须共用同一份定义。
+ */
 export const WEEK_KEYS = [
+  'sun',
   'mon',
   'tue',
   'wed',
   'thu',
   'fri',
   'sat',
-  'sun',
 ] as const;
 
 export function generateMonthCells(
@@ -69,8 +73,8 @@ export function generateMonthCells(
   month: number,
 ): CalendarCell[] {
   const daysInMonth = new Date(year, month, 0).getDate();
-  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-  const offset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+  // getDay(): 0=周日 … 6=周六；周日起排表时缩进量直接等于它（周日不缩进）
+  const offset = new Date(year, month - 1, 1).getDay();
 
   const cells: CalendarCell[] = [];
 
