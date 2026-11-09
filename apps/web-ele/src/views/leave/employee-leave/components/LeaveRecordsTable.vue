@@ -2,6 +2,7 @@
 import type { LeaveRequestApi } from '#/api';
 
 import { computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { ElButton, ElTag } from 'element-plus';
 
@@ -27,6 +28,13 @@ const emit = defineEmits<{
   refresh: [];
   withdraw: [id: string];
 }>();
+
+const router = useRouter();
+
+/** 跳转申请详情页（含审批流程时间线） */
+function goDetail(row: Record<string, any>) {
+  router.push(`/employee/leave/detail/${row.id}`);
+}
 
 /** 是否隐藏已撤回 / 已驳回记录 */
 const hideWithdrawnOrRejected = defineModel<boolean>(
@@ -133,6 +141,9 @@ watch(
     </template>
 
     <template #action="{ row }">
+      <ElButton size="small" @click="goDetail(row)">
+        {{ $t('page.leave.employeeLeave.button.detail') }}
+      </ElButton>
       <ElButton
         v-if="row.approval_status === 'pending'"
         size="small"
@@ -141,7 +152,6 @@ watch(
       >
         {{ $t('page.leave.employeeLeave.button.withdraw') }}
       </ElButton>
-      <span v-else style="color: hsl(var(--muted-foreground))">-</span>
     </template>
   </BasicTable>
 </template>

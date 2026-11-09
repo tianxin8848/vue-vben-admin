@@ -5,6 +5,7 @@ import { ElButton, ElDialog, ElTag } from 'element-plus';
 
 import { $t } from '#/locales';
 
+import LeaveApprovalFlow from '../../leave/shared/LeaveApprovalFlow.vue';
 import {
   resolveLeaveTypeLabel,
   sessionLabelMap,
@@ -84,6 +85,8 @@ function close() {
           {{ current.review_comment || '无' }}
         </div>
       </div>
+
+      <LeaveApprovalFlow :request="current" />
     </div>
     <template #footer>
       <ElButton @click="close">关闭</ElButton>

@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import type { LeaveRequestApi } from '#/api';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+import { useUserStore } from '@vben/stores';
 
 import {
   ElButton,
@@ -20,15 +22,29 @@ import {
   loadLeaveTypeLabels,
   resolveLeaveTypeLabel,
 } from '../shared/leave-types';
+import LeaveApprovalFlow from '../shared/LeaveApprovalFlow.vue';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const loading = ref(false);
 
 const requestId = route.params.id as string;
 const leaveRequest = ref<LeaveRequestApi.LeaveRequest | null>(null);
 const showReviewModal = ref(false);
 const reviewComment = ref('');
+
+/** 只有轮到当前登录人审批时才显示审批按钮 */
+const canReview = computed(() => {
+  const request = leaveRequest.value;
+  if (!request || request.approval_status !== 'pending') return false;
+  const myId = userStore.userInfo?.userId;
+  return (
+    !!request.current_approver_id &&
+    !!myId &&
+    request.current_approver_id === myId
+  );
+});
 
 const statusOptions: Record<string, string> = {
   pending: '待审批',
@@ -161,10 +177,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <div
-        class="action-section"
-        v-if="leaveRequest.approval_status === 'pending'"
-      >
+      <LeaveApprovalFlow :request="leaveRequest" />
+
+      <div class="action-section" v-if="canReview">
         <ElButton type="primary" @click="showReviewModal = true">审批</ElButton>
       </div>
     </ElCard>

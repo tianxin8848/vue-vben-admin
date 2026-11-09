@@ -7,6 +7,26 @@
       "workflowCenter": "Workflow Center",
       "detail": "Request Detail",
       "workflow": "Approval Workflow",
+      "approvalFlow": {
+        "title": "Approval Flow",
+        "subtitle": "Two levels by default: line manager → HR",
+        "comment": "Comment: {comment}",
+        "unassigned": "Unassigned",
+        "state": {
+          "approved": "Approved",
+          "current": "In review",
+          "rejected": "Rejected",
+          "skipped": "Not started",
+          "waiting": "Pending",
+          "withdrawn": "Withdrawn"
+        },
+        "role": {
+          "approver": "Approver",
+          "hr": "HR",
+          "level": "Level {level} approver",
+          "manager": "Line manager"
+        }
+      },
       "submit": "Submit Request",
       "review": "Review",
       "revoke": "Revoke",
@@ -54,7 +74,8 @@
           "create": "Fill in Leave Form",
           "showAll": "Show All",
           "hideWithdrawnRejected": "Hide Withdrawn/Rejected",
-          "withdraw": "Withdraw"
+          "withdraw": "Withdraw",
+          "detail": "Detail"
         },
         "date": {
           "to": "to"

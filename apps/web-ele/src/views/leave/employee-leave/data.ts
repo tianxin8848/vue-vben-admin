@@ -82,7 +82,7 @@ export function createTableColumns(t: TFunc): VxeGridProps['columns'] {
     },
     {
       title: t('page.leave.employeeLeave.table.action'),
-      width: 120,
+      width: 170,
       fixed: 'right',
       slots: { default: 'action' },
     },

@@ -7,6 +7,26 @@
       "workflowCenter": "流程中心",
       "detail": "申请详情",
       "workflow": "审批流程",
+      "approvalFlow": {
+        "title": "审批流程",
+        "subtitle": "默认两级：直属主管 → HR 审批",
+        "comment": "审批意见：{comment}",
+        "unassigned": "待指派",
+        "state": {
+          "approved": "已通过",
+          "current": "审批中",
+          "rejected": "已驳回",
+          "skipped": "未开始",
+          "waiting": "待审批",
+          "withdrawn": "已撤回"
+        },
+        "role": {
+          "approver": "审批人",
+          "hr": "HR 审批",
+          "level": "第 {level} 级审批",
+          "manager": "直属主管"
+        }
+      },
       "submit": "提交申请",
       "review": "审批",
       "revoke": "撤销申请",
@@ -54,7 +74,8 @@
           "create": "填写请假单",
           "showAll": "显示全部",
           "hideWithdrawnRejected": "隐藏撤回/驳回",
-          "withdraw": "撤回"
+          "withdraw": "撤回",
+          "detail": "详情"
         },
         "date": {
           "to": "至"
