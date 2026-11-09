@@ -63,3 +63,6 @@ skills-lock.json
 .atomcode
 datalog
 .workbuddy/
+
+# 误放的明文凭据文件（含密码），仅本地忽略，切勿提交
+apps/web-ele/src/locales/langs/en-US/eric
