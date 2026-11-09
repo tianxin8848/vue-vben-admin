@@ -44,9 +44,6 @@ const {
 <template>
   <Page>
     <div class="flex h-full flex-col gap-4">
-      <!-- 调休额度管理（管理员） -->
-      <LieuAdminPanel :employees="employeesDirectory" />
-
       <ElCard shadow="never">
         <!-- 工具栏放到卡片内容区顶部：横跨整宽，切换器与地区筛选不再被表头挤到卡片外 -->
         <div class="mb-4 border-b border-border pb-4">
@@ -93,6 +90,10 @@ const {
             @remove-holiday="removeHoliday"
             @set-holiday="setHoliday"
           />
+
+          <!-- 调休额度管理（管理员）：收在年历与当日详情之后，先把日历留给主视线。
+               mt-4 是补卡片间距 —— 两张 ElCard 直接相邻时边框会贴上，看起来像一整块。 -->
+          <LieuAdminPanel class="mt-4" :employees="employeesDirectory" />
         </div>
       </ElCard>
     </div>

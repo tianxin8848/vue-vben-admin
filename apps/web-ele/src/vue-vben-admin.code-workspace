@@ -39,5 +39,8 @@
     "debug.onTaskErrors": "debugAnyway",
     "emmet.showSuggestionsAsSnippets": true,
     "explorer.fileNesting.expand": false
-  }
+},
+"trae": {
+	"workspaceId": "3a3da420404473ee10d3d16adfe54bfc"
+}
 }

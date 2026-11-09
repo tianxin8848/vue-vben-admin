@@ -255,16 +255,18 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* 年视图整体：左侧 12 个月排期表 + 右侧人员图例 */
+/* 年视图整体：上面 12 个月排期表 + 底部一条人员图例
+   图例不占右侧列：它只在「按人着色」时才有内容，常驻一条 136px 的竖列会把
+   4 列月历挤成 3 列，而且 sticky 那条在滚动时一直悬在右侧抢注意力。
+   铺到底部后横向 wrap，人名多时自然折行。 */
 .year-view {
   display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: flex-start;
 }
 
 .year-months {
   display: grid;
-  flex: 1;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   min-width: 0;
@@ -397,12 +399,9 @@
   color: hsl(var(--foreground));
 }
 
-/* 右侧人员图例 */
+/* 底部人员图例：横铺整宽，人名一行排不开就折到下一行 */
 .year-legend {
-  position: sticky;
-  top: 12px;
-  flex: 0 0 136px;
-  padding: 10px;
+  padding: 10px 12px;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
@@ -417,8 +416,8 @@
 
 .legend-list {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-flow: row wrap;
+  gap: 4px 16px;
 }
 
 .legend-item {
@@ -451,7 +450,7 @@
   border-top: 1px dashed hsl(var(--border));
 }
 
-/* 响应式：窄屏逐级降列，图例移到下方并横向铺开 */
+/* 响应式：窄屏逐级降列（图例本来就在底部，不需要再挪） */
 @media (max-width: 1500px) {
   .year-months {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -459,24 +458,8 @@
 }
 
 @media (max-width: 1100px) {
-  .year-view {
-    flex-direction: column;
-  }
-
   .year-months {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .year-legend {
-    position: static;
-    flex: 1 1 auto;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .legend-list {
-    flex-flow: row wrap;
-    gap: 4px 16px;
   }
 }
 

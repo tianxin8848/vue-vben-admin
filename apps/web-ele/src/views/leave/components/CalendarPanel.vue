@@ -447,7 +447,7 @@ function goNextMonth() {
       </div>
     </div>
 
-    <!-- 年视图：全年 12 个月排期表，按人着色 + 右侧人员图例 -->
+    <!-- 年视图：全年 12 个月排期表，按人着色 + 底部一条人员图例 -->
     <div v-else class="year-view">
       <div class="year-months">
         <div
@@ -517,6 +517,7 @@ function goNextMonth() {
         </div>
       </div>
 
+      <!-- 人员图例：放在 12 个月之后横向铺开（原来是右侧 sticky 竖列，会把 4 列月历挤窄） -->
       <aside v-if="personLegend.length > 0" class="year-legend">
         <div class="legend-title">
           {{ $t('page.leave.calendarView.personLegend') }}
