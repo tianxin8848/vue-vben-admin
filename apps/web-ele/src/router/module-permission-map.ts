@@ -369,6 +369,12 @@ export function buildRoutesFromPermissions(
       ? `/employee/manage/${firstChild.path}`
       : '/employee/manage';
 
+    // 拥有管理职能（管理员/经理）时，Employee 菜单排在 Workspace 之前
+    const workspaceRoute = routes.find((r) => r.name === 'Workspace');
+    if (workspaceRoute?.meta) {
+      workspaceRoute.meta.order = 1;
+    }
+
     routes.push({
       name: 'EmployeeManage',
       path: '/employee/manage',
@@ -376,7 +382,7 @@ export function buildRoutesFromPermissions(
       redirect: redirectPath,
       meta: {
         icon: 'lucide:users',
-        order: 1,
+        order: 0,
         title: 'page.employees.title',
       },
       children: managementChildren,
