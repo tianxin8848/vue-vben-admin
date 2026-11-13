@@ -67,11 +67,6 @@ export namespace DocumentApi {
     name?: string;
     parent_id?: null | string;
   }
-
-  /** 删除响应 */
-  export interface DeleteResult {
-    deleted: boolean;
-  }
 }
 
 // ─── 文件资料（查看：document_library / document_library_manage） ──────────
@@ -130,9 +125,7 @@ export async function updateDocumentApi(
 
 /** 删除文件 */
 export async function deleteDocumentApi(documentId: string) {
-  return requestClient.delete<DocumentApi.DeleteResult>(
-    `/documents/${documentId}`,
-  );
+  return requestClient.delete(`/documents/${documentId}`);
 }
 
 // ─── 文件夹 ────────────────────────────────────────────────────────────────
@@ -168,7 +161,5 @@ export async function updateFolderApi(
 
 /** 删除空文件夹 */
 export async function deleteFolderApi(folderId: string) {
-  return requestClient.delete<DocumentApi.DeleteResult>(
-    `/documents/folders/${folderId}`,
-  );
+  return requestClient.delete(`/documents/folders/${folderId}`);
 }

@@ -135,13 +135,6 @@ export namespace ClaimApi {
     is_flowing: boolean;
     created_at: null | string;
   }
-
-  /** 全员导出可选员工（GET /claims/export/employees） */
-  export interface ClaimExportEmployee {
-    id: string;
-    name: string;
-    username: string;
-  }
 }
 
 // ─── 报销选项 ────────────────────────────────────────────────────────────────
@@ -256,19 +249,14 @@ export async function updateClaimDraftApi(
   );
 }
 
-/** 撤回报销（withdraw_comment 为查询参数，含中文时需 URL 编码） */
+/** 撤回报销（withdraw_comment 走 JSON body） */
 export async function withdrawClaimApi(
   claimId: string,
   withdrawComment?: null | string,
 ) {
   return requestClient.patch<ClaimApi.ClaimResponse>(
     `/me/claims/${claimId}/withdraw`,
-    undefined,
-    {
-      params: withdrawComment
-        ? { withdraw_comment: withdrawComment }
-        : undefined,
-    },
+    { withdraw_comment: withdrawComment ?? null },
   );
 }
 
@@ -297,7 +285,7 @@ export async function getMyApprovedClaimsApi() {
   return requestClient.get<ClaimApi.ClaimResponse[]>('/me/claims/approved');
 }
 
-/** 审批报销申请（application/x-www-form-urlencoded，支持部分驳回 rejected_item_ids） */
+/** 审批报销申请（JSON body，支持部分驳回 rejected_item_ids） */
 export async function reviewClaimApi(
   claimId: string,
   data: {
@@ -306,20 +294,13 @@ export async function reviewClaimApi(
     review_comment?: null | string;
   },
 ) {
-  const params = new URLSearchParams();
-  params.append('approval_status', data.approval_status);
-  if (data.review_comment) {
-    params.append('review_comment', data.review_comment);
-  }
-  if (data.rejected_item_ids && data.rejected_item_ids.length > 0) {
-    data.rejected_item_ids.forEach((id) =>
-      params.append('rejected_item_ids', id),
-    );
-  }
   return requestClient.patch<ClaimApi.ClaimResponse>(
     `/claims/${claimId}/approval`,
-    params,
-    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+    {
+      approval_status: data.approval_status,
+      review_comment: data.review_comment ?? null,
+      rejected_item_ids: data.rejected_item_ids ?? [],
+    },
   );
 }
 
@@ -342,33 +323,14 @@ export async function exportMyClaimsApi(claimIds?: string[]) {
 }
 
 /**
- * 全员导出可选员工列表（出现在已通过报销里的员工）。
- * 供导出下拉使用；权限同 exportClaimsApi。
- */
-export async function getClaimExportEmployeesApi() {
-  return requestClient.get<ClaimApi.ClaimExportEmployee[]>(
-    '/claims/export/employees',
-  );
-}
-
-/**
  * 导出组织级报销记录为 Excel（.xlsx），跨员工、按提交月份（created_at）分 sheet。
  * 后端仅导出 approval_status = approved 的记录；Date/Start/End 列仍为 invoice_date。
  * @param group 'month' → 每个提交月份一个 sheet（含 Name 列）；'person_month' → 每个员工 + 提交月份一个 sheet
- * @param employeeIds 可选，限定员工（可多个）；省略则导出全员
  * @permission claim_management 或 claim_org_export（内置 admin 不可用）
  */
-export async function exportClaimsApi(
-  group: 'month' | 'person_month',
-  employeeIds?: string[],
-) {
+export async function exportClaimsApi(group: 'month' | 'person_month') {
   return requestClient.get<Blob>('/claims/export', {
-    params: {
-      group,
-      ...(employeeIds && employeeIds.length > 0
-        ? { employee_id: employeeIds }
-        : {}),
-    },
+    params: { group },
     paramsSerializer: 'repeat',
     responseType: 'blob',
     // 导出 Excel 可能耗时较长，单独放宽至 60s

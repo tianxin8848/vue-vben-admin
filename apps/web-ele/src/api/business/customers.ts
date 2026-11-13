@@ -33,11 +33,6 @@ export namespace CustomerApi {
     notes?: string;
     contacts?: CustomerContact[];
   }
-
-  /** 删除响应 */
-  export interface CustomerDeleteResult {
-    deleted: boolean;
-  }
 }
 
 // ─── CRUD ──────────────────────────────────────────────────────────────────
@@ -65,7 +60,5 @@ export async function updateCustomerApi(
 
 /** 删除客户 */
 export async function deleteCustomerApi(customerId: string) {
-  return requestClient.delete<CustomerApi.CustomerDeleteResult>(
-    `/customers/${customerId}`,
-  );
+  return requestClient.delete(`/customers/${customerId}`);
 }
